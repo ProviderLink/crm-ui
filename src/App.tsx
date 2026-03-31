@@ -1,5 +1,10 @@
+import { AuthInitializer } from '@/components/shared/AuthInitializer'
 import { AppRouter } from '@/router'
 
 export default function App() {
-  return <AppRouter />
+  return (
+    <AuthInitializer>
+      <AppRouter />
+    </AuthInitializer>
+  )
 }

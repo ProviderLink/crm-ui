@@ -12,4 +12,5 @@ export interface AuthState {
   user: IUser | null
   accessToken: string | null
   isAuthenticated: boolean
+  isHydrated: boolean
 }

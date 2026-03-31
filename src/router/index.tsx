@@ -1,7 +1,9 @@
 import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
+import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
+import { RoleGuard } from '@/components/shared/RoleGuard'
 
-// Auth
+// Auth (public)
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage'))
 
@@ -20,7 +22,7 @@ const AccountManagementPage = lazy(() => import('@/pages/admin/AccountManagement
 const ClientDashboardPage = lazy(() => import('@/pages/client/ClientDashboardPage'))
 const WorkActivityPage = lazy(() => import('@/pages/client/WorkActivityPage'))
 
-// Fallback
+// 404
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
 function SuspenseLayout() {
@@ -35,33 +37,50 @@ const router = createBrowserRouter([
   {
     element: <SuspenseLayout />,
     children: [
+      // Public routes
       { path: '/', element: <Navigate to="/login" replace /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/reset-password', element: <ResetPasswordPage /> },
+
+      // Protected — must be authenticated
       {
-        path: '/va',
+        element: <ProtectedRoute />,
         children: [
-          { path: 'dashboard', element: <VaDashboardPage /> },
-          { path: 'work/new', element: <AddWorkEntryPage /> },
-          { path: 'work/history', element: <WorkHistoryPage /> },
-          { path: 'eod/new', element: <EodSubmitPage /> },
-          { path: 'eod/history', element: <EodHistoryPage /> },
+          // VA portal
+          {
+            path: '/va',
+            element: <RoleGuard roles={['va']} />,
+            children: [
+              { path: 'dashboard', element: <VaDashboardPage /> },
+              { path: 'work/new', element: <AddWorkEntryPage /> },
+              { path: 'work/history', element: <WorkHistoryPage /> },
+              { path: 'eod/new', element: <EodSubmitPage /> },
+              { path: 'eod/history', element: <EodHistoryPage /> },
+            ],
+          },
+
+          // Admin portal — admin + account_manager
+          {
+            path: '/admin',
+            element: <RoleGuard roles={['admin', 'account_manager']} />,
+            children: [
+              { path: 'dashboard', element: <AdminDashboardPage /> },
+              { path: 'accounts', element: <AccountManagementPage /> },
+            ],
+          },
+
+          // Client portal
+          {
+            path: '/client',
+            element: <RoleGuard roles={['client']} />,
+            children: [
+              { path: 'dashboard', element: <ClientDashboardPage /> },
+              { path: 'work', element: <WorkActivityPage /> },
+            ],
+          },
         ],
       },
-      {
-        path: '/admin',
-        children: [
-          { path: 'dashboard', element: <AdminDashboardPage /> },
-          { path: 'accounts', element: <AccountManagementPage /> },
-        ],
-      },
-      {
-        path: '/client',
-        children: [
-          { path: 'dashboard', element: <ClientDashboardPage /> },
-          { path: 'work', element: <WorkActivityPage /> },
-        ],
-      },
+
       { path: '*', element: <NotFoundPage /> },
     ],
   },
