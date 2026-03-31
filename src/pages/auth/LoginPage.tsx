@@ -10,6 +10,7 @@ import { useAppDispatch } from '@/hooks/store'
 import { setAuth } from '@/store/slices/authSlice'
 import { login } from '@/services/auth.service'
 import type { UserRole } from '@/types/auth'
+import { DevQuickLogin } from '@/components/dev/DevQuickLogin'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -123,6 +124,8 @@ export default function LoginPage() {
 
           </form>
         </div>
+
+        {import.meta.env.DEV && <DevQuickLogin />}
 
       </div>
     </div>

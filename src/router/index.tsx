@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { RoleGuard } from '@/components/shared/RoleGuard'
+import { VaLayout } from '@/layouts/VaLayout'
 
 // Auth (public)
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
@@ -51,11 +52,16 @@ const router = createBrowserRouter([
             path: '/va',
             element: <RoleGuard roles={['va']} />,
             children: [
-              { path: 'dashboard', element: <VaDashboardPage /> },
-              { path: 'work/new', element: <AddWorkEntryPage /> },
-              { path: 'work/history', element: <WorkHistoryPage /> },
-              { path: 'eod/new', element: <EodSubmitPage /> },
-              { path: 'eod/history', element: <EodHistoryPage /> },
+              {
+                element: <VaLayout />,
+                children: [
+                  { path: 'dashboard', element: <VaDashboardPage /> },
+                  { path: 'work/new', element: <AddWorkEntryPage /> },
+                  { path: 'work/history', element: <WorkHistoryPage /> },
+                  { path: 'eod/new', element: <EodSubmitPage /> },
+                  { path: 'eod/history', element: <EodHistoryPage /> },
+                ],
+              },
             ],
           },
 
