@@ -6,6 +6,7 @@ import {
   HelpCircleIcon,
   HistoryIcon,
   LayoutDashboardIcon,
+  LinkIcon,
   SearchIcon,
   SettingsIcon,
   UsersIcon,
@@ -57,14 +58,16 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
   },
   admin: {
     navMain: [
-      { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboardIcon },
-      { title: "Accounts",  url: "/admin/accounts",  icon: UsersIcon },
+      { title: "Dashboard",   url: "/admin/dashboard",    icon: LayoutDashboardIcon },
+      { title: "Assignments", url: "/admin/assignments",  icon: LinkIcon },
+      { title: "Accounts",    url: "/admin/accounts",     icon: UsersIcon },
     ],
   },
   account_manager: {
     navMain: [
-      { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboardIcon },
-      { title: "Accounts",  url: "/admin/accounts",  icon: UsersIcon },
+      { title: "Dashboard",   url: "/admin/dashboard",    icon: LayoutDashboardIcon },
+      { title: "Assignments", url: "/admin/assignments",  icon: LinkIcon },
+      { title: "Accounts",    url: "/admin/accounts",     icon: UsersIcon },
     ],
   },
   client: {

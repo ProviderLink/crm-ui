@@ -17,6 +17,7 @@ const EodHistoryPage = lazy(() => import('@/pages/va/EodHistoryPage'))
 
 // Admin portal
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'))
+const AssignmentManagementPage = lazy(() => import('@/pages/admin/AssignmentManagementPage'))
 const AccountManagementPage = lazy(() => import('@/pages/admin/AccountManagementPage'))
 
 // Client portal
@@ -73,8 +74,9 @@ const router = createBrowserRouter([
               {
                 element: <DashboardLayout />,
                 children: [
-                  { path: 'dashboard', element: <AdminDashboardPage /> },
-                  { path: 'accounts', element: <AccountManagementPage /> },
+                  { path: 'dashboard',   element: <AdminDashboardPage /> },
+                  { path: 'assignments', element: <AssignmentManagementPage /> },
+                  { path: 'accounts',    element: <AccountManagementPage /> },
                 ],
               },
             ],

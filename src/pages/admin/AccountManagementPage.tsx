@@ -1,3 +1,592 @@
+import { useEffect, useState, type ReactNode } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import type { ColumnDef } from '@tanstack/react-table'
+
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from '@/components/ui/select'
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from '@/components/ui/sheet'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { DataTable } from '@/components/shared/DataTable'
+import { getClientAccounts, updateClientAccount } from '@/services/client-accounts.service'
+import { getVaProfiles, updateVaProfile } from '@/services/va-profiles.service'
+import { getAtsClients, getAtsVAs } from '@/services/ats.service'
+import type { IClientAccount } from '@/types/client-account'
+import type { IVaProfile } from '@/types/va-profile'
+import type { IAtsClient, IAtsCandidate } from '@/types/ats'
+
+// ─── Schemas ─────────────────────────────────────────────────────────────────
+
+const clientAccountSchema = z.object({
+  healthStatus:      z.enum(['green', 'yellow', 'red']),
+  satisfactionScore: z.string().optional(),
+  baaSigned:         z.boolean(),
+  baaSignedDate:     z.string().optional(),
+  onboardingComplete: z.boolean(),
+  sopReceived:       z.boolean(),
+  primaryContact:    z.string().optional(),
+  secondaryContact:  z.string().optional(),
+  lastClientCheckin: z.string().optional(),
+  emrSystem:         z.string().optional(),
+  openIssuesCount:   z.coerce.number().int().min(0),
+  notes:             z.string().optional(),
+})
+type ClientAccountFormData = z.infer<typeof clientAccountSchema>
+
+const vaProfileSchema = z.object({
+  workloadLevel:      z.enum(['low', 'normal', 'high', 'overloaded']),
+  satisfactionScore:  z.string().optional(),
+  burnoutRiskFlag:    z.boolean(),
+  replacementRiskFlag: z.boolean(),
+  lastVaCheckin:      z.string().optional(),
+  notes:              z.string().optional(),
+})
+type VaProfileFormData = z.infer<typeof vaProfileSchema>
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function HealthBadge({ status }: { status: string }) {
+  const cls =
+    status === 'green'  ? 'bg-green-100 text-green-700' :
+    status === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+  return (
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${cls}`}>
+      {status}
+    </span>
+  )
+}
+
+function WorkloadBadge({ level }: { level: string }) {
+  const cls =
+    level === 'low'       ? 'bg-blue-100 text-blue-700' :
+    level === 'normal'    ? 'bg-green-100 text-green-700' :
+    level === 'high'      ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+  return (
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${cls}`}>
+      {level}
+    </span>
+  )
+}
+
+function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium text-[#0F172A]">{label}</Label>
+      {children}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  )
+}
+
+function CheckboxField({
+  label, checked, onCheckedChange,
+}: {
+  label: string
+  checked: boolean
+  onCheckedChange: (v: boolean) => void
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <Checkbox
+        checked={checked}
+        onCheckedChange={(v) => onCheckedChange(v === true)}
+        id={label}
+      />
+      <Label htmlFor={label} className="text-sm font-medium text-[#0F172A] cursor-pointer">
+        {label}
+      </Label>
+    </div>
+  )
+}
+
+// ─── Client Account Edit Form ─────────────────────────────────────────────────
+
+function EditClientAccountForm({
+  account, onSuccess,
+}: {
+  account: IClientAccount
+  onSuccess: () => void
+}) {
+  const {
+    register, handleSubmit, control, reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ClientAccountFormData>({ resolver: zodResolver(clientAccountSchema) })
+
+  const [serverError, setServerError] = useState('')
+
+  useEffect(() => {
+    reset({
+      healthStatus:      account.health_status,
+      satisfactionScore: account.satisfaction_score?.toString() ?? '',
+      baaSigned:         account.baa_signed,
+      baaSignedDate:     account.baa_signed_date?.slice(0, 10) ?? '',
+      onboardingComplete: account.onboarding_complete,
+      sopReceived:       account.sop_received,
+      primaryContact:    account.primary_contact ?? '',
+      secondaryContact:  account.secondary_contact ?? '',
+      lastClientCheckin: account.last_client_checkin?.slice(0, 10) ?? '',
+      emrSystem:         account.emr_system ?? '',
+      openIssuesCount:   account.open_issues_count,
+      notes:             account.notes ?? '',
+    })
+  }, [account, reset])
+
+  async function onSubmit(data: ClientAccountFormData) {
+    setServerError('')
+    try {
+      await updateClientAccount(account.client_id, {
+        ...data,
+        satisfactionScore: data.satisfactionScore ? parseInt(data.satisfactionScore, 10) : undefined,
+      })
+      onSuccess()
+    } catch {
+      setServerError('Failed to save changes. Please try again.')
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
+      {serverError && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{serverError}</p>
+      )}
+
+      <Field label="Health Status" error={errors.healthStatus?.message}>
+        <Controller
+          control={control}
+          name="healthStatus"
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger className="rounded-xl border-slate-200">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="green">Green — Healthy</SelectItem>
+                <SelectItem value="yellow">Yellow — Attention needed</SelectItem>
+                <SelectItem value="red">Red — At risk</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </Field>
+
+      <Field label="Satisfaction Score (1–5)" error={errors.satisfactionScore?.message}>
+        <Controller
+          control={control}
+          name="satisfactionScore"
+          render={({ field }) => (
+            <Select value={field.value ?? ''} onValueChange={field.onChange}>
+              <SelectTrigger className="rounded-xl border-slate-200">
+                <SelectValue placeholder="Select score" />
+              </SelectTrigger>
+              <SelectContent>
+                {['1', '2', '3', '4', '5'].map((v) => (
+                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </Field>
+
+      <Controller
+        control={control}
+        name="baaSigned"
+        render={({ field }) => (
+          <CheckboxField label="BAA Signed" checked={field.value} onCheckedChange={field.onChange} />
+        )}
+      />
+
+      <Field label="BAA Signed Date" error={errors.baaSignedDate?.message}>
+        <Input type="date" {...register('baaSignedDate')} className="rounded-xl border-slate-200" />
+      </Field>
+
+      <Controller
+        control={control}
+        name="onboardingComplete"
+        render={({ field }) => (
+          <CheckboxField label="Onboarding Complete" checked={field.value} onCheckedChange={field.onChange} />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="sopReceived"
+        render={({ field }) => (
+          <CheckboxField label="SOP Received" checked={field.value} onCheckedChange={field.onChange} />
+        )}
+      />
+
+      <Field label="EMR System" error={errors.emrSystem?.message}>
+        <Input {...register('emrSystem')} placeholder="e.g. Epic, Athena" className="rounded-xl border-slate-200" />
+      </Field>
+
+      <Field label="Primary Contact" error={errors.primaryContact?.message}>
+        <Input {...register('primaryContact')} placeholder="Name or email" className="rounded-xl border-slate-200" />
+      </Field>
+
+      <Field label="Secondary Contact" error={errors.secondaryContact?.message}>
+        <Input {...register('secondaryContact')} placeholder="Name or email" className="rounded-xl border-slate-200" />
+      </Field>
+
+      <Field label="Last Client Check-in" error={errors.lastClientCheckin?.message}>
+        <Input type="date" {...register('lastClientCheckin')} className="rounded-xl border-slate-200" />
+      </Field>
+
+      <Field label="Open Issues Count" error={errors.openIssuesCount?.message}>
+        <Input type="number" min="0" {...register('openIssuesCount')} className="rounded-xl border-slate-200" />
+      </Field>
+
+      <Field label="Notes" error={errors.notes?.message}>
+        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-xl border-slate-200" />
+      </Field>
+
+      <Button type="submit" disabled={isSubmitting} className="mt-2">
+        {isSubmitting ? 'Saving…' : 'Save Changes'}
+      </Button>
+    </form>
+  )
+}
+
+// ─── VA Profile Edit Form ─────────────────────────────────────────────────────
+
+function EditVaProfileForm({
+  profile, onSuccess,
+}: {
+  profile: IVaProfile
+  onSuccess: () => void
+}) {
+  const {
+    register, handleSubmit, control, reset,
+    formState: { errors, isSubmitting },
+  } = useForm<VaProfileFormData>({ resolver: zodResolver(vaProfileSchema) })
+
+  const [serverError, setServerError] = useState('')
+
+  useEffect(() => {
+    reset({
+      workloadLevel:      profile.workload_level,
+      satisfactionScore:  profile.satisfaction_score?.toString() ?? '',
+      burnoutRiskFlag:    profile.burnout_risk_flag,
+      replacementRiskFlag: profile.replacement_risk_flag,
+      lastVaCheckin:      profile.last_va_checkin?.slice(0, 10) ?? '',
+      notes:              profile.notes ?? '',
+    })
+  }, [profile, reset])
+
+  async function onSubmit(data: VaProfileFormData) {
+    setServerError('')
+    try {
+      await updateVaProfile(profile.va_id, {
+        ...data,
+        satisfactionScore: data.satisfactionScore ? parseInt(data.satisfactionScore, 10) : undefined,
+      })
+      onSuccess()
+    } catch {
+      setServerError('Failed to save changes. Please try again.')
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
+      {serverError && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{serverError}</p>
+      )}
+
+      <Field label="Workload Level" error={errors.workloadLevel?.message}>
+        <Controller
+          control={control}
+          name="workloadLevel"
+          render={({ field }) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger className="rounded-xl border-slate-200">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="overloaded">Overloaded</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </Field>
+
+      <Field label="Satisfaction Score (1–5)" error={errors.satisfactionScore?.message}>
+        <Controller
+          control={control}
+          name="satisfactionScore"
+          render={({ field }) => (
+            <Select value={field.value ?? ''} onValueChange={field.onChange}>
+              <SelectTrigger className="rounded-xl border-slate-200">
+                <SelectValue placeholder="Select score" />
+              </SelectTrigger>
+              <SelectContent>
+                {['1', '2', '3', '4', '5'].map((v) => (
+                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </Field>
+
+      <Controller
+        control={control}
+        name="burnoutRiskFlag"
+        render={({ field }) => (
+          <CheckboxField label="Burnout Risk" checked={field.value} onCheckedChange={field.onChange} />
+        )}
+      />
+
+      <Controller
+        control={control}
+        name="replacementRiskFlag"
+        render={({ field }) => (
+          <CheckboxField label="Replacement Risk" checked={field.value} onCheckedChange={field.onChange} />
+        )}
+      />
+
+      <Field label="Last VA Check-in" error={errors.lastVaCheckin?.message}>
+        <Input type="date" {...register('lastVaCheckin')} className="rounded-xl border-slate-200" />
+      </Field>
+
+      <Field label="Notes" error={errors.notes?.message}>
+        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-xl border-slate-200" />
+      </Field>
+
+      <Button type="submit" disabled={isSubmitting} className="mt-2">
+        {isSubmitting ? 'Saving…' : 'Save Changes'}
+      </Button>
+    </form>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function AccountManagementPage() {
-  return <div>Account Management</div>
+  const [accounts, setAccounts] = useState<IClientAccount[]>([])
+  const [profiles, setProfiles] = useState<IVaProfile[]>([])
+  const [atsClients, setAtsClients] = useState<IAtsClient[]>([])
+  const [atsVas, setAtsVas] = useState<IAtsCandidate[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const [editAccount, setEditAccount] = useState<IClientAccount | null>(null)
+  const [editProfile, setEditProfile] = useState<IVaProfile | null>(null)
+
+  async function reload() {
+    const [a, p] = await Promise.all([getClientAccounts(), getVaProfiles()])
+    setAccounts(a)
+    setProfiles(p)
+  }
+
+  useEffect(() => {
+    async function init() {
+      try {
+        const [a, p, clients, vas] = await Promise.all([
+          getClientAccounts(),
+          getVaProfiles(),
+          getAtsClients(),
+          getAtsVAs(),
+        ])
+        setAccounts(a)
+        setProfiles(p)
+        setAtsClients(clients)
+        setAtsVas(vas)
+      } catch {
+        // silently fail
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    void init()
+  }, [])
+
+  const clientMap: Record<string, string> = {}
+  for (const c of atsClients) clientMap[c.id] = c.companyName
+
+  const vaMap: Record<string, string> = {}
+  for (const v of atsVas) vaMap[v.id] = `${v.firstName} ${v.lastName}`
+
+  // ── Client Accounts columns ──────────────────────────────────────────────
+  const accountColumns: ColumnDef<IClientAccount>[] = [
+    {
+      accessorKey: 'client_id',
+      header: 'Company',
+      cell: ({ getValue }) => clientMap[getValue<string>()] ?? getValue<string>(),
+    },
+    {
+      accessorKey: 'health_status',
+      header: 'Health',
+      cell: ({ getValue }) => <HealthBadge status={getValue<string>()} />,
+    },
+    {
+      accessorKey: 'baa_signed',
+      header: 'BAA',
+      cell: ({ getValue }) => getValue<boolean>() ? '✓' : '—',
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'onboarding_complete',
+      header: 'Onboarding',
+      cell: ({ getValue }) => getValue<boolean>() ? '✓' : '—',
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'open_issues_count',
+      header: 'Open Issues',
+    },
+    {
+      accessorKey: 'last_client_checkin',
+      header: 'Last Check-in',
+      cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <button
+          type="button"
+          onClick={() => setEditAccount(row.original)}
+          className="text-xs text-blue-600 hover:underline"
+        >
+          Edit
+        </button>
+      ),
+    },
+  ]
+
+  // ── VA Profile columns ───────────────────────────────────────────────────
+  const profileColumns: ColumnDef<IVaProfile>[] = [
+    {
+      accessorKey: 'va_id',
+      header: 'VA',
+      cell: ({ getValue }) => vaMap[getValue<string>()] ?? getValue<string>(),
+    },
+    {
+      accessorKey: 'workload_level',
+      header: 'Workload',
+      cell: ({ getValue }) => <WorkloadBadge level={getValue<string>()} />,
+    },
+    {
+      accessorKey: 'satisfaction_score',
+      header: 'Satisfaction',
+      cell: ({ getValue }) => getValue<number | undefined>() ?? '—',
+    },
+    {
+      accessorKey: 'burnout_risk_flag',
+      header: 'Burnout Risk',
+      cell: ({ getValue }) => getValue<boolean>() ? '🔴' : '—',
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'replacement_risk_flag',
+      header: 'Replacement Risk',
+      cell: ({ getValue }) => getValue<boolean>() ? '🔴' : '—',
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'last_va_checkin',
+      header: 'Last Check-in',
+      cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <button
+          type="button"
+          onClick={() => setEditProfile(row.original)}
+          className="text-xs text-blue-600 hover:underline"
+        >
+          Edit
+        </button>
+      ),
+    },
+  ]
+
+  return (
+    <div className="@container/main flex flex-1 flex-col gap-2">
+      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+
+        <div className="px-4 lg:px-6">
+          <h1 className="text-xl font-semibold text-[#0F172A]">Account Management</h1>
+          <p className="text-sm text-muted-foreground">Client accounts and VA operational profiles</p>
+        </div>
+
+        <div className="px-4 lg:px-6">
+          <Tabs defaultValue="client-accounts">
+            <TabsList>
+              <TabsTrigger value="client-accounts">Client Accounts</TabsTrigger>
+              <TabsTrigger value="va-profiles">VA Profiles</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="client-accounts" className="mt-4">
+              <DataTable columns={accountColumns} data={accounts} isLoading={isLoading} />
+            </TabsContent>
+
+            <TabsContent value="va-profiles" className="mt-4">
+              <DataTable columns={profileColumns} data={profiles} isLoading={isLoading} />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+      </div>
+
+      {/* Client Account Edit Sheet */}
+      <Sheet open={editAccount !== null} onOpenChange={(o) => !o && setEditAccount(null)}>
+        <SheetContent className="sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Edit Client Account</SheetTitle>
+            <SheetDescription>
+              {editAccount ? clientMap[editAccount.client_id] ?? editAccount.client_id : ''}
+            </SheetDescription>
+          </SheetHeader>
+          {editAccount && (
+            <EditClientAccountForm
+              account={editAccount}
+              onSuccess={async () => {
+                setEditAccount(null)
+                await reload()
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* VA Profile Edit Sheet */}
+      <Sheet open={editProfile !== null} onOpenChange={(o) => !o && setEditProfile(null)}>
+        <SheetContent className="sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Edit VA Profile</SheetTitle>
+            <SheetDescription>
+              {editProfile ? vaMap[editProfile.va_id] ?? editProfile.va_id : ''}
+            </SheetDescription>
+          </SheetHeader>
+          {editProfile && (
+            <EditVaProfileForm
+              profile={editProfile}
+              onSuccess={async () => {
+                setEditProfile(null)
+                await reload()
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  )
 }
