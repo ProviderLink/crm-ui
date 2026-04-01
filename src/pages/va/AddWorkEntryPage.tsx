@@ -68,8 +68,8 @@ export default function AddWorkEntryPage() {
     return (
       <div className="max-w-2xl">
         <PageHeader />
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center">
-          <p className="text-sm text-[#64748B]">No active assignments found. Contact your account manager.</p>
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
+          <p className="text-sm text-muted-foreground">No active assignments found. Contact your account manager.</p>
         </div>
       </div>
     )
@@ -79,7 +79,7 @@ export default function AddWorkEntryPage() {
     <div className="max-w-2xl">
       <PageHeader />
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+      <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
 
           {/* Assignment */}
@@ -89,7 +89,7 @@ export default function AddWorkEntryPage() {
               name="assignment_id"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange} disabled={assignments.length === 1}>
-                  <SelectTrigger className="rounded-xl border-slate-200">
+                  <SelectTrigger className="rounded-xl border-input">
                     <SelectValue placeholder="Select assignment" />
                   </SelectTrigger>
                   <SelectContent>
@@ -107,10 +107,10 @@ export default function AddWorkEntryPage() {
           {/* Date + Time */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Date" error={errors.entry_date?.message}>
-              <Input type="date" className="rounded-xl border-slate-200" {...register('entry_date')} />
+              <Input type="date" className="rounded-xl border-input" {...register('entry_date')} />
             </Field>
             <Field label="Time" error={errors.entry_time?.message}>
-              <Input type="time" className="rounded-xl border-slate-200" {...register('entry_time')} />
+              <Input type="time" className="rounded-xl border-input" {...register('entry_time')} />
             </Field>
           </div>
 
@@ -121,7 +121,7 @@ export default function AddWorkEntryPage() {
               name="task_category"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="rounded-xl border-slate-200">
+                  <SelectTrigger className="rounded-xl border-input">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -138,7 +138,7 @@ export default function AddWorkEntryPage() {
           <Field label="Task Description" error={errors.task_description?.message}>
             <Textarea
               placeholder="What did you work on?"
-              className="rounded-xl border-slate-200 resize-none"
+              className="rounded-xl border-input resize-none"
               rows={3}
               {...register('task_description')}
             />
@@ -151,7 +151,7 @@ export default function AddWorkEntryPage() {
                 type="number"
                 min={1}
                 placeholder="e.g. 60"
-                className="rounded-xl border-slate-200"
+                className="rounded-xl border-input"
                 {...register('time_spent')}
               />
             </Field>
@@ -161,7 +161,7 @@ export default function AddWorkEntryPage() {
                 name="status"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="rounded-xl border-slate-200">
+                    <SelectTrigger className="rounded-xl border-input">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -181,7 +181,7 @@ export default function AddWorkEntryPage() {
           <Field label="Notes (optional)" error={errors.notes?.message}>
             <Textarea
               placeholder="Any additional notes…"
-              className="rounded-xl border-slate-200 resize-none"
+              className="rounded-xl border-input resize-none"
               rows={2}
               {...register('notes')}
             />
@@ -190,7 +190,7 @@ export default function AddWorkEntryPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-black hover:bg-black/90 text-white rounded-xl h-10 font-medium transition-opacity"
+            className="w-full rounded-xl h-10 font-medium"
           >
             {isSubmitting ? 'Saving…' : 'Save Work Entry'}
           </Button>
@@ -208,8 +208,8 @@ import type { ReactNode } from 'react'
 function PageHeader() {
   return (
     <div className="mb-6">
-      <h1 className="text-2xl font-semibold text-[#0F172A]">Add Work Entry</h1>
-      <p className="text-sm text-[#64748B] mt-0.5">Log a task you worked on today</p>
+      <h1 className="text-2xl font-semibold text-foreground">Add Work Entry</h1>
+      <p className="text-sm text-muted-foreground mt-0.5">Log a task you worked on today</p>
     </div>
   )
 }
@@ -217,9 +217,9 @@ function PageHeader() {
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-[#0F172A]">{label}</Label>
+      <Label className="text-sm font-medium text-foreground">{label}</Label>
       {children}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
 }
@@ -227,10 +227,10 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 function PageSkeleton() {
   return (
     <div className="max-w-2xl space-y-4">
-      <div className="h-8 w-48 rounded-xl bg-slate-100 animate-pulse" />
-      <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
+      <div className="h-8 w-48 rounded-xl bg-muted animate-pulse" />
+      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-10 rounded-xl bg-slate-100 animate-pulse" />
+          <div key={i} className="h-10 rounded-xl bg-muted animate-pulse" />
         ))}
       </div>
     </div>

@@ -109,7 +109,7 @@ export default function AdminDashboardPage() {
               <CardDescription>Missing EODs Today</CardDescription>
               <CardTitle
                 className={`@[250px]/card:text-3xl text-2xl font-semibold tabular-nums ${
-                  !loading && (stats?.missingEodsToday ?? 0) > 0 ? 'text-red-600' : ''
+                  !loading && (stats?.missingEodsToday ?? 0) > 0 ? 'text-destructive' : ''
                 }`}
               >
                 {loading ? '—' : stats?.missingEodsToday ?? 0}
@@ -143,7 +143,7 @@ export default function AdminDashboardPage() {
         {/* Per-VA breakdown */}
         {!loading && breakdown.length > 0 && (
           <div className="px-4 lg:px-6">
-            <h2 className="mb-3 text-sm font-medium text-[#0F172A]">VA Activity Today</h2>
+            <h2 className="mb-3 text-sm font-medium text-foreground">VA Activity Today</h2>
             <DataTable columns={breakdownColumns} data={breakdown} />
           </div>
         )}

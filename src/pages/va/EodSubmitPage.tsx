@@ -80,8 +80,8 @@ export default function EodSubmitPage() {
     return (
       <div className="max-w-2xl">
         <PageHeader />
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center">
-          <p className="text-sm text-[#64748B]">No active assignments found. Contact your account manager.</p>
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
+          <p className="text-sm text-muted-foreground">No active assignments found. Contact your account manager.</p>
         </div>
       </div>
     )
@@ -91,13 +91,13 @@ export default function EodSubmitPage() {
     return (
       <div className="max-w-2xl">
         <PageHeader />
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center space-y-3">
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center space-y-3">
           <CheckCircle2 size={36} className="text-green-500 mx-auto" />
-          <p className="text-base font-medium text-[#0F172A]">EOD already submitted for today</p>
-          <p className="text-sm text-[#64748B]">You can view it in your EOD history.</p>
+          <p className="text-base font-medium text-foreground">EOD already submitted for today</p>
+          <p className="text-sm text-muted-foreground">You can view it in your EOD history.</p>
           <button
             onClick={() => navigate('/va/eod/history')}
-            className="text-sm text-slate-500 hover:text-[#0F172A] hover:underline"
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
           >
             View EOD History →
           </button>
@@ -110,11 +110,11 @@ export default function EodSubmitPage() {
     <div className="max-w-2xl">
       <PageHeader />
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+      <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
 
           {error && (
-            <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+            <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -126,7 +126,7 @@ export default function EodSubmitPage() {
               name="assignment_id"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange} disabled={assignments.length === 1}>
-                  <SelectTrigger className="rounded-xl border-slate-200">
+                  <SelectTrigger className="rounded-xl border-input">
                     <SelectValue placeholder="Select assignment" />
                   </SelectTrigger>
                   <SelectContent>
@@ -143,20 +143,20 @@ export default function EodSubmitPage() {
 
           {/* Date */}
           <Field label="Date" error={errors.date?.message}>
-            <Input type="date" className="rounded-xl border-slate-200 max-w-[200px]" {...register('date')} />
+            <Input type="date" className="rounded-xl border-input max-w-[200px]" {...register('date')} />
           </Field>
 
           {/* Shift times + hours */}
           <div className="grid grid-cols-3 gap-4">
             <Field label="Shift Start" error={errors.shift_start?.message}>
-              <Input type="time" className="rounded-xl border-slate-200" {...register('shift_start')} />
+              <Input type="time" className="rounded-xl border-input" {...register('shift_start')} />
             </Field>
             <Field label="Shift End" error={errors.shift_end?.message}>
-              <Input type="time" className="rounded-xl border-slate-200" {...register('shift_end')} />
+              <Input type="time" className="rounded-xl border-input" {...register('shift_end')} />
             </Field>
             <div className="space-y-1.5">
-              <Label className="text-sm font-medium text-[#0F172A]">Hours Worked</Label>
-              <div className="h-10 flex items-center px-3 rounded-xl bg-slate-50 border border-slate-200 text-sm text-[#64748B]">
+              <Label className="text-sm font-medium text-foreground">Hours Worked</Label>
+              <div className="h-10 flex items-center px-3 rounded-xl bg-muted border border-input text-sm text-muted-foreground">
                 {hoursWorked}h
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function EodSubmitPage() {
           <Field label="Summary of Work" error={errors.summary_of_work?.message}>
             <Textarea
               placeholder="What did you accomplish today?"
-              className="rounded-xl border-slate-200 resize-none"
+              className="rounded-xl border-input resize-none"
               rows={4}
               {...register('summary_of_work')}
             />
@@ -176,7 +176,7 @@ export default function EodSubmitPage() {
           <Field label="Pending Tasks" error={errors.pending_tasks?.message}>
             <Textarea
               placeholder="List pending tasks or write 'None'"
-              className="rounded-xl border-slate-200 resize-none"
+              className="rounded-xl border-input resize-none"
               rows={3}
               {...register('pending_tasks')}
             />
@@ -186,7 +186,7 @@ export default function EodSubmitPage() {
           <Field label="Blockers" error={errors.blockers?.message}>
             <Textarea
               placeholder="Describe blockers or write 'None'"
-              className="rounded-xl border-slate-200 resize-none"
+              className="rounded-xl border-input resize-none"
               rows={2}
               {...register('blockers')}
             />
@@ -196,7 +196,7 @@ export default function EodSubmitPage() {
           <Field label="Notes (optional)" error={errors.notes?.message}>
             <Textarea
               placeholder="Any additional notes…"
-              className="rounded-xl border-slate-200 resize-none"
+              className="rounded-xl border-input resize-none"
               rows={2}
               {...register('notes')}
             />
@@ -205,7 +205,7 @@ export default function EodSubmitPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-black hover:bg-black/90 text-white rounded-xl h-10 font-medium transition-opacity"
+            className="w-full rounded-xl h-10 font-medium"
           >
             {isSubmitting ? 'Submitting…' : 'Submit EOD'}
           </Button>
@@ -221,8 +221,8 @@ export default function EodSubmitPage() {
 function PageHeader() {
   return (
     <div className="mb-6">
-      <h1 className="text-2xl font-semibold text-[#0F172A]">End of Day Report</h1>
-      <p className="text-sm text-[#64748B] mt-0.5">Submit your daily work summary</p>
+      <h1 className="text-2xl font-semibold text-foreground">End of Day Report</h1>
+      <p className="text-sm text-muted-foreground mt-0.5">Submit your daily work summary</p>
     </div>
   )
 }
@@ -230,9 +230,9 @@ function PageHeader() {
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-[#0F172A]">{label}</Label>
+      <Label className="text-sm font-medium text-foreground">{label}</Label>
       {children}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
 }
@@ -240,10 +240,10 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 function PageSkeleton() {
   return (
     <div className="max-w-2xl space-y-4">
-      <div className="h-8 w-48 rounded-xl bg-slate-100 animate-pulse" />
-      <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
+      <div className="h-8 w-48 rounded-xl bg-muted animate-pulse" />
+      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-10 rounded-xl bg-slate-100 animate-pulse" />
+          <div key={i} className="h-10 rounded-xl bg-muted animate-pulse" />
         ))}
       </div>
     </div>

@@ -61,7 +61,7 @@ function RequestStep() {
   return (
     <AuthShell title="Reset password" subtitle="Enter your email to receive a reset link">
       {sent ? (
-        <div className="rounded-xl bg-green-50 border border-green-100 px-4 py-3 text-sm text-green-700">
+        <div className="rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-600 dark:text-green-400">
           Check your inbox — a reset link is on its way.
         </div>
       ) : (
@@ -69,7 +69,7 @@ function RequestStep() {
           {error && <ErrorBanner message={error} />}
 
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-sm font-medium text-[#0F172A]">
+            <Label htmlFor="email" className="text-sm font-medium text-foreground">
               Email
             </Label>
             <Input
@@ -77,7 +77,7 @@ function RequestStep() {
               type="email"
               placeholder="you@company.com"
               autoComplete="email"
-              className="rounded-xl border-slate-200 focus-visible:ring-blue-400/40"
+              className="rounded-xl border-input focus-visible:ring-ring/40"
               {...register('email')}
             />
             {errors.email && <FieldError message={errors.email.message!} />}
@@ -86,7 +86,7 @@ function RequestStep() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-black hover:bg-black/90 text-white rounded-xl h-10 font-medium transition-opacity"
+            className="w-full rounded-xl h-10 font-medium"
           >
             {isSubmitting ? 'Sending…' : 'Send reset link'}
           </Button>
@@ -123,7 +123,7 @@ function ConfirmStep({ token }: { token: string }) {
     <AuthShell title="Set new password" subtitle="Choose a strong password for your account">
       {done ? (
         <div className="space-y-4">
-          <div className="rounded-xl bg-green-50 border border-green-100 px-4 py-3 text-sm text-green-700">
+          <div className="rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-600 dark:text-green-400">
             Password updated. You can now sign in.
           </div>
           <BackToLogin />
@@ -133,7 +133,7 @@ function ConfirmStep({ token }: { token: string }) {
           {error && <ErrorBanner message={error} />}
 
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-sm font-medium text-[#0F172A]">
+            <Label htmlFor="password" className="text-sm font-medium text-foreground">
               New password
             </Label>
             <Input
@@ -141,14 +141,14 @@ function ConfirmStep({ token }: { token: string }) {
               type="password"
               placeholder="••••••••"
               autoComplete="new-password"
-              className="rounded-xl border-slate-200 focus-visible:ring-blue-400/40"
+              className="rounded-xl border-input focus-visible:ring-ring/40"
               {...register('password')}
             />
             {errors.password && <FieldError message={errors.password.message!} />}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="confirm" className="text-sm font-medium text-[#0F172A]">
+            <Label htmlFor="confirm" className="text-sm font-medium text-foreground">
               Confirm password
             </Label>
             <Input
@@ -156,7 +156,7 @@ function ConfirmStep({ token }: { token: string }) {
               type="password"
               placeholder="••••••••"
               autoComplete="new-password"
-              className="rounded-xl border-slate-200 focus-visible:ring-blue-400/40"
+              className="rounded-xl border-input focus-visible:ring-ring/40"
               {...register('confirm')}
             />
             {errors.confirm && <FieldError message={errors.confirm.message!} />}
@@ -165,7 +165,7 @@ function ConfirmStep({ token }: { token: string }) {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-black hover:bg-black/90 text-white rounded-xl h-10 font-medium transition-opacity"
+            className="w-full rounded-xl h-10 font-medium"
           >
             {isSubmitting ? 'Updating…' : 'Update password'}
           </Button>
@@ -187,16 +187,16 @@ function AuthShell({
   children: ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-[#F5F7FB] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <span className="text-xl font-semibold text-[#0F172A] tracking-tight">
+          <span className="text-xl font-semibold text-foreground tracking-tight">
             Arista CRM
           </span>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
-          <h1 className="text-2xl font-semibold text-[#0F172A] mb-1">{title}</h1>
-          <p className="text-sm text-[#64748B] mb-6">{subtitle}</p>
+        <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
+          <h1 className="text-2xl font-semibold text-foreground mb-1">{title}</h1>
+          <p className="text-sm text-muted-foreground mb-6">{subtitle}</p>
           {children}
         </div>
       </div>
@@ -206,20 +206,20 @@ function AuthShell({
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+    <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
       {message}
     </div>
   )
 }
 
 function FieldError({ message }: { message: string }) {
-  return <p className="text-xs text-red-500">{message}</p>
+  return <p className="text-xs text-destructive">{message}</p>
 }
 
 function BackToLogin() {
   return (
-    <p className="mt-4 text-center text-sm text-[#64748B]">
-      <Link to="/login" className="text-slate-500 hover:text-[#0F172A] hover:underline">
+    <p className="mt-4 text-center text-sm text-muted-foreground">
+      <Link to="/login" className="text-muted-foreground hover:text-foreground hover:underline">
         Back to sign in
       </Link>
     </p>

@@ -56,9 +56,9 @@ type VaProfileFormData = z.infer<typeof vaProfileSchema>
 
 function HealthBadge({ status }: { status: string }) {
   const cls =
-    status === 'green'  ? 'bg-green-100 text-green-700' :
-    status === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
+    status === 'green'  ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
+    status === 'yellow' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' :
+                          'bg-red-500/10 text-red-600 dark:text-red-400'
   return (
     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${cls}`}>
       {status}
@@ -68,10 +68,10 @@ function HealthBadge({ status }: { status: string }) {
 
 function WorkloadBadge({ level }: { level: string }) {
   const cls =
-    level === 'low'       ? 'bg-blue-100 text-blue-700' :
-    level === 'normal'    ? 'bg-green-100 text-green-700' :
-    level === 'high'      ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
+    level === 'low'       ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+    level === 'normal'    ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
+    level === 'high'      ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' :
+                            'bg-red-500/10 text-red-600 dark:text-red-400'
   return (
     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${cls}`}>
       {level}
@@ -82,9 +82,9 @@ function WorkloadBadge({ level }: { level: string }) {
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-[#0F172A]">{label}</Label>
+      <Label className="text-sm font-medium text-foreground">{label}</Label>
       {children}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
 }
@@ -103,7 +103,7 @@ function CheckboxField({
         onCheckedChange={(v) => onCheckedChange(v === true)}
         id={label}
       />
-      <Label htmlFor={label} className="text-sm font-medium text-[#0F172A] cursor-pointer">
+      <Label htmlFor={label} className="text-sm font-medium text-foreground cursor-pointer">
         {label}
       </Label>
     </div>
@@ -158,7 +158,7 @@ function EditClientAccountForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
       {serverError && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{serverError}</p>
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</p>
       )}
 
       <Field label="Health Status" error={errors.healthStatus?.message}>
@@ -167,7 +167,7 @@ function EditClientAccountForm({
           name="healthStatus"
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-slate-200">
+              <SelectTrigger className="rounded-xl border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -186,7 +186,7 @@ function EditClientAccountForm({
           name="satisfactionScore"
           render={({ field }) => (
             <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-slate-200">
+              <SelectTrigger className="rounded-xl border-input">
                 <SelectValue placeholder="Select score" />
               </SelectTrigger>
               <SelectContent>
@@ -208,7 +208,7 @@ function EditClientAccountForm({
       />
 
       <Field label="BAA Signed Date" error={errors.baaSignedDate?.message}>
-        <Input type="date" {...register('baaSignedDate')} className="rounded-xl border-slate-200" />
+        <Input type="date" {...register('baaSignedDate')} className="rounded-xl border-input" />
       </Field>
 
       <Controller
@@ -228,27 +228,27 @@ function EditClientAccountForm({
       />
 
       <Field label="EMR System" error={errors.emrSystem?.message}>
-        <Input {...register('emrSystem')} placeholder="e.g. Epic, Athena" className="rounded-xl border-slate-200" />
+        <Input {...register('emrSystem')} placeholder="e.g. Epic, Athena" className="rounded-xl border-input" />
       </Field>
 
       <Field label="Primary Contact" error={errors.primaryContact?.message}>
-        <Input {...register('primaryContact')} placeholder="Name or email" className="rounded-xl border-slate-200" />
+        <Input {...register('primaryContact')} placeholder="Name or email" className="rounded-xl border-input" />
       </Field>
 
       <Field label="Secondary Contact" error={errors.secondaryContact?.message}>
-        <Input {...register('secondaryContact')} placeholder="Name or email" className="rounded-xl border-slate-200" />
+        <Input {...register('secondaryContact')} placeholder="Name or email" className="rounded-xl border-input" />
       </Field>
 
       <Field label="Last Client Check-in" error={errors.lastClientCheckin?.message}>
-        <Input type="date" {...register('lastClientCheckin')} className="rounded-xl border-slate-200" />
+        <Input type="date" {...register('lastClientCheckin')} className="rounded-xl border-input" />
       </Field>
 
       <Field label="Open Issues Count" error={errors.openIssuesCount?.message}>
-        <Input type="number" min="0" {...register('openIssuesCount')} className="rounded-xl border-slate-200" />
+        <Input type="number" min="0" {...register('openIssuesCount')} className="rounded-xl border-input" />
       </Field>
 
       <Field label="Notes" error={errors.notes?.message}>
-        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-xl border-slate-200" />
+        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-xl border-input" />
       </Field>
 
       <Button type="submit" disabled={isSubmitting} className="mt-2">
@@ -300,7 +300,7 @@ function EditVaProfileForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
       {serverError && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{serverError}</p>
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</p>
       )}
 
       <Field label="Workload Level" error={errors.workloadLevel?.message}>
@@ -309,7 +309,7 @@ function EditVaProfileForm({
           name="workloadLevel"
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-slate-200">
+              <SelectTrigger className="rounded-xl border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -329,7 +329,7 @@ function EditVaProfileForm({
           name="satisfactionScore"
           render={({ field }) => (
             <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-slate-200">
+              <SelectTrigger className="rounded-xl border-input">
                 <SelectValue placeholder="Select score" />
               </SelectTrigger>
               <SelectContent>
@@ -359,11 +359,11 @@ function EditVaProfileForm({
       />
 
       <Field label="Last VA Check-in" error={errors.lastVaCheckin?.message}>
-        <Input type="date" {...register('lastVaCheckin')} className="rounded-xl border-slate-200" />
+        <Input type="date" {...register('lastVaCheckin')} className="rounded-xl border-input" />
       </Field>
 
       <Field label="Notes" error={errors.notes?.message}>
-        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-xl border-slate-200" />
+        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-xl border-input" />
       </Field>
 
       <Button type="submit" disabled={isSubmitting} className="mt-2">
@@ -523,7 +523,7 @@ export default function AccountManagementPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
 
         <div className="px-4 lg:px-6">
-          <h1 className="text-xl font-semibold text-[#0F172A]">Account Management</h1>
+          <h1 className="text-xl font-semibold text-foreground">Account Management</h1>
           <p className="text-sm text-muted-foreground">Client accounts and VA operational profiles</p>
         </div>
 

@@ -8,27 +8,27 @@ import { formatMinutes } from '@/lib/time'
 import type { ColumnDef } from '@tanstack/react-table'
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
-  completed:   'bg-green-50 text-green-700 border-green-100',
-  in_progress: 'bg-orange-50 text-orange-600 border-orange-100',
-  pending:     'bg-slate-50 text-slate-500 border-slate-200',
+  completed:   'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
+  in_progress: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
+  pending:     'bg-muted text-muted-foreground border-border',
 }
 
 const columns: ColumnDef<IWorkEntry>[] = [
   {
     accessorKey: 'entry_date',
     header: 'Date',
-    cell: ({ getValue }) => <span className="text-xs text-[#64748B]">{getValue<string>()}</span>,
+    cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()}</span>,
   },
   {
     accessorKey: 'entry_time',
     header: 'Time',
-    cell: ({ getValue }) => <span className="text-xs text-[#64748B]">{getValue<string>()}</span>,
+    cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()}</span>,
   },
   {
     accessorKey: 'task_category',
     header: 'Category',
     cell: ({ getValue }) => (
-      <span className="text-xs px-2 py-0.5 rounded-full bg-[#E1F2AE] text-[#0F172A]">
+      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
         {getValue<string>()}
       </span>
     ),
@@ -46,7 +46,7 @@ const columns: ColumnDef<IWorkEntry>[] = [
     accessorKey: 'time_spent',
     header: 'Time Spent',
     cell: ({ getValue }) => (
-      <span className="text-xs text-[#64748B]">{formatMinutes(getValue<number>())}</span>
+      <span className="text-xs text-muted-foreground">{formatMinutes(getValue<number>())}</span>
     ),
   },
   {
@@ -97,12 +97,12 @@ export default function WorkHistoryPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-[#0F172A]">Work History</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">All your logged work entries</p>
+          <h1 className="text-2xl font-semibold text-foreground">Work History</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">All your logged work entries</p>
         </div>
         <Link
           to="/va/work/new"
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white bg-black hover:bg-black/90 transition-opacity"
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-opacity"
         >
           + Add Entry
         </Link>
@@ -111,32 +111,32 @@ export default function WorkHistoryPage() {
       {/* Filters */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#94A3B8]">From</span>
+          <span className="text-xs text-muted-foreground">From</span>
           <Input
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-xl border-slate-200 h-8 text-sm w-36"
+            className="rounded-xl border-input h-8 text-sm w-36"
           />
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#94A3B8]">To</span>
+          <span className="text-xs text-muted-foreground">To</span>
           <Input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-xl border-slate-200 h-8 text-sm w-36"
+            className="rounded-xl border-input h-8 text-sm w-36"
           />
         </div>
         {(dateFrom || dateTo) && (
           <button
             onClick={clearFilters}
-            className="text-xs text-slate-500 hover:text-[#0F172A] hover:underline"
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
           >
             Clear
           </button>
         )}
-        <span className="text-xs text-[#94A3B8] ml-auto">{filtered.length} records</span>
+        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} records</span>
       </div>
 
       <DataTable columns={columns} data={filtered} isLoading={isLoading} />

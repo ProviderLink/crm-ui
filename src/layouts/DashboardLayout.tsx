@@ -16,7 +16,7 @@ export function DashboardLayout() {
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset className="overflow-hidden bg-[#F5F7FB] dark:bg-slate-900">
+      <SidebarInset className="overflow-hidden bg-background">
         <SiteHeader />
         <div className="flex flex-1 flex-col overflow-y-auto">
           <Suspense fallback={null}>

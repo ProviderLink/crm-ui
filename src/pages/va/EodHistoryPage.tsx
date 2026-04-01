@@ -10,7 +10,7 @@ const columns: ColumnDef<IEodSubmission>[] = [
   {
     accessorKey: 'date',
     header: 'Date',
-    cell: ({ getValue }) => <span className="text-xs text-[#64748B]">{getValue<string>()}</span>,
+    cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()}</span>,
   },
   {
     accessorKey: 'shift_start',
@@ -26,7 +26,7 @@ const columns: ColumnDef<IEodSubmission>[] = [
     accessorKey: 'hours_worked',
     header: 'Hours',
     cell: ({ getValue }) => (
-      <span className="text-sm font-medium text-[#0F172A]">{getValue<number>()}h</span>
+      <span className="text-sm font-medium text-foreground">{getValue<number>()}h</span>
     ),
   },
   {
@@ -74,12 +74,12 @@ export default function EodHistoryPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-[#0F172A]">EOD History</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Your end-of-day submissions</p>
+          <h1 className="text-2xl font-semibold text-foreground">EOD History</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Your end-of-day submissions</p>
         </div>
         <Link
           to="/va/eod/new"
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white bg-black hover:bg-black/90 transition-opacity"
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-opacity"
         >
           + Submit EOD
         </Link>
@@ -88,32 +88,32 @@ export default function EodHistoryPage() {
       {/* Filters */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#94A3B8]">From</span>
+          <span className="text-xs text-muted-foreground">From</span>
           <Input
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-xl border-slate-200 h-8 text-sm w-36"
+            className="rounded-xl border-input h-8 text-sm w-36"
           />
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#94A3B8]">To</span>
+          <span className="text-xs text-muted-foreground">To</span>
           <Input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-xl border-slate-200 h-8 text-sm w-36"
+            className="rounded-xl border-input h-8 text-sm w-36"
           />
         </div>
         {(dateFrom || dateTo) && (
           <button
             onClick={clearFilters}
-            className="text-xs text-slate-500 hover:text-[#0F172A] hover:underline"
+            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
           >
             Clear
           </button>
         )}
-        <span className="text-xs text-[#94A3B8] ml-auto">{filtered.length} records</span>
+        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} records</span>
       </div>
 
       <DataTable columns={columns} data={filtered} isLoading={isLoading} />
