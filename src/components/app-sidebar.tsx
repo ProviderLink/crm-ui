@@ -1,17 +1,17 @@
 import * as React from "react"
 import {
-  BookOpenIcon,
-  BotIcon,
-  ChartBarIcon,
+  ClipboardListIcon,
+  ClockIcon,
   CommandIcon,
-  FrameIcon,
   HelpCircleIcon,
+  HistoryIcon,
+  LayoutDashboardIcon,
   SearchIcon,
   SettingsIcon,
-  SquareTerminalIcon,
+  UsersIcon,
+  type LucideIcon,
 } from "lucide-react"
 
-import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
@@ -24,32 +24,68 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useAppSelector } from "@/hooks/store"
+import type { UserRole } from "@/types/auth"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    { title: "Dashboard",  url: "#", icon: SquareTerminalIcon },
-    { title: "Analytics",  url: "#", icon: ChartBarIcon },
-    { title: "Projects",   url: "#", icon: FrameIcon },
-    { title: "Team",       url: "#", icon: BotIcon },
-  ],
-  navSecondary: [
-    { title: "Settings",  url: "#", icon: SettingsIcon },
-    { title: "Get Help",  url: "#", icon: HelpCircleIcon },
-    { title: "Search",    url: "#", icon: SearchIcon },
-  ],
-  documents: [
-    { name: "Data Library",    url: "#", icon: BookOpenIcon },
-    { name: "Report Summary",  url: "#", icon: ChartBarIcon },
-    { name: "Developer Guide", url: "#", icon: SquareTerminalIcon },
-  ],
+type NavItem = {
+  title: string
+  url: string
+  icon?: LucideIcon
 }
 
+type QuickAction = {
+  label: string
+  icon?: LucideIcon
+  to: string
+}
+
+type RoleConfig = {
+  navMain: NavItem[]
+  quickAction?: QuickAction
+}
+
+const roleConfigs: Record<UserRole, RoleConfig> = {
+  va: {
+    quickAction: { label: "Log Work", icon: ClockIcon, to: "/va/work/new" },
+    navMain: [
+      { title: "Dashboard",    url: "/va/dashboard",    icon: LayoutDashboardIcon },
+      { title: "Log Work",     url: "/va/work/new",     icon: ClockIcon },
+      { title: "Work History", url: "/va/work/history", icon: HistoryIcon },
+      { title: "Submit EOD",   url: "/va/eod/new",      icon: ClipboardListIcon },
+      { title: "EOD History",  url: "/va/eod/history",  icon: HistoryIcon },
+    ],
+  },
+  admin: {
+    navMain: [
+      { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboardIcon },
+      { title: "Accounts",  url: "/admin/accounts",  icon: UsersIcon },
+    ],
+  },
+  account_manager: {
+    navMain: [
+      { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboardIcon },
+      { title: "Accounts",  url: "/admin/accounts",  icon: UsersIcon },
+    ],
+  },
+  client: {
+    navMain: [
+      { title: "Dashboard",     url: "/client/dashboard", icon: LayoutDashboardIcon },
+      { title: "Work Activity", url: "/client/work",      icon: ClipboardListIcon },
+    ],
+  },
+}
+
+const navSecondary = [
+  { title: "Settings", url: "#", icon: SettingsIcon },
+  { title: "Help",     url: "#", icon: HelpCircleIcon },
+  { title: "Search",   url: "#", icon: SearchIcon },
+]
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const user = useAppSelector((s) => s.auth.user)
+  const role: UserRole = user?.role ?? "va"
+  const config = roleConfigs[role]
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -69,13 +105,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={config.navMain} quickAction={config.quickAction} />
+        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser
+          user={{
+            name: user?.name ?? "—",
+            email: user?.email ?? "",
+            avatar: "",
+          }}
+        />
       </SidebarFooter>
     </Sidebar>
   )
