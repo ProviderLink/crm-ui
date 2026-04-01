@@ -97,7 +97,7 @@ export default function EodSubmitPage() {
           <p className="text-sm text-[#64748B]">You can view it in your EOD history.</p>
           <button
             onClick={() => navigate('/va/eod/history')}
-            className="text-sm text-[#7B6CF6] hover:underline"
+            className="text-sm text-slate-500 hover:text-[#0F172A] hover:underline"
           >
             View EOD History →
           </button>
@@ -205,7 +205,7 @@ export default function EodSubmitPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA] hover:opacity-90 text-white rounded-xl h-10 font-medium transition-opacity"
+            className="w-full bg-black hover:bg-black/90 text-white rounded-xl h-10 font-medium transition-opacity"
           >
             {isSubmitting ? 'Submitting…' : 'Submit EOD'}
           </Button>

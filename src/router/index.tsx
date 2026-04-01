@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { RoleGuard } from '@/components/shared/RoleGuard'
-import { VaLayout } from '@/layouts/VaLayout'
+import { DashboardLayout } from '@/layouts/DashboardLayout'
 
 // Auth (public)
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
@@ -53,7 +53,7 @@ const router = createBrowserRouter([
             element: <RoleGuard roles={['va']} />,
             children: [
               {
-                element: <VaLayout />,
+                element: <DashboardLayout />,
                 children: [
                   { path: 'dashboard', element: <VaDashboardPage /> },
                   { path: 'work/new', element: <AddWorkEntryPage /> },
@@ -70,8 +70,13 @@ const router = createBrowserRouter([
             path: '/admin',
             element: <RoleGuard roles={['admin', 'account_manager']} />,
             children: [
-              { path: 'dashboard', element: <AdminDashboardPage /> },
-              { path: 'accounts', element: <AccountManagementPage /> },
+              {
+                element: <DashboardLayout />,
+                children: [
+                  { path: 'dashboard', element: <AdminDashboardPage /> },
+                  { path: 'accounts', element: <AccountManagementPage /> },
+                ],
+              },
             ],
           },
 
@@ -80,8 +85,13 @@ const router = createBrowserRouter([
             path: '/client',
             element: <RoleGuard roles={['client']} />,
             children: [
-              { path: 'dashboard', element: <ClientDashboardPage /> },
-              { path: 'work', element: <WorkActivityPage /> },
+              {
+                element: <DashboardLayout />,
+                children: [
+                  { path: 'dashboard', element: <ClientDashboardPage /> },
+                  { path: 'work', element: <WorkActivityPage /> },
+                ],
+              },
             ],
           },
         ],

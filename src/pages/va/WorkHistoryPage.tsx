@@ -28,7 +28,7 @@ const columns: ColumnDef<IWorkEntry>[] = [
     accessorKey: 'task_category',
     header: 'Category',
     cell: ({ getValue }) => (
-      <span className="text-xs px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#7B6CF6]">
+      <span className="text-xs px-2 py-0.5 rounded-full bg-[#E1F2AE] text-[#0F172A]">
         {getValue<string>()}
       </span>
     ),
@@ -102,7 +102,7 @@ export default function WorkHistoryPage() {
         </div>
         <Link
           to="/va/work/new"
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA] hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white bg-black hover:bg-black/90 transition-opacity"
         >
           + Add Entry
         </Link>
@@ -131,7 +131,7 @@ export default function WorkHistoryPage() {
         {(dateFrom || dateTo) && (
           <button
             onClick={clearFilters}
-            className="text-xs text-[#7B6CF6] hover:underline"
+            className="text-xs text-slate-500 hover:text-[#0F172A] hover:underline"
           >
             Clear
           </button>

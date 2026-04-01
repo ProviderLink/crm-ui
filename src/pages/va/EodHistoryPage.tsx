@@ -79,7 +79,7 @@ export default function EodHistoryPage() {
         </div>
         <Link
           to="/va/eod/new"
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA] hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white bg-black hover:bg-black/90 transition-opacity"
         >
           + Submit EOD
         </Link>
@@ -108,7 +108,7 @@ export default function EodHistoryPage() {
         {(dateFrom || dateTo) && (
           <button
             onClick={clearFilters}
-            className="text-xs text-[#7B6CF6] hover:underline"
+            className="text-xs text-slate-500 hover:text-[#0F172A] hover:underline"
           >
             Clear
           </button>

@@ -190,7 +190,7 @@ export default function AddWorkEntryPage() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA] hover:opacity-90 text-white rounded-xl h-10 font-medium transition-opacity"
+            className="w-full bg-black hover:bg-black/90 text-white rounded-xl h-10 font-medium transition-opacity"
           >
             {isSubmitting ? 'Saving…' : 'Save Work Entry'}
           </Button>

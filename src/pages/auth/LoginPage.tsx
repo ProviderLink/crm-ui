@@ -54,7 +54,7 @@ export default function LoginPage() {
 
         {/* Wordmark */}
         <div className="text-center mb-8">
-          <span className="text-xl font-semibold bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA] bg-clip-text text-transparent">
+          <span className="text-xl font-semibold text-[#0F172A] tracking-tight">
             Arista CRM
           </span>
         </div>
@@ -81,7 +81,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="you@company.com"
                 autoComplete="email"
-                className="rounded-xl border-slate-200 focus-visible:ring-[#7B6CF6]/40"
+                className="rounded-xl border-slate-200 focus-visible:ring-blue-400/40"
                 {...register('email')}
               />
               {errors.email && (
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 </Label>
                 <Link
                   to="/reset-password"
-                  className="text-xs text-[#7B6CF6] hover:underline"
+                  className="text-xs text-slate-500 hover:text-[#0F172A] hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -106,7 +106,7 @@ export default function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className="rounded-xl border-slate-200 focus-visible:ring-[#7B6CF6]/40"
+                className="rounded-xl border-slate-200 focus-visible:ring-blue-400/40"
                 {...register('password')}
               />
               {errors.password && (
@@ -117,7 +117,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA] hover:opacity-90 text-white rounded-xl h-10 font-medium transition-opacity mt-2"
+              className="w-full bg-black hover:bg-black/90 text-white rounded-xl h-10 font-medium transition-opacity mt-2"
             >
               {isSubmitting ? 'Signing in…' : 'Sign in'}
             </Button>

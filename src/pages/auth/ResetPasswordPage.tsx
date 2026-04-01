@@ -77,7 +77,7 @@ function RequestStep() {
               type="email"
               placeholder="you@company.com"
               autoComplete="email"
-              className="rounded-xl border-slate-200 focus-visible:ring-[#7B6CF6]/40"
+              className="rounded-xl border-slate-200 focus-visible:ring-blue-400/40"
               {...register('email')}
             />
             {errors.email && <FieldError message={errors.email.message!} />}
@@ -86,7 +86,7 @@ function RequestStep() {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA] hover:opacity-90 text-white rounded-xl h-10 font-medium transition-opacity"
+            className="w-full bg-black hover:bg-black/90 text-white rounded-xl h-10 font-medium transition-opacity"
           >
             {isSubmitting ? 'Sending…' : 'Send reset link'}
           </Button>
@@ -141,7 +141,7 @@ function ConfirmStep({ token }: { token: string }) {
               type="password"
               placeholder="••••••••"
               autoComplete="new-password"
-              className="rounded-xl border-slate-200 focus-visible:ring-[#7B6CF6]/40"
+              className="rounded-xl border-slate-200 focus-visible:ring-blue-400/40"
               {...register('password')}
             />
             {errors.password && <FieldError message={errors.password.message!} />}
@@ -156,7 +156,7 @@ function ConfirmStep({ token }: { token: string }) {
               type="password"
               placeholder="••••••••"
               autoComplete="new-password"
-              className="rounded-xl border-slate-200 focus-visible:ring-[#7B6CF6]/40"
+              className="rounded-xl border-slate-200 focus-visible:ring-blue-400/40"
               {...register('confirm')}
             />
             {errors.confirm && <FieldError message={errors.confirm.message!} />}
@@ -165,7 +165,7 @@ function ConfirmStep({ token }: { token: string }) {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA] hover:opacity-90 text-white rounded-xl h-10 font-medium transition-opacity"
+            className="w-full bg-black hover:bg-black/90 text-white rounded-xl h-10 font-medium transition-opacity"
           >
             {isSubmitting ? 'Updating…' : 'Update password'}
           </Button>
@@ -190,7 +190,7 @@ function AuthShell({
     <div className="min-h-screen bg-[#F5F7FB] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <span className="text-xl font-semibold bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA] bg-clip-text text-transparent">
+          <span className="text-xl font-semibold text-[#0F172A] tracking-tight">
             Arista CRM
           </span>
         </div>
@@ -219,7 +219,7 @@ function FieldError({ message }: { message: string }) {
 function BackToLogin() {
   return (
     <p className="mt-4 text-center text-sm text-[#64748B]">
-      <Link to="/login" className="text-[#7B6CF6] hover:underline">
+      <Link to="/login" className="text-slate-500 hover:text-[#0F172A] hover:underline">
         Back to sign in
       </Link>
     </p>

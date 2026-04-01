@@ -1,14 +1,16 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
+@custom-variant dark (&:is(.dark *));
+
 /* ─── Design Tokens ─────────────────────────────────────── */
 @theme {
   /* Font */
   --font-sans: 'Inter', system-ui, sans-serif;
 
-  /* Brand */
-  --color-brand-purple: #7B6CF6;
-  --color-brand-blue:   #5AC8FA;
+  /* Brand — lime/black accent system */
+  --color-lime:         #C7F33C; /* lime green accent */
+  --color-lime-pale:    #E1F2AE; /* pale lime highlight */
 
   /* Neutral */
   --color-app-bg:         #F5F7FB;
@@ -47,36 +49,50 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
 }
 
 /* ─── Base Layer ─────────────────────────────────────────── */
 @layer base {
   :root {
     /* shadcn semantic variables — tuned to our design system */
-    --background:             #F5F7FB;
+    --background:             #ffffff;
     --foreground:             #0F172A;
     --card:                   rgba(255, 255, 255, 0.70);
     --card-foreground:        #0F172A;
     --popover:                rgba(255, 255, 255, 0.90);
     --popover-foreground:     #0F172A;
-    --primary:                #7B6CF6;
+    --primary:                #000000; /* black — primary buttons/actions */
     --primary-foreground:     #ffffff;
     --secondary:              #F1F5F9;
     --secondary-foreground:   #0F172A;
     --muted:                  #F1F5F9;
     --muted-foreground:       #64748B;
-    --accent:                 #EDE9FE;
-    --accent-foreground:      #7B6CF6;
+    --accent:                 #E1F2AE; /* pale lime — hover/accent surfaces */
+    --accent-foreground:      #000000;
     --destructive:            #EF4444;
     --border:                 rgba(255, 255, 255, 0.40);
     --input:                  rgba(255, 255, 255, 0.60);
-    --ring:                   #7B6CF6;
+    --ring:                   #60A5FA; /* blue-400 — keyboard focus ring */
     --radius:                 0.75rem; /* 12px — maps to rounded-xl for controls */
   }
 
   *, *::before, *::after {
     box-sizing: border-box;
     border-color: var(--border);
+  }
+
+  button:not([disabled]),
+  [role="button"]:not([disabled]),
+  a {
+    cursor: pointer;
   }
 
   html {
@@ -88,8 +104,8 @@
   body {
     min-height: 100vh;
     margin: 0;
-    background-color: #F5F7FB;
-    color: #0F172A;
+    background-color: var(--background);
+    color: var(--foreground);
     font-size: 0.875rem;
     line-height: 1.5;
   }
@@ -108,6 +124,50 @@
     @apply hover:shadow-md hover:scale-[1.01] transition-all duration-200 ease-out;
   }
   .gradient-brand {
-    @apply bg-gradient-to-r from-[#7B6CF6] to-[#5AC8FA];
+    @apply bg-gradient-to-r from-[#C7F33C] to-[#E1F2AE];
   }
+}
+
+/* ─── Sidebar CSS Variables (design system tuned) ───────── */
+:root {
+  --sidebar:                    #ffffff;
+  --sidebar-foreground:         #0F172A;
+  --sidebar-primary:            #000000;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent:             #E1F2AE; /* pale lime — active nav bg */
+  --sidebar-accent-foreground:  #0F172A;
+  --sidebar-border:             #F1F5F9; /* slate-100 */
+  --sidebar-ring:               #60A5FA; /* blue-400 focus ring */
+}
+
+/* ─── Dark Mode ──────────────────────────────────────────── */
+.dark {
+  --background:             #0F172A;
+  --foreground:             #F8FAFC;
+  --card:                   #1E293B;
+  --card-foreground:        #F8FAFC;
+  --popover:                #1E293B;
+  --popover-foreground:     #F8FAFC;
+  --primary:                #C7F33C;
+  --primary-foreground:     #0F172A;
+  --secondary:              #1E293B;
+  --secondary-foreground:   #F8FAFC;
+  --muted:                  #1E293B;
+  --muted-foreground:       #94A3B8;
+  --accent:                 rgba(199, 243, 60, 0.12);
+  --accent-foreground:      #C7F33C;
+  --destructive:            #F87171;
+  --border:                 rgba(255, 255, 255, 0.08);
+  --input:                  rgba(255, 255, 255, 0.08);
+  --ring:                   #C7F33C;
+
+  /* Sidebar dark */
+  --sidebar:                    #1E293B;
+  --sidebar-foreground:         #F8FAFC;
+  --sidebar-primary:            #C7F33C;
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent:             rgba(199, 243, 60, 0.12);
+  --sidebar-accent-foreground:  #C7F33C;
+  --sidebar-border:             rgba(255, 255, 255, 0.08);
+  --sidebar-ring:               #C7F33C;
 }
