@@ -66,18 +66,27 @@ export default function AddWorkEntryPage() {
 
   if (assignments.length === 0) {
     return (
-      <div className="max-w-2xl">
-        <PageHeader />
-        <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
-          <p className="text-sm text-muted-foreground">No active assignments found. Contact your account manager.</p>
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          <div className="px-4 lg:px-6">
+            <div className="max-w-2xl">
+              <PageHeader />
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
+                <p className="text-sm text-muted-foreground">No active assignments found. Contact your account manager.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl">
-      <PageHeader />
+    <div className="@container/main flex flex-1 flex-col gap-2">
+      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+        <div className="px-4 lg:px-6">
+          <div className="max-w-2xl">
+            <PageHeader />
 
       <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
@@ -198,6 +207,9 @@ export default function AddWorkEntryPage() {
         </form>
       </div>
     </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -226,12 +238,18 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 
 function PageSkeleton() {
   return (
-    <div className="max-w-2xl space-y-4">
-      <div className="h-8 w-48 rounded-xl bg-muted animate-pulse" />
-      <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-10 rounded-xl bg-muted animate-pulse" />
-        ))}
+    <div className="@container/main flex flex-1 flex-col gap-2">
+      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+        <div className="px-4 lg:px-6">
+          <div className="max-w-2xl space-y-4">
+            <div className="h-8 w-48 rounded-xl bg-muted animate-pulse" />
+            <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-10 rounded-xl bg-muted animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

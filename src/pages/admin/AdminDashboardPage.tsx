@@ -4,7 +4,8 @@ import { AlertTriangleIcon, ClipboardXIcon, UserCheckIcon, UsersIcon } from 'luc
 import type { ColumnDef } from '@tanstack/react-table'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { DataTable } from '@/components/shared/DataTable'
 import { getDashboardStats, type IDashboardStats } from '@/services/admin.service'
 import { getAtsVAs } from '@/services/ats.service'
@@ -61,7 +62,7 @@ export default function AdminDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Active Assignments</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? '—' : stats?.activeAssignmentsCount ?? 0}
+                {loading ? <Skeleton className="h-8 w-16" /> : stats?.activeAssignmentsCount ?? 0}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <UsersIcon className="size-4 text-muted-foreground" />
@@ -76,7 +77,7 @@ export default function AdminDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Entries Today</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? '—' : stats?.totalEntriesToday ?? 0}
+                {loading ? <Skeleton className="h-8 w-16" /> : stats?.totalEntriesToday ?? 0}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <UserCheckIcon className="size-4 text-muted-foreground" />
@@ -91,7 +92,7 @@ export default function AdminDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>EODs Submitted Today</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? '—' : stats?.eodSubmissionsToday ?? 0}
+                {loading ? <Skeleton className="h-8 w-16" /> : stats?.eodSubmissionsToday ?? 0}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ClipboardXIcon className="size-4 text-muted-foreground" />
@@ -99,7 +100,7 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
               <div className="text-muted-foreground">
-                {loading ? '' : `${stats?.missingEodsToday ?? 0} missing`}
+                {loading ? <Skeleton className="h-4 w-20" /> : `${stats?.missingEodsToday ?? 0} missing`}
               </div>
             </CardFooter>
           </Card>
@@ -112,7 +113,7 @@ export default function AdminDashboardPage() {
                   !loading && (stats?.missingEodsToday ?? 0) > 0 ? 'text-destructive' : ''
                 }`}
               >
-                {loading ? '—' : stats?.missingEodsToday ?? 0}
+                {loading ? <Skeleton className="h-8 w-16" /> : stats?.missingEodsToday ?? 0}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <AlertTriangleIcon className="size-4 text-muted-foreground" />
@@ -143,8 +144,14 @@ export default function AdminDashboardPage() {
         {/* Per-VA breakdown */}
         {!loading && breakdown.length > 0 && (
           <div className="px-4 lg:px-6">
-            <h2 className="mb-3 text-sm font-medium text-foreground">VA Activity Today</h2>
-            <DataTable columns={breakdownColumns} data={breakdown} />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-medium">VA Activity Today</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DataTable columns={breakdownColumns} data={breakdown} />
+              </CardContent>
+            </Card>
           </div>
         )}
 

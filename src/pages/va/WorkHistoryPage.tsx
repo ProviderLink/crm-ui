@@ -94,7 +94,9 @@ export default function WorkHistoryPage() {
   }
 
   return (
-    <div>
+    <div className="@container/main flex flex-1 flex-col gap-2">
+      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+        <div className="px-4 lg:px-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Work History</h1>
@@ -140,6 +142,8 @@ export default function WorkHistoryPage() {
       </div>
 
       <DataTable columns={columns} data={filtered} isLoading={isLoading} />
+        </div>
+      </div>
     </div>
   )
 }

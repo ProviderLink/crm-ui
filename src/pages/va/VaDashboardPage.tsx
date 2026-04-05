@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ClipboardCheckIcon, ClockIcon, PlusIcon, TrophyIcon, ZapIcon } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { getEodSubmissions } from '@/services/eod-submissions.service'
 import { getScorecards } from '@/services/scorecards.service'
 import { getWorkEntries } from '@/services/work-entries.service'
@@ -70,7 +70,7 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Entries Today</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? '—' : todayEntries.length}
+                {loading ? <Skeleton className="h-8 w-16" /> : todayEntries.length}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ClockIcon className="size-4 text-muted-foreground" />
@@ -85,15 +85,10 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>EOD Status</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? '—' : eodSubmitted ? 'Submitted' : 'Pending'}
+                {loading ? <Skeleton className="h-8 w-28" /> : eodSubmitted ? 'Submitted' : 'Pending'}
               </CardTitle>
               <div className="absolute right-4 top-4">
-                <Badge
-                  variant="outline"
-                  className={`rounded-lg text-xs ${eodSubmitted ? 'border-green-500 text-green-600' : 'border-amber-400 text-amber-600'}`}
-                >
-                  {loading ? '·' : eodSubmitted ? '✓' : '!'}
-                </Badge>
+                <ClipboardCheckIcon className={`size-4 ${!loading && eodSubmitted ? 'text-green-500' : 'text-muted-foreground'}`} />
               </div>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
@@ -105,7 +100,7 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>This Week's Hours</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading || weekHours === null ? '—' : `${weekHours.toFixed(1)}h`}
+                {loading || weekHours === null ? <Skeleton className="h-8 w-20" /> : `${weekHours.toFixed(1)}h`}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ZapIcon className="size-4 text-muted-foreground" />
@@ -120,7 +115,7 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Productivity Score</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? '—' : latestScore !== null ? `${latestScore}` : 'N/A'}
+                {loading ? <Skeleton className="h-8 w-16" /> : latestScore !== null ? `${latestScore}` : 'N/A'}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <TrophyIcon className="size-4 text-muted-foreground" />
