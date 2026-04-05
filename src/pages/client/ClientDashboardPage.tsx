@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ActivityIcon, BriefcaseIcon, CalendarCheckIcon, ClockIcon } from 'lucide-react'
+import { ActivityIcon, BriefcaseIcon, CalendarCheckIcon, ClockIcon, UserIcon } from 'lucide-react'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getAllAssignments } from '@/services/assignments.service'
 import { getEodSubmissions } from '@/services/eod-submissions.service'
 import { getWorkEntries } from '@/services/work-entries.service'
+import type { IAssignment } from '@/types/assignment'
 
 function todayStr() {
   return new Date().toISOString().split('T')[0]
@@ -20,10 +22,17 @@ function weekStartStr() {
   return d.toISOString().split('T')[0]
 }
 
+const statusVariant: Record<IAssignment['status'], 'default' | 'secondary' | 'destructive'> = {
+  active:  'default',
+  paused:  'secondary',
+  ended:   'destructive',
+}
+
 export default function ClientDashboardPage() {
   const today = todayStr()
   const weekStart = weekStartStr()
 
+  const [assignments, setAssignments] = useState<IAssignment[]>([])
   const [activeAssignments, setActiveAssignments] = useState<number | null>(null)
   const [weekHours, setWeekHours] = useState<number | null>(null)
   const [lastEodDate, setLastEodDate] = useState<string | null>(null)
@@ -33,13 +42,14 @@ export default function ClientDashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [assignments, workWeek, workToday, eods] = await Promise.all([
+        const [assignmentList, workWeek, workToday, eods] = await Promise.all([
           getAllAssignments({ status: 'active' }),
           getWorkEntries({ dateFrom: weekStart, dateTo: today }),
           getWorkEntries({ dateFrom: today, dateTo: today }),
           getEodSubmissions(),
         ])
-        setActiveAssignments(assignments.length)
+        setAssignments(assignmentList)
+        setActiveAssignments(assignmentList.length)
         setWeekHours(workWeek.reduce((sum, e) => sum + e.time_spent, 0) / 60)
         setTodayCount(workToday.length)
         const sorted = [...eods].sort((a, b) => (b.date > a.date ? 1 : -1))
@@ -122,6 +132,61 @@ export default function ClientDashboardPage() {
             </CardFooter>
           </Card>
 
+        </div>
+
+        {/* Your VA Engagements */}
+        <div className="px-4 lg:px-6">
+          <h2 className="mb-3 text-base font-semibold">Your VA Engagements</h2>
+          {loading ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2].map((n) => (
+                <Card key={n}>
+                  <CardHeader className="pb-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="mt-1 h-3 w-20" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-3 w-28" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : assignments.length === 0 ? (
+            <Card>
+              <CardContent className="py-6 text-center text-sm text-muted-foreground">
+                No active VA engagements found.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {assignments.map((a) => (
+                <Card key={a.id} className="bg-gradient-to-t from-primary/5 to-card shadow-xs">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="size-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">
+                          {a.service_type ?? 'VA Engagement'}
+                        </CardTitle>
+                      </div>
+                      <Badge variant={statusVariant[a.status]} className="capitalize text-xs">
+                        {a.status}
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-xs">
+                      Started {a.start_date}
+                      {a.end_date ? ` · Ends ${a.end_date}` : ''}
+                    </CardDescription>
+                  </CardHeader>
+                  {a.notes && (
+                    <CardContent className="pt-0">
+                      <p className="text-xs text-muted-foreground line-clamp-2">{a.notes}</p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quick action */}

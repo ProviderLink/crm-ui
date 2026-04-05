@@ -19,6 +19,8 @@ const EodHistoryPage = lazy(() => import('@/pages/va/EodHistoryPage'))
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'))
 const AssignmentManagementPage = lazy(() => import('@/pages/admin/AssignmentManagementPage'))
 const AccountManagementPage = lazy(() => import('@/pages/admin/AccountManagementPage'))
+const SurveyRemindersPage = lazy(() => import('@/pages/admin/SurveyRemindersPage'))
+const ScorecardsPage = lazy(() => import('@/pages/admin/ScorecardsPage'))
 
 // Client portal
 const ClientDashboardPage = lazy(() => import('@/pages/client/ClientDashboardPage'))
@@ -77,6 +79,8 @@ const router = createBrowserRouter([
                   { path: 'dashboard',   element: <AdminDashboardPage /> },
                   { path: 'assignments', element: <AssignmentManagementPage /> },
                   { path: 'accounts',    element: <AccountManagementPage /> },
+                  { path: 'reminders',   element: <SurveyRemindersPage /> },
+                  { path: 'scorecards',  element: <ScorecardsPage /> },
                 ],
               },
             ],

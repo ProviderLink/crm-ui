@@ -1,15 +1,44 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangleIcon, ClipboardXIcon, UserCheckIcon, UsersIcon } from 'lucide-react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { AlertTriangleIcon, ClipboardXIcon, DownloadIcon, UserCheckIcon, UsersIcon } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import type { ColumnDef } from '@tanstack/react-table'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig,
+} from '@/components/ui/chart'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DataTable } from '@/components/shared/DataTable'
 import { getDashboardStats, type IDashboardStats } from '@/services/admin.service'
 import { getAtsVAs } from '@/services/ats.service'
+import { exportReport } from '@/services/reports.service'
 import { useAppSelector } from '@/hooks/store'
+
+// ─── Export form ─────────────────────────────────────────────────────────────
+
+const exportSchema = z.object({
+  type:     z.enum(['work_entries', 'eod']),
+  dateFrom: z.string().min(1, 'Required'),
+  dateTo:   z.string().min(1, 'Required'),
+  format:   z.enum(['csv', 'excel']),
+})
+type ExportFormData = z.infer<typeof exportSchema>
+
+// ─── Chart config ─────────────────────────────────────────────────────────────
+
+const activityChartConfig = {
+  count: { label: 'Entries', color: 'hsl(var(--primary))' },
+} satisfies ChartConfig
 
 type VABreakdownRow = { vaName: string; count: number }
 
@@ -25,6 +54,30 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<IDashboardStats | null>(null)
   const [breakdown, setBreakdown] = useState<VABreakdownRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ExportFormData>({
+    resolver: zodResolver(exportSchema),
+    defaultValues: { type: 'work_entries', format: 'csv', dateFrom: '', dateTo: '' },
+  })
+
+  async function onExport(values: ExportFormData) {
+    setExporting(true)
+    setExportError(null)
+    try {
+      await exportReport(values)
+    } catch {
+      setExportError('Export failed. Please try again.')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -141,19 +194,118 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        {/* Per-VA breakdown */}
+        {/* Per-VA breakdown — chart + table */}
         {!loading && breakdown.length > 0 && (
           <div className="px-4 lg:px-6">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base font-medium">VA Activity Today</CardTitle>
+                <CardDescription>Work entries logged per VA today</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <ChartContainer config={activityChartConfig} className="h-[200px] w-full">
+                  <BarChart data={breakdown} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="vaName"
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fontSize: 11 }}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fontSize: 11 }}
+                      width={28}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
                 <DataTable columns={breakdownColumns} data={breakdown} />
               </CardContent>
             </Card>
           </div>
         )}
+
+        {/* Export data */}
+        <div className="px-4 lg:px-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-medium">Export Data</CardTitle>
+              <CardDescription>Download work entries or EOD submissions as CSV or Excel.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit(onExport)} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {/* Report type */}
+                <div className="grid gap-1.5">
+                  <Label>Report Type</Label>
+                  <Controller
+                    name="type"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="work_entries">Work Entries</SelectItem>
+                          <SelectItem value="eod">EOD Submissions</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
+                </div>
+
+                {/* Date from */}
+                <div className="grid gap-1.5">
+                  <Label>From</Label>
+                  <Input type="date" {...register('dateFrom')} />
+                  {errors.dateFrom && <p className="text-xs text-destructive">{errors.dateFrom.message}</p>}
+                </div>
+
+                {/* Date to */}
+                <div className="grid gap-1.5">
+                  <Label>To</Label>
+                  <Input type="date" {...register('dateTo')} />
+                  {errors.dateTo && <p className="text-xs text-destructive">{errors.dateTo.message}</p>}
+                </div>
+
+                {/* Format */}
+                <div className="grid gap-1.5">
+                  <Label>Format</Label>
+                  <Controller
+                    name="format"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select format" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="csv">CSV</SelectItem>
+                          <SelectItem value="excel">Excel (.xlsx)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.format && <p className="text-xs text-destructive">{errors.format.message}</p>}
+                </div>
+
+                {/* Submit — spans full row */}
+                <div className="sm:col-span-2 lg:col-span-4 flex items-center gap-3">
+                  <Button type="submit" disabled={exporting}>
+                    <DownloadIcon className="size-4" />
+                    {exporting ? 'Downloading…' : 'Download Report'}
+                  </Button>
+                  {exportError && <p className="text-sm text-destructive">{exportError}</p>}
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
 
       </div>
     </div>

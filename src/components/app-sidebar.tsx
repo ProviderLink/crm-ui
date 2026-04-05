@@ -1,5 +1,7 @@
 import * as React from "react"
 import {
+  BarChart3Icon,
+  BellIcon,
   ClipboardListIcon,
   ClockIcon,
   CommandIcon,
@@ -61,6 +63,8 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       { title: "Dashboard",   url: "/admin/dashboard",    icon: LayoutDashboardIcon },
       { title: "Assignments", url: "/admin/assignments",  icon: LinkIcon },
       { title: "Accounts",    url: "/admin/accounts",     icon: UsersIcon },
+      { title: "Reminders",   url: "/admin/reminders",    icon: BellIcon },
+      { title: "Scorecards",  url: "/admin/scorecards",   icon: BarChart3Icon },
     ],
   },
   account_manager: {
@@ -68,6 +72,8 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       { title: "Dashboard",   url: "/admin/dashboard",    icon: LayoutDashboardIcon },
       { title: "Assignments", url: "/admin/assignments",  icon: LinkIcon },
       { title: "Accounts",    url: "/admin/accounts",     icon: UsersIcon },
+      { title: "Reminders",   url: "/admin/reminders",    icon: BellIcon },
+      { title: "Scorecards",  url: "/admin/scorecards",   icon: BarChart3Icon },
     ],
   },
   client: {
