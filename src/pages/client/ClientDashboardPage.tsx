@@ -42,18 +42,21 @@ export default function ClientDashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [assignmentList, workWeek, workToday, eods] = await Promise.all([
+        const [assignmentList, workAll, eods] = await Promise.all([
           getAllAssignments({ status: 'active' }),
-          getWorkEntries({ dateFrom: weekStart, dateTo: today }),
-          getWorkEntries({ dateFrom: today, dateTo: today }),
+          getWorkEntries(),
           getEodSubmissions(),
         ])
         setAssignments(assignmentList)
         setActiveAssignments(assignmentList.length)
-        setWeekHours(workWeek.reduce((sum, e) => sum + e.time_spent, 0) / 60)
-        setTodayCount(workToday.length)
+        const weekEntries = workAll.filter((e) => {
+          const d = e.entryDate?.slice(0, 10) ?? ''
+          return d >= weekStart && d <= today
+        })
+        setWeekHours(weekEntries.reduce((sum, e) => sum + e.timeSpent, 0) / 60)
+        setTodayCount(workAll.filter((e) => (e.entryDate?.slice(0, 10) ?? '') === today).length)
         const sorted = [...eods].sort((a, b) => (b.date > a.date ? 1 : -1))
-        setLastEodDate(sorted[0]?.date ?? null)
+        setLastEodDate(sorted[0]?.date?.slice(0, 10) ?? null)
       } catch {
         // Dashboard is informational — silently skip on error
       } finally {
@@ -166,7 +169,7 @@ export default function ClientDashboardPage() {
                       <div className="flex items-center gap-2">
                         <UserIcon className="size-4 text-muted-foreground" />
                         <CardTitle className="text-sm font-medium">
-                          {a.service_type ?? 'VA Engagement'}
+                          {a.serviceType ?? 'VA Engagement'}
                         </CardTitle>
                       </div>
                       <Badge variant={statusVariant[a.status]} className="capitalize text-xs">
@@ -174,8 +177,8 @@ export default function ClientDashboardPage() {
                       </Badge>
                     </div>
                     <CardDescription className="text-xs">
-                      Started {a.start_date}
-                      {a.end_date ? ` · Ends ${a.end_date}` : ''}
+                      Started {a.startDate?.slice(0, 10)}
+                      {a.endDate ? ` · Ends ${a.endDate?.slice(0, 10)}` : ''}
                     </CardDescription>
                   </CardHeader>
                   {a.notes && (

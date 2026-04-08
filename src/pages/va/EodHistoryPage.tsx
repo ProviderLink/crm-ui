@@ -10,27 +10,27 @@ const columns: ColumnDef<IEodSubmission>[] = [
   {
     accessorKey: 'date',
     header: 'Date',
-    cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()}</span>,
+    cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()?.slice(0, 10)}</span>,
   },
   {
-    accessorKey: 'shift_start',
+    accessorKey: 'shiftStart',
     header: 'Start',
     cell: ({ getValue }) => <span className="text-sm">{getValue<string>()}</span>,
   },
   {
-    accessorKey: 'shift_end',
+    accessorKey: 'shiftEnd',
     header: 'End',
     cell: ({ getValue }) => <span className="text-sm">{getValue<string>()}</span>,
   },
   {
-    accessorKey: 'hours_worked',
+    accessorKey: 'hoursWorked',
     header: 'Hours',
     cell: ({ getValue }) => (
       <span className="text-sm font-medium text-foreground">{getValue<number>()}h</span>
     ),
   },
   {
-    accessorKey: 'summary_of_work',
+    accessorKey: 'summaryOfWork',
     header: 'Summary',
     enableSorting: false,
     cell: ({ getValue }) => {
@@ -58,8 +58,9 @@ export default function EodHistoryPage() {
   useEffect(() => {
     setFiltered(
       eods.filter((e) => {
-        if (dateFrom && e.date < dateFrom) return false
-        if (dateTo && e.date > dateTo) return false
+        const d = e.date?.slice(0, 10) ?? ''
+        if (dateFrom && d < dateFrom) return false
+        if (dateTo && d > dateTo) return false
         return true
       }),
     )

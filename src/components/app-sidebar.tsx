@@ -5,18 +5,14 @@ import {
   ClipboardListIcon,
   ClockIcon,
   CommandIcon,
-  HelpCircleIcon,
   HistoryIcon,
   LayoutDashboardIcon,
   LinkIcon,
-  SearchIcon,
-  SettingsIcon,
   UsersIcon,
   type LucideIcon,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -84,12 +80,6 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
   },
 }
 
-const navSecondary = [
-  { title: "Settings", url: "#", icon: SettingsIcon },
-  { title: "Help",     url: "#", icon: HelpCircleIcon },
-  { title: "Search",   url: "#", icon: SearchIcon },
-]
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useAppSelector((s) => s.auth.user)
   const role: UserRole = user?.role ?? "va"
@@ -115,7 +105,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarContent>
         <NavMain items={config.navMain} quickAction={config.quickAction} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
 
       <SidebarFooter>

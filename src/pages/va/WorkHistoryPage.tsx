@@ -15,17 +15,17 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
 
 const columns: ColumnDef<IWorkEntry>[] = [
   {
-    accessorKey: 'entry_date',
+    accessorKey: 'entryDate',
     header: 'Date',
-    cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()}</span>,
+    cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()?.slice(0, 10)}</span>,
   },
   {
-    accessorKey: 'entry_time',
+    accessorKey: 'entryTime',
     header: 'Time',
     cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()}</span>,
   },
   {
-    accessorKey: 'task_category',
+    accessorKey: 'taskCategory',
     header: 'Category',
     cell: ({ getValue }) => (
       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
@@ -34,7 +34,7 @@ const columns: ColumnDef<IWorkEntry>[] = [
     ),
   },
   {
-    accessorKey: 'task_description',
+    accessorKey: 'taskDescription',
     header: 'Description',
     enableSorting: false,
     cell: ({ getValue }) => {
@@ -43,7 +43,7 @@ const columns: ColumnDef<IWorkEntry>[] = [
     },
   },
   {
-    accessorKey: 'time_spent',
+    accessorKey: 'timeSpent',
     header: 'Time Spent',
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">{formatMinutes(getValue<number>())}</span>
@@ -81,8 +81,9 @@ export default function WorkHistoryPage() {
   useEffect(() => {
     setFiltered(
       entries.filter((e) => {
-        if (dateFrom && e.entry_date < dateFrom) return false
-        if (dateTo && e.entry_date > dateTo) return false
+        const d = e.entryDate?.slice(0, 10) ?? ''
+        if (dateFrom && d < dateFrom) return false
+        if (dateTo && d > dateTo) return false
         return true
       }),
     )

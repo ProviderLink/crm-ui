@@ -13,7 +13,7 @@ import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const SURVEY_TYPE_LABELS: Record<ISurveyReminder['survey_type'], string> = {
+const SURVEY_TYPE_LABELS: Record<ISurveyReminder['surveyType'], string> = {
   '3_day':  '3-Day',
   '1_week': '1-Week',
   '30_day': '30-Day',
@@ -60,7 +60,7 @@ export default function SurveyRemindersPage() {
     try {
       const updated = await updateSurveyReminder(id, {
         status,
-        ...(status === 'completed' ? { completed_date: todayStr() } : {}),
+        ...(status === 'completed' ? { completedDate: todayStr() } : {}),
       })
       setReminders((prev) => prev.map((r) => (r.id === id ? updated : r)))
     } catch {
@@ -72,29 +72,29 @@ export default function SurveyRemindersPage() {
 
   const columns: ColumnDef<ISurveyReminder>[] = [
     {
-      accessorKey: 'survey_type',
+      accessorKey: 'surveyType',
       header: 'Survey',
       cell: ({ getValue }) => (
         <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
-          {SURVEY_TYPE_LABELS[getValue<ISurveyReminder['survey_type']>()]}
+          {SURVEY_TYPE_LABELS[getValue<ISurveyReminder['surveyType']>()]}
         </span>
       ),
     },
     {
-      accessorKey: 'related_type',
+      accessorKey: 'relatedType',
       header: 'For',
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground capitalize">
-          {row.original.related_type} · <span className="font-mono">{row.original.related_id.slice(-8)}</span>
+          {row.original.relatedType} · <span className="font-mono">{row.original.relatedId.slice(-8)}</span>
         </span>
       ),
       enableSorting: false,
     },
     {
-      accessorKey: 'due_date',
+      accessorKey: 'dueDate',
       header: 'Due Date',
       cell: ({ getValue }) => {
-        const v = getValue<string>()
+        const v = getValue<string>()?.slice(0, 10) ?? ''
         const overdue = v < todayStr()
         return (
           <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>

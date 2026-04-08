@@ -81,8 +81,8 @@ function WorkloadBadge({ level }: { level: string }) {
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-foreground">{label}</Label>
+    <div className="flex flex-col gap-2">
+      <Label className="text-sm font-medium leading-none text-foreground">{label}</Label>
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
@@ -127,17 +127,17 @@ function EditClientAccountForm({
 
   useEffect(() => {
     reset({
-      healthStatus:      account.health_status,
-      satisfactionScore: account.satisfaction_score?.toString() ?? '',
-      baaSigned:         account.baa_signed,
-      baaSignedDate:     account.baa_signed_date?.slice(0, 10) ?? '',
-      onboardingComplete: account.onboarding_complete,
-      sopReceived:       account.sop_received,
-      primaryContact:    account.primary_contact ?? '',
-      secondaryContact:  account.secondary_contact ?? '',
-      lastClientCheckin: account.last_client_checkin?.slice(0, 10) ?? '',
-      emrSystem:         account.emr_system ?? '',
-      openIssuesCount:   account.open_issues_count,
+      healthStatus:      account.healthStatus,
+      satisfactionScore: account.satisfactionScore?.toString() ?? '',
+      baaSigned:         account.baaSigned,
+      baaSignedDate:     account.baaSignedDate?.slice(0, 10) ?? '',
+      onboardingComplete: account.onboardingComplete,
+      sopReceived:       account.sopReceived,
+      primaryContact:    account.primaryContact ?? '',
+      secondaryContact:  account.secondaryContact ?? '',
+      lastClientCheckin: account.lastClientCheckin?.slice(0, 10) ?? '',
+      emrSystem:         account.emrSystem ?? '',
+      openIssuesCount:   account.openIssuesCount,
       notes:             account.notes ?? '',
     })
   }, [account, reset])
@@ -145,7 +145,7 @@ function EditClientAccountForm({
   async function onSubmit(data: ClientAccountFormData) {
     setServerError('')
     try {
-      await updateClientAccount(account.client_id, {
+      await updateClientAccount(account.clientId, {
         ...data,
         satisfactionScore: data.satisfactionScore ? parseInt(data.satisfactionScore, 10) : undefined,
       })
@@ -156,7 +156,7 @@ function EditClientAccountForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-7 pb-6">
       {serverError && (
         <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</p>
       )}
@@ -167,7 +167,7 @@ function EditClientAccountForm({
           name="healthStatus"
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -186,7 +186,7 @@ function EditClientAccountForm({
           name="satisfactionScore"
           render={({ field }) => (
             <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue placeholder="Select score" />
               </SelectTrigger>
               <SelectContent>
@@ -208,7 +208,7 @@ function EditClientAccountForm({
       />
 
       <Field label="BAA Signed Date" error={errors.baaSignedDate?.message}>
-        <Input type="date" {...register('baaSignedDate')} className="rounded-xl border-input" />
+        <Input type="date" {...register('baaSignedDate')} className="rounded-md border-input" />
       </Field>
 
       <Controller
@@ -228,27 +228,27 @@ function EditClientAccountForm({
       />
 
       <Field label="EMR System" error={errors.emrSystem?.message}>
-        <Input {...register('emrSystem')} placeholder="e.g. Epic, Athena" className="rounded-xl border-input" />
+        <Input {...register('emrSystem')} placeholder="e.g. Epic, Athena" className="rounded-md border-input" />
       </Field>
 
       <Field label="Primary Contact" error={errors.primaryContact?.message}>
-        <Input {...register('primaryContact')} placeholder="Name or email" className="rounded-xl border-input" />
+        <Input {...register('primaryContact')} placeholder="Name or email" className="rounded-md border-input" />
       </Field>
 
       <Field label="Secondary Contact" error={errors.secondaryContact?.message}>
-        <Input {...register('secondaryContact')} placeholder="Name or email" className="rounded-xl border-input" />
+        <Input {...register('secondaryContact')} placeholder="Name or email" className="rounded-md border-input" />
       </Field>
 
       <Field label="Last Client Check-in" error={errors.lastClientCheckin?.message}>
-        <Input type="date" {...register('lastClientCheckin')} className="rounded-xl border-input" />
+        <Input type="date" {...register('lastClientCheckin')} className="rounded-md border-input" />
       </Field>
 
       <Field label="Open Issues Count" error={errors.openIssuesCount?.message}>
-        <Input type="number" min="0" {...register('openIssuesCount')} className="rounded-xl border-input" />
+        <Input type="number" min="0" {...register('openIssuesCount')} className="rounded-md border-input" />
       </Field>
 
       <Field label="Notes" error={errors.notes?.message}>
-        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-xl border-input" />
+        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-md border-input" />
       </Field>
 
       <Button type="submit" disabled={isSubmitting} className="mt-2">
@@ -275,11 +275,11 @@ function EditVaProfileForm({
 
   useEffect(() => {
     reset({
-      workloadLevel:      profile.workload_level,
-      satisfactionScore:  profile.satisfaction_score?.toString() ?? '',
-      burnoutRiskFlag:    profile.burnout_risk_flag,
-      replacementRiskFlag: profile.replacement_risk_flag,
-      lastVaCheckin:      profile.last_va_checkin?.slice(0, 10) ?? '',
+      workloadLevel:      profile.workloadLevel,
+      satisfactionScore:  profile.satisfactionScore?.toString() ?? '',
+      burnoutRiskFlag:    profile.burnoutRiskFlag,
+      replacementRiskFlag: profile.replacementRiskFlag,
+      lastVaCheckin:      profile.lastVaCheckin?.slice(0, 10) ?? '',
       notes:              profile.notes ?? '',
     })
   }, [profile, reset])
@@ -287,7 +287,7 @@ function EditVaProfileForm({
   async function onSubmit(data: VaProfileFormData) {
     setServerError('')
     try {
-      await updateVaProfile(profile.va_id, {
+      await updateVaProfile(profile.vaId, {
         ...data,
         satisfactionScore: data.satisfactionScore ? parseInt(data.satisfactionScore, 10) : undefined,
       })
@@ -298,7 +298,7 @@ function EditVaProfileForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-7 pb-6">
       {serverError && (
         <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</p>
       )}
@@ -309,7 +309,7 @@ function EditVaProfileForm({
           name="workloadLevel"
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -329,7 +329,7 @@ function EditVaProfileForm({
           name="satisfactionScore"
           render={({ field }) => (
             <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue placeholder="Select score" />
               </SelectTrigger>
               <SelectContent>
@@ -359,11 +359,11 @@ function EditVaProfileForm({
       />
 
       <Field label="Last VA Check-in" error={errors.lastVaCheckin?.message}>
-        <Input type="date" {...register('lastVaCheckin')} className="rounded-xl border-input" />
+        <Input type="date" {...register('lastVaCheckin')} className="rounded-md border-input" />
       </Field>
 
       <Field label="Notes" error={errors.notes?.message}>
-        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-xl border-input" />
+        <Textarea {...register('notes')} placeholder="Internal notes…" className="rounded-md border-input" />
       </Field>
 
       <Button type="submit" disabled={isSubmitting} className="mt-2">
@@ -422,33 +422,33 @@ export default function AccountManagementPage() {
   // ── Client Accounts columns ──────────────────────────────────────────────
   const accountColumns: ColumnDef<IClientAccount>[] = [
     {
-      accessorKey: 'client_id',
+      accessorKey: 'clientId',
       header: 'Company',
       cell: ({ getValue }) => clientMap[getValue<string>()] ?? getValue<string>(),
     },
     {
-      accessorKey: 'health_status',
+      accessorKey: 'healthStatus',
       header: 'Health',
       cell: ({ getValue }) => <HealthBadge status={getValue<string>()} />,
     },
     {
-      accessorKey: 'baa_signed',
+      accessorKey: 'baaSigned',
       header: 'BAA',
       cell: ({ getValue }) => getValue<boolean>() ? '✓' : '—',
       enableSorting: false,
     },
     {
-      accessorKey: 'onboarding_complete',
+      accessorKey: 'onboardingComplete',
       header: 'Onboarding',
       cell: ({ getValue }) => getValue<boolean>() ? '✓' : '—',
       enableSorting: false,
     },
     {
-      accessorKey: 'open_issues_count',
+      accessorKey: 'openIssuesCount',
       header: 'Open Issues',
     },
     {
-      accessorKey: 'last_client_checkin',
+      accessorKey: 'lastClientCheckin',
       header: 'Last Check-in',
       cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
     },
@@ -471,34 +471,34 @@ export default function AccountManagementPage() {
   // ── VA Profile columns ───────────────────────────────────────────────────
   const profileColumns: ColumnDef<IVaProfile>[] = [
     {
-      accessorKey: 'va_id',
+      accessorKey: 'vaId',
       header: 'VA',
       cell: ({ getValue }) => vaMap[getValue<string>()] ?? getValue<string>(),
     },
     {
-      accessorKey: 'workload_level',
+      accessorKey: 'workloadLevel',
       header: 'Workload',
       cell: ({ getValue }) => <WorkloadBadge level={getValue<string>()} />,
     },
     {
-      accessorKey: 'satisfaction_score',
+      accessorKey: 'satisfactionScore',
       header: 'Satisfaction',
       cell: ({ getValue }) => getValue<number | undefined>() ?? '—',
     },
     {
-      accessorKey: 'burnout_risk_flag',
+      accessorKey: 'burnoutRiskFlag',
       header: 'Burnout Risk',
       cell: ({ getValue }) => getValue<boolean>() ? '🔴' : '—',
       enableSorting: false,
     },
     {
-      accessorKey: 'replacement_risk_flag',
+      accessorKey: 'replacementRiskFlag',
       header: 'Replacement Risk',
       cell: ({ getValue }) => getValue<boolean>() ? '🔴' : '—',
       enableSorting: false,
     },
     {
-      accessorKey: 'last_va_checkin',
+      accessorKey: 'lastVaCheckin',
       header: 'Last Check-in',
       cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
     },
@@ -552,7 +552,7 @@ export default function AccountManagementPage() {
           <SheetHeader>
             <SheetTitle>Edit Client Account</SheetTitle>
             <SheetDescription>
-              {editAccount ? clientMap[editAccount.client_id] ?? editAccount.client_id : ''}
+              {editAccount ? clientMap[editAccount.clientId] ?? editAccount.clientId : ''}
             </SheetDescription>
           </SheetHeader>
           {editAccount && (
@@ -573,7 +573,7 @@ export default function AccountManagementPage() {
           <SheetHeader>
             <SheetTitle>Edit VA Profile</SheetTitle>
             <SheetDescription>
-              {editProfile ? vaMap[editProfile.va_id] ?? editProfile.va_id : ''}
+              {editProfile ? vaMap[editProfile.vaId] ?? editProfile.vaId : ''}
             </SheetDescription>
           </SheetHeader>
           {editProfile && (

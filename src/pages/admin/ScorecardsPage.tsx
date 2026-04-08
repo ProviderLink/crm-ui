@@ -61,7 +61,7 @@ export default function ScorecardsPage() {
 
   const columns: ColumnDef<IScorecard>[] = [
     {
-      accessorKey: 'va_id',
+      accessorKey: 'vaId',
       header: 'VA',
       cell: ({ getValue }) => (
         <span className="text-sm font-medium">
@@ -70,37 +70,37 @@ export default function ScorecardsPage() {
       ),
     },
     {
-      accessorKey: 'week_start',
+      accessorKey: 'weekStart',
       header: 'Week',
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground">
-          {row.original.week_start} – {row.original.week_end}
+          {row.original.weekStart?.slice(0, 10)} – {row.original.weekEnd?.slice(0, 10)}
         </span>
       ),
     },
     {
-      accessorKey: 'total_hours',
+      accessorKey: 'totalHours',
       header: 'Hours',
       cell: ({ getValue }) => (
         <span className="text-sm tabular-nums">{getValue<number>().toFixed(1)}h</span>
       ),
     },
     {
-      accessorKey: 'total_tasks_completed',
+      accessorKey: 'totalTasksCompleted',
       header: 'Tasks',
       cell: ({ getValue }) => (
         <span className="text-sm tabular-nums">{getValue<number>()}</span>
       ),
     },
     {
-      accessorKey: 'eod_compliance_rate',
+      accessorKey: 'eodComplianceRate',
       header: 'EOD Rate',
       cell: ({ getValue }) => (
-        <span className="text-sm tabular-nums">{pct(getValue<number>())}</span>
+        <span className="text-sm tabular-nums">{getValue<number>().toFixed(0)}%</span>
       ),
     },
     {
-      accessorKey: 'productivity_score',
+      accessorKey: 'productivityScore',
       header: 'Score',
       cell: ({ getValue }) => {
         const s = getValue<number>()

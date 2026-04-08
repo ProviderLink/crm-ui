@@ -16,14 +16,14 @@ import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry'
 import { todayString, nowTimeString } from '@/lib/time'
 
 const schema = z.object({
-  assignment_id:    z.string().min(1, 'Assignment is required'),
-  entry_date:       z.string().min(1, 'Date is required'),
-  entry_time:       z.string().min(1, 'Time is required'),
-  task_category:    z.enum(['Administrative', 'Clinical Coordination', 'Data Entry', 'Communication', 'Research', 'Scheduling', 'Other']),
-  task_description: z.string().min(1, 'Description is required'),
-  time_spent:       z.coerce.number().int().min(1, 'Enter at least 1 minute'),
-  status:           z.enum(['completed', 'in_progress', 'pending']),
-  notes:            z.string().optional(),
+  assignmentId:    z.string().min(1, 'Assignment is required'),
+  entryDate:       z.string().min(1, 'Date is required'),
+  entryTime:       z.string().min(1, 'Time is required'),
+  taskCategory:    z.enum(['Administrative', 'Clinical Coordination', 'Data Entry', 'Communication', 'Research', 'Scheduling', 'Other']),
+  taskDescription: z.string().min(1, 'Description is required'),
+  timeSpent:       z.coerce.number().int().min(1, 'Enter at least 1 minute'),
+  status:          z.enum(['completed', 'in_progress', 'pending']),
+  notes:           z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -38,16 +38,16 @@ export default function AddWorkEntryPage() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      entry_date: todayString(),
-      entry_time: nowTimeString(),
-      status:     'completed',
+      entryDate: todayString(),
+      entryTime: nowTimeString(),
+      status:    'completed',
     },
   })
 
   // Auto-select when only one assignment
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
-      setValue('assignment_id', assignments[0].id)
+      setValue('assignmentId', assignments[0].id)
     }
   }, [assignments, setValue])
 
@@ -92,10 +92,10 @@ export default function AddWorkEntryPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
 
           {/* Assignment */}
-          <Field label="Assignment" error={errors.assignment_id?.message}>
+          <Field label="Assignment" error={errors.assignmentId?.message}>
             <Controller
               control={control}
-              name="assignment_id"
+              name="assignmentId"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange} disabled={assignments.length === 1}>
                   <SelectTrigger className="rounded-xl border-input">
@@ -104,7 +104,7 @@ export default function AddWorkEntryPage() {
                   <SelectContent>
                     {assignments.map((a) => (
                       <SelectItem key={a.id} value={a.id}>
-                        {a.service_type ?? a.id}
+                        {a.serviceType ?? a.id}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -115,19 +115,19 @@ export default function AddWorkEntryPage() {
 
           {/* Date + Time */}
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Date" error={errors.entry_date?.message}>
-              <Input type="date" className="rounded-xl border-input" {...register('entry_date')} />
+            <Field label="Date" error={errors.entryDate?.message}>
+              <Input type="date" className="rounded-xl border-input" {...register('entryDate')} />
             </Field>
-            <Field label="Time" error={errors.entry_time?.message}>
-              <Input type="time" className="rounded-xl border-input" {...register('entry_time')} />
+            <Field label="Time" error={errors.entryTime?.message}>
+              <Input type="time" className="rounded-xl border-input" {...register('entryTime')} />
             </Field>
           </div>
 
           {/* Category */}
-          <Field label="Category" error={errors.task_category?.message}>
+          <Field label="Category" error={errors.taskCategory?.message}>
             <Controller
               control={control}
-              name="task_category"
+              name="taskCategory"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger className="rounded-xl border-input">
@@ -144,24 +144,24 @@ export default function AddWorkEntryPage() {
           </Field>
 
           {/* Description */}
-          <Field label="Task Description" error={errors.task_description?.message}>
+          <Field label="Task Description" error={errors.taskDescription?.message}>
             <Textarea
               placeholder="What did you work on?"
               className="rounded-xl border-input resize-none"
               rows={3}
-              {...register('task_description')}
+              {...register('taskDescription')}
             />
           </Field>
 
           {/* Time spent + Status */}
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Time Spent (minutes)" error={errors.time_spent?.message}>
+            <Field label="Time Spent (minutes)" error={errors.timeSpent?.message}>
               <Input
                 type="number"
                 min={1}
                 placeholder="e.g. 60"
                 className="rounded-xl border-input"
-                {...register('time_spent')}
+                {...register('timeSpent')}
               />
             </Field>
             <Field label="Status" error={errors.status?.message}>

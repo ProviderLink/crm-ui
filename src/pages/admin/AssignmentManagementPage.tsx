@@ -55,22 +55,22 @@ function buildColumns(
 ): ColumnDef<IAssignment>[] {
   return [
     {
-      accessorKey: 'client_id',
+      accessorKey: 'clientId',
       header: 'Client',
       cell: ({ getValue }) => clientMap[getValue<string>()] ?? getValue<string>(),
     },
     {
-      accessorKey: 'va_id',
+      accessorKey: 'vaId',
       header: 'VA',
       cell: ({ getValue }) => vaMap[getValue<string>()] ?? getValue<string>(),
     },
     {
-      accessorKey: 'account_manager_id',
+      accessorKey: 'accountManagerId',
       header: 'Account Manager',
       cell: ({ getValue }) => amMap[getValue<string>() ?? ''] ?? '—',
     },
     {
-      accessorKey: 'start_date',
+      accessorKey: 'startDate',
       header: 'Start Date',
       cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
     },
@@ -91,7 +91,7 @@ function buildColumns(
       },
     },
     {
-      accessorKey: 'service_type',
+      accessorKey: 'serviceType',
       header: 'Service Type',
       cell: ({ getValue }) => getValue<string>() ?? '—',
     },
@@ -127,8 +127,8 @@ function buildColumns(
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-foreground">{label}</Label>
+    <div className="flex flex-col gap-2">
+      <Label className="text-sm font-medium leading-none text-foreground">{label}</Label>
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
@@ -166,7 +166,7 @@ function CreateAssignmentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-7 pb-6">
       {serverError && (
         <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</p>
       )}
@@ -177,7 +177,7 @@ function CreateAssignmentForm({
           name="clientId"
           render={({ field }) => (
             <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue placeholder="Select client" />
               </SelectTrigger>
               <SelectContent>
@@ -196,7 +196,7 @@ function CreateAssignmentForm({
           name="vaId"
           render={({ field }) => (
             <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue placeholder="Select VA" />
               </SelectTrigger>
               <SelectContent>
@@ -215,7 +215,7 @@ function CreateAssignmentForm({
           name="accountManagerId"
           render={({ field }) => (
             <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue placeholder="Select account manager" />
               </SelectTrigger>
               <SelectContent>
@@ -232,16 +232,16 @@ function CreateAssignmentForm({
         <Input
           {...register('serviceType')}
           placeholder="e.g. Medical VA, Admin Support"
-          className="rounded-xl border-input"
+          className="rounded-md border-input"
         />
       </Field>
 
       <Field label="Start Date" error={errors.startDate?.message}>
-        <Input type="date" {...register('startDate')} className="rounded-xl border-input" />
+        <Input type="date" {...register('startDate')} className="rounded-md border-input" />
       </Field>
 
       <Field label="End Date (optional)" error={errors.endDate?.message}>
-        <Input type="date" {...register('endDate')} className="rounded-xl border-input" />
+        <Input type="date" {...register('endDate')} className="rounded-md border-input" />
       </Field>
 
       <Field label="Status" error={errors.status?.message}>
@@ -250,7 +250,7 @@ function CreateAssignmentForm({
           name="status"
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -264,7 +264,7 @@ function CreateAssignmentForm({
       </Field>
 
       <Field label="Notes (optional)" error={errors.notes?.message}>
-        <Textarea {...register('notes')} placeholder="Any additional notes…" className="rounded-xl border-input" />
+        <Textarea {...register('notes')} placeholder="Any additional notes…" className="rounded-md border-input" />
       </Field>
 
       <Button type="submit" disabled={isSubmitting} className="mt-2">
@@ -292,10 +292,10 @@ function EditAssignmentForm({
 
   useEffect(() => {
     reset({
-      accountManagerId: assignment.account_manager_id ?? '',
+      accountManagerId: assignment.accountManagerId ?? '',
       status:           assignment.status,
-      serviceType:      assignment.service_type ?? '',
-      endDate:          assignment.end_date ?? '',
+      serviceType:      assignment.serviceType ?? '',
+      endDate:          assignment.endDate ?? '',
       notes:            assignment.notes ?? '',
     })
   }, [assignment, reset])
@@ -311,7 +311,7 @@ function EditAssignmentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-7 pb-6">
       {serverError && (
         <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{serverError}</p>
       )}
@@ -322,7 +322,7 @@ function EditAssignmentForm({
           name="accountManagerId"
           render={({ field }) => (
             <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue placeholder="Select account manager" />
               </SelectTrigger>
               <SelectContent>
@@ -341,7 +341,7 @@ function EditAssignmentForm({
           name="status"
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
+              <SelectTrigger className="rounded-md border-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -358,16 +358,16 @@ function EditAssignmentForm({
         <Input
           {...register('serviceType')}
           placeholder="e.g. Medical VA, Admin Support"
-          className="rounded-xl border-input"
+          className="rounded-md border-input"
         />
       </Field>
 
       <Field label="End Date (optional)" error={errors.endDate?.message}>
-        <Input type="date" {...register('endDate')} className="rounded-xl border-input" />
+        <Input type="date" {...register('endDate')} className="rounded-md border-input" />
       </Field>
 
       <Field label="Notes (optional)" error={errors.notes?.message}>
-        <Textarea {...register('notes')} placeholder="Any additional notes…" className="rounded-xl border-input" />
+        <Textarea {...register('notes')} placeholder="Any additional notes…" className="rounded-md border-input" />
       </Field>
 
       <Button type="submit" disabled={isSubmitting} className="mt-2">

@@ -17,14 +17,14 @@ import { todayString, calcHours } from '@/lib/time'
 import { CheckCircle2 } from 'lucide-react'
 
 const schema = z.object({
-  assignment_id:    z.string().min(1, 'Assignment is required'),
-  date:             z.string().min(1, 'Date is required'),
-  shift_start:      z.string().min(1, 'Shift start is required'),
-  shift_end:        z.string().min(1, 'Shift end is required'),
-  summary_of_work:  z.string().min(10, 'Please provide a summary (min 10 characters)'),
-  pending_tasks:    z.string().min(1, 'List pending tasks or write "None"'),
-  blockers:         z.string().min(1, 'Describe blockers or write "None"'),
-  notes:            z.string().optional(),
+  assignmentId:   z.string().min(1, 'Assignment is required'),
+  date:           z.string().min(1, 'Date is required'),
+  shiftStart:     z.string().min(1, 'Shift start is required'),
+  shiftEnd:       z.string().min(1, 'Shift end is required'),
+  summaryOfWork:  z.string().min(10, 'Please provide a summary (min 10 characters)'),
+  pendingTasks:   z.string().min(1, 'List pending tasks or write "None"'),
+  blockers:       z.string().min(1, 'Describe blockers or write "None"'),
+  notes:          z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -43,11 +43,11 @@ export default function EodSubmitPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { date: today, shift_start: '09:00', shift_end: '17:00' },
+    defaultValues: { date: today, shiftStart: '09:00', shiftEnd: '17:00' },
   })
 
-  const shiftStart = watch('shift_start') ?? ''
-  const shiftEnd   = watch('shift_end') ?? ''
+  const shiftStart = watch('shiftStart') ?? ''
+  const shiftEnd   = watch('shiftEnd') ?? ''
   const hoursWorked = calcHours(shiftStart, shiftEnd)
 
   // Check if EOD already submitted today + auto-select assignment
@@ -60,14 +60,14 @@ export default function EodSubmitPage() {
 
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
-      setValue('assignment_id', assignments[0].id)
+      setValue('assignmentId', assignments[0].id)
     }
   }, [assignments, setValue])
 
   async function onSubmit(data: FormData) {
     setError(null)
     try {
-      await createEodSubmission({ ...data, hours_worked: hoursWorked })
+      await createEodSubmission({ ...data, hoursWorked })
       navigate('/va/eod/history')
     } catch {
       setError('Failed to submit EOD. Please try again.')
@@ -135,10 +135,10 @@ export default function EodSubmitPage() {
           )}
 
           {/* Assignment */}
-          <Field label="Assignment" error={errors.assignment_id?.message}>
+          <Field label="Assignment" error={errors.assignmentId?.message}>
             <Controller
               control={control}
-              name="assignment_id"
+              name="assignmentId"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange} disabled={assignments.length === 1}>
                   <SelectTrigger className="rounded-xl border-input">
@@ -147,7 +147,7 @@ export default function EodSubmitPage() {
                   <SelectContent>
                     {assignments.map((a) => (
                       <SelectItem key={a.id} value={a.id}>
-                        {a.service_type ?? a.id}
+                        {a.serviceType ?? a.id}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -163,11 +163,11 @@ export default function EodSubmitPage() {
 
           {/* Shift times + hours */}
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Shift Start" error={errors.shift_start?.message}>
-              <Input type="time" className="rounded-xl border-input" {...register('shift_start')} />
+            <Field label="Shift Start" error={errors.shiftStart?.message}>
+              <Input type="time" className="rounded-xl border-input" {...register('shiftStart')} />
             </Field>
-            <Field label="Shift End" error={errors.shift_end?.message}>
-              <Input type="time" className="rounded-xl border-input" {...register('shift_end')} />
+            <Field label="Shift End" error={errors.shiftEnd?.message}>
+              <Input type="time" className="rounded-xl border-input" {...register('shiftEnd')} />
             </Field>
             <div className="space-y-1.5">
               <Label className="text-sm font-medium text-foreground">Hours Worked</Label>
@@ -178,22 +178,22 @@ export default function EodSubmitPage() {
           </div>
 
           {/* Summary */}
-          <Field label="Summary of Work" error={errors.summary_of_work?.message}>
+          <Field label="Summary of Work" error={errors.summaryOfWork?.message}>
             <Textarea
               placeholder="What did you accomplish today?"
               className="rounded-xl border-input resize-none"
               rows={4}
-              {...register('summary_of_work')}
+              {...register('summaryOfWork')}
             />
           </Field>
 
           {/* Pending tasks */}
-          <Field label="Pending Tasks" error={errors.pending_tasks?.message}>
+          <Field label="Pending Tasks" error={errors.pendingTasks?.message}>
             <Textarea
               placeholder="List pending tasks or write 'None'"
               className="rounded-xl border-input resize-none"
               rows={3}
-              {...register('pending_tasks')}
+              {...register('pendingTasks')}
             />
           </Field>
 
