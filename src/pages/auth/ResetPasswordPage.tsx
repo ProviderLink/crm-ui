@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { forgotPassword, resetPassword } from '@/services/auth.service'
+import aristaLogo from '@/assets/arista_crm.png'
 
 // ─── Schemas ────────────────────────────────────────────────
 
@@ -189,10 +190,9 @@ function AuthShell({
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <span className="text-xl font-semibold text-foreground tracking-tight">
-            Arista CRM
-          </span>
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <img src={aristaLogo} alt="" className="h-6 w-6 object-contain" />
+          <span className="text-xl font-semibold text-foreground tracking-tight">Arista CRM</span>
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
           <h1 className="text-2xl font-semibold text-foreground mb-1">{title}</h1>

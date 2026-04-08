@@ -11,6 +11,7 @@ import { setAuth } from '@/store/slices/authSlice'
 import { login } from '@/services/auth.service'
 import type { UserRole } from '@/types/auth'
 import { DevQuickLogin } from '@/components/dev/DevQuickLogin'
+import aristaLogo from '@/assets/arista_crm.png'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -53,10 +54,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
 
         {/* Wordmark */}
-        <div className="text-center mb-8">
-          <span className="text-xl font-semibold text-foreground tracking-tight">
-            Arista CRM
-          </span>
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <img src={aristaLogo} alt="" className="h-6 w-6 object-contain" />
+          <span className="text-xl font-semibold text-foreground tracking-tight">Arista CRM</span>
         </div>
 
         {/* Card */}

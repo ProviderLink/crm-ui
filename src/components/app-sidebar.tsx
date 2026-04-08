@@ -4,13 +4,13 @@ import {
   BellIcon,
   ClipboardListIcon,
   ClockIcon,
-  CommandIcon,
   HistoryIcon,
   LayoutDashboardIcon,
   LinkIcon,
   UsersIcon,
   type LucideIcon,
 } from "lucide-react"
+import aristaLogo from "@/assets/arista_crm.png"
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
@@ -95,7 +95,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <CommandIcon className="!size-5" />
+                <img src={aristaLogo} alt="Arista CRM" className="!size-5 object-contain" />
                 <span className="text-base font-semibold">Arista CRM</span>
               </a>
             </SidebarMenuButton>
