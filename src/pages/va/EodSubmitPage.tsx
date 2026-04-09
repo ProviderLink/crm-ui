@@ -1,37 +1,37 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { useMyAssignments } from '@/hooks/useMyAssignments'
+import { calcHours, todayString } from '@/lib/time'
 import {
-  getEodSubmissions,
   createEodSubmission,
+  getEodSubmissions,
 } from '@/services/eod-submissions.service'
-import { todayString, calcHours } from '@/lib/time'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2 } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { useEffect, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
+import { z } from 'zod'
 
 const schema = z.object({
-  assignment_id: z.string().min(1, 'Assignment is required'),
+  assignmentId: z.string().min(1, 'Assignment is required'),
   date: z.string().min(1, 'Date is required'),
-  shift_start: z.string().min(1, 'Shift start is required'),
-  shift_end: z.string().min(1, 'Shift end is required'),
-  summary_of_work: z
+  shiftStart: z.string().min(1, 'Shift start is required'),
+  shiftEnd: z.string().min(1, 'Shift end is required'),
+  summaryOfWork: z
     .string()
     .min(10, 'Please provide a summary (min 10 characters)'),
-  pending_tasks: z.string().min(1, 'List pending tasks or write "None"'),
+  pendingTasks: z.string().min(1, 'List pending tasks or write "None"'),
   blockers: z.string().min(1, 'Describe blockers or write "None"'),
   notes: z.string().optional(),
 })
@@ -56,31 +56,33 @@ export default function EodSubmitPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { date: today, shift_start: '09:00', shift_end: '17:00' },
+    defaultValues: { date: today, shiftStart: '09:00', shiftEnd: '17:00' },
   })
 
-  const shiftStart = watch('shift_start') ?? ''
-  const shiftEnd = watch('shift_end') ?? ''
+  const shiftStart = watch('shiftStart') ?? ''
+  const shiftEnd = watch('shiftEnd') ?? ''
   const hoursWorked = calcHours(shiftStart, shiftEnd)
 
   // Check if EOD already submitted today + auto-select assignment
   useEffect(() => {
-    getEodSubmissions({ dateFrom: today, dateTo: today })
-      .then(eods => setAlreadySubmitted(eods.length > 0))
+    getEodSubmissions()
+      .then(eods =>
+        setAlreadySubmitted(eods.some(e => e.date.slice(0, 10) === today))
+      )
       .catch(() => {})
       .finally(() => setCheckingEod(false))
   }, [today])
 
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
-      setValue('assignment_id', assignments[0].id)
+      setValue('assignmentId', assignments[0].id)
     }
   }, [assignments, setValue])
 
   async function onSubmit(data: FormData) {
     setError(null)
     try {
-      await createEodSubmission({ ...data, hours_worked: hoursWorked })
+      await createEodSubmission({ ...data, hoursWorked: hoursWorked })
       navigate('/va/eod/history')
     } catch {
       setError('Failed to submit EOD. Please try again.')
@@ -157,10 +159,10 @@ export default function EodSubmitPage() {
                 )}
 
                 {/* Assignment */}
-                <Field label="Assignment" error={errors.assignment_id?.message}>
+                <Field label="Assignment" error={errors.assignmentId?.message}>
                   <Controller
                     control={control}
-                    name="assignment_id"
+                    name="assignmentId"
                     render={({ field }) => (
                       <Select
                         value={field.value}
@@ -173,7 +175,7 @@ export default function EodSubmitPage() {
                         <SelectContent>
                           {assignments.map(a => (
                             <SelectItem key={a.id} value={a.id}>
-                              {a.service_type ?? a.id}
+                              {a.serviceType ?? a.id}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -193,21 +195,18 @@ export default function EodSubmitPage() {
 
                 {/* Shift times + hours */}
                 <div className="grid grid-cols-3 gap-4">
-                  <Field
-                    label="Shift Start"
-                    error={errors.shift_start?.message}
-                  >
+                  <Field label="Shift Start" error={errors.shiftStart?.message}>
                     <Input
                       type="time"
                       className="rounded-xl border-input"
-                      {...register('shift_start')}
+                      {...register('shiftStart')}
                     />
                   </Field>
-                  <Field label="Shift End" error={errors.shift_end?.message}>
+                  <Field label="Shift End" error={errors.shiftEnd?.message}>
                     <Input
                       type="time"
                       className="rounded-xl border-input"
-                      {...register('shift_end')}
+                      {...register('shiftEnd')}
                     />
                   </Field>
                   <div className="space-y-1.5">
@@ -223,26 +222,26 @@ export default function EodSubmitPage() {
                 {/* Summary */}
                 <Field
                   label="Summary of Work"
-                  error={errors.summary_of_work?.message}
+                  error={errors.summaryOfWork?.message}
                 >
                   <Textarea
                     placeholder="What did you accomplish today?"
                     className="rounded-xl border-input resize-none"
                     rows={4}
-                    {...register('summary_of_work')}
+                    {...register('summaryOfWork')}
                   />
                 </Field>
 
                 {/* Pending tasks */}
                 <Field
                   label="Pending Tasks"
-                  error={errors.pending_tasks?.message}
+                  error={errors.pendingTasks?.message}
                 >
                   <Textarea
                     placeholder="List pending tasks or write 'None'"
                     className="rounded-xl border-input resize-none"
                     rows={3}
-                    {...register('pending_tasks')}
+                    {...register('pendingTasks')}
                   />
                 </Field>
 

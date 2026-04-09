@@ -8,8 +8,11 @@ export async function getVaProfiles(): Promise<IVaProfile[]> {
 
 export async function updateVaProfile(
   id: string,
-  payload: UpdateVaProfilePayload,
+  payload: UpdateVaProfilePayload
 ): Promise<IVaProfile> {
-  const { data } = await api.patch<{ data: IVaProfile }>(`/va-profiles/${id}`, payload)
+  const { data } = await api.patch<{ data: IVaProfile }>(
+    `/va-profiles/${id}`,
+    payload
+  )
   return data.data
 }

@@ -1,5 +1,5 @@
+import type { AuthState, IUser } from '@/types/auth'
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { IUser, AuthState } from '@/types/auth'
 
 const storedToken = localStorage.getItem('accessToken')
 
@@ -15,7 +15,10 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     // Full login — sets user + token (called after successful /auth/login)
-    setAuth(state, action: PayloadAction<{ user: IUser; accessToken: string }>) {
+    setAuth(
+      state,
+      action: PayloadAction<{ user: IUser; accessToken: string }>
+    ) {
       state.user = action.payload.user
       state.accessToken = action.payload.accessToken
       state.isAuthenticated = true
@@ -47,5 +50,6 @@ const authSlice = createSlice({
   },
 })
 
-export const { setAuth, setUser, setAccessToken, setHydrated, clearAuth } = authSlice.actions
+export const { setAuth, setUser, setAccessToken, setHydrated, clearAuth } =
+  authSlice.actions
 export default authSlice.reducer

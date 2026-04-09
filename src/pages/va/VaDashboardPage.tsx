@@ -47,20 +47,21 @@ export default function VaDashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [workToday, workWeek, eods, scorecards] = await Promise.all([
-          getWorkEntries({ dateFrom: today, dateTo: today }),
-          getWorkEntries({ dateFrom: weekStart, dateTo: today }),
-          getEodSubmissions({ dateFrom: today, dateTo: today }),
+        const [workAll, eods, scorecards] = await Promise.all([
+          getWorkEntries(),
+          getEodSubmissions(),
           getScorecards(),
         ])
+        const workToday = workAll.filter(e => e.entryDate.slice(0, 10) === today)
+        const workWeek = workAll.filter(e => e.entryDate.slice(0, 10) >= weekStart)
         setTodayEntries(workToday)
-        setEodToday(eods[0] ?? null)
-        setWeekHours(workWeek.reduce((sum, e) => sum + e.time_spent, 0) / 60)
+        setEodToday(eods.find(e => e.date.slice(0, 10) === today) ?? null)
+        setWeekHours(workWeek.reduce((sum, e) => sum + e.timeSpent, 0) / 60)
         const sorted = [...scorecards].sort(
           (a, b) =>
-            new Date(b.week_start).getTime() - new Date(a.week_start).getTime()
+            new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
         )
-        setLatestScore(sorted[0]?.productivity_score ?? null)
+        setLatestScore(sorted[0]?.productivityScore ?? null)
       } catch {
         // dashboard is informational — silently skip on error
       } finally {

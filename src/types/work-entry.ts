@@ -19,24 +19,36 @@ export type WorkEntryStatus = (typeof WORK_ENTRY_STATUSES)[number]
 
 export interface IWorkEntry {
   id: string
-  assignment_id: string
-  entry_date: string // 'YYYY-MM-DD'
-  entry_time: string // 'HH:MM'
-  task_category: WorkEntryCategory
-  task_description: string
-  time_spent: number // minutes
+  assignmentId: string
+  vaId: string
+  clientId: string
+  entryDate: string // 'YYYY-MM-DD'
+  entryTime: string // 'HH:MM'
+  taskCategory: WorkEntryCategory
+  taskDescription: string
+  timeSpent: number // minutes
   status: WorkEntryStatus
   notes?: string
-  created_at: string
+  createdAt: string
 }
 
 export interface CreateWorkEntryPayload {
-  assignment_id: string
-  entry_date: string
-  entry_time: string
-  task_category: WorkEntryCategory
-  task_description: string
-  time_spent: number
+  assignmentId: string
+  entryDate: string
+  entryTime: string
+  taskCategory: WorkEntryCategory
+  taskDescription: string
+  timeSpent: number
   status: WorkEntryStatus
+  notes?: string
+}
+
+export interface UpdateWorkEntryPayload {
+  entryDate?: string
+  entryTime?: string
+  taskCategory?: WorkEntryCategory
+  taskDescription?: string
+  timeSpent?: number
+  status?: WorkEntryStatus
   notes?: string
 }

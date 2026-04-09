@@ -12,10 +12,10 @@ export interface ExportReportParams {
 
 export async function exportReport(params: ExportReportParams): Promise<void> {
   const query = new URLSearchParams({
-    type:     params.type,
+    type: params.type,
     dateFrom: params.dateFrom,
-    dateTo:   params.dateTo,
-    format:   params.format,
+    dateTo: params.dateTo,
+    format: params.format,
   })
 
   const response = await api.get(`/reports/export?${query.toString()}`, {

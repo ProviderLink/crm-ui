@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
+import { PlusCircleIcon, type LucideIcon } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
-import { PlusCircleIcon, type LucideIcon } from "lucide-react"
 
 import {
   SidebarGroup,
@@ -9,7 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar'
 
 type NavItem = {
   title: string
@@ -52,12 +52,16 @@ export function NavMain({
           </SidebarMenu>
         )}
         <SidebarMenu>
-          {items.map((item) => {
+          {items.map(item => {
             const isActive =
               pathname === item.url || pathname.startsWith(item.url + '/')
             return (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton tooltip={item.title} isActive={isActive} asChild>
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  isActive={isActive}
+                  asChild
+                >
                   <Link to={item.url}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>

@@ -11,6 +11,8 @@ export interface IDashboardStats {
 }
 
 export async function getDashboardStats(): Promise<IDashboardStats> {
-  const { data } = await api.get<{ data: IDashboardStats }>('/admin/dashboard-stats')
+  const { data } = await api.get<{ data: IDashboardStats }>(
+    '/admin/dashboard-stats'
+  )
   return data.data
 }

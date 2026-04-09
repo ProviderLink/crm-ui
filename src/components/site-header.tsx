@@ -3,7 +3,10 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 
 export function SiteHeader() {
   const dateStr = new Date().toLocaleDateString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
   })
 
   return (

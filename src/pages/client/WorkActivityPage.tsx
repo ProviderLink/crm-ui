@@ -31,16 +31,16 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
 
 const workColumns: ColumnDef<IWorkEntry>[] = [
   {
-    accessorKey: 'entry_date',
+    accessorKey: 'entryDate',
     header: 'Date',
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">
-        {getValue<string>()}
+        {getValue<string>()?.slice(0, 10)}
       </span>
     ),
   },
   {
-    accessorKey: 'entry_time',
+    accessorKey: 'entryTime',
     header: 'Time',
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">
@@ -49,7 +49,7 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
     ),
   },
   {
-    accessorKey: 'task_category',
+    accessorKey: 'taskCategory',
     header: 'Category',
     cell: ({ getValue }) => (
       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
@@ -58,7 +58,7 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
     ),
   },
   {
-    accessorKey: 'task_description',
+    accessorKey: 'taskDescription',
     header: 'Description',
     enableSorting: false,
     cell: ({ getValue }) => {
@@ -71,7 +71,7 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
     },
   },
   {
-    accessorKey: 'time_spent',
+    accessorKey: 'timeSpent',
     header: 'Time Spent',
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">
@@ -103,26 +103,26 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
     header: 'Date',
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">
-        {getValue<string>()}
+        {getValue<string>()?.slice(0, 10)}
       </span>
     ),
   },
   {
-    accessorKey: 'shift_start',
+    accessorKey: 'shiftStart',
     header: 'Start',
     cell: ({ getValue }) => (
       <span className="text-sm">{getValue<string>()}</span>
     ),
   },
   {
-    accessorKey: 'shift_end',
+    accessorKey: 'shiftEnd',
     header: 'End',
     cell: ({ getValue }) => (
       <span className="text-sm">{getValue<string>()}</span>
     ),
   },
   {
-    accessorKey: 'hours_worked',
+    accessorKey: 'hoursWorked',
     header: 'Hours',
     cell: ({ getValue }) => (
       <span className="text-sm font-medium text-foreground">
@@ -131,7 +131,7 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
     ),
   },
   {
-    accessorKey: 'summary_of_work',
+    accessorKey: 'summaryOfWork',
     header: 'Summary',
     enableSorting: false,
     cell: ({ getValue }) => {
@@ -144,7 +144,7 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
     },
   },
   {
-    accessorKey: 'pending_tasks',
+    accessorKey: 'pendingTasks',
     header: 'Pending Tasks',
     enableSorting: false,
     cell: ({ getValue }) => {
@@ -199,16 +199,16 @@ export default function WorkActivityPage() {
   useEffect(() => {
     setFilteredEntries(
       allEntries.filter(e => {
-        if (assignmentFilter !== 'all' && e.assignment_id !== assignmentFilter)
+        if (assignmentFilter !== 'all' && e.assignmentId !== assignmentFilter)
           return false
-        if (dateFrom && e.entry_date < dateFrom) return false
-        if (dateTo && e.entry_date > dateTo) return false
+        if (dateFrom && e.entryDate < dateFrom) return false
+        if (dateTo && e.entryDate > dateTo) return false
         return true
       })
     )
     setFilteredEods(
       allEods.filter(e => {
-        if (assignmentFilter !== 'all' && e.assignment_id !== assignmentFilter)
+        if (assignmentFilter !== 'all' && e.assignmentId !== assignmentFilter)
           return false
         if (dateFrom && e.date < dateFrom) return false
         if (dateTo && e.date > dateTo) return false
@@ -228,8 +228,8 @@ export default function WorkActivityPage() {
   const multipleAssignments = assignments.length > 1
 
   function assignmentLabel(a: IAssignment): string {
-    const type = a.service_type ?? 'VA Service'
-    return `${type} (from ${a.start_date})`
+    const type = a.serviceType ?? 'VA Service'
+    return `${type} (from ${a.startDate})`
   }
 
   return (

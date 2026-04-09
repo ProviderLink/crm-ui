@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import type { IAssignment } from '@/types/assignment'
 import { getMyAssignments } from '@/services/assignments.service'
+import type { IAssignment } from '@/types/assignment'
+import { useEffect, useState } from 'react'
 
 export function useMyAssignments() {
   const [assignments, setAssignments] = useState<IAssignment[]>([])
@@ -8,7 +8,7 @@ export function useMyAssignments() {
 
   useEffect(() => {
     getMyAssignments()
-      .then(setAssignments)
+      .then(data => setAssignments(data.filter(a => a.status === 'active')))
       .catch(() => setAssignments([]))
       .finally(() => setIsLoading(false))
   }, [])

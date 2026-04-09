@@ -1,7 +1,7 @@
-import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { config } from '@/lib/config'
 import { store } from '@/store'
-import { setAccessToken, clearAuth } from '@/store/slices/authSlice'
+import { clearAuth, setAccessToken } from '@/store/slices/authSlice'
+import axios, { type InternalAxiosRequestConfig } from 'axios'
 
 interface RetryableConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
@@ -18,7 +18,7 @@ const api = axios.create({
 })
 
 // Attach access token to every request
-api.interceptors.request.use((requestConfig) => {
+api.interceptors.request.use(requestConfig => {
   const token = store.getState().auth.accessToken
   if (token) {
     requestConfig.headers.set('Authorization', `Bearer ${token}`)
@@ -39,13 +39,24 @@ function processQueue(error: unknown, token: string | null): void {
 }
 
 api.interceptors.response.use(
-  (response) => response,
+  response => response,
   async (error: unknown) => {
     if (!axios.isAxiosError(error)) return Promise.reject(error)
 
     const originalRequest = error.config as RetryableConfig | undefined
 
-    if (error.response?.status !== 401 || !originalRequest || originalRequest._retry) {
+    if (
+      error.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry
+    ) {
+      return Promise.reject(error)
+    }
+
+    // If the refresh request itself fails, clear auth and redirect immediately
+    if (originalRequest.url?.includes('/auth/refresh')) {
+      store.dispatch(clearAuth())
+      window.location.href = '/login'
       return Promise.reject(error)
     }
 
@@ -53,7 +64,7 @@ api.interceptors.response.use(
       return new Promise<string>((resolve, reject) => {
         failedQueue.push({ resolve, reject })
       })
-        .then((token) => {
+        .then(token => {
           originalRequest.headers.set('Authorization', `Bearer ${token}`)
           return api(originalRequest)
         })
@@ -77,7 +88,7 @@ api.interceptors.response.use(
     } finally {
       isRefreshing = false
     }
-  },
+  }
 )
 
 export default api

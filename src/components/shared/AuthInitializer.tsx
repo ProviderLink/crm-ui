@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
-import type { ReactNode } from 'react'
 import { useAppDispatch, useAppSelector } from '@/hooks/store'
-import { setUser, setHydrated, clearAuth } from '@/store/slices/authSlice'
 import { getMe } from '@/services/auth.service'
+import { clearAuth, setHydrated, setUser } from '@/store/slices/authSlice'
+import type { ReactNode } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface Props {
   children: ReactNode
@@ -14,8 +14,8 @@ interface Props {
  */
 export function AuthInitializer({ children }: Props) {
   const dispatch = useAppDispatch()
-  const accessToken = useAppSelector((s) => s.auth.accessToken)
-  const isHydrated = useAppSelector((s) => s.auth.isHydrated)
+  const accessToken = useAppSelector(s => s.auth.accessToken)
+  const isHydrated = useAppSelector(s => s.auth.isHydrated)
   const initialized = useRef(false)
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export function AuthInitializer({ children }: Props) {
     }
 
     getMe()
-      .then((user) => {
+      .then(user => {
         dispatch(setUser(user))
         dispatch(setHydrated())
       })

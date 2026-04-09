@@ -67,23 +67,23 @@ function buildColumns(
 ): ColumnDef<IAssignment>[] {
   return [
     {
-      accessorKey: 'client_id',
+      accessorKey: 'clientId',
       header: 'Client',
       cell: ({ getValue }) =>
         clientMap[getValue<string>()] ?? getValue<string>(),
     },
     {
-      accessorKey: 'va_id',
+      accessorKey: 'vaId',
       header: 'VA',
       cell: ({ getValue }) => vaMap[getValue<string>()] ?? getValue<string>(),
     },
     {
-      accessorKey: 'account_manager_id',
+      accessorKey: 'accountManagerId',
       header: 'Account Manager',
       cell: ({ getValue }) => amMap[getValue<string>() ?? ''] ?? '—',
     },
     {
-      accessorKey: 'start_date',
+      accessorKey: 'startDate',
       header: 'Start Date',
       cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
     },
@@ -108,7 +108,7 @@ function buildColumns(
       },
     },
     {
-      accessorKey: 'service_type',
+      accessorKey: 'serviceType',
       header: 'Service Type',
       cell: ({ getValue }) => getValue<string>() ?? '—',
     },
@@ -350,10 +350,10 @@ function EditAssignmentForm({
 
   useEffect(() => {
     reset({
-      accountManagerId: assignment.account_manager_id ?? '',
+      accountManagerId: assignment.accountManagerId ?? '',
       status: assignment.status,
-      serviceType: assignment.service_type ?? '',
-      endDate: assignment.end_date ?? '',
+      serviceType: assignment.serviceType ?? '',
+      endDate: assignment.endDate ?? '',
       notes: assignment.notes ?? '',
     })
   }, [assignment, reset])

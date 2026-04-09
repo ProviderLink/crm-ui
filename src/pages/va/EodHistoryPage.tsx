@@ -12,26 +12,26 @@ const columns: ColumnDef<IEodSubmission>[] = [
     header: 'Date',
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">
-        {getValue<string>()}
+        {getValue<string>()?.slice(0, 10)}
       </span>
     ),
   },
   {
-    accessorKey: 'shift_start',
+    accessorKey: 'shiftStart',
     header: 'Start',
     cell: ({ getValue }) => (
       <span className="text-sm">{getValue<string>()}</span>
     ),
   },
   {
-    accessorKey: 'shift_end',
+    accessorKey: 'shiftEnd',
     header: 'End',
     cell: ({ getValue }) => (
       <span className="text-sm">{getValue<string>()}</span>
     ),
   },
   {
-    accessorKey: 'hours_worked',
+    accessorKey: 'hoursWorked',
     header: 'Hours',
     cell: ({ getValue }) => (
       <span className="text-sm font-medium text-foreground">
@@ -40,7 +40,7 @@ const columns: ColumnDef<IEodSubmission>[] = [
     ),
   },
   {
-    accessorKey: 'summary_of_work',
+    accessorKey: 'summaryOfWork',
     header: 'Summary',
     enableSorting: false,
     cell: ({ getValue }) => {

@@ -1,36 +1,59 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { AlertTriangleIcon, ClipboardXIcon, DownloadIcon, UserCheckIcon, UsersIcon } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import type { ColumnDef } from '@tanstack/react-table'
-
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig,
+  AlertTriangleIcon,
+  ClipboardXIcon,
+  DownloadIcon,
+  UserCheckIcon,
+  UsersIcon,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { Link } from 'react-router-dom'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { z } from 'zod'
+
+import { DataTable } from '@/components/shared/DataTable'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
 } from '@/components/ui/chart'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DataTable } from '@/components/shared/DataTable'
-import { getDashboardStats, type IDashboardStats } from '@/services/admin.service'
-import { getAtsVAs } from '@/services/ats.service'
-import { exportReport } from '@/services/reports.service'
 import { useAppSelector } from '@/hooks/store'
+import {
+  getDashboardStats,
+  type IDashboardStats,
+} from '@/services/admin.service'
+import { getAtsClients, getAtsVAs } from '@/services/ats.service'
+import { exportReport } from '@/services/reports.service'
 
 // ─── Export form ─────────────────────────────────────────────────────────────
 
 const exportSchema = z.object({
-  type:     z.enum(['work_entries', 'eod']),
+  type: z.enum(['work_entries', 'eod']),
   dateFrom: z.string().min(1, 'Required'),
-  dateTo:   z.string().min(1, 'Required'),
-  format:   z.enum(['csv', 'excel']),
+  dateTo: z.string().min(1, 'Required'),
+  format: z.enum(['csv', 'excel']),
 })
 type ExportFormData = z.infer<typeof exportSchema>
 
@@ -41,18 +64,27 @@ const activityChartConfig = {
 } satisfies ChartConfig
 
 type VABreakdownRow = { vaName: string; count: number }
+type ClientBreakdownRow = { clientName: string; count: number }
 
 const breakdownColumns: ColumnDef<VABreakdownRow>[] = [
   { accessorKey: 'vaName', header: 'VA' },
   { accessorKey: 'count', header: 'Entries Today' },
 ]
 
+const clientBreakdownColumns: ColumnDef<ClientBreakdownRow>[] = [
+  { accessorKey: 'clientName', header: 'Client' },
+  { accessorKey: 'count', header: 'Entries Today' },
+]
+
 export default function AdminDashboardPage() {
-  const user = useAppSelector((s) => s.auth.user)
+  const user = useAppSelector(s => s.auth.user)
   const isAccountManager = user?.role === 'account_manager'
 
   const [stats, setStats] = useState<IDashboardStats | null>(null)
   const [breakdown, setBreakdown] = useState<VABreakdownRow[]>([])
+  const [clientBreakdown, setClientBreakdown] = useState<ClientBreakdownRow[]>(
+    []
+  )
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
@@ -64,7 +96,12 @@ export default function AdminDashboardPage() {
     formState: { errors },
   } = useForm<ExportFormData>({
     resolver: zodResolver(exportSchema),
-    defaultValues: { type: 'work_entries', format: 'csv', dateFrom: '', dateTo: '' },
+    defaultValues: {
+      type: 'work_entries',
+      format: 'csv',
+      dateFrom: '',
+      dateTo: '',
+    },
   })
 
   async function onExport(values: ExportFormData) {
@@ -82,19 +119,34 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [s, vas] = await Promise.all([getDashboardStats(), getAtsVAs()])
+        const [s, vas, clients] = await Promise.all([
+          getDashboardStats(),
+          getAtsVAs(),
+          getAtsClients(),
+        ])
         setStats(s)
 
         const vaMap: Record<string, string> = {}
         for (const va of vas) {
           vaMap[va.id] = `${va.firstName} ${va.lastName}`
         }
-
         const rows = Object.entries(s.perVABreakdown).map(([vaId, count]) => ({
           vaName: vaMap[vaId] ?? vaId,
           count,
         }))
         setBreakdown(rows)
+
+        const clientMap: Record<string, string> = {}
+        for (const c of clients) {
+          clientMap[c.id] = c.companyName
+        }
+        const clientRows = Object.entries(s.perClientBreakdown).map(
+          ([clientId, count]) => ({
+            clientName: clientMap[clientId] ?? clientId,
+            count,
+          })
+        )
+        setClientBreakdown(clientRows)
       } catch {
         // silently skip
       } finally {
@@ -107,22 +159,26 @@ export default function AdminDashboardPage() {
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-
         {/* Stat cards */}
         <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card lg:px-6">
-
           <Card className="@container/card">
             <CardHeader className="relative">
               <CardDescription>Active Assignments</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Skeleton className="h-8 w-16" /> : stats?.activeAssignmentsCount ?? 0}
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  (stats?.activeAssignmentsCount ?? 0)
+                )}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <UsersIcon className="size-4 text-muted-foreground" />
               </div>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">VA–client assignments currently active</div>
+              <div className="text-muted-foreground">
+                VA–client assignments currently active
+              </div>
             </CardFooter>
           </Card>
 
@@ -130,14 +186,20 @@ export default function AdminDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Entries Today</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Skeleton className="h-8 w-16" /> : stats?.totalEntriesToday ?? 0}
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  (stats?.totalEntriesToday ?? 0)
+                )}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <UserCheckIcon className="size-4 text-muted-foreground" />
               </div>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">Work entries logged across all VAs today</div>
+              <div className="text-muted-foreground">
+                Work entries logged across all VAs today
+              </div>
             </CardFooter>
           </Card>
 
@@ -145,7 +207,11 @@ export default function AdminDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>EODs Submitted Today</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Skeleton className="h-8 w-16" /> : stats?.eodSubmissionsToday ?? 0}
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  (stats?.eodSubmissionsToday ?? 0)
+                )}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ClipboardXIcon className="size-4 text-muted-foreground" />
@@ -153,7 +219,11 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
               <div className="text-muted-foreground">
-                {loading ? <Skeleton className="h-4 w-20" /> : `${stats?.missingEodsToday ?? 0} missing`}
+                {loading ? (
+                  <Skeleton className="h-4 w-20" />
+                ) : (
+                  `${stats?.missingEodsToday ?? 0} missing`
+                )}
               </div>
             </CardFooter>
           </Card>
@@ -163,20 +233,27 @@ export default function AdminDashboardPage() {
               <CardDescription>Missing EODs Today</CardDescription>
               <CardTitle
                 className={`@[250px]/card:text-3xl text-2xl font-semibold tabular-nums ${
-                  !loading && (stats?.missingEodsToday ?? 0) > 0 ? 'text-destructive' : ''
+                  !loading && (stats?.missingEodsToday ?? 0) > 0
+                    ? 'text-destructive'
+                    : ''
                 }`}
               >
-                {loading ? <Skeleton className="h-8 w-16" /> : stats?.missingEodsToday ?? 0}
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  (stats?.missingEodsToday ?? 0)
+                )}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <AlertTriangleIcon className="size-4 text-muted-foreground" />
               </div>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">Active assignments with no EOD yet</div>
+              <div className="text-muted-foreground">
+                Active assignments with no EOD yet
+              </div>
             </CardFooter>
           </Card>
-
         </div>
 
         {/* Quick actions */}
@@ -199,12 +276,22 @@ export default function AdminDashboardPage() {
           <div className="px-4 lg:px-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base font-medium">VA Activity Today</CardTitle>
-                <CardDescription>Work entries logged per VA today</CardDescription>
+                <CardTitle className="text-base font-medium">
+                  VA Activity Today
+                </CardTitle>
+                <CardDescription>
+                  Work entries logged per VA today
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ChartContainer config={activityChartConfig} className="h-[200px] w-full">
-                  <BarChart data={breakdown} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+                <ChartContainer
+                  config={activityChartConfig}
+                  className="h-[200px] w-full"
+                >
+                  <BarChart
+                    data={breakdown}
+                    margin={{ top: 4, right: 8, bottom: 4, left: 0 }}
+                  >
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
                     <XAxis
                       dataKey="vaName"
@@ -220,10 +307,36 @@ export default function AdminDashboardPage() {
                       width={28}
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
+                    <Bar
+                      dataKey="count"
+                      fill="var(--color-count)"
+                      radius={[4, 4, 0, 0]}
+                    />
                   </BarChart>
                 </ChartContainer>
                 <DataTable columns={breakdownColumns} data={breakdown} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Per-client breakdown */}
+        {!loading && clientBreakdown.length > 0 && (
+          <div className="px-4 lg:px-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-medium">
+                  Client Activity Today
+                </CardTitle>
+                <CardDescription>
+                  Work entries logged per client today
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DataTable
+                  columns={clientBreakdownColumns}
+                  data={clientBreakdown}
+                />
               </CardContent>
             </Card>
           </div>
@@ -233,11 +346,18 @@ export default function AdminDashboardPage() {
         <div className="px-4 lg:px-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base font-medium">Export Data</CardTitle>
-              <CardDescription>Download work entries or EOD submissions as CSV or Excel.</CardDescription>
+              <CardTitle className="text-base font-medium">
+                Export Data
+              </CardTitle>
+              <CardDescription>
+                Download work entries or EOD submissions as CSV or Excel.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit(onExport)} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <form
+                onSubmit={handleSubmit(onExport)}
+                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+              >
                 {/* Report type */}
                 <div className="grid gap-1.5">
                   <Label>Report Type</Label>
@@ -245,32 +365,49 @@ export default function AdminDashboardPage() {
                     name="type"
                     control={control}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="work_entries">Work Entries</SelectItem>
+                          <SelectItem value="work_entries">
+                            Work Entries
+                          </SelectItem>
                           <SelectItem value="eod">EOD Submissions</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
                   />
-                  {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
+                  {errors.type && (
+                    <p className="text-xs text-destructive">
+                      {errors.type.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Date from */}
                 <div className="grid gap-1.5">
                   <Label>From</Label>
                   <Input type="date" {...register('dateFrom')} />
-                  {errors.dateFrom && <p className="text-xs text-destructive">{errors.dateFrom.message}</p>}
+                  {errors.dateFrom && (
+                    <p className="text-xs text-destructive">
+                      {errors.dateFrom.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Date to */}
                 <div className="grid gap-1.5">
                   <Label>To</Label>
                   <Input type="date" {...register('dateTo')} />
-                  {errors.dateTo && <p className="text-xs text-destructive">{errors.dateTo.message}</p>}
+                  {errors.dateTo && (
+                    <p className="text-xs text-destructive">
+                      {errors.dateTo.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Format */}
@@ -280,7 +417,10 @@ export default function AdminDashboardPage() {
                     name="format"
                     control={control}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select format" />
                         </SelectTrigger>
@@ -291,7 +431,11 @@ export default function AdminDashboardPage() {
                       </Select>
                     )}
                   />
-                  {errors.format && <p className="text-xs text-destructive">{errors.format.message}</p>}
+                  {errors.format && (
+                    <p className="text-xs text-destructive">
+                      {errors.format.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Submit — spans full row */}
@@ -300,13 +444,14 @@ export default function AdminDashboardPage() {
                     <DownloadIcon className="size-4" />
                     {exporting ? 'Downloading…' : 'Download Report'}
                   </Button>
-                  {exportError && <p className="text-sm text-destructive">{exportError}</p>}
+                  {exportError && (
+                    <p className="text-sm text-destructive">{exportError}</p>
+                  )}
                 </div>
               </form>
             </CardContent>
           </Card>
         </div>
-
       </div>
     </div>
   )

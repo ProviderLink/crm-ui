@@ -1,8 +1,13 @@
-import { lazy, Suspense } from 'react'
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { RoleGuard } from '@/components/shared/RoleGuard'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
+import { lazy, Suspense } from 'react'
+import {
+  createBrowserRouter,
+  Navigate,
+  Outlet,
+  RouterProvider,
+} from 'react-router-dom'
 
 // Auth (public)
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
@@ -16,14 +21,26 @@ const EodSubmitPage = lazy(() => import('@/pages/va/EodSubmitPage'))
 const EodHistoryPage = lazy(() => import('@/pages/va/EodHistoryPage'))
 
 // Admin portal
-const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'))
-const AssignmentManagementPage = lazy(() => import('@/pages/admin/AssignmentManagementPage'))
-const AccountManagementPage = lazy(() => import('@/pages/admin/AccountManagementPage'))
-const SurveyRemindersPage = lazy(() => import('@/pages/admin/SurveyRemindersPage'))
+const AdminDashboardPage = lazy(
+  () => import('@/pages/admin/AdminDashboardPage')
+)
+const AssignmentManagementPage = lazy(
+  () => import('@/pages/admin/AssignmentManagementPage')
+)
+const AccountManagementPage = lazy(
+  () => import('@/pages/admin/AccountManagementPage')
+)
+const SurveyRemindersPage = lazy(
+  () => import('@/pages/admin/SurveyRemindersPage')
+)
 const ScorecardsPage = lazy(() => import('@/pages/admin/ScorecardsPage'))
+const WorkEntriesPage = lazy(() => import('@/pages/admin/WorkEntriesPage'))
+const EodReportsPage = lazy(() => import('@/pages/admin/EodReportsPage'))
 
 // Client portal
-const ClientDashboardPage = lazy(() => import('@/pages/client/ClientDashboardPage'))
+const ClientDashboardPage = lazy(
+  () => import('@/pages/client/ClientDashboardPage')
+)
 const WorkActivityPage = lazy(() => import('@/pages/client/WorkActivityPage'))
 
 // 404
@@ -76,11 +93,16 @@ const router = createBrowserRouter([
               {
                 element: <DashboardLayout />,
                 children: [
-                  { path: 'dashboard',   element: <AdminDashboardPage /> },
-                  { path: 'assignments', element: <AssignmentManagementPage /> },
-                  { path: 'accounts',    element: <AccountManagementPage /> },
-                  { path: 'reminders',   element: <SurveyRemindersPage /> },
-                  { path: 'scorecards',  element: <ScorecardsPage /> },
+                  { path: 'dashboard', element: <AdminDashboardPage /> },
+                  {
+                    path: 'assignments',
+                    element: <AssignmentManagementPage />,
+                  },
+                  { path: 'accounts', element: <AccountManagementPage /> },
+                  { path: 'reminders', element: <SurveyRemindersPage /> },
+                  { path: 'scorecards', element: <ScorecardsPage /> },
+                  { path: 'work-entries', element: <WorkEntriesPage /> },
+                  { path: 'eod-reports', element: <EodReportsPage /> },
                 ],
               },
             ],

@@ -1,5 +1,5 @@
 import api from '@/lib/api'
-import type { IAtsClient, IAtsCandidate, IAtsUser } from '@/types/ats'
+import type { IAtsCandidate, IAtsClient, IAtsUser } from '@/types/ats'
 
 export async function getAtsClients(): Promise<IAtsClient[]> {
   const { data } = await api.get<{ data: IAtsClient[] }>('/ats/clients')

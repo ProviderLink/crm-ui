@@ -13,7 +13,7 @@ export function calcHours(start: string, end: string): number {
   const [eh, em] = end.split(':').map(Number)
   const startMin = (sh ?? 0) * 60 + (sm ?? 0)
   const endMin = (eh ?? 0) * 60 + (em ?? 0)
-  return Math.max(0, Math.round((endMin - startMin) / 60 * 10) / 10)
+  return Math.max(0, Math.round(((endMin - startMin) / 60) * 10) / 10)
 }
 
 /** Today as "YYYY-MM-DD" */
