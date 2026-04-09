@@ -1,30 +1,38 @@
-import { useState, useEffect, useCallback } from 'react'
-import { BellIcon } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
+import { BellIcon } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 
-import { Badge } from '@/components/ui/badge'
+import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/shared/DataTable'
-import { getSurveyReminders, updateSurveyReminder } from '@/services/survey-reminders.service'
+import {
+  getSurveyReminders,
+  updateSurveyReminder,
+} from '@/services/survey-reminders.service'
 import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const SURVEY_TYPE_LABELS: Record<ISurveyReminder['surveyType'], string> = {
-  '3_day':  '3-Day',
+  '3_day': '3-Day',
   '1_week': '1-Week',
   '30_day': '30-Day',
-  monthly:  'Monthly',
+  monthly: 'Monthly',
 }
 
 const STATUS_STYLES: Record<SurveyStatus, string> = {
-  pending:   'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-  sent:      'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-  completed: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-  skipped:   'bg-muted text-muted-foreground border-border',
+  pending:
+    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+  sent: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+  completed:
+    'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
+  skipped: 'bg-muted text-muted-foreground border-border',
 }
 
 const todayStr = () => new Date().toISOString().split('T')[0]
@@ -41,17 +49,24 @@ export default function SurveyRemindersPage() {
   const load = useCallback(() => {
     setIsLoading(true)
     getSurveyReminders()
-      .then((data) => { setReminders(data); setFiltered(data) })
+      .then(data => {
+        setReminders(data)
+        setFiltered(data)
+      })
       .catch(() => setReminders([]))
       .finally(() => setIsLoading(false))
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+  }, [load])
 
   // Client-side status filter
   useEffect(() => {
     setFiltered(
-      statusFilter === 'all' ? reminders : reminders.filter((r) => r.status === statusFilter),
+      statusFilter === 'all'
+        ? reminders
+        : reminders.filter(r => r.status === statusFilter)
     )
   }, [reminders, statusFilter])
 
@@ -62,7 +77,7 @@ export default function SurveyRemindersPage() {
         status,
         ...(status === 'completed' ? { completedDate: todayStr() } : {}),
       })
-      setReminders((prev) => prev.map((r) => (r.id === id ? updated : r)))
+      setReminders(prev => prev.map(r => (r.id === id ? updated : r)))
     } catch {
       // silently ignore
     } finally {
@@ -85,7 +100,8 @@ export default function SurveyRemindersPage() {
       header: 'For',
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground capitalize">
-          {row.original.relatedType} · <span className="font-mono">{row.original.relatedId.slice(-8)}</span>
+          {row.original.relatedType} ·{' '}
+          <span className="font-mono">{row.original.relatedId.slice(-8)}</span>
         </span>
       ),
       enableSorting: false,
@@ -97,8 +113,11 @@ export default function SurveyRemindersPage() {
         const v = getValue<string>()?.slice(0, 10) ?? ''
         const overdue = v < todayStr()
         return (
-          <span className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-            {v}{overdue ? ' (overdue)' : ''}
+          <span
+            className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
+          >
+            {v}
+            {overdue ? ' (overdue)' : ''}
           </span>
         )
       },
@@ -109,7 +128,9 @@ export default function SurveyRemindersPage() {
       cell: ({ getValue }) => {
         const s = getValue<SurveyStatus>()
         return (
-          <span className={`text-xs px-2 py-0.5 rounded-full border capitalize ${STATUS_STYLES[s]}`}>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full border capitalize ${STATUS_STYLES[s]}`}
+          >
             {s}
           </span>
         )
@@ -153,10 +174,11 @@ export default function SurveyRemindersPage() {
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
-
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">Survey Reminders</h1>
+              <h1 className="text-2xl font-semibold text-foreground">
+                Survey Reminders
+              </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
                 Track and action scheduled check-in reminders
               </p>
@@ -173,7 +195,7 @@ export default function SurveyRemindersPage() {
               <span className="text-xs text-muted-foreground">Status</span>
               <Select
                 value={statusFilter}
-                onValueChange={(v) => setStatusFilter(v as SurveyStatus | 'all')}
+                onValueChange={v => setStatusFilter(v as SurveyStatus | 'all')}
               >
                 <SelectTrigger className="h-8 w-36 text-sm">
                   <SelectValue />
@@ -198,7 +220,6 @@ export default function SurveyRemindersPage() {
           </div>
 
           <DataTable columns={columns} data={filtered} isLoading={isLoading} />
-
         </div>
       </div>
     </div>

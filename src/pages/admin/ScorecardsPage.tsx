@@ -1,16 +1,23 @@
-import { useState, useEffect, useCallback } from 'react'
-import { BarChart3Icon, RefreshCwIcon } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
+import { BarChart3Icon, RefreshCwIcon } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 
+import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select'
-import { DataTable } from '@/components/shared/DataTable'
-import { getScorecards, generateScorecards } from '@/services/scorecards.service'
 import { getAtsVAs } from '@/services/ats.service'
-import type { IScorecard } from '@/types/scorecard'
+import {
+  generateScorecards,
+  getScorecards,
+} from '@/services/scorecards.service'
 import type { IAtsCandidate } from '@/types/ats'
+import type { IScorecard } from '@/types/scorecard'
 
 function pct(n: number) {
   return `${(n * 100).toFixed(0)}%`
@@ -45,7 +52,9 @@ export default function ScorecardsPage() {
       .finally(() => setIsLoading(false))
   }, [vaFilter])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+  }, [load])
 
   async function handleGenerate() {
     setGenerating(true)
@@ -74,7 +83,8 @@ export default function ScorecardsPage() {
       header: 'Week',
       cell: ({ row }) => (
         <span className="text-xs text-muted-foreground">
-          {row.original.weekStart?.slice(0, 10)} – {row.original.weekEnd?.slice(0, 10)}
+          {row.original.weekStart?.slice(0, 10)} –{' '}
+          {row.original.weekEnd?.slice(0, 10)}
         </span>
       ),
     },
@@ -82,7 +92,9 @@ export default function ScorecardsPage() {
       accessorKey: 'totalHours',
       header: 'Hours',
       cell: ({ getValue }) => (
-        <span className="text-sm tabular-nums">{getValue<number>().toFixed(1)}h</span>
+        <span className="text-sm tabular-nums">
+          {getValue<number>().toFixed(1)}h
+        </span>
       ),
     },
     {
@@ -96,7 +108,9 @@ export default function ScorecardsPage() {
       accessorKey: 'eodComplianceRate',
       header: 'EOD Rate',
       cell: ({ getValue }) => (
-        <span className="text-sm tabular-nums">{getValue<number>().toFixed(0)}%</span>
+        <span className="text-sm tabular-nums">
+          {getValue<number>().toFixed(0)}%
+        </span>
       ),
     },
     {
@@ -105,7 +119,9 @@ export default function ScorecardsPage() {
       cell: ({ getValue }) => {
         const s = getValue<number>()
         return (
-          <span className={`text-sm font-semibold tabular-nums ${scoreColor(s)}`}>
+          <span
+            className={`text-sm font-semibold tabular-nums ${scoreColor(s)}`}
+          >
             {s.toFixed(0)}
           </span>
         )
@@ -117,10 +133,11 @@ export default function ScorecardsPage() {
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
-
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">Productivity Scorecards</h1>
+              <h1 className="text-2xl font-semibold text-foreground">
+                Productivity Scorecards
+              </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
                 Weekly performance scores — generated every Sunday at 11 PM
               </p>
@@ -141,7 +158,7 @@ export default function ScorecardsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All VAs</SelectItem>
-                  {vaList.map((v) => (
+                  {vaList.map(v => (
                     <SelectItem key={v.id} value={v.id}>
                       {v.firstName} {v.lastName}
                     </SelectItem>
@@ -164,14 +181,19 @@ export default function ScorecardsPage() {
                 onClick={handleGenerate}
                 disabled={generating}
               >
-                <RefreshCwIcon className={`size-3.5 ${generating ? 'animate-spin' : ''}`} />
+                <RefreshCwIcon
+                  className={`size-3.5 ${generating ? 'animate-spin' : ''}`}
+                />
                 {generating ? 'Generating…' : 'Generate Now'}
               </Button>
             </div>
           </div>
 
-          <DataTable columns={columns} data={scorecards} isLoading={isLoading} />
-
+          <DataTable
+            columns={columns}
+            data={scorecards}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>

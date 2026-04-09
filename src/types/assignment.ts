@@ -1,14 +1,14 @@
 export interface IAssignment {
   id: string
-  clientId: string
-  vaId: string
+  client_id: string
+  va_id: string
   status: 'active' | 'paused' | 'ended'
-  serviceType?: string
-  accountManagerId?: string
-  startDate: string
-  endDate?: string
+  service_type?: string
+  account_manager_id?: string
+  start_date: string
+  end_date?: string
   notes?: string
-  createdAt: string
+  created_at: string
 }
 
 export interface CreateAssignmentPayload {

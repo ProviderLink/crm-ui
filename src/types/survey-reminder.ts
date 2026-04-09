@@ -4,17 +4,17 @@ export type SurveyStatus = 'pending' | 'sent' | 'completed' | 'skipped'
 
 export interface ISurveyReminder {
   id: string
-  relatedType: SurveyRelatedType
-  relatedId: string
-  surveyType: SurveyType
-  dueDate: string
-  completedDate?: string
+  related_type: SurveyRelatedType
+  related_id: string
+  survey_type: SurveyType
+  due_date: string
+  completed_date?: string
   status: SurveyStatus
-  assignedTo?: string
-  createdAt: string
+  assigned_to?: string
+  created_at: string
 }
 
 export interface UpdateSurveyReminderPayload {
   status: SurveyStatus
-  completedDate?: string
+  completed_date?: string
 }

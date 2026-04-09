@@ -1,9 +1,21 @@
+import {
+  ClipboardCheckIcon,
+  ClockIcon,
+  PlusIcon,
+  TrophyIcon,
+  ZapIcon,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ClipboardCheckIcon, ClockIcon, PlusIcon, TrophyIcon, ZapIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getEodSubmissions } from '@/services/eod-submissions.service'
 import { getScorecards } from '@/services/scorecards.service'
@@ -35,23 +47,20 @@ export default function VaDashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [workAll, eods, scorecards] = await Promise.all([
-          getWorkEntries(),
-          getEodSubmissions(),
+        const [workToday, workWeek, eods, scorecards] = await Promise.all([
+          getWorkEntries({ dateFrom: today, dateTo: today }),
+          getWorkEntries({ dateFrom: weekStart, dateTo: today }),
+          getEodSubmissions({ dateFrom: today, dateTo: today }),
           getScorecards(),
         ])
-        const todayWork = workAll.filter((e) => (e.entryDate?.slice(0, 10) ?? '') === today)
-        const weekWork = workAll.filter((e) => {
-          const d = e.entryDate?.slice(0, 10) ?? ''
-          return d >= weekStart && d <= today
-        })
-        setTodayEntries(todayWork)
-        setEodToday(eods.find((e) => e.date?.slice(0, 10) === today) ?? null)
-        setWeekHours(weekWork.reduce((sum, e) => sum + e.timeSpent, 0) / 60)
+        setTodayEntries(workToday)
+        setEodToday(eods[0] ?? null)
+        setWeekHours(workWeek.reduce((sum, e) => sum + e.time_spent, 0) / 60)
         const sorted = [...scorecards].sort(
-          (a, b) => (b.weekStart > a.weekStart ? 1 : -1)
+          (a, b) =>
+            new Date(b.week_start).getTime() - new Date(a.week_start).getTime()
         )
-        setLatestScore(sorted[0]?.productivityScore ?? null)
+        setLatestScore(sorted[0]?.productivity_score ?? null)
       } catch {
         // dashboard is informational — silently skip on error
       } finally {
@@ -66,22 +75,26 @@ export default function VaDashboardPage() {
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-
         {/* Stat cards */}
         <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card lg:px-6">
-
           <Card className="@container/card">
             <CardHeader className="relative">
               <CardDescription>Entries Today</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Skeleton className="h-8 w-16" /> : todayEntries.length}
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  todayEntries.length
+                )}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ClockIcon className="size-4 text-muted-foreground" />
               </div>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">Work entries logged today</div>
+              <div className="text-muted-foreground">
+                Work entries logged today
+              </div>
             </CardFooter>
           </Card>
 
@@ -89,14 +102,24 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>EOD Status</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Skeleton className="h-8 w-28" /> : eodSubmitted ? 'Submitted' : 'Pending'}
+                {loading ? (
+                  <Skeleton className="h-8 w-28" />
+                ) : eodSubmitted ? (
+                  'Submitted'
+                ) : (
+                  'Pending'
+                )}
               </CardTitle>
               <div className="absolute right-4 top-4">
-                <ClipboardCheckIcon className={`size-4 ${!loading && eodSubmitted ? 'text-green-500' : 'text-muted-foreground'}`} />
+                <ClipboardCheckIcon
+                  className={`size-4 ${!loading && eodSubmitted ? 'text-green-500' : 'text-muted-foreground'}`}
+                />
               </div>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">End-of-day report for today</div>
+              <div className="text-muted-foreground">
+                End-of-day report for today
+              </div>
             </CardFooter>
           </Card>
 
@@ -104,14 +127,20 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>This Week's Hours</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading || weekHours === null ? <Skeleton className="h-8 w-20" /> : `${weekHours.toFixed(1)}h`}
+                {loading || weekHours === null ? (
+                  <Skeleton className="h-8 w-20" />
+                ) : (
+                  `${weekHours.toFixed(1)}h`
+                )}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ZapIcon className="size-4 text-muted-foreground" />
               </div>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">Total time logged Mon–today</div>
+              <div className="text-muted-foreground">
+                Total time logged Mon–today
+              </div>
             </CardFooter>
           </Card>
 
@@ -119,17 +148,24 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Productivity Score</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Skeleton className="h-8 w-16" /> : latestScore !== null ? `${latestScore}` : 'N/A'}
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : latestScore !== null ? (
+                  `${latestScore}`
+                ) : (
+                  'N/A'
+                )}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <TrophyIcon className="size-4 text-muted-foreground" />
               </div>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">Latest weekly scorecard (0–100)</div>
+              <div className="text-muted-foreground">
+                Latest weekly scorecard (0–100)
+              </div>
             </CardFooter>
           </Card>
-
         </div>
 
         {/* Quick actions */}
@@ -147,7 +183,6 @@ export default function VaDashboardPage() {
             </Link>
           </Button>
         </div>
-
       </div>
     </div>
   )

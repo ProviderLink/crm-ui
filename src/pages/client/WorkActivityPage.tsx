@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
+import { useEffect, useState } from 'react'
 
+import { DataTable } from '@/components/shared/DataTable'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -10,40 +11,45 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { DataTable } from '@/components/shared/DataTable'
-import { getAllAssignments } from '@/services/assignments.service'
-import { getWorkEntries } from '@/services/work-entries.service'
-import { getEodSubmissions } from '@/services/eod-submissions.service'
-import type { IAssignment } from '@/types/assignment'
-import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
-import type { IEodSubmission } from '@/types/eod-submission'
 import { formatMinutes } from '@/lib/time'
+import { getAllAssignments } from '@/services/assignments.service'
+import { getEodSubmissions } from '@/services/eod-submissions.service'
+import { getWorkEntries } from '@/services/work-entries.service'
+import type { IAssignment } from '@/types/assignment'
+import type { IEodSubmission } from '@/types/eod-submission'
+import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
 
 // ── Work Entry columns ────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
-  completed:   'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-  in_progress: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
-  pending:     'bg-muted text-muted-foreground border-border',
+  completed:
+    'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
+  in_progress:
+    'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
+  pending: 'bg-muted text-muted-foreground border-border',
 }
 
 const workColumns: ColumnDef<IWorkEntry>[] = [
   {
-    accessorKey: 'entryDate',
+    accessorKey: 'entry_date',
     header: 'Date',
     cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">{getValue<string>()?.slice(0, 10)}</span>
+      <span className="text-xs text-muted-foreground">
+        {getValue<string>()}
+      </span>
     ),
   },
   {
-    accessorKey: 'entryTime',
+    accessorKey: 'entry_time',
     header: 'Time',
     cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">{getValue<string>()}</span>
+      <span className="text-xs text-muted-foreground">
+        {getValue<string>()}
+      </span>
     ),
   },
   {
-    accessorKey: 'taskCategory',
+    accessorKey: 'task_category',
     header: 'Category',
     cell: ({ getValue }) => (
       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
@@ -52,19 +58,25 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
     ),
   },
   {
-    accessorKey: 'taskDescription',
+    accessorKey: 'task_description',
     header: 'Description',
     enableSorting: false,
     cell: ({ getValue }) => {
       const v = getValue<string>()
-      return <span className="text-sm">{v.length > 55 ? `${v.slice(0, 55)}…` : v}</span>
+      return (
+        <span className="text-sm">
+          {v.length > 55 ? `${v.slice(0, 55)}…` : v}
+        </span>
+      )
     },
   },
   {
-    accessorKey: 'timeSpent',
+    accessorKey: 'time_spent',
     header: 'Time Spent',
     cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">{formatMinutes(getValue<number>())}</span>
+      <span className="text-xs text-muted-foreground">
+        {formatMinutes(getValue<number>())}
+      </span>
     ),
   },
   {
@@ -73,7 +85,9 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
     cell: ({ getValue }) => {
       const s = getValue<WorkEntryStatus>()
       return (
-        <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}>
+        <span
+          className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
+        >
           {s.replace('_', ' ')}
         </span>
       )
@@ -88,37 +102,49 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
     accessorKey: 'date',
     header: 'Date',
     cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">{getValue<string>()?.slice(0, 10)}</span>
+      <span className="text-xs text-muted-foreground">
+        {getValue<string>()}
+      </span>
     ),
   },
   {
-    accessorKey: 'shiftStart',
+    accessorKey: 'shift_start',
     header: 'Start',
-    cell: ({ getValue }) => <span className="text-sm">{getValue<string>()}</span>,
+    cell: ({ getValue }) => (
+      <span className="text-sm">{getValue<string>()}</span>
+    ),
   },
   {
-    accessorKey: 'shiftEnd',
+    accessorKey: 'shift_end',
     header: 'End',
-    cell: ({ getValue }) => <span className="text-sm">{getValue<string>()}</span>,
+    cell: ({ getValue }) => (
+      <span className="text-sm">{getValue<string>()}</span>
+    ),
   },
   {
-    accessorKey: 'hoursWorked',
+    accessorKey: 'hours_worked',
     header: 'Hours',
     cell: ({ getValue }) => (
-      <span className="text-sm font-medium text-foreground">{getValue<number>()}h</span>
+      <span className="text-sm font-medium text-foreground">
+        {getValue<number>()}h
+      </span>
     ),
   },
   {
-    accessorKey: 'summaryOfWork',
+    accessorKey: 'summary_of_work',
     header: 'Summary',
     enableSorting: false,
     cell: ({ getValue }) => {
       const v = getValue<string>()
-      return <span className="text-sm">{v.length > 60 ? `${v.slice(0, 60)}…` : v}</span>
+      return (
+        <span className="text-sm">
+          {v.length > 60 ? `${v.slice(0, 60)}…` : v}
+        </span>
+      )
     },
   },
   {
-    accessorKey: 'pendingTasks',
+    accessorKey: 'pending_tasks',
     header: 'Pending Tasks',
     enableSorting: false,
     cell: ({ getValue }) => {
@@ -172,22 +198,22 @@ export default function WorkActivityPage() {
   // Re-filter whenever any filter state changes
   useEffect(() => {
     setFilteredEntries(
-      allEntries.filter((e) => {
-        const d = e.entryDate?.slice(0, 10) ?? ''
-        if (assignmentFilter !== 'all' && e.assignmentId !== assignmentFilter) return false
-        if (dateFrom && d < dateFrom) return false
-        if (dateTo && d > dateTo) return false
+      allEntries.filter(e => {
+        if (assignmentFilter !== 'all' && e.assignment_id !== assignmentFilter)
+          return false
+        if (dateFrom && e.entry_date < dateFrom) return false
+        if (dateTo && e.entry_date > dateTo) return false
         return true
-      }),
+      })
     )
     setFilteredEods(
-      allEods.filter((e) => {
-        const d = e.date?.slice(0, 10) ?? ''
-        if (assignmentFilter !== 'all' && e.assignmentId !== assignmentFilter) return false
-        if (dateFrom && d < dateFrom) return false
-        if (dateTo && d > dateTo) return false
+      allEods.filter(e => {
+        if (assignmentFilter !== 'all' && e.assignment_id !== assignmentFilter)
+          return false
+        if (dateFrom && e.date < dateFrom) return false
+        if (dateTo && e.date > dateTo) return false
         return true
-      }),
+      })
     )
   }, [allEntries, allEods, dateFrom, dateTo, assignmentFilter])
 
@@ -197,21 +223,23 @@ export default function WorkActivityPage() {
     setAssignmentFilter('all')
   }
 
-  const hasActiveFilters = dateFrom !== '' || dateTo !== '' || assignmentFilter !== 'all'
+  const hasActiveFilters =
+    dateFrom !== '' || dateTo !== '' || assignmentFilter !== 'all'
   const multipleAssignments = assignments.length > 1
 
   function assignmentLabel(a: IAssignment): string {
-    const type = a.serviceType ?? 'VA Service'
-    return `${type} (from ${a.startDate?.slice(0, 10) ?? ''})`
+    const type = a.service_type ?? 'VA Service'
+    return `${type} (from ${a.start_date})`
   }
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
-
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground">Work Activity</h1>
+            <h1 className="text-2xl font-semibold text-foreground">
+              Work Activity
+            </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Your VA's work entries and end-of-day reports
             </p>
@@ -220,13 +248,16 @@ export default function WorkActivityPage() {
           {/* Filters */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             {multipleAssignments && (
-              <Select value={assignmentFilter} onValueChange={setAssignmentFilter}>
+              <Select
+                value={assignmentFilter}
+                onValueChange={setAssignmentFilter}
+              >
                 <SelectTrigger className="rounded-xl border-input h-8 text-sm w-52">
                   <SelectValue placeholder="All assignments" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All assignments</SelectItem>
-                  {assignments.map((a) => (
+                  {assignments.map(a => (
                     <SelectItem key={a.id} value={a.id}>
                       {assignmentLabel(a)}
                     </SelectItem>
@@ -240,7 +271,7 @@ export default function WorkActivityPage() {
               <Input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={e => setDateFrom(e.target.value)}
                 className="rounded-xl border-input h-8 text-sm w-36"
               />
             </div>
@@ -249,7 +280,7 @@ export default function WorkActivityPage() {
               <Input
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={e => setDateTo(e.target.value)}
                 className="rounded-xl border-input h-8 text-sm w-36"
               />
             </div>
@@ -285,14 +316,21 @@ export default function WorkActivityPage() {
             </TabsList>
 
             <TabsContent value="work">
-              <DataTable columns={workColumns} data={filteredEntries} isLoading={isLoading} />
+              <DataTable
+                columns={workColumns}
+                data={filteredEntries}
+                isLoading={isLoading}
+              />
             </TabsContent>
 
             <TabsContent value="eod">
-              <DataTable columns={eodColumns} data={filteredEods} isLoading={isLoading} />
+              <DataTable
+                columns={eodColumns}
+                data={filteredEods}
+                isLoading={isLoading}
+              />
             </TabsContent>
           </Tabs>
-
         </div>
       </div>
     </div>

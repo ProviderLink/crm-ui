@@ -1,14 +1,13 @@
-import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { forgotPassword, resetPassword } from '@/services/auth.service'
-import aristaLogo from '@/assets/arista_crm.png'
+import { zodResolver } from '@hookform/resolvers/zod'
+import type { ReactNode } from 'react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { Link, useSearchParams } from 'react-router-dom'
+import { z } from 'zod'
 
 // ─── Schemas ────────────────────────────────────────────────
 
@@ -21,7 +20,7 @@ const confirmSchema = z
     password: z.string().min(8, 'At least 8 characters'),
     confirm: z.string(),
   })
-  .refine((d) => d.password === d.confirm, {
+  .refine(d => d.password === d.confirm, {
     message: 'Passwords do not match',
     path: ['confirm'],
   })
@@ -60,17 +59,27 @@ function RequestStep() {
   }
 
   return (
-    <AuthShell title="Reset password" subtitle="Enter your email to receive a reset link">
+    <AuthShell
+      title="Reset password"
+      subtitle="Enter your email to receive a reset link"
+    >
       {sent ? (
         <div className="rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-600 dark:text-green-400">
           Check your inbox — a reset link is on its way.
         </div>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          noValidate
+        >
           {error && <ErrorBanner message={error} />}
 
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-foreground"
+            >
               Email
             </Label>
             <Input
@@ -121,7 +130,10 @@ function ConfirmStep({ token }: { token: string }) {
   }
 
   return (
-    <AuthShell title="Set new password" subtitle="Choose a strong password for your account">
+    <AuthShell
+      title="Set new password"
+      subtitle="Choose a strong password for your account"
+    >
       {done ? (
         <div className="space-y-4">
           <div className="rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-600 dark:text-green-400">
@@ -130,11 +142,18 @@ function ConfirmStep({ token }: { token: string }) {
           <BackToLogin />
         </div>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          noValidate
+        >
           {error && <ErrorBanner message={error} />}
 
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="password"
+              className="text-sm font-medium text-foreground"
+            >
               New password
             </Label>
             <Input
@@ -145,11 +164,16 @@ function ConfirmStep({ token }: { token: string }) {
               className="rounded-xl border-input focus-visible:ring-ring/40"
               {...register('password')}
             />
-            {errors.password && <FieldError message={errors.password.message!} />}
+            {errors.password && (
+              <FieldError message={errors.password.message!} />
+            )}
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="confirm" className="text-sm font-medium text-foreground">
+            <Label
+              htmlFor="confirm"
+              className="text-sm font-medium text-foreground"
+            >
               Confirm password
             </Label>
             <Input
@@ -190,12 +214,15 @@ function AuthShell({
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <img src={aristaLogo} alt="" className="h-6 w-6 object-contain" />
-          <span className="text-xl font-semibold text-foreground tracking-tight">Arista CRM</span>
+        <div className="text-center mb-8">
+          <span className="text-xl font-semibold text-foreground tracking-tight">
+            Arista CRM
+          </span>
         </div>
         <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
-          <h1 className="text-2xl font-semibold text-foreground mb-1">{title}</h1>
+          <h1 className="text-2xl font-semibold text-foreground mb-1">
+            {title}
+          </h1>
           <p className="text-sm text-muted-foreground mb-6">{subtitle}</p>
           {children}
         </div>
@@ -219,7 +246,10 @@ function FieldError({ message }: { message: string }) {
 function BackToLogin() {
   return (
     <p className="mt-4 text-center text-sm text-muted-foreground">
-      <Link to="/login" className="text-muted-foreground hover:text-foreground hover:underline">
+      <Link
+        to="/login"
+        className="text-muted-foreground hover:text-foreground hover:underline"
+      >
         Back to sign in
       </Link>
     </p>

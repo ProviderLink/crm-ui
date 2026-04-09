@@ -1,31 +1,41 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Input } from '@/components/ui/input'
 import { DataTable } from '@/components/shared/DataTable'
+import { Input } from '@/components/ui/input'
+import { formatMinutes } from '@/lib/time'
 import { getWorkEntries } from '@/services/work-entries.service'
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
-import { formatMinutes } from '@/lib/time'
 import type { ColumnDef } from '@tanstack/react-table'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
-  completed:   'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-  in_progress: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
-  pending:     'bg-muted text-muted-foreground border-border',
+  completed:
+    'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
+  in_progress:
+    'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
+  pending: 'bg-muted text-muted-foreground border-border',
 }
 
 const columns: ColumnDef<IWorkEntry>[] = [
   {
-    accessorKey: 'entryDate',
+    accessorKey: 'entry_date',
     header: 'Date',
-    cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()?.slice(0, 10)}</span>,
+    cell: ({ getValue }) => (
+      <span className="text-xs text-muted-foreground">
+        {getValue<string>()}
+      </span>
+    ),
   },
   {
-    accessorKey: 'entryTime',
+    accessorKey: 'entry_time',
     header: 'Time',
-    cell: ({ getValue }) => <span className="text-xs text-muted-foreground">{getValue<string>()}</span>,
+    cell: ({ getValue }) => (
+      <span className="text-xs text-muted-foreground">
+        {getValue<string>()}
+      </span>
+    ),
   },
   {
-    accessorKey: 'taskCategory',
+    accessorKey: 'task_category',
     header: 'Category',
     cell: ({ getValue }) => (
       <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
@@ -34,19 +44,25 @@ const columns: ColumnDef<IWorkEntry>[] = [
     ),
   },
   {
-    accessorKey: 'taskDescription',
+    accessorKey: 'task_description',
     header: 'Description',
     enableSorting: false,
     cell: ({ getValue }) => {
       const v = getValue<string>()
-      return <span className="text-sm">{v.length > 55 ? `${v.slice(0, 55)}…` : v}</span>
+      return (
+        <span className="text-sm">
+          {v.length > 55 ? `${v.slice(0, 55)}…` : v}
+        </span>
+      )
     },
   },
   {
-    accessorKey: 'timeSpent',
+    accessorKey: 'time_spent',
     header: 'Time Spent',
     cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">{formatMinutes(getValue<number>())}</span>
+      <span className="text-xs text-muted-foreground">
+        {formatMinutes(getValue<number>())}
+      </span>
     ),
   },
   {
@@ -55,7 +71,9 @@ const columns: ColumnDef<IWorkEntry>[] = [
     cell: ({ getValue }) => {
       const s = getValue<WorkEntryStatus>()
       return (
-        <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}>
+        <span
+          className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
+        >
           {s.replace('_', ' ')}
         </span>
       )
@@ -72,7 +90,10 @@ export default function WorkHistoryPage() {
 
   useEffect(() => {
     getWorkEntries()
-      .then((data) => { setEntries(data); setFiltered(data) })
+      .then(data => {
+        setEntries(data)
+        setFiltered(data)
+      })
       .catch(() => setEntries([]))
       .finally(() => setIsLoading(false))
   }, [])
@@ -80,12 +101,11 @@ export default function WorkHistoryPage() {
   // Client-side date filter
   useEffect(() => {
     setFiltered(
-      entries.filter((e) => {
-        const d = e.entryDate?.slice(0, 10) ?? ''
-        if (dateFrom && d < dateFrom) return false
-        if (dateTo && d > dateTo) return false
+      entries.filter(e => {
+        if (dateFrom && e.entry_date < dateFrom) return false
+        if (dateTo && e.entry_date > dateTo) return false
         return true
-      }),
+      })
     )
   }, [entries, dateFrom, dateTo])
 
@@ -98,51 +118,57 @@ export default function WorkHistoryPage() {
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Work History</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">All your logged work entries</p>
-        </div>
-        <Link
-          to="/va/work/new"
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-opacity"
-        >
-          + Add Entry
-        </Link>
-      </div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground">
+                Work History
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                All your logged work entries
+              </p>
+            </div>
+            <Link
+              to="/va/work/new"
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-opacity"
+            >
+              + Add Entry
+            </Link>
+          </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">From</span>
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-xl border-input h-8 text-sm w-36"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">To</span>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-xl border-input h-8 text-sm w-36"
-          />
-        </div>
-        {(dateFrom || dateTo) && (
-          <button
-            onClick={clearFilters}
-            className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-          >
-            Clear
-          </button>
-        )}
-        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} records</span>
-      </div>
+          {/* Filters */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">From</span>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)}
+                className="rounded-xl border-input h-8 text-sm w-36"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">To</span>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={e => setDateTo(e.target.value)}
+                className="rounded-xl border-input h-8 text-sm w-36"
+              />
+            </div>
+            {(dateFrom || dateTo) && (
+              <button
+                onClick={clearFilters}
+                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+              >
+                Clear
+              </button>
+            )}
+            <span className="text-xs text-muted-foreground ml-auto">
+              {filtered.length} records
+            </span>
+          </div>
 
-      <DataTable columns={columns} data={filtered} isLoading={isLoading} />
+          <DataTable columns={columns} data={filtered} isLoading={isLoading} />
         </div>
       </div>
     </div>

@@ -10,29 +10,33 @@ export const WORK_ENTRY_CATEGORIES = [
 
 export type WorkEntryCategory = (typeof WORK_ENTRY_CATEGORIES)[number]
 
-export const WORK_ENTRY_STATUSES = ['completed', 'in_progress', 'pending'] as const
+export const WORK_ENTRY_STATUSES = [
+  'completed',
+  'in_progress',
+  'pending',
+] as const
 export type WorkEntryStatus = (typeof WORK_ENTRY_STATUSES)[number]
 
 export interface IWorkEntry {
   id: string
-  assignmentId: string
-  entryDate: string   // 'YYYY-MM-DD'
-  entryTime: string   // 'HH:MM'
-  taskCategory: WorkEntryCategory
-  taskDescription: string
-  timeSpent: number   // minutes
+  assignment_id: string
+  entry_date: string // 'YYYY-MM-DD'
+  entry_time: string // 'HH:MM'
+  task_category: WorkEntryCategory
+  task_description: string
+  time_spent: number // minutes
   status: WorkEntryStatus
   notes?: string
-  createdAt: string
+  created_at: string
 }
 
 export interface CreateWorkEntryPayload {
-  assignmentId: string
-  entryDate: string
-  entryTime: string
-  taskCategory: WorkEntryCategory
-  taskDescription: string
-  timeSpent: number
+  assignment_id: string
+  entry_date: string
+  entry_time: string
+  task_category: WorkEntryCategory
+  task_description: string
+  time_spent: number
   status: WorkEntryStatus
   notes?: string
 }
