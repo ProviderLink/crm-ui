@@ -51,7 +51,7 @@ const editSchema = z.object({
     'Other',
   ]),
   taskDescription: z.string().min(1, 'Required'),
-  timeSpent: z.coerce.number().int().min(1, 'At least 1 minute'),
+  timeSpent: z.number().int().min(1, 'At least 1 minute'),
   status: z.enum(['completed', 'in_progress', 'pending']),
   notes: z.string().optional(),
 })
@@ -166,7 +166,7 @@ function EditWorkEntryForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <Label>Time Spent (minutes)</Label>
-          <Input type="number" min={1} {...register('timeSpent')} className="rounded-md border-input" />
+          <Input type="number" min={1} {...register('timeSpent', { valueAsNumber: true })} className="rounded-md border-input" />
           {errors.timeSpent && <p className="text-xs text-destructive">{errors.timeSpent.message}</p>}
         </div>
         <div className="flex flex-col gap-2">

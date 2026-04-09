@@ -33,7 +33,7 @@ const schema = z.object({
     'Other',
   ]),
   taskDescription: z.string().min(1, 'Description is required'),
-  timeSpent: z.coerce.number().int().min(1, 'Enter at least 1 minute'),
+  timeSpent: z.number().int().min(1, 'Enter at least 1 minute'),
   status: z.enum(['completed', 'in_progress', 'pending']),
   notes: z.string().optional(),
 })
@@ -204,7 +204,7 @@ export default function AddWorkEntryPage() {
                       min={1}
                       placeholder="e.g. 60"
                       className="rounded-xl border-input"
-                      {...register('timeSpent')}
+                      {...register('timeSpent', { valueAsNumber: true })}
                     />
                   </Field>
                   <Field label="Status" error={errors.status?.message}>

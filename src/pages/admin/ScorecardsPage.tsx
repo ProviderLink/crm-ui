@@ -19,10 +19,6 @@ import {
 import type { IAtsCandidate } from '@/types/ats'
 import type { IScorecard } from '@/types/scorecard'
 
-function pct(n: number) {
-  return `${(n * 100).toFixed(0)}%`
-}
-
 const scoreColor = (score: number) => {
   if (score >= 80) return 'text-green-600 dark:text-green-400'
   if (score >= 60) return 'text-amber-600 dark:text-amber-400'

@@ -48,7 +48,7 @@ const clientAccountSchema = z.object({
   secondaryContact: z.string().optional(),
   lastClientCheckin: z.string().optional(),
   emrSystem: z.string().optional(),
-  openIssuesCount: z.coerce.number().int().min(0),
+  openIssuesCount: z.number().int().min(0),
   notes: z.string().optional(),
 })
 type ClientAccountFormData = z.infer<typeof clientAccountSchema>
@@ -337,7 +337,7 @@ function EditClientAccountForm({
         <Input
           type="number"
           min="0"
-          {...register('openIssuesCount')}
+          {...register('openIssuesCount', { valueAsNumber: true })}
           className="rounded-md border-input"
         />
       </Field>
