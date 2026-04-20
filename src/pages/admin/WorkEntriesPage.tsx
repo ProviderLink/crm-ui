@@ -106,7 +106,6 @@ export default function WorkEntriesPage() {
         accessorKey: 'taskDescription',
         header: 'Description',
         enableSorting: false,
-        size: 280,
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string>()}</span>
         ),
