@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input'
 import { useEodSubmissionsQuery } from '@/hooks/queries'
 import type { IEodSubmission } from '@/types/eod-submission'
 import type { ColumnDef } from '@tanstack/react-table'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const columns: ColumnDef<IEodSubmission>[] = [
@@ -56,20 +56,18 @@ const columns: ColumnDef<IEodSubmission>[] = [
 
 export default function EodHistoryPage() {
   const { data: eods = [], isLoading } = useEodSubmissionsQuery()
-  const [filtered, setFiltered] = useState<IEodSubmission[]>([])
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
-  // Client-side date filter
-  useEffect(() => {
-    setFiltered(
+  const filtered = useMemo(
+    () =>
       eods.filter(e => {
         if (dateFrom && e.date < dateFrom) return false
         if (dateTo && e.date > dateTo) return false
         return true
-      })
-    )
-  }, [eods, dateFrom, dateTo])
+      }),
+    [eods, dateFrom, dateTo]
+  )
 
   function clearFilters() {
     setDateFrom('')

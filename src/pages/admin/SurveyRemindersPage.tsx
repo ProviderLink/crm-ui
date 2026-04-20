@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useQueryClient } from '@tanstack/react-query'
 import { BellIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
@@ -41,18 +41,16 @@ const todayStr = () => new Date().toISOString().split('T')[0]
 export default function SurveyRemindersPage() {
   const queryClient = useQueryClient()
   const { data: reminders = [], isLoading } = useSurveyRemindersQuery()
-  const [filtered, setFiltered] = useState<ISurveyReminder[]>([])
   const [statusFilter, setStatusFilter] = useState<SurveyStatus | 'all'>('all')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
-  // Client-side status filter
-  useEffect(() => {
-    setFiltered(
+  const filtered = useMemo(
+    () =>
       statusFilter === 'all'
         ? reminders
-        : reminders.filter(r => r.status === statusFilter)
-    )
-  }, [reminders, statusFilter])
+        : reminders.filter(r => r.status === statusFilter),
+    [reminders, statusFilter]
+  )
 
   async function handleUpdateStatus(id: string, status: SurveyStatus) {
     setUpdatingId(id)
@@ -69,90 +67,93 @@ export default function SurveyRemindersPage() {
     }
   }
 
-  const columns: ColumnDef<ISurveyReminder>[] = [
-    {
-      accessorKey: 'surveyType',
-      header: 'Survey',
-      cell: ({ getValue }) => (
-        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
-          {SURVEY_TYPE_LABELS[getValue<ISurveyReminder['surveyType']>()]}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'relatedType',
-      header: 'For',
-      cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground capitalize">
-          {row.original.relatedType} ·{' '}
-          <span className="font-mono">{row.original.relatedId.slice(-8)}</span>
-        </span>
-      ),
-      enableSorting: false,
-    },
-    {
-      accessorKey: 'dueDate',
-      header: 'Due Date',
-      cell: ({ getValue }) => {
-        const v = getValue<string>()?.slice(0, 10) ?? ''
-        const overdue = v < todayStr()
-        return (
-          <span
-            className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
-          >
-            {v}
-            {overdue ? ' (overdue)' : ''}
+  const columns = useMemo<ColumnDef<ISurveyReminder>[]>(
+    () => [
+      {
+        accessorKey: 'surveyType',
+        header: 'Survey',
+        cell: ({ getValue }) => (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+            {SURVEY_TYPE_LABELS[getValue<ISurveyReminder['surveyType']>()]}
           </span>
-        )
+        ),
       },
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ getValue }) => {
-        const s = getValue<SurveyStatus>()
-        return (
-          <span
-            className={`text-xs px-2 py-0.5 rounded-full border capitalize ${STATUS_STYLES[s]}`}
-          >
-            {s}
+      {
+        accessorKey: 'relatedType',
+        header: 'For',
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground capitalize">
+            {row.original.relatedType} ·{' '}
+            <span className="font-mono">{row.original.relatedId.slice(-8)}</span>
           </span>
-        )
+        ),
+        enableSorting: false,
       },
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      enableSorting: false,
-      cell: ({ row }) => {
-        const { id, status } = row.original
-        if (status === 'completed' || status === 'skipped') return null
-        const busy = updatingId === id
-        return (
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 text-xs"
-              disabled={busy}
-              onClick={() => handleUpdateStatus(id, 'completed')}
+      {
+        accessorKey: 'dueDate',
+        header: 'Due Date',
+        cell: ({ getValue }) => {
+          const v = getValue<string>()?.slice(0, 10) ?? ''
+          const overdue = v < todayStr()
+          return (
+            <span
+              className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
             >
-              Complete
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-xs text-muted-foreground"
-              disabled={busy}
-              onClick={() => handleUpdateStatus(id, 'skipped')}
-            >
-              Skip
-            </Button>
-          </div>
-        )
+              {v}
+              {overdue ? ' (overdue)' : ''}
+            </span>
+          )
+        },
       },
-    },
-  ]
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ getValue }) => {
+          const s = getValue<SurveyStatus>()
+          return (
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full border capitalize ${STATUS_STYLES[s]}`}
+            >
+              {s}
+            </span>
+          )
+        },
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        enableSorting: false,
+        cell: ({ row }) => {
+          const { id, status } = row.original
+          if (status === 'completed' || status === 'skipped') return null
+          const busy = updatingId === id
+          return (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                disabled={busy}
+                onClick={() => handleUpdateStatus(id, 'completed')}
+              >
+                Complete
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs text-muted-foreground"
+                disabled={busy}
+                onClick={() => handleUpdateStatus(id, 'skipped')}
+              >
+                Skip
+              </Button>
+            </div>
+          )
+        },
+      },
+    ],
+    [updatingId] // eslint-disable-line react-hooks/exhaustive-deps
+  )
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">

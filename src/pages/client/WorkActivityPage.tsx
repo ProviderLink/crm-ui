@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
 import { Input } from '@/components/ui/input'
@@ -168,33 +168,33 @@ export default function WorkActivityPage() {
   const { data: allEods = [], isLoading: loadingEods } = useEodSubmissionsQuery()
   const isLoading = loadingAssignments || loadingEntries || loadingEods
 
-  const [filteredEntries, setFilteredEntries] = useState<IWorkEntry[]>([])
-  const [filteredEods, setFilteredEods] = useState<IEodSubmission[]>([])
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [assignmentFilter, setAssignmentFilter] = useState('all')
 
-  // Re-filter whenever any filter state changes
-  useEffect(() => {
-    setFilteredEntries(
+  const filteredEntries = useMemo(
+    () =>
       allEntries.filter(e => {
         if (assignmentFilter !== 'all' && e.assignmentId !== assignmentFilter)
           return false
         if (dateFrom && e.entryDate < dateFrom) return false
         if (dateTo && e.entryDate > dateTo) return false
         return true
-      })
-    )
-    setFilteredEods(
+      }),
+    [allEntries, dateFrom, dateTo, assignmentFilter]
+  )
+
+  const filteredEods = useMemo(
+    () =>
       allEods.filter(e => {
         if (assignmentFilter !== 'all' && e.assignmentId !== assignmentFilter)
           return false
         if (dateFrom && e.date < dateFrom) return false
         if (dateTo && e.date > dateTo) return false
         return true
-      })
-    )
-  }, [allEntries, allEods, dateFrom, dateTo, assignmentFilter])
+      }),
+    [allEods, dateFrom, dateTo, assignmentFilter]
+  )
 
   function clearFilters() {
     setDateFrom('')

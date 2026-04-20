@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
 import { Input } from '@/components/ui/input'
@@ -22,23 +22,103 @@ export default function EodReportsPage() {
   const { data: atsVAs = [] } = useAtsVAsQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
 
-  const [filtered, setFiltered] = useState<IEodSubmission[]>([])
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [vaFilter, setVaFilter] = useState('all')
   const [clientFilter, setClientFilter] = useState('all')
 
-  useEffect(() => {
-    setFiltered(
+  const vaMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const v of atsVAs) m[v.id] = `${v.firstName} ${v.lastName}`
+    return m
+  }, [atsVAs])
+
+  const clientMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const c of atsClients) m[c.id] = c.companyName
+    return m
+  }, [atsClients])
+
+  const filtered = useMemo(
+    () =>
       allEods.filter(e => {
         if (vaFilter !== 'all' && e.vaId !== vaFilter) return false
         if (clientFilter !== 'all' && e.clientId !== clientFilter) return false
         if (dateFrom && e.date < dateFrom) return false
         if (dateTo && e.date > dateTo) return false
         return true
-      })
-    )
-  }, [allEods, vaFilter, clientFilter, dateFrom, dateTo])
+      }),
+    [allEods, vaFilter, clientFilter, dateFrom, dateTo]
+  )
+
+  const columns = useMemo<ColumnDef<IEodSubmission>[]>(
+    () => [
+      {
+        accessorKey: 'date',
+        header: 'Date',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-muted-foreground">
+            {getValue<string>()?.slice(0, 10)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'vaId',
+        header: 'VA',
+        cell: ({ getValue }) => (
+          <span className="text-sm">
+            {vaMap[getValue<string>()] ?? getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'clientId',
+        header: 'Client',
+        cell: ({ getValue }) => (
+          <span className="text-sm">
+            {clientMap[getValue<string>()] ?? getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'shiftStart',
+        header: 'Start',
+        cell: ({ getValue }) => (
+          <span className="text-sm">{getValue<string>()}</span>
+        ),
+      },
+      {
+        accessorKey: 'shiftEnd',
+        header: 'End',
+        cell: ({ getValue }) => (
+          <span className="text-sm">{getValue<string>()}</span>
+        ),
+      },
+      {
+        accessorKey: 'hoursWorked',
+        header: 'Hours',
+        cell: ({ getValue }) => (
+          <span className="text-sm font-medium text-foreground">
+            {getValue<number>()}h
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'summaryOfWork',
+        header: 'Summary',
+        enableSorting: false,
+        cell: ({ getValue }) => {
+          const v = getValue<string>()
+          return (
+            <span className="text-sm">
+              {v.length > 55 ? `${v.slice(0, 55)}…` : v}
+            </span>
+          )
+        },
+      },
+    ],
+    [vaMap, clientMap]
+  )
 
   function clearFilters() {
     setDateFrom('')
@@ -47,83 +127,11 @@ export default function EodReportsPage() {
     setClientFilter('all')
   }
 
-  const vaMap: Record<string, string> = {}
-  for (const v of atsVAs) vaMap[v.id] = `${v.firstName} ${v.lastName}`
-
-  const clientMap: Record<string, string> = {}
-  for (const c of atsClients) clientMap[c.id] = c.companyName
-
   const hasFilter =
     dateFrom !== '' ||
     dateTo !== '' ||
     vaFilter !== 'all' ||
     clientFilter !== 'all'
-
-  const columns: ColumnDef<IEodSubmission>[] = [
-    {
-      accessorKey: 'date',
-      header: 'Date',
-      cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
-          {getValue<string>()?.slice(0, 10)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'vaId',
-      header: 'VA',
-      cell: ({ getValue }) => (
-        <span className="text-sm">
-          {vaMap[getValue<string>()] ?? getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'clientId',
-      header: 'Client',
-      cell: ({ getValue }) => (
-        <span className="text-sm">
-          {clientMap[getValue<string>()] ?? getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'shiftStart',
-      header: 'Start',
-      cell: ({ getValue }) => (
-        <span className="text-sm">{getValue<string>()}</span>
-      ),
-    },
-    {
-      accessorKey: 'shiftEnd',
-      header: 'End',
-      cell: ({ getValue }) => (
-        <span className="text-sm">{getValue<string>()}</span>
-      ),
-    },
-    {
-      accessorKey: 'hoursWorked',
-      header: 'Hours',
-      cell: ({ getValue }) => (
-        <span className="text-sm font-medium text-foreground">
-          {getValue<number>()}h
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'summaryOfWork',
-      header: 'Summary',
-      enableSorting: false,
-      cell: ({ getValue }) => {
-        const v = getValue<string>()
-        return (
-          <span className="text-sm">
-            {v.length > 55 ? `${v.slice(0, 55)}…` : v}
-          </span>
-        )
-      },
-    },
-  ]
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">

@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
 import { Input } from '@/components/ui/input'
@@ -31,23 +31,112 @@ export default function WorkEntriesPage() {
   const { data: atsVAs = [] } = useAtsVAsQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
 
-  const [filtered, setFiltered] = useState<IWorkEntry[]>([])
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [vaFilter, setVaFilter] = useState('all')
   const [clientFilter, setClientFilter] = useState('all')
 
-  useEffect(() => {
-    setFiltered(
+  const vaMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const v of atsVAs) m[v.id] = `${v.firstName} ${v.lastName}`
+    return m
+  }, [atsVAs])
+
+  const clientMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const c of atsClients) m[c.id] = c.companyName
+    return m
+  }, [atsClients])
+
+  const filtered = useMemo(
+    () =>
       allEntries.filter(e => {
         if (vaFilter !== 'all' && e.vaId !== vaFilter) return false
         if (clientFilter !== 'all' && e.clientId !== clientFilter) return false
         if (dateFrom && e.entryDate < dateFrom) return false
         if (dateTo && e.entryDate > dateTo) return false
         return true
-      })
-    )
-  }, [allEntries, vaFilter, clientFilter, dateFrom, dateTo])
+      }),
+    [allEntries, vaFilter, clientFilter, dateFrom, dateTo]
+  )
+
+  const columns = useMemo<ColumnDef<IWorkEntry>[]>(
+    () => [
+      {
+        accessorKey: 'entryDate',
+        header: 'Date',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-muted-foreground">
+            {getValue<string>()?.slice(0, 10)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'vaId',
+        header: 'VA',
+        cell: ({ getValue }) => (
+          <span className="text-sm">
+            {vaMap[getValue<string>()] ?? getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'clientId',
+        header: 'Client',
+        cell: ({ getValue }) => (
+          <span className="text-sm">
+            {clientMap[getValue<string>()] ?? getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'taskCategory',
+        header: 'Category',
+        cell: ({ getValue }) => (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+            {getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'taskDescription',
+        header: 'Description',
+        enableSorting: false,
+        cell: ({ getValue }) => {
+          const v = getValue<string>()
+          return (
+            <span className="text-sm">
+              {v.length > 50 ? `${v.slice(0, 50)}…` : v}
+            </span>
+          )
+        },
+      },
+      {
+        accessorKey: 'timeSpent',
+        header: 'Time',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-muted-foreground">
+            {formatMinutes(getValue<number>())}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ getValue }) => {
+          const s = getValue<WorkEntryStatus>()
+          return (
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
+            >
+              {s.replace('_', ' ')}
+            </span>
+          )
+        },
+      },
+    ],
+    [vaMap, clientMap]
+  )
 
   function clearFilters() {
     setDateFrom('')
@@ -56,92 +145,11 @@ export default function WorkEntriesPage() {
     setClientFilter('all')
   }
 
-  const vaMap: Record<string, string> = {}
-  for (const v of atsVAs) vaMap[v.id] = `${v.firstName} ${v.lastName}`
-
-  const clientMap: Record<string, string> = {}
-  for (const c of atsClients) clientMap[c.id] = c.companyName
-
   const hasFilter =
     dateFrom !== '' ||
     dateTo !== '' ||
     vaFilter !== 'all' ||
     clientFilter !== 'all'
-
-  const columns: ColumnDef<IWorkEntry>[] = [
-    {
-      accessorKey: 'entryDate',
-      header: 'Date',
-      cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
-          {getValue<string>()?.slice(0, 10)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'vaId',
-      header: 'VA',
-      cell: ({ getValue }) => (
-        <span className="text-sm">
-          {vaMap[getValue<string>()] ?? getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'clientId',
-      header: 'Client',
-      cell: ({ getValue }) => (
-        <span className="text-sm">
-          {clientMap[getValue<string>()] ?? getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'taskCategory',
-      header: 'Category',
-      cell: ({ getValue }) => (
-        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
-          {getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'taskDescription',
-      header: 'Description',
-      enableSorting: false,
-      cell: ({ getValue }) => {
-        const v = getValue<string>()
-        return (
-          <span className="text-sm">
-            {v.length > 50 ? `${v.slice(0, 50)}…` : v}
-          </span>
-        )
-      },
-    },
-    {
-      accessorKey: 'timeSpent',
-      header: 'Time',
-      cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
-          {formatMinutes(getValue<number>())}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ getValue }) => {
-        const s = getValue<WorkEntryStatus>()
-        return (
-          <span
-            className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
-          >
-            {s.replace('_', ' ')}
-          </span>
-        )
-      },
-    },
-  ]
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">

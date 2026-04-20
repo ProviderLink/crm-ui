@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { z } from 'zod'
@@ -249,105 +249,107 @@ function EditWorkEntryForm({
 export default function WorkHistoryPage() {
   const queryClient = useQueryClient()
   const { data: entries = [], isLoading } = useWorkEntriesQuery()
-  const [filtered, setFiltered] = useState<IWorkEntry[]>([])
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [editEntry, setEditEntry] = useState<IWorkEntry | null>(null)
 
-  useEffect(() => {
-    setFiltered(
+  const filtered = useMemo(
+    () =>
       entries.filter(e => {
         if (dateFrom && e.entryDate < dateFrom) return false
         if (dateTo && e.entryDate > dateTo) return false
         return true
-      })
-    )
-  }, [entries, dateFrom, dateTo])
+      }),
+    [entries, dateFrom, dateTo]
+  )
 
   function clearFilters() {
     setDateFrom('')
     setDateTo('')
   }
 
-  const columns: ColumnDef<IWorkEntry>[] = [
-    {
-      accessorKey: 'entryDate',
-      header: 'Date',
-      cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
-          {getValue<string>()?.slice(0, 10)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'entryTime',
-      header: 'Time',
-      cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
-          {getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'taskCategory',
-      header: 'Category',
-      cell: ({ getValue }) => (
-        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
-          {getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'taskDescription',
-      header: 'Description',
-      enableSorting: false,
-      cell: ({ getValue }) => {
-        const v = getValue<string>()
-        return (
-          <span className="text-sm">
-            {v.length > 55 ? `${v.slice(0, 55)}…` : v}
+  const columns = useMemo<ColumnDef<IWorkEntry>[]>(
+    () => [
+      {
+        accessorKey: 'entryDate',
+        header: 'Date',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-muted-foreground">
+            {getValue<string>()?.slice(0, 10)}
           </span>
-        )
+        ),
       },
-    },
-    {
-      accessorKey: 'timeSpent',
-      header: 'Time Spent',
-      cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
-          {formatMinutes(getValue<number>())}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ getValue }) => {
-        const s = getValue<WorkEntryStatus>()
-        return (
-          <span
-            className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
+      {
+        accessorKey: 'entryTime',
+        header: 'Time',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-muted-foreground">
+            {getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'taskCategory',
+        header: 'Category',
+        cell: ({ getValue }) => (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+            {getValue<string>()}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'taskDescription',
+        header: 'Description',
+        enableSorting: false,
+        cell: ({ getValue }) => {
+          const v = getValue<string>()
+          return (
+            <span className="text-sm">
+              {v.length > 55 ? `${v.slice(0, 55)}…` : v}
+            </span>
+          )
+        },
+      },
+      {
+        accessorKey: 'timeSpent',
+        header: 'Time Spent',
+        cell: ({ getValue }) => (
+          <span className="text-xs text-muted-foreground">
+            {formatMinutes(getValue<number>())}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ getValue }) => {
+          const s = getValue<WorkEntryStatus>()
+          return (
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
+            >
+              {s.replace('_', ' ')}
+            </span>
+          )
+        },
+      },
+      {
+        id: 'actions',
+        header: '',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <button
+            type="button"
+            onClick={() => setEditEntry(row.original)}
+            className="text-xs text-blue-600 hover:underline"
           >
-            {s.replace('_', ' ')}
-          </span>
-        )
+            Edit
+          </button>
+        ),
       },
-    },
-    {
-      id: 'actions',
-      header: '',
-      enableSorting: false,
-      cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={() => setEditEntry(row.original)}
-          className="text-xs text-blue-600 hover:underline"
-        >
-          Edit
-        </button>
-      ),
-    },
-  ]
+    ],
+    [setEditEntry]
+  )
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
