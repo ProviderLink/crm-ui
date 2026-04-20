@@ -1,6 +1,6 @@
 import { DataTable } from '@/components/shared/DataTable'
 import { Input } from '@/components/ui/input'
-import { getEodSubmissions } from '@/services/eod-submissions.service'
+import { useEodSubmissionsQuery } from '@/hooks/queries'
 import type { IEodSubmission } from '@/types/eod-submission'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useEffect, useState } from 'react'
@@ -55,21 +55,10 @@ const columns: ColumnDef<IEodSubmission>[] = [
 ]
 
 export default function EodHistoryPage() {
-  const [eods, setEods] = useState<IEodSubmission[]>([])
+  const { data: eods = [], isLoading } = useEodSubmissionsQuery()
   const [filtered, setFiltered] = useState<IEodSubmission[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-
-  useEffect(() => {
-    getEodSubmissions()
-      .then(data => {
-        setEods(data)
-        setFiltered(data)
-      })
-      .catch(() => setEods([]))
-      .finally(() => setIsLoading(false))
-  }, [])
 
   // Client-side date filter
   useEffect(() => {

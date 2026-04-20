@@ -10,10 +10,12 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useMyAssignments } from '@/hooks/useMyAssignments'
+import { QK } from '@/hooks/queries'
 import { nowTimeString, todayString } from '@/lib/time'
 import { createWorkEntry } from '@/services/work-entries.service'
 import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -42,6 +44,7 @@ type FormData = z.infer<typeof schema>
 
 export default function AddWorkEntryPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { assignments, isLoading: loadingAssignments } = useMyAssignments()
 
   const {
@@ -69,6 +72,7 @@ export default function AddWorkEntryPage() {
   async function onSubmit(data: FormData) {
     try {
       await createWorkEntry(data)
+      queryClient.invalidateQueries({ queryKey: QK.workEntries })
       navigate('/va/work/history')
     } catch {
       // error handled below via isSubmitting state reset

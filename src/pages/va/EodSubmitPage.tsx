@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,11 +11,9 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useMyAssignments } from '@/hooks/useMyAssignments'
+import { QK, useEodSubmissionsQuery } from '@/hooks/queries'
 import { calcHours, todayString } from '@/lib/time'
-import {
-  createEodSubmission,
-  getEodSubmissions,
-} from '@/services/eod-submissions.service'
+import { createEodSubmission } from '@/services/eod-submissions.service'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -43,8 +42,9 @@ export default function EodSubmitPage() {
   const today = todayString()
   const { assignments, isLoading: loadingAssignments } = useMyAssignments()
 
-  const [alreadySubmitted, setAlreadySubmitted] = useState(false)
-  const [checkingEod, setCheckingEod] = useState(true)
+  const queryClient = useQueryClient()
+  const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery()
+  const alreadySubmitted = eods.some(e => e.date.slice(0, 10) === today)
   const [error, setError] = useState<string | null>(null)
 
   const {
@@ -65,15 +65,6 @@ export default function EodSubmitPage() {
 
   // Check if EOD already submitted today + auto-select assignment
   useEffect(() => {
-    getEodSubmissions()
-      .then(eods =>
-        setAlreadySubmitted(eods.some(e => e.date.slice(0, 10) === today))
-      )
-      .catch(() => {})
-      .finally(() => setCheckingEod(false))
-  }, [today])
-
-  useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
       setValue('assignmentId', assignments[0].id)
     }
@@ -83,6 +74,7 @@ export default function EodSubmitPage() {
     setError(null)
     try {
       await createEodSubmission({ ...data, hoursWorked: hoursWorked })
+      queryClient.invalidateQueries({ queryKey: QK.eodSubmissions })
       navigate('/va/eod/history')
     } catch {
       setError('Failed to submit EOD. Please try again.')

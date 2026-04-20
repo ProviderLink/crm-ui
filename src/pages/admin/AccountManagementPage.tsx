@@ -25,13 +25,16 @@ import {
 } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { getAtsClients, getAtsVAs } from '@/services/ats.service'
+import { useQueryClient } from '@tanstack/react-query'
 import {
-  getClientAccounts,
-  updateClientAccount,
-} from '@/services/client-accounts.service'
-import { getVaProfiles, updateVaProfile } from '@/services/va-profiles.service'
-import type { IAtsCandidate, IAtsClient } from '@/types/ats'
+  QK,
+  useAtsClientsQuery,
+  useAtsVAsQuery,
+  useClientAccountsQuery,
+  useVaProfilesQuery,
+} from '@/hooks/queries'
+import { updateClientAccount } from '@/services/client-accounts.service'
+import { updateVaProfile } from '@/services/va-profiles.service'
 import type { IClientAccount } from '@/types/client-account'
 import type { IVaProfile } from '@/types/va-profile'
 
@@ -507,42 +510,15 @@ function EditVaProfileForm({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AccountManagementPage() {
-  const [accounts, setAccounts] = useState<IClientAccount[]>([])
-  const [profiles, setProfiles] = useState<IVaProfile[]>([])
-  const [atsClients, setAtsClients] = useState<IAtsClient[]>([])
-  const [atsVas, setAtsVas] = useState<IAtsCandidate[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const { data: accounts = [], isLoading: loadingAccounts } = useClientAccountsQuery()
+  const { data: profiles = [], isLoading: loadingProfiles } = useVaProfilesQuery()
+  const { data: atsClients = [] } = useAtsClientsQuery()
+  const { data: atsVas = [] } = useAtsVAsQuery()
+  const isLoading = loadingAccounts || loadingProfiles
 
   const [editAccount, setEditAccount] = useState<IClientAccount | null>(null)
   const [editProfile, setEditProfile] = useState<IVaProfile | null>(null)
-
-  async function reload() {
-    const [a, p] = await Promise.all([getClientAccounts(), getVaProfiles()])
-    setAccounts(a)
-    setProfiles(p)
-  }
-
-  useEffect(() => {
-    async function init() {
-      try {
-        const [a, p, clients, vas] = await Promise.all([
-          getClientAccounts(),
-          getVaProfiles(),
-          getAtsClients(),
-          getAtsVAs(),
-        ])
-        setAccounts(a)
-        setProfiles(p)
-        setAtsClients(clients)
-        setAtsVas(vas)
-      } catch {
-        // silently fail
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    void init()
-  }, [])
 
   const clientMap: Record<string, string> = {}
   for (const c of atsClients) clientMap[c.id] = c.companyName
@@ -705,9 +681,9 @@ export default function AccountManagementPage() {
           {editAccount && (
             <EditClientAccountForm
               account={editAccount}
-              onSuccess={async () => {
+              onSuccess={() => {
                 setEditAccount(null)
-                await reload()
+                queryClient.invalidateQueries({ queryKey: QK.clientAccounts })
               }}
             />
           )}
@@ -729,9 +705,9 @@ export default function AccountManagementPage() {
           {editProfile && (
             <EditVaProfileForm
               profile={editProfile}
-              onSuccess={async () => {
+              onSuccess={() => {
                 setEditProfile(null)
-                await reload()
+                queryClient.invalidateQueries({ queryKey: QK.vaProfiles })
               }}
             />
           )}

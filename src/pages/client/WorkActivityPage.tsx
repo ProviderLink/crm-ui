@@ -12,9 +12,11 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatMinutes } from '@/lib/time'
-import { getAllAssignments } from '@/services/assignments.service'
-import { getEodSubmissions } from '@/services/eod-submissions.service'
-import { getWorkEntries } from '@/services/work-entries.service'
+import {
+  useAllAssignmentsQuery,
+  useEodSubmissionsQuery,
+  useWorkEntriesQuery,
+} from '@/hooks/queries'
 import type { IAssignment } from '@/types/assignment'
 import type { IEodSubmission } from '@/types/eod-submission'
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
@@ -161,39 +163,16 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function WorkActivityPage() {
-  const [assignments, setAssignments] = useState<IAssignment[]>([])
-  const [allEntries, setAllEntries] = useState<IWorkEntry[]>([])
-  const [allEods, setAllEods] = useState<IEodSubmission[]>([])
+  const { data: assignments = [], isLoading: loadingAssignments } = useAllAssignmentsQuery()
+  const { data: allEntries = [], isLoading: loadingEntries } = useWorkEntriesQuery()
+  const { data: allEods = [], isLoading: loadingEods } = useEodSubmissionsQuery()
+  const isLoading = loadingAssignments || loadingEntries || loadingEods
+
   const [filteredEntries, setFilteredEntries] = useState<IWorkEntry[]>([])
   const [filteredEods, setFilteredEods] = useState<IEodSubmission[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [assignmentFilter, setAssignmentFilter] = useState('all')
-
-  // Load all data once on mount
-  useEffect(() => {
-    async function load() {
-      try {
-        const [asgns, entries, eods] = await Promise.all([
-          getAllAssignments(),
-          getWorkEntries(),
-          getEodSubmissions(),
-        ])
-        setAssignments(asgns)
-        setAllEntries(entries)
-        setAllEods(eods)
-        setFilteredEntries(entries)
-        setFilteredEods(eods)
-      } catch {
-        setAllEntries([])
-        setAllEods([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    void load()
-  }, [])
 
   // Re-filter whenever any filter state changes
   useEffect(() => {

@@ -24,12 +24,18 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  QK,
+  useAllAssignmentsQuery,
+  useAtsClientsQuery,
+  useAtsTeamQuery,
+  useAtsVAsQuery,
+} from '@/hooks/queries'
 import {
   createAssignment,
-  getAllAssignments,
   updateAssignment,
 } from '@/services/assignments.service'
-import { getAtsClients, getAtsTeam, getAtsVAs } from '@/services/ats.service'
 import type { IAssignment } from '@/types/assignment'
 import type { IAtsCandidate, IAtsClient, IAtsUser } from '@/types/ats'
 
@@ -453,41 +459,27 @@ function EditAssignmentForm({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AssignmentManagementPage() {
-  const [assignments, setAssignments] = useState<IAssignment[]>([])
-  const [atsClients, setAtsClients] = useState<IAtsClient[]>([])
-  const [atsVas, setAtsVas] = useState<IAtsCandidate[]>([])
-  const [atsTeam, setAtsTeam] = useState<IAtsUser[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const { data: assignments = [], isLoading } = useAllAssignmentsQuery()
+  const { data: atsClients = [] } = useAtsClientsQuery()
+  const { data: atsVas = [] } = useAtsVAsQuery()
+  const { data: atsTeam = [] } = useAtsTeamQuery()
 
   const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null)
   const [editTarget, setEditTarget] = useState<IAssignment | null>(null)
 
-  async function loadAssignments() {
-    const data = await getAllAssignments()
-    setAssignments(data)
+  async function handleDeactivate(a: IAssignment) {
+    try {
+      await updateAssignment(a.id, { status: 'ended' })
+      queryClient.invalidateQueries({ queryKey: QK.allAssignments })
+    } catch {
+      // silently fail
+    }
   }
 
-  useEffect(() => {
-    async function init() {
-      try {
-        const [allAssignments, clients, vas, team] = await Promise.all([
-          getAllAssignments(),
-          getAtsClients(),
-          getAtsVAs(),
-          getAtsTeam(),
-        ])
-        setAssignments(allAssignments)
-        setAtsClients(clients)
-        setAtsVas(vas)
-        setAtsTeam(team)
-      } catch {
-        // silently fail
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    void init()
-  }, [])
+  function handleSheetClose(open: boolean) {
+    if (!open) setSheetMode(null)
+  }
 
   const clientMap: Record<string, string> = {}
   for (const c of atsClients) clientMap[c.id] = c.companyName
@@ -497,19 +489,6 @@ export default function AssignmentManagementPage() {
 
   const amMap: Record<string, string> = {}
   for (const u of atsTeam) amMap[u.id] = `${u.firstName} ${u.lastName}`
-
-  async function handleDeactivate(a: IAssignment) {
-    try {
-      await updateAssignment(a.id, { status: 'ended' })
-      await loadAssignments()
-    } catch {
-      // silently fail
-    }
-  }
-
-  function handleSheetClose(open: boolean) {
-    if (!open) setSheetMode(null)
-  }
 
   const columns = buildColumns(
     clientMap,
@@ -570,9 +549,9 @@ export default function AssignmentManagementPage() {
               clients={atsClients}
               vas={atsVas}
               team={atsTeam}
-              onSuccess={async () => {
+              onSuccess={() => {
                 setSheetMode(null)
-                await loadAssignments()
+                queryClient.invalidateQueries({ queryKey: QK.allAssignments })
               }}
             />
           )}
@@ -581,9 +560,9 @@ export default function AssignmentManagementPage() {
             <EditAssignmentForm
               assignment={editTarget}
               team={atsTeam}
-              onSuccess={async () => {
+              onSuccess={() => {
                 setSheetMode(null)
-                await loadAssignments()
+                queryClient.invalidateQueries({ queryKey: QK.allAssignments })
               }}
             />
           )}

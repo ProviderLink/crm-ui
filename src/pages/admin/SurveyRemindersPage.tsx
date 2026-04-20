@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
+import { useQueryClient } from '@tanstack/react-query'
 import { BellIcon } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
@@ -11,10 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  getSurveyReminders,
-  updateSurveyReminder,
-} from '@/services/survey-reminders.service'
+import { QK, useSurveyRemindersQuery } from '@/hooks/queries'
+import { updateSurveyReminder } from '@/services/survey-reminders.service'
 import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -40,26 +39,11 @@ const todayStr = () => new Date().toISOString().split('T')[0]
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SurveyRemindersPage() {
-  const [reminders, setReminders] = useState<ISurveyReminder[]>([])
+  const queryClient = useQueryClient()
+  const { data: reminders = [], isLoading } = useSurveyRemindersQuery()
   const [filtered, setFiltered] = useState<ISurveyReminder[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<SurveyStatus | 'all'>('all')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
-
-  const load = useCallback(() => {
-    setIsLoading(true)
-    getSurveyReminders()
-      .then(data => {
-        setReminders(data)
-        setFiltered(data)
-      })
-      .catch(() => setReminders([]))
-      .finally(() => setIsLoading(false))
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
 
   // Client-side status filter
   useEffect(() => {
@@ -73,11 +57,11 @@ export default function SurveyRemindersPage() {
   async function handleUpdateStatus(id: string, status: SurveyStatus) {
     setUpdatingId(id)
     try {
-      const updated = await updateSurveyReminder(id, {
+      await updateSurveyReminder(id, {
         status,
         ...(status === 'completed' ? { completedDate: todayStr() } : {}),
       })
-      setReminders(prev => prev.map(r => (r.id === id ? updated : r)))
+      queryClient.invalidateQueries({ queryKey: QK.surveyReminders })
     } catch {
       // silently ignore
     } finally {

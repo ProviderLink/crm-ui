@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
+import { useQueryClient } from '@tanstack/react-query'
 import { BarChart3Icon, RefreshCwIcon } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
@@ -11,12 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { getAtsVAs } from '@/services/ats.service'
-import {
-  generateScorecards,
-  getScorecards,
-} from '@/services/scorecards.service'
-import type { IAtsCandidate } from '@/types/ats'
+import { useAtsVAsQuery, useScorecardsQuery } from '@/hooks/queries'
+import { generateScorecards } from '@/services/scorecards.service'
 import type { IScorecard } from '@/types/scorecard'
 
 const scoreColor = (score: number) => {
@@ -26,37 +23,22 @@ const scoreColor = (score: number) => {
 }
 
 export default function ScorecardsPage() {
-  const [scorecards, setScorecards] = useState<IScorecard[]>([])
-  const [vaMap, setVaMap] = useState<Record<string, string>>({})
-  const [vaList, setVaList] = useState<IAtsCandidate[]>([])
+  const queryClient = useQueryClient()
   const [vaFilter, setVaFilter] = useState<string>('all')
-  const [isLoading, setIsLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
 
-  const load = useCallback(() => {
-    setIsLoading(true)
-    const vaId = vaFilter === 'all' ? undefined : vaFilter
-    Promise.all([getScorecards(vaId), getAtsVAs()])
-      .then(([cards, vas]) => {
-        setScorecards(cards)
-        const map: Record<string, string> = {}
-        for (const v of vas) map[v.id] = `${v.firstName} ${v.lastName}`
-        setVaMap(map)
-        setVaList(vas)
-      })
-      .catch(() => setScorecards([]))
-      .finally(() => setIsLoading(false))
-  }, [vaFilter])
+  const vaId = vaFilter === 'all' ? undefined : vaFilter
+  const { data: scorecards = [], isLoading } = useScorecardsQuery(vaId)
+  const { data: vaList = [] } = useAtsVAsQuery()
 
-  useEffect(() => {
-    load()
-  }, [load])
+  const vaMap: Record<string, string> = {}
+  for (const v of vaList) vaMap[v.id] = `${v.firstName} ${v.lastName}`
 
   async function handleGenerate() {
     setGenerating(true)
     try {
       await generateScorecards()
-      load()
+      queryClient.invalidateQueries({ queryKey: ['scorecards'] })
     } catch {
       // silently ignore
     } finally {

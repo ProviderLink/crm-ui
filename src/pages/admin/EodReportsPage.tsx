@@ -10,42 +10,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { getAtsClients, getAtsVAs } from '@/services/ats.service'
-import { getEodSubmissions } from '@/services/eod-submissions.service'
-import type { IAtsCandidate, IAtsClient } from '@/types/ats'
+import {
+  useAtsClientsQuery,
+  useAtsVAsQuery,
+  useEodSubmissionsQuery,
+} from '@/hooks/queries'
 import type { IEodSubmission } from '@/types/eod-submission'
 
 export default function EodReportsPage() {
-  const [allEods, setAllEods] = useState<IEodSubmission[]>([])
+  const { data: allEods = [], isLoading } = useEodSubmissionsQuery()
+  const { data: atsVAs = [] } = useAtsVAsQuery()
+  const { data: atsClients = [] } = useAtsClientsQuery()
+
   const [filtered, setFiltered] = useState<IEodSubmission[]>([])
-  const [atsVAs, setAtsVAs] = useState<IAtsCandidate[]>([])
-  const [atsClients, setAtsClients] = useState<IAtsClient[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [vaFilter, setVaFilter] = useState('all')
   const [clientFilter, setClientFilter] = useState('all')
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const [eods, vas, clients] = await Promise.all([
-          getEodSubmissions(),
-          getAtsVAs(),
-          getAtsClients(),
-        ])
-        setAllEods(eods)
-        setFiltered(eods)
-        setAtsVAs(vas)
-        setAtsClients(clients)
-      } catch {
-        setAllEods([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    void load()
-  }, [])
 
   useEffect(() => {
     setFiltered(

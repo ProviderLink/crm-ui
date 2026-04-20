@@ -5,7 +5,6 @@ import {
   ClockIcon,
   UserIcon,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Badge } from '@/components/ui/badge'
@@ -19,9 +18,11 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getAllAssignments } from '@/services/assignments.service'
-import { getEodSubmissions } from '@/services/eod-submissions.service'
-import { getWorkEntries } from '@/services/work-entries.service'
+import {
+  useAllAssignmentsQuery,
+  useEodSubmissionsQuery,
+  useWorkEntriesQuery,
+} from '@/hooks/queries'
 import type { IAssignment } from '@/types/assignment'
 
 function todayStr() {
@@ -48,40 +49,23 @@ export default function ClientDashboardPage() {
   const today = todayStr()
   const weekStart = weekStartStr()
 
-  const [assignments, setAssignments] = useState<IAssignment[]>([])
-  const [activeAssignments, setActiveAssignments] = useState<number | null>(
-    null
-  )
-  const [weekHours, setWeekHours] = useState<number | null>(null)
-  const [lastEodDate, setLastEodDate] = useState<string | null>(null)
-  const [todayCount, setTodayCount] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: assignmentList = [], isLoading: loadingAssignments } =
+    useAllAssignmentsQuery()
+  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery()
+  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery()
+  const loading = loadingAssignments || loadingWork || loadingEods
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [assignmentList, workAll, eods] = await Promise.all([
-          getAllAssignments(),
-          getWorkEntries(),
-          getEodSubmissions(),
-        ])
-        const activeList = assignmentList.filter(a => a.status === 'active')
-        setAssignments(activeList)
-        setActiveAssignments(activeList.length)
-        const workWeek = workAll.filter(e => e.entryDate.slice(0, 10) >= weekStart)
-        const workToday = workAll.filter(e => e.entryDate.slice(0, 10) === today)
-        setWeekHours(workWeek.reduce((sum, e) => sum + e.timeSpent, 0) / 60)
-        setTodayCount(workToday.length)
-        const sorted = [...eods].sort((a, b) => (b.date > a.date ? 1 : -1))
-        setLastEodDate(sorted[0]?.date?.slice(0, 10) ?? null)
-      } catch {
-        // Dashboard is informational — silently skip on error
-      } finally {
-        setLoading(false)
-      }
-    }
-    void load()
-  }, [today, weekStart])
+  const assignments = assignmentList.filter(a => a.status === 'active')
+  const activeAssignments = assignments.length
+  const weekHours =
+    workAll
+      .filter(e => e.entryDate.slice(0, 10) >= weekStart)
+      .reduce((sum, e) => sum + e.timeSpent, 0) / 60
+  const todayCount = workAll.filter(
+    e => e.entryDate.slice(0, 10) === today
+  ).length
+  const sortedEods = [...eods].sort((a, b) => (b.date > a.date ? 1 : -1))
+  const lastEodDate = sortedEods[0]?.date?.slice(0, 10) ?? null
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -95,7 +79,7 @@ export default function ClientDashboardPage() {
                 {loading ? (
                   <Skeleton className="h-8 w-12" />
                 ) : (
-                  (activeAssignments ?? 0)
+                  activeAssignments
                 )}
               </CardTitle>
               <div className="absolute right-4 top-4">
@@ -156,7 +140,7 @@ export default function ClientDashboardPage() {
                 {loading ? (
                   <Skeleton className="h-8 w-12" />
                 ) : (
-                  (todayCount ?? 0)
+                  todayCount
                 )}
               </CardTitle>
               <div className="absolute right-4 top-4">

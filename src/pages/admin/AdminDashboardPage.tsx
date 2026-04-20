@@ -7,7 +7,7 @@ import {
   UserCheckIcon,
   UsersIcon,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
@@ -41,10 +41,10 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAppSelector } from '@/hooks/store'
 import {
-  getDashboardStats,
-  type IDashboardStats,
-} from '@/services/admin.service'
-import { getAtsClients, getAtsVAs } from '@/services/ats.service'
+  useAtsClientsQuery,
+  useAtsVAsQuery,
+  useDashboardStatsQuery,
+} from '@/hooks/queries'
 import { exportReport } from '@/services/reports.service'
 
 // ─── Export form ─────────────────────────────────────────────────────────────
@@ -80,12 +80,31 @@ export default function AdminDashboardPage() {
   const user = useAppSelector(s => s.auth.user)
   const isAccountManager = user?.role === 'account_manager'
 
-  const [stats, setStats] = useState<IDashboardStats | null>(null)
-  const [breakdown, setBreakdown] = useState<VABreakdownRow[]>([])
-  const [clientBreakdown, setClientBreakdown] = useState<ClientBreakdownRow[]>(
-    []
-  )
-  const [loading, setLoading] = useState(true)
+  const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery()
+  const { data: atsVAs = [], isLoading: loadingVAs } = useAtsVAsQuery()
+  const { data: atsClients = [], isLoading: loadingClients } = useAtsClientsQuery()
+  const loading = loadingStats || loadingVAs || loadingClients
+
+  const vaMap: Record<string, string> = {}
+  for (const va of atsVAs) vaMap[va.id] = `${va.firstName} ${va.lastName}`
+
+  const breakdown: VABreakdownRow[] = stats
+    ? Object.entries(stats.perVABreakdown).map(([vaId, count]) => ({
+        vaName: vaMap[vaId] ?? vaId,
+        count,
+      }))
+    : []
+
+  const clientMap: Record<string, string> = {}
+  for (const c of atsClients) clientMap[c.id] = c.companyName
+
+  const clientBreakdown: ClientBreakdownRow[] = stats
+    ? Object.entries(stats.perClientBreakdown).map(([clientId, count]) => ({
+        clientName: clientMap[clientId] ?? clientId,
+        count,
+      }))
+    : []
+
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
 
@@ -116,45 +135,6 @@ export default function AdminDashboardPage() {
     }
   }
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [s, vas, clients] = await Promise.all([
-          getDashboardStats(),
-          getAtsVAs(),
-          getAtsClients(),
-        ])
-        setStats(s)
-
-        const vaMap: Record<string, string> = {}
-        for (const va of vas) {
-          vaMap[va.id] = `${va.firstName} ${va.lastName}`
-        }
-        const rows = Object.entries(s.perVABreakdown).map(([vaId, count]) => ({
-          vaName: vaMap[vaId] ?? vaId,
-          count,
-        }))
-        setBreakdown(rows)
-
-        const clientMap: Record<string, string> = {}
-        for (const c of clients) {
-          clientMap[c.id] = c.companyName
-        }
-        const clientRows = Object.entries(s.perClientBreakdown).map(
-          ([clientId, count]) => ({
-            clientName: clientMap[clientId] ?? clientId,
-            count,
-          })
-        )
-        setClientBreakdown(clientRows)
-      } catch {
-        // silently skip
-      } finally {
-        setLoading(false)
-      }
-    }
-    void load()
-  }, [])
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">

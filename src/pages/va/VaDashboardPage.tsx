@@ -5,7 +5,6 @@ import {
   TrophyIcon,
   ZapIcon,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
@@ -17,11 +16,11 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getEodSubmissions } from '@/services/eod-submissions.service'
-import { getScorecards } from '@/services/scorecards.service'
-import { getWorkEntries } from '@/services/work-entries.service'
-import type { IEodSubmission } from '@/types/eod-submission'
-import type { IWorkEntry } from '@/types/work-entry'
+import {
+  useEodSubmissionsQuery,
+  useScorecardsQuery,
+  useWorkEntriesQuery,
+} from '@/hooks/queries'
 
 function todayStr() {
   return new Date().toISOString().split('T')[0]
@@ -38,38 +37,22 @@ export default function VaDashboardPage() {
   const today = todayStr()
   const weekStart = weekStartStr()
 
-  const [todayEntries, setTodayEntries] = useState<IWorkEntry[]>([])
-  const [eodToday, setEodToday] = useState<IEodSubmission | null>(null)
-  const [weekHours, setWeekHours] = useState<number | null>(null)
-  const [latestScore, setLatestScore] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery()
+  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery()
+  const { data: scorecards = [], isLoading: loadingScores } =
+    useScorecardsQuery()
+  const loading = loadingWork || loadingEods || loadingScores
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [workAll, eods, scorecards] = await Promise.all([
-          getWorkEntries(),
-          getEodSubmissions(),
-          getScorecards(),
-        ])
-        const workToday = workAll.filter(e => e.entryDate.slice(0, 10) === today)
-        const workWeek = workAll.filter(e => e.entryDate.slice(0, 10) >= weekStart)
-        setTodayEntries(workToday)
-        setEodToday(eods.find(e => e.date.slice(0, 10) === today) ?? null)
-        setWeekHours(workWeek.reduce((sum, e) => sum + e.timeSpent, 0) / 60)
-        const sorted = [...scorecards].sort(
-          (a, b) =>
-            new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
-        )
-        setLatestScore(sorted[0]?.productivityScore ?? null)
-      } catch {
-        // dashboard is informational — silently skip on error
-      } finally {
-        setLoading(false)
-      }
-    }
-    void load()
-  }, [today, weekStart])
+  const todayEntries = workAll.filter(e => e.entryDate.slice(0, 10) === today)
+  const eodToday = eods.find(e => e.date.slice(0, 10) === today) ?? null
+  const weekHours =
+    workAll
+      .filter(e => e.entryDate.slice(0, 10) >= weekStart)
+      .reduce((sum, e) => sum + e.timeSpent, 0) / 60
+  const sorted = [...scorecards].sort(
+    (a, b) => new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
+  )
+  const latestScore = sorted[0]?.productivityScore ?? null
 
   const eodSubmitted = Boolean(eodToday)
 

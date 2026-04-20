@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
@@ -24,11 +25,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import { QK, useWorkEntriesQuery } from '@/hooks/queries'
 import { formatMinutes } from '@/lib/time'
-import {
-  getWorkEntries,
-  updateWorkEntry,
-} from '@/services/work-entries.service'
+import { updateWorkEntry } from '@/services/work-entries.service'
 import {
   WORK_ENTRY_CATEGORIES,
   WORK_ENTRY_STATUSES,
@@ -74,7 +73,7 @@ function EditWorkEntryForm({
   onSuccess,
 }: {
   entry: IWorkEntry
-  onSuccess: (updated: IWorkEntry) => void
+  onSuccess: () => void
 }) {
   const {
     register,
@@ -101,8 +100,8 @@ function EditWorkEntryForm({
   async function onSubmit(data: EditFormData) {
     setServerError('')
     try {
-      const updated = await updateWorkEntry(entry.id, data)
-      onSuccess(updated)
+      await updateWorkEntry(entry.id, data)
+      onSuccess()
     } catch {
       setServerError('Failed to save. Please try again.')
     }
@@ -122,13 +121,29 @@ function EditWorkEntryForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <Label>Date</Label>
-          <Input type="date" {...register('entryDate')} className="rounded-md border-input" />
-          {errors.entryDate && <p className="text-xs text-destructive">{errors.entryDate.message}</p>}
+          <Input
+            type="date"
+            {...register('entryDate')}
+            className="rounded-md border-input"
+          />
+          {errors.entryDate && (
+            <p className="text-xs text-destructive">
+              {errors.entryDate.message}
+            </p>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <Label>Time</Label>
-          <Input type="time" {...register('entryTime')} className="rounded-md border-input" />
-          {errors.entryTime && <p className="text-xs text-destructive">{errors.entryTime.message}</p>}
+          <Input
+            type="time"
+            {...register('entryTime')}
+            className="rounded-md border-input"
+          />
+          {errors.entryTime && (
+            <p className="text-xs text-destructive">
+              {errors.entryTime.message}
+            </p>
+          )}
         </div>
       </div>
 
@@ -144,13 +159,19 @@ function EditWorkEntryForm({
               </SelectTrigger>
               <SelectContent>
                 {WORK_ENTRY_CATEGORIES.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
         />
-        {errors.taskCategory && <p className="text-xs text-destructive">{errors.taskCategory.message}</p>}
+        {errors.taskCategory && (
+          <p className="text-xs text-destructive">
+            {errors.taskCategory.message}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -160,14 +181,27 @@ function EditWorkEntryForm({
           rows={3}
           className="rounded-md border-input resize-none"
         />
-        {errors.taskDescription && <p className="text-xs text-destructive">{errors.taskDescription.message}</p>}
+        {errors.taskDescription && (
+          <p className="text-xs text-destructive">
+            {errors.taskDescription.message}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <Label>Time Spent (minutes)</Label>
-          <Input type="number" min={1} {...register('timeSpent', { valueAsNumber: true })} className="rounded-md border-input" />
-          {errors.timeSpent && <p className="text-xs text-destructive">{errors.timeSpent.message}</p>}
+          <Input
+            type="number"
+            min={1}
+            {...register('timeSpent', { valueAsNumber: true })}
+            className="rounded-md border-input"
+          />
+          {errors.timeSpent && (
+            <p className="text-xs text-destructive">
+              {errors.timeSpent.message}
+            </p>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <Label>Status</Label>
@@ -182,7 +216,9 @@ function EditWorkEntryForm({
                 <SelectContent>
                   {WORK_ENTRY_STATUSES.map(s => (
                     <SelectItem key={s} value={s}>
-                      {s.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                      {s
+                        .replace('_', ' ')
+                        .replace(/\b\w/g, c => c.toUpperCase())}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -211,22 +247,12 @@ function EditWorkEntryForm({
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function WorkHistoryPage() {
-  const [entries, setEntries] = useState<IWorkEntry[]>([])
+  const queryClient = useQueryClient()
+  const { data: entries = [], isLoading } = useWorkEntriesQuery()
   const [filtered, setFiltered] = useState<IWorkEntry[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [editEntry, setEditEntry] = useState<IWorkEntry | null>(null)
-
-  useEffect(() => {
-    getWorkEntries()
-      .then(data => {
-        setEntries(data)
-        setFiltered(data)
-      })
-      .catch(() => setEntries([]))
-      .finally(() => setIsLoading(false))
-  }, [])
 
   useEffect(() => {
     setFiltered(
@@ -257,7 +283,9 @@ export default function WorkHistoryPage() {
       accessorKey: 'entryTime',
       header: 'Time',
       cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">{getValue<string>()}</span>
+        <span className="text-xs text-muted-foreground">
+          {getValue<string>()}
+        </span>
       ),
     },
     {
@@ -275,7 +303,11 @@ export default function WorkHistoryPage() {
       enableSorting: false,
       cell: ({ getValue }) => {
         const v = getValue<string>()
-        return <span className="text-sm">{v.length > 55 ? `${v.slice(0, 55)}…` : v}</span>
+        return (
+          <span className="text-sm">
+            {v.length > 55 ? `${v.slice(0, 55)}…` : v}
+          </span>
+        )
       },
     },
     {
@@ -293,7 +325,9 @@ export default function WorkHistoryPage() {
       cell: ({ getValue }) => {
         const s = getValue<WorkEntryStatus>()
         return (
-          <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
+          >
             {s.replace('_', ' ')}
           </span>
         )
@@ -321,8 +355,12 @@ export default function WorkHistoryPage() {
         <div className="px-4 lg:px-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">Work History</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">All your logged work entries</p>
+              <h1 className="text-2xl font-semibold text-foreground">
+                Work History
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                All your logged work entries
+              </p>
             </div>
             <Link
               to="/va/work/new"
@@ -368,7 +406,10 @@ export default function WorkHistoryPage() {
         </div>
       </div>
 
-      <Sheet open={editEntry !== null} onOpenChange={o => !o && setEditEntry(null)}>
+      <Sheet
+        open={editEntry !== null}
+        onOpenChange={o => !o && setEditEntry(null)}
+      >
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Edit Work Entry</SheetTitle>
@@ -379,8 +420,8 @@ export default function WorkHistoryPage() {
           {editEntry && (
             <EditWorkEntryForm
               entry={editEntry}
-              onSuccess={updated => {
-                setEntries(prev => prev.map(e => (e.id === updated.id ? updated : e)))
+              onSuccess={() => {
+                queryClient.invalidateQueries({ queryKey: QK.workEntries })
                 setEditEntry(null)
               }}
             />

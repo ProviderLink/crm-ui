@@ -11,9 +11,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formatMinutes } from '@/lib/time'
-import { getAtsClients, getAtsVAs } from '@/services/ats.service'
-import { getWorkEntries } from '@/services/work-entries.service'
-import type { IAtsCandidate, IAtsClient } from '@/types/ats'
+import {
+  useAtsClientsQuery,
+  useAtsVAsQuery,
+  useWorkEntriesQuery,
+} from '@/hooks/queries'
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
@@ -25,36 +27,15 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
 }
 
 export default function WorkEntriesPage() {
-  const [allEntries, setAllEntries] = useState<IWorkEntry[]>([])
+  const { data: allEntries = [], isLoading } = useWorkEntriesQuery()
+  const { data: atsVAs = [] } = useAtsVAsQuery()
+  const { data: atsClients = [] } = useAtsClientsQuery()
+
   const [filtered, setFiltered] = useState<IWorkEntry[]>([])
-  const [atsVAs, setAtsVAs] = useState<IAtsCandidate[]>([])
-  const [atsClients, setAtsClients] = useState<IAtsClient[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [vaFilter, setVaFilter] = useState('all')
   const [clientFilter, setClientFilter] = useState('all')
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const [entries, vas, clients] = await Promise.all([
-          getWorkEntries(),
-          getAtsVAs(),
-          getAtsClients(),
-        ])
-        setAllEntries(entries)
-        setFiltered(entries)
-        setAtsVAs(vas)
-        setAtsClients(clients)
-      } catch {
-        setAllEntries([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    void load()
-  }, [])
 
   useEffect(() => {
     setFiltered(
