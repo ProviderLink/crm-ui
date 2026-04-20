@@ -1,5 +1,3 @@
-'use client'
-
 import { LogOutIcon, MoreVerticalIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -20,6 +18,26 @@ import {
 } from '@/components/ui/sidebar'
 import { useAppDispatch } from '@/hooks/store'
 import { clearAuth } from '@/store/slices/authSlice'
+import type { UserRole } from '@/types/auth'
+
+const roleConfig: Record<UserRole, { label: string; className: string }> = {
+  admin: {
+    label: 'Admin',
+    className: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary',
+  },
+  account_manager: {
+    label: 'Account Manager',
+    className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  },
+  va: {
+    label: 'Virtual Assistant',
+    className: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+  },
+  client: {
+    label: 'Client',
+    className: 'bg-green-500/10 text-green-600 dark:text-green-400',
+  },
+}
 
 export function NavUser({
   user,
@@ -28,6 +46,7 @@ export function NavUser({
     name: string
     email: string
     avatar: string
+    role: UserRole
   }
 }) {
   const { isMobile } = useSidebar()
@@ -40,6 +59,8 @@ export function NavUser({
     .join('')
     .toUpperCase()
     .slice(0, 2)
+
+  const role = roleConfig[user.role]
 
   function handleLogout() {
     dispatch(clearAuth())
@@ -92,7 +113,16 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-border" />
+            <div className="px-3 py-2.5 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground font-medium">Role</span>
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tracking-wide ${role.className}`}
+              >
+                {role.label}
+              </span>
+            </div>
+            <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem
               onClick={handleLogout}
               className="text-destructive focus:text-destructive"

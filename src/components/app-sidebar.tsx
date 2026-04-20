@@ -117,17 +117,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:!p-1.5 pointer-events-none"
             >
-              <a href="#">
-                <img
-                  src={aristaLogo}
-                  alt="Arista CRM"
-                  className="!size-5 object-contain"
-                />
-                <span className="text-base font-semibold">Arista CRM</span>
-              </a>
+              <img
+                src={aristaLogo}
+                alt="Arista CRM"
+                className="!size-5 object-contain"
+              />
+              <span className="text-base font-semibold">Arista CRM</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -143,6 +140,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             name: user?.name ?? '—',
             email: user?.email ?? '',
             avatar: '',
+            role: role,
           }}
         />
       </SidebarFooter>

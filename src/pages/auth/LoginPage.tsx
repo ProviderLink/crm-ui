@@ -53,11 +53,13 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         {/* Wordmark */}
-        <div className="flex items-center justify-center gap-2 mb-8">
+        <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center gap-2">
           <img src={aristaLogo} alt="" className="h-6 w-6 object-contain" />
           <span className="text-xl font-semibold text-foreground tracking-tight">
             Arista CRM
           </span>
+          </div>
         </div>
 
         {/* Card */}
