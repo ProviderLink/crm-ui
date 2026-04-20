@@ -17,7 +17,7 @@ import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
@@ -46,7 +46,11 @@ type FormData = z.infer<typeof schema>
 export default function AddWorkEntryPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { assignments, isLoading: loadingAssignments, isError: assignmentsError } = useMyAssignments()
+  const {
+    assignments,
+    isLoading: loadingAssignments,
+    isError: assignmentsError,
+  } = useMyAssignments()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
