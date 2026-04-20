@@ -52,6 +52,7 @@ export default function ScorecardsPage() {
     {
       accessorKey: 'vaId',
       header: 'VA',
+      size: 155,
       cell: ({ getValue }) => (
         <span className="text-sm font-medium">
           {vaMap[getValue<string>()] ?? getValue<string>().slice(-8)}
@@ -61,8 +62,9 @@ export default function ScorecardsPage() {
     {
       accessorKey: 'weekStart',
       header: 'Week',
+      size: 210,
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
           {row.original.weekStart?.slice(0, 10)} –{' '}
           {row.original.weekEnd?.slice(0, 10)}
         </span>
@@ -71,6 +73,7 @@ export default function ScorecardsPage() {
     {
       accessorKey: 'totalHours',
       header: 'Hours',
+      size: 80,
       cell: ({ getValue }) => (
         <span className="text-sm tabular-nums">
           {getValue<number>().toFixed(1)}h
@@ -80,6 +83,7 @@ export default function ScorecardsPage() {
     {
       accessorKey: 'totalTasksCompleted',
       header: 'Tasks',
+      size: 75,
       cell: ({ getValue }) => (
         <span className="text-sm tabular-nums">{getValue<number>()}</span>
       ),
@@ -87,20 +91,31 @@ export default function ScorecardsPage() {
     {
       accessorKey: 'eodComplianceRate',
       header: 'EOD Rate',
-      cell: ({ getValue }) => (
-        <span className="text-sm tabular-nums">
-          {getValue<number>().toFixed(0)}%
-        </span>
-      ),
+      size: 95,
+      cell: ({ getValue }) => {
+        const v = getValue<number>()
+        return (
+          <span className={`text-sm tabular-nums font-medium ${scoreColor(v)}`}>
+            {v.toFixed(0)}%
+          </span>
+        )
+      },
     },
     {
       accessorKey: 'productivityScore',
       header: 'Score',
+      size: 80,
       cell: ({ getValue }) => {
         const s = getValue<number>()
+        const colorClass =
+          s >= 80
+            ? 'bg-green-500/10 text-green-700 border-green-500/30 dark:text-green-400'
+            : s >= 60
+              ? 'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400'
+              : 'bg-red-500/10 text-destructive border-destructive/30'
         return (
           <span
-            className={`text-sm font-semibold tabular-nums ${scoreColor(s)}`}
+            className={`text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}
           >
             {s.toFixed(0)}
           </span>

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
+import { PencilIcon } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -25,6 +26,12 @@ import {
 } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import {
   QK,
   useAtsClientsQuery,
@@ -534,6 +541,7 @@ export default function AccountManagementPage() {
     {
       accessorKey: 'clientId',
       header: 'Company',
+      size: 220,
       cell: ({ getValue }) =>
         clientMap[getValue<string>()] ?? getValue<string>(),
     },
@@ -567,14 +575,23 @@ export default function AccountManagementPage() {
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
+      size: 70,
       cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={() => setEditAccount(row.original)}
-          className="text-xs text-blue-600 hover:underline"
-        >
-          Edit
-        </button>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-7"
+                onClick={() => setEditAccount(row.original)}
+              >
+                <PencilIcon className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Edit</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ),
     },
   ]
@@ -617,14 +634,23 @@ export default function AccountManagementPage() {
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
+      size: 70,
       cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={() => setEditProfile(row.original)}
-          className="text-xs text-blue-600 hover:underline"
-        >
-          Edit
-        </button>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-7"
+                onClick={() => setEditProfile(row.original)}
+              >
+                <PencilIcon className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Edit</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ),
     },
   ]

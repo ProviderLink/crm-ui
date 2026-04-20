@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
-import { BellIcon } from 'lucide-react'
+import { BellIcon, CheckIcon, XIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
@@ -12,6 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { QK, useSurveyRemindersQuery } from '@/hooks/queries'
 import { todayString } from '@/lib/time'
 import { updateSurveyReminder } from '@/services/survey-reminders.service'
@@ -75,8 +81,9 @@ export default function SurveyRemindersPage() {
       {
         accessorKey: 'surveyType',
         header: 'Survey',
+        size: 100,
         cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
             {SURVEY_TYPE_LABELS[getValue<ISurveyReminder['surveyType']>()]}
           </span>
         ),
@@ -84,6 +91,7 @@ export default function SurveyRemindersPage() {
       {
         accessorKey: 'relatedType',
         header: 'For',
+        size: 160,
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground capitalize">
             {row.original.relatedType} ·{' '}
@@ -97,12 +105,13 @@ export default function SurveyRemindersPage() {
       {
         accessorKey: 'dueDate',
         header: 'Due Date',
+        size: 155,
         cell: ({ getValue }) => {
           const v = getValue<string>()?.slice(0, 10) ?? ''
           const overdue = v < todayStr()
           return (
             <span
-              className={`text-xs ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
+              className={`text-xs whitespace-nowrap ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
             >
               {v}
               {overdue ? ' (overdue)' : ''}
@@ -113,11 +122,12 @@ export default function SurveyRemindersPage() {
       {
         accessorKey: 'status',
         header: 'Status',
+        size: 105,
         cell: ({ getValue }) => {
           const s = getValue<SurveyStatus>()
           return (
             <span
-              className={`text-xs px-2 py-0.5 rounded-full border capitalize ${STATUS_STYLES[s]}`}
+              className={`text-xs px-2 py-0.5 rounded-full border capitalize whitespace-nowrap ${STATUS_STYLES[s]}`}
             >
               {s}
             </span>
@@ -128,31 +138,45 @@ export default function SurveyRemindersPage() {
         id: 'actions',
         header: 'Actions',
         enableSorting: false,
+        size: 80,
         cell: ({ row }) => {
           const { id, status } = row.original
           if (status === 'completed' || status === 'skipped') return null
           const busy = updatingId === id
           return (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs"
-                disabled={busy}
-                onClick={() => handleUpdateStatus(id, 'completed')}
-              >
-                Complete
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 text-xs text-muted-foreground"
-                disabled={busy}
-                onClick={() => handleUpdateStatus(id, 'skipped')}
-              >
-                Skip
-              </Button>
-            </div>
+            <TooltipProvider delayDuration={300}>
+              <div className="flex items-center gap-1 whitespace-nowrap">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-7 text-green-600 border-green-500/30 hover:bg-green-500/10 hover:text-green-700 hover:border-green-500/50"
+                      disabled={busy}
+                      onClick={() => handleUpdateStatus(id, 'completed')}
+                    >
+                      <CheckIcon className="size-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Mark as completed</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-7 text-muted-foreground hover:text-foreground"
+                      disabled={busy}
+                      onClick={() => handleUpdateStatus(id, 'skipped')}
+                    >
+                      <XIcon className="size-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Skip</TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
           )
         },
       },

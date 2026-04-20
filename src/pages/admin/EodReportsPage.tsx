@@ -56,6 +56,7 @@ export default function EodReportsPage() {
       {
         accessorKey: 'date',
         header: 'Date',
+        size: 105,
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {getValue<string>()?.slice(0, 10)}
@@ -65,6 +66,7 @@ export default function EodReportsPage() {
       {
         accessorKey: 'vaId',
         header: 'VA',
+        size: 130,
         cell: ({ getValue }) => (
           <span className="text-sm">
             {vaMap[getValue<string>()] ?? getValue<string>()}
@@ -74,6 +76,7 @@ export default function EodReportsPage() {
       {
         accessorKey: 'clientId',
         header: 'Client',
+        size: 210,
         cell: ({ getValue }) => (
           <span className="text-sm">
             {clientMap[getValue<string>()] ?? getValue<string>()}
@@ -83,6 +86,7 @@ export default function EodReportsPage() {
       {
         accessorKey: 'shiftStart',
         header: 'Start',
+        size: 70,
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string>()}</span>
         ),
@@ -90,6 +94,7 @@ export default function EodReportsPage() {
       {
         accessorKey: 'shiftEnd',
         header: 'End',
+        size: 70,
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string>()}</span>
         ),
@@ -97,6 +102,7 @@ export default function EodReportsPage() {
       {
         accessorKey: 'hoursWorked',
         header: 'Hours',
+        size: 70,
         cell: ({ getValue }) => (
           <span className="text-sm font-medium text-foreground">
             {getValue<number>()}h
@@ -107,14 +113,9 @@ export default function EodReportsPage() {
         accessorKey: 'summaryOfWork',
         header: 'Summary',
         enableSorting: false,
-        cell: ({ getValue }) => {
-          const v = getValue<string>()
-          return (
-            <span className="text-sm">
-              {v.length > 55 ? `${v.slice(0, 55)}…` : v}
-            </span>
-          )
-        },
+        cell: ({ getValue }) => (
+          <span className="text-sm">{getValue<string>()}</span>
+        ),
       },
     ],
     [vaMap, clientMap]
