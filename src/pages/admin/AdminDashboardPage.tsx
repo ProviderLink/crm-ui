@@ -14,6 +14,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { z } from 'zod'
 
 import { DataTable } from '@/components/shared/DataTable'
+import { StatCard } from '@/components/shared/StatCard'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -83,11 +84,11 @@ export default function AdminDashboardPage() {
   const user = useAppSelector(s => s.auth.user)
   const isAccountManager = user?.role === 'account_manager'
 
-  const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery()
+  const { data: stats, isFetching: loadingStats } = useDashboardStatsQuery()
   const { data: atsVAs = [], isLoading: loadingVAs } = useAtsVAsQuery()
   const { data: atsClients = [], isLoading: loadingClients } =
     useAtsClientsQuery()
-  const loading = loadingStats || loadingVAs || loadingClients
+  const loading = loadingVAs || loadingClients
 
   const vaMap: Record<string, string> = {}
   for (const va of atsVAs) vaMap[va.id] = `${va.firstName} ${va.lastName}`
@@ -147,32 +148,32 @@ export default function AdminDashboardPage() {
           <StatCard
             label="Active Assignments"
             value={stats?.activeAssignmentsCount ?? 0}
-            isLoading={loading}
+            isLoading={loadingStats}
             icon={UsersIcon}
             footer="VA–client assignments currently active"
           />
           <StatCard
             label="Entries Today"
             value={stats?.totalEntriesToday ?? 0}
-            isLoading={loading}
+            isLoading={loadingStats}
             icon={UserCheckIcon}
             footer="Work entries logged across all VAs today"
           />
           <StatCard
             label="EODs Submitted Today"
             value={stats?.eodSubmissionsToday ?? 0}
-            isLoading={loading}
+            isLoading={loadingStats}
             icon={ClipboardXIcon}
-            footer={`${stats?.missingEodsToday ?? 0} missing`}
+            footer="End-of-day reports submitted today"
           />
           <StatCard
             label="Missing EODs Today"
             value={stats?.missingEodsToday ?? 0}
-            isLoading={loading}
+            isLoading={loadingStats}
             icon={AlertTriangleIcon}
             footer="Active assignments with no EOD yet"
             valueClassName={
-              !loading && (stats?.missingEodsToday ?? 0) > 0
+              !loadingStats && (stats?.missingEodsToday ?? 0) > 0
                 ? 'text-destructive'
                 : ''
             }
