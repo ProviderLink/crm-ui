@@ -61,7 +61,7 @@ export function DataTable<T>({
   return (
     <div className="space-y-2">
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-        <table className="w-full text-sm">
+        <table className="min-w-full text-sm">
           <thead>
             {table.getHeaderGroups().map(headerGroup => (
               <tr
@@ -72,7 +72,7 @@ export function DataTable<T>({
                   <th
                     key={header.id}
                     className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide"
-                    style={header.column.columnDef.size ? { width: header.column.columnDef.size } : undefined}
+                    style={header.column.columnDef.size ? { width: header.column.columnDef.size, minWidth: header.column.columnDef.size } : undefined}
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button

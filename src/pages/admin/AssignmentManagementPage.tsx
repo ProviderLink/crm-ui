@@ -81,29 +81,32 @@ function buildColumns(
     {
       accessorKey: 'clientId',
       header: 'Client',
-      size: 220,
+      size: 210,
       cell: ({ getValue }) =>
         clientMap[getValue<string>()] ?? getValue<string>(),
     },
     {
       accessorKey: 'vaId',
       header: 'VA',
+      size: 130,
       cell: ({ getValue }) => vaMap[getValue<string>()] ?? getValue<string>(),
     },
     {
       accessorKey: 'accountManagerId',
       header: 'Account Manager',
-      size: 180,
+      size: 165,
       cell: ({ getValue }) => amMap[getValue<string>() ?? ''] ?? '—',
     },
     {
       accessorKey: 'startDate',
       header: 'Start Date',
+      size: 115,
       cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
     },
     {
       accessorKey: 'status',
       header: 'Status',
+      size: 90,
       cell: ({ getValue }) => {
         const v = getValue<string>()
         const styles = {
@@ -112,7 +115,7 @@ function buildColumns(
           ended:   'bg-muted text-muted-foreground ring-1 ring-border',
         }[v] ?? 'bg-muted text-muted-foreground ring-1 ring-border'
         return (
-          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${styles}`}>
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize whitespace-nowrap ${styles}`}>
             {v}
           </span>
         )
@@ -121,14 +124,13 @@ function buildColumns(
     {
       accessorKey: 'serviceType',
       header: 'Service Type',
-      size: 200,
       cell: ({ getValue }) => getValue<string>() ?? '—',
     },
     {
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
-      size: 1,
+      size: 90,
       cell: ({ row }) => (
         <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-1 whitespace-nowrap">

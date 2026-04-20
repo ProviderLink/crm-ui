@@ -10,12 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { formatMinutes } from '@/lib/time'
 import {
   useAtsClientsQuery,
   useAtsVAsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries'
+import { formatMinutes } from '@/lib/time'
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
@@ -65,6 +65,7 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'entryDate',
         header: 'Date',
+        size: 105,
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {getValue<string>()?.slice(0, 10)}
@@ -74,6 +75,7 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'vaId',
         header: 'VA',
+        size: 155,
         cell: ({ getValue }) => (
           <span className="text-sm">
             {vaMap[getValue<string>()] ?? getValue<string>()}
@@ -83,6 +85,7 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'clientId',
         header: 'Client',
+        size: 210,
         cell: ({ getValue }) => (
           <span className="text-sm">
             {clientMap[getValue<string>()] ?? getValue<string>()}
@@ -92,8 +95,9 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'taskCategory',
         header: 'Category',
+        size: 160,
         cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
             {getValue<string>()}
           </span>
         ),
@@ -102,18 +106,15 @@ export default function WorkEntriesPage() {
         accessorKey: 'taskDescription',
         header: 'Description',
         enableSorting: false,
-        cell: ({ getValue }) => {
-          const v = getValue<string>()
-          return (
-            <span className="text-sm">
-              {v.length > 50 ? `${v.slice(0, 50)}…` : v}
-            </span>
-          )
-        },
+        size: 280,
+        cell: ({ getValue }) => (
+          <span className="text-sm">{getValue<string>()}</span>
+        ),
       },
       {
         accessorKey: 'timeSpent',
         header: 'Time',
+        size: 75,
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {formatMinutes(getValue<number>())}
@@ -123,11 +124,12 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'status',
         header: 'Status',
+        size: 125,
         cell: ({ getValue }) => {
           const s = getValue<WorkEntryStatus>()
           return (
             <span
-              className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
+              className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
             >
               {s.replace('_', ' ')}
             </span>
