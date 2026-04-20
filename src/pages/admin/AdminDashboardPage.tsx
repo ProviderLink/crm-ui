@@ -19,7 +19,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -38,7 +37,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   useAtsClientsQuery,
   useAtsVAsQuery,
@@ -146,99 +144,39 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         {/* Stat cards */}
         <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card lg:px-6">
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>Active Assignments</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  (stats?.activeAssignmentsCount ?? 0)
-                )}
-              </CardTitle>
-              <div className="absolute right-4 top-4">
-                <UsersIcon className="size-4 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">
-                VA–client assignments currently active
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>Entries Today</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  (stats?.totalEntriesToday ?? 0)
-                )}
-              </CardTitle>
-              <div className="absolute right-4 top-4">
-                <UserCheckIcon className="size-4 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">
-                Work entries logged across all VAs today
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>EODs Submitted Today</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  (stats?.eodSubmissionsToday ?? 0)
-                )}
-              </CardTitle>
-              <div className="absolute right-4 top-4">
-                <ClipboardXIcon className="size-4 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">
-                {loading ? (
-                  <Skeleton className="h-4 w-20" />
-                ) : (
-                  `${stats?.missingEodsToday ?? 0} missing`
-                )}
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>Missing EODs Today</CardDescription>
-              <CardTitle
-                className={`@[250px]/card:text-3xl text-2xl font-semibold tabular-nums ${
-                  !loading && (stats?.missingEodsToday ?? 0) > 0
-                    ? 'text-destructive'
-                    : ''
-                }`}
-              >
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  (stats?.missingEodsToday ?? 0)
-                )}
-              </CardTitle>
-              <div className="absolute right-4 top-4">
-                <AlertTriangleIcon className="size-4 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">
-                Active assignments with no EOD yet
-              </div>
-            </CardFooter>
-          </Card>
+          <StatCard
+            label="Active Assignments"
+            value={stats?.activeAssignmentsCount ?? 0}
+            isLoading={loading}
+            icon={UsersIcon}
+            footer="VA–client assignments currently active"
+          />
+          <StatCard
+            label="Entries Today"
+            value={stats?.totalEntriesToday ?? 0}
+            isLoading={loading}
+            icon={UserCheckIcon}
+            footer="Work entries logged across all VAs today"
+          />
+          <StatCard
+            label="EODs Submitted Today"
+            value={stats?.eodSubmissionsToday ?? 0}
+            isLoading={loading}
+            icon={ClipboardXIcon}
+            footer={`${stats?.missingEodsToday ?? 0} missing`}
+          />
+          <StatCard
+            label="Missing EODs Today"
+            value={stats?.missingEodsToday ?? 0}
+            isLoading={loading}
+            icon={AlertTriangleIcon}
+            footer="Active assignments with no EOD yet"
+            valueClassName={
+              !loading && (stats?.missingEodsToday ?? 0) > 0
+                ? 'text-destructive'
+                : ''
+            }
+          />
         </div>
 
         {/* Quick actions */}
