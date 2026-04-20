@@ -1,8 +1,10 @@
+import aristaLogo from '@/assets/arista_crm.png'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { forgotPassword, resetPassword } from '@/services/auth.service'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { CheckCircle2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -63,44 +65,35 @@ function RequestStep() {
   }
 
   return (
-    <AuthShell
-      title="Reset password"
-      subtitle="Enter your email to receive a reset link"
-    >
+    <AuthShell title="Reset password" subtitle="Enter your email to receive a reset link.">
       {sent ? (
-        <div className="rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-600 dark:text-green-400">
+        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
           Check your inbox — a reset link is on its way.
         </div>
       ) : (
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4"
-          noValidate
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {error && <ErrorBanner message={error} />}
-
           <div className="space-y-1.5">
-            <Label
-              htmlFor="email"
-              className="text-sm font-medium text-foreground"
-            >
-              Email
-            </Label>
+            <div className="flex items-center">
+              <Label htmlFor="email" className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+                Email
+              </Label>
+            </div>
             <Input
               id="email"
               type="email"
               placeholder="you@company.com"
               autoComplete="email"
-              className="rounded-xl border-input focus-visible:ring-ring/40"
+              className="h-10 rounded-lg text-sm text-white placeholder:text-slate-600 border-white/[0.08] focus-visible:border-white/20 focus-visible:ring-0"
+              style={{ background: 'rgba(255,255,255,0.04)' }}
               {...register('email')}
             />
             {errors.email && <FieldError message={errors.email.message!} />}
           </div>
-
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl h-10 font-medium"
+            className="w-full h-10 rounded-lg font-semibold text-sm bg-[#c7f33c] hover:bg-[#d4f75a] text-[#07101c] border-0 mt-1 transition-colors duration-150"
           >
             {isSubmitting ? 'Sending…' : 'Send reset link'}
           </Button>
@@ -134,67 +127,55 @@ function ConfirmStep({ token }: { token: string }) {
   }
 
   return (
-    <AuthShell
-      title="Set new password"
-      subtitle="Choose a strong password for your account"
-    >
+    <AuthShell title="Set new password" subtitle="Choose a strong password for your account.">
       {done ? (
         <div className="space-y-4">
-          <div className="rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-600 dark:text-green-400">
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
             Password updated. You can now sign in.
           </div>
           <BackToLogin />
         </div>
       ) : (
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4"
-          noValidate
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           {error && <ErrorBanner message={error} />}
-
           <div className="space-y-1.5">
-            <Label
-              htmlFor="password"
-              className="text-sm font-medium text-foreground"
-            >
-              New password
-            </Label>
+            <div className="flex items-center">
+              <Label htmlFor="password" className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+                New password
+              </Label>
+            </div>
             <Input
               id="password"
               type="password"
               placeholder="••••••••"
               autoComplete="new-password"
-              className="rounded-xl border-input focus-visible:ring-ring/40"
+              className="h-10 rounded-lg text-sm text-white placeholder:text-slate-600 border-white/[0.08] focus-visible:border-white/20 focus-visible:ring-0"
+              style={{ background: 'rgba(255,255,255,0.04)' }}
               {...register('password')}
             />
-            {errors.password && (
-              <FieldError message={errors.password.message!} />
-            )}
+            {errors.password && <FieldError message={errors.password.message!} />}
           </div>
-
           <div className="space-y-1.5">
-            <Label
-              htmlFor="confirm"
-              className="text-sm font-medium text-foreground"
-            >
-              Confirm password
-            </Label>
+            <div className="flex items-center">
+              <Label htmlFor="confirm" className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+                Confirm password
+              </Label>
+            </div>
             <Input
               id="confirm"
               type="password"
               placeholder="••••••••"
               autoComplete="new-password"
-              className="rounded-xl border-input focus-visible:ring-ring/40"
+              className="h-10 rounded-lg text-sm text-white placeholder:text-slate-600 border-white/[0.08] focus-visible:border-white/20 focus-visible:ring-0"
+              style={{ background: 'rgba(255,255,255,0.04)' }}
               {...register('confirm')}
             />
             {errors.confirm && <FieldError message={errors.confirm.message!} />}
           </div>
-
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-xl h-10 font-medium"
+            className="w-full h-10 rounded-lg font-semibold text-sm bg-[#c7f33c] hover:bg-[#d4f75a] text-[#07101c] border-0 mt-1 transition-colors duration-150"
           >
             {isSubmitting ? 'Updating…' : 'Update password'}
           </Button>
@@ -204,7 +185,7 @@ function ConfirmStep({ token }: { token: string }) {
   )
 }
 
-// ─── Shared layout + micro-components ────────────────────────
+// ─── Shared layout ────────────────────────────────────────────
 
 function AuthShell({
   title,
@@ -216,46 +197,63 @@ function AuthShell({
   children: ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <span className="text-xl font-semibold text-foreground tracking-tight">
-            Arista CRM
-          </span>
-        </div>
-        <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
-          <h1 className="text-2xl font-semibold text-foreground mb-1">
-            {title}
-          </h1>
-          <p className="text-sm text-muted-foreground mb-6">{subtitle}</p>
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: '#07101c' }}>
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 min-h-0">
+        <div className="w-full max-w-[360px]">
+          {/* Logo */}
+          <div className="flex items-center gap-2.5 mb-10">
+            <img src={aristaLogo} alt="" className="h-6 w-6 object-contain" />
+            <span className="text-white font-semibold text-base tracking-tight">
+              Arista CRM
+            </span>
+          </div>
+
+          {/* Heading */}
+          <div className="mb-7">
+            <h1 className="text-2xl font-bold text-white tracking-tight leading-tight">
+              {title}
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
+          </div>
+
           {children}
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="relative z-10 shrink-0 border-t border-white/[0.06] px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+          <span className="text-[11px] text-slate-500">All systems operational</span>
+        </div>
+        <p className="text-[11px] text-slate-600">
+          © {new Date().getFullYear()} Arista CRM
+        </p>
+      </footer>
     </div>
   )
 }
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+    <div className="mb-1 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400 flex items-start gap-2">
+      <span className="shrink-0 mt-0.5">⚠</span>
       {message}
     </div>
   )
 }
 
 function FieldError({ message }: { message: string }) {
-  return <p className="text-xs text-destructive">{message}</p>
+  return <p className="text-xs text-red-400">{message}</p>
 }
 
 function BackToLogin() {
   return (
-    <p className="mt-4 text-center text-sm text-muted-foreground">
-      <Link
-        to="/login"
-        className="text-muted-foreground hover:text-foreground hover:underline"
-      >
-        Back to sign in
+    <p className="mt-5 text-center text-xs text-slate-500">
+      <Link to="/login" className="hover:text-slate-300 transition-colors">
+        ← Back to sign in
       </Link>
     </p>
   )
 }
+

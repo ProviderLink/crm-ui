@@ -20,14 +20,19 @@ interface DevAccount {
 
 const DEV_ACCOUNTS: DevAccount[] = [
   {
-    label: 'VA',
-    email: import.meta.env.VITE_DEV_VA_EMAIL ?? '',
-    password: import.meta.env.VITE_DEV_VA_PASSWORD ?? '',
-  },
-  {
     label: 'Admin',
     email: import.meta.env.VITE_DEV_ADMIN_EMAIL ?? '',
     password: import.meta.env.VITE_DEV_ADMIN_PASSWORD ?? '',
+  },
+  {
+    label: 'Acc. Mgr',
+    email: import.meta.env.VITE_DEV_ACCOUNT_MANAGER_EMAIL ?? '',
+    password: import.meta.env.VITE_DEV_ACCOUNT_MANAGER_PASSWORD ?? '',
+  },
+  {
+    label: 'VA',
+    email: import.meta.env.VITE_DEV_VA_EMAIL ?? '',
+    password: import.meta.env.VITE_DEV_VA_PASSWORD ?? '',
   },
   {
     label: 'Client',
@@ -62,10 +67,16 @@ export function DevQuickLogin() {
   if (configured.length === 0) return null
 
   return (
-    <div className="mt-4 rounded-xl border border-dashed border-amber-300 bg-amber-50 p-4">
-      <p className="mb-3 text-center text-xs font-medium text-amber-600 uppercase tracking-wide">
-        Dev quick login
-      </p>
+    <div className="mt-6">
+      {/* Divider */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex-1 h-px bg-white/[0.06]" />
+        <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest">
+          Dev
+        </span>
+        <div className="flex-1 h-px bg-white/[0.06]" />
+      </div>
+
       <div className="flex gap-2">
         {configured.map(account => (
           <button
@@ -75,14 +86,28 @@ export function DevQuickLogin() {
               quickLogin(account)
             }}
             disabled={loading !== null}
-            className="flex-1 rounded-lg border border-amber-300 bg-white py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-50 transition-colors"
+            className="flex-1 h-8 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-colors duration-150 disabled:opacity-40"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: '#64748b',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#94a3b8')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#64748b')}
           >
-            {loading === account.label ? '…' : account.label}
+            {loading === account.label ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full border border-slate-500 border-t-transparent animate-spin" />
+              </span>
+            ) : (
+              account.label
+            )}
           </button>
         ))}
       </div>
+
       {error && (
-        <p className="mt-2 text-center text-xs text-red-500">{error}</p>
+        <p className="mt-2 text-center text-[11px] text-red-400">{error}</p>
       )}
     </div>
   )
