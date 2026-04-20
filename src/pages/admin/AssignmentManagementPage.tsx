@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PlusIcon } from 'lucide-react'
+import { BanIcon, PencilIcon, PlusIcon } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -24,6 +24,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import {
   QK,
   useAllAssignmentsQuery,
@@ -75,6 +81,7 @@ function buildColumns(
     {
       accessorKey: 'clientId',
       header: 'Client',
+      size: 220,
       cell: ({ getValue }) =>
         clientMap[getValue<string>()] ?? getValue<string>(),
     },
@@ -86,6 +93,7 @@ function buildColumns(
     {
       accessorKey: 'accountManagerId',
       header: 'Account Manager',
+      size: 180,
       cell: ({ getValue }) => amMap[getValue<string>() ?? ''] ?? '—',
     },
     {
@@ -98,16 +106,13 @@ function buildColumns(
       header: 'Status',
       cell: ({ getValue }) => {
         const v = getValue<string>()
-        const cls =
-          v === 'active'
-            ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-            : v === 'paused'
-              ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-              : 'bg-muted text-muted-foreground'
+        const styles = {
+          active:  'bg-green-500/10 text-green-700 dark:text-green-400 ring-1 ring-green-500/20',
+          paused:  'bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20',
+          ended:   'bg-muted text-muted-foreground ring-1 ring-border',
+        }[v] ?? 'bg-muted text-muted-foreground ring-1 ring-border'
         return (
-          <span
-            className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${cls}`}
-          >
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${styles}`}>
             {v}
           </span>
         )
@@ -116,31 +121,50 @@ function buildColumns(
     {
       accessorKey: 'serviceType',
       header: 'Service Type',
+      size: 200,
       cell: ({ getValue }) => getValue<string>() ?? '—',
     },
     {
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
+      size: 1,
       cell: ({ row }) => (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onEdit(row.original)}
-            className="text-xs text-blue-600 hover:underline"
-          >
-            Edit
-          </button>
-          {row.original.status !== 'ended' && (
-            <button
-              type="button"
-              onClick={() => onDeactivate(row.original)}
-              className="text-xs text-destructive hover:underline"
-            >
-              Deactivate
-            </button>
-          )}
-        </div>
+        <TooltipProvider delayDuration={300}>
+          <div className="flex items-center gap-1 whitespace-nowrap">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-7"
+                  onClick={() => onEdit(row.original)}
+                >
+                  <PencilIcon className="size-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Edit</TooltipContent>
+            </Tooltip>
+
+            {row.original.status !== 'ended' ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                  className="size-7 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
+                    onClick={() => onDeactivate(row.original)}
+                  >
+                    <BanIcon className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">End Assignment</TooltipContent>
+              </Tooltip>
+            ) : (
+              <div className="size-7" />
+            )}
+          </div>
+        </TooltipProvider>
       ),
     },
   ]
