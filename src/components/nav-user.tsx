@@ -17,6 +17,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { useAppDispatch } from '@/hooks/store'
+import { logout } from '@/services/auth.service'
 import { clearAuth } from '@/store/slices/authSlice'
 import type { UserRole } from '@/types/auth'
 
