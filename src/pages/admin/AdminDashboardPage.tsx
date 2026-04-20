@@ -39,22 +39,27 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAppSelector } from '@/hooks/store'
 import {
   useAtsClientsQuery,
   useAtsVAsQuery,
   useDashboardStatsQuery,
 } from '@/hooks/queries'
+import { useAppSelector } from '@/hooks/store'
 import { exportReport } from '@/services/reports.service'
 
 // ─── Export form ─────────────────────────────────────────────────────────────
 
-const exportSchema = z.object({
-  type: z.enum(['work_entries', 'eod']),
-  dateFrom: z.string().min(1, 'Required'),
-  dateTo: z.string().min(1, 'Required'),
-  format: z.enum(['csv', 'excel']),
-})
+const exportSchema = z
+  .object({
+    type: z.enum(['work_entries', 'eod']),
+    dateFrom: z.string().min(1, 'Required'),
+    dateTo: z.string().min(1, 'Required'),
+    format: z.enum(['csv', 'excel']),
+  })
+  .refine(d => d.dateFrom <= d.dateTo, {
+    message: '"From" date must be before or equal to "To" date',
+    path: ['dateTo'],
+  })
 type ExportFormData = z.infer<typeof exportSchema>
 
 // ─── Chart config ─────────────────────────────────────────────────────────────
@@ -82,7 +87,8 @@ export default function AdminDashboardPage() {
 
   const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery()
   const { data: atsVAs = [], isLoading: loadingVAs } = useAtsVAsQuery()
-  const { data: atsClients = [], isLoading: loadingClients } = useAtsClientsQuery()
+  const { data: atsClients = [], isLoading: loadingClients } =
+    useAtsClientsQuery()
   const loading = loadingStats || loadingVAs || loadingClients
 
   const vaMap: Record<string, string> = {}
@@ -134,7 +140,6 @@ export default function AdminDashboardPage() {
       setExporting(false)
     }
   }
-
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">

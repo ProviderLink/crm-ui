@@ -109,16 +109,14 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useAppSelector(s => s.auth.user)
   const role: UserRole = user?.role ?? 'va'
-  const config = roleConfigs[role]
+  const config = user ? roleConfigs[role] : { navMain: [] }
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:!p-1.5 pointer-events-none"
-            >
+            <SidebarMenuButton className="data-[slot=sidebar-menu-button]:!p-1.5 pointer-events-none">
               <img
                 src={aristaLogo}
                 alt="Arista CRM"

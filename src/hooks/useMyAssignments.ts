@@ -1,6 +1,6 @@
 import { useMyAssignmentsQuery } from '@/hooks/queries'
 
 export function useMyAssignments() {
-  const { data, isLoading } = useMyAssignmentsQuery()
-  return { assignments: data ?? [], isLoading }
+  const { data, isLoading, isError } = useMyAssignmentsQuery()
+  return { assignments: data ?? [], isLoading, isError }
 }

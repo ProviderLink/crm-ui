@@ -53,10 +53,13 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // If the refresh request itself fails, clear auth and redirect immediately
+    // If the refresh request itself fails, clear auth and redirect only if already hydrated
     if (originalRequest.url?.includes('/auth/refresh')) {
+      const isHydrated = store.getState().auth.isHydrated
       store.dispatch(clearAuth())
-      window.location.href = '/login'
+      if (isHydrated) {
+        window.location.href = '/login'
+      }
       return Promise.reject(error)
     }
 
@@ -75,10 +78,15 @@ api.interceptors.response.use(
     isRefreshing = true
 
     try {
-      const { data } = await api.post<{ accessToken: string }>('/auth/refresh')
-      store.dispatch(setAccessToken(data.accessToken))
-      processQueue(null, data.accessToken)
-      originalRequest.headers.set('Authorization', `Bearer ${data.accessToken}`)
+      const { data } = await api.post<{ data: { accessToken: string } }>(
+        '/auth/refresh'
+      )
+      store.dispatch(setAccessToken(data.data.accessToken))
+      processQueue(null, data.data.accessToken)
+      originalRequest.headers.set(
+        'Authorization',
+        `Bearer ${data.data.accessToken}`
+      )
       return api(originalRequest)
     } catch (refreshError: unknown) {
       processQueue(refreshError, null)

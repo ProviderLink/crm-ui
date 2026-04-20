@@ -9,13 +9,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { useMyAssignments } from '@/hooks/useMyAssignments'
 import { QK } from '@/hooks/queries'
+import { useMyAssignments } from '@/hooks/useMyAssignments'
 import { nowTimeString, todayString } from '@/lib/time'
 import { createWorkEntry } from '@/services/work-entries.service'
 import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -45,7 +46,8 @@ type FormData = z.infer<typeof schema>
 export default function AddWorkEntryPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { assignments, isLoading: loadingAssignments } = useMyAssignments()
+  const { assignments, isLoading: loadingAssignments, isError: assignmentsError } = useMyAssignments()
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     register,
@@ -70,17 +72,37 @@ export default function AddWorkEntryPage() {
   }, [assignments, setValue])
 
   async function onSubmit(data: FormData) {
+    setSubmitError(null)
     try {
       await createWorkEntry(data)
       queryClient.invalidateQueries({ queryKey: QK.workEntries })
       navigate('/va/work/history')
     } catch {
-      // error handled below via isSubmitting state reset
+      setSubmitError('Failed to save work entry. Please try again.')
     }
   }
 
   if (loadingAssignments) {
     return <PageSkeleton />
+  }
+
+  if (assignmentsError) {
+    return (
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          <div className="px-4 lg:px-6">
+            <div className="max-w-2xl">
+              <PageHeader />
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
+                <p className="text-sm text-destructive">
+                  Failed to load assignments. Please refresh the page.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (assignments.length === 0) {
@@ -115,6 +137,12 @@ export default function AddWorkEntryPage() {
                 className="space-y-5"
                 noValidate
               >
+                {submitError && (
+                  <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+                    {submitError}
+                  </div>
+                )}
+
                 {/* Assignment */}
                 <Field label="Assignment" error={errors.assignmentId?.message}>
                   <Controller
@@ -146,6 +174,7 @@ export default function AddWorkEntryPage() {
                   <Field label="Date" error={errors.entryDate?.message}>
                     <Input
                       type="date"
+                      max={todayString()}
                       className="rounded-xl border-input"
                       {...register('entryDate')}
                     />
@@ -265,8 +294,6 @@ export default function AddWorkEntryPage() {
 }
 
 // ─── Micro-components ─────────────────────────────────────────
-
-import type { ReactNode } from 'react'
 
 function PageHeader() {
   return (

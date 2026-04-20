@@ -35,9 +35,29 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
   return { user: mapUser(data.data.user), accessToken: data.data.accessToken }
 }
 
+/** Called once on startup — uses the HttpOnly refresh cookie to get a fresh token, then fetches the user. */
+export async function hydrate(): Promise<LoginResponse> {
+  const { data: refreshData } = await api.post<{ data: { accessToken: string } }>(
+    '/auth/refresh'
+  )
+  const accessToken = refreshData.data.accessToken
+
+  // Pass the new token explicitly since it's not yet in the Redux store
+  const { data: meData } = await api.get<{ data: BackendUser }>('/auth/me', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  return { user: mapUser(meData.data), accessToken }
+}
+
 export async function getMe(): Promise<IUser> {
   const { data } = await api.get<{ data: BackendUser }>('/auth/me')
   return mapUser(data.data)
+}
+
+export async function logout(): Promise<void> {
+  await api.post('/auth/logout').catch(() => {
+    // best-effort — clear client state regardless
+  })
 }
 
 export async function forgotPassword(email: string): Promise<void> {

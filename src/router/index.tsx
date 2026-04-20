@@ -46,9 +46,17 @@ const WorkActivityPage = lazy(() => import('@/pages/client/WorkActivityPage'))
 // 404
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
+function PageSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+    </div>
+  )
+}
+
 function SuspenseLayout() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PageSpinner />}>
       <Outlet />
     </Suspense>
   )

@@ -23,7 +23,8 @@ import type { UserRole } from '@/types/auth'
 const roleConfig: Record<UserRole, { label: string; className: string }> = {
   admin: {
     label: 'Admin',
-    className: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary',
+    className:
+      'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary',
   },
   account_manager: {
     label: 'Account Manager',
@@ -62,7 +63,8 @@ export function NavUser({
 
   const role = roleConfig[user.role]
 
-  function handleLogout() {
+  async function handleLogout() {
+    await logout()
     dispatch(clearAuth())
     navigate('/login')
   }
@@ -115,7 +117,9 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-border" />
             <div className="px-3 py-2.5 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">Role</span>
+              <span className="text-xs text-muted-foreground font-medium">
+                Role
+              </span>
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tracking-wide ${role.className}`}
               >

@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,11 +9,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { useMyAssignments } from '@/hooks/useMyAssignments'
 import { QK, useEodSubmissionsQuery } from '@/hooks/queries'
+import { useMyAssignments } from '@/hooks/useMyAssignments'
 import { calcHours, todayString } from '@/lib/time'
 import { createEodSubmission } from '@/services/eod-submissions.service'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
@@ -40,11 +40,11 @@ type FormData = z.infer<typeof schema>
 export default function EodSubmitPage() {
   const navigate = useNavigate()
   const today = todayString()
-  const { assignments, isLoading: loadingAssignments } = useMyAssignments()
+  const { assignments, isLoading: loadingAssignments, isError: assignmentsError } = useMyAssignments()
 
   const queryClient = useQueryClient()
   const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery()
-  const alreadySubmitted = eods.some(e => e.date.slice(0, 10) === today)
+  const submittedDates = new Set(eods.map(e => e.date.slice(0, 10)))
   const [error, setError] = useState<string | null>(null)
 
   const {
@@ -56,14 +56,16 @@ export default function EodSubmitPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { date: today, shiftStart: '09:00', shiftEnd: '17:00' },
+    defaultValues: { date: today, shiftStart: '', shiftEnd: '' },
   })
 
+  const selectedDate = watch('date') ?? today
   const shiftStart = watch('shiftStart') ?? ''
   const shiftEnd = watch('shiftEnd') ?? ''
   const hoursWorked = calcHours(shiftStart, shiftEnd)
+  const alreadySubmitted = submittedDates.has(selectedDate)
 
-  // Check if EOD already submitted today + auto-select assignment
+  // Auto-select when only one assignment
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
       setValue('assignmentId', assignments[0].id)
@@ -73,7 +75,7 @@ export default function EodSubmitPage() {
   async function onSubmit(data: FormData) {
     setError(null)
     try {
-      await createEodSubmission({ ...data, hoursWorked: hoursWorked })
+      await createEodSubmission({ ...data, hoursWorked })
       queryClient.invalidateQueries({ queryKey: QK.eodSubmissions })
       navigate('/va/eod/history')
     } catch {
@@ -82,6 +84,25 @@ export default function EodSubmitPage() {
   }
 
   if (loadingAssignments || checkingEod) return <PageSkeleton />
+
+  if (assignmentsError) {
+    return (
+      <div className="@container/main flex flex-1 flex-col gap-2">
+        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          <div className="px-4 lg:px-6">
+            <div className="max-w-2xl">
+              <PageHeader />
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
+                <p className="text-sm text-destructive">
+                  Failed to load assignments. Please refresh the page.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (assignments.length === 0) {
     return (
@@ -112,7 +133,7 @@ export default function EodSubmitPage() {
               <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center space-y-3">
                 <CheckCircle2 size={36} className="text-green-500 mx-auto" />
                 <p className="text-base font-medium text-foreground">
-                  EOD already submitted for today
+                  EOD already submitted for {selectedDate === today ? 'today' : selectedDate}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   You can view it in your EOD history.
@@ -180,6 +201,7 @@ export default function EodSubmitPage() {
                 <Field label="Date" error={errors.date?.message}>
                   <Input
                     type="date"
+                    max={today}
                     className="rounded-xl border-input max-w-[200px]"
                     {...register('date')}
                   />

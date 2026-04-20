@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { useQueryClient } from '@tanstack/react-query'
 import {
   QK,
   useAtsClientsQuery,
@@ -37,6 +36,7 @@ import { updateClientAccount } from '@/services/client-accounts.service'
 import { updateVaProfile } from '@/services/va-profiles.service'
 import type { IClientAccount } from '@/types/client-account'
 import type { IVaProfile } from '@/types/va-profile'
+import { useQueryClient } from '@tanstack/react-query'
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -131,15 +131,16 @@ function CheckboxField({
   checked: boolean
   onCheckedChange: (v: boolean) => void
 }) {
+  const id = `checkbox-${label.toLowerCase().replace(/\s+/g, '-')}`
   return (
     <div className="flex items-center gap-2">
       <Checkbox
         checked={checked}
         onCheckedChange={v => onCheckedChange(v === true)}
-        id={label}
+        id={id}
       />
       <Label
-        htmlFor={label}
+        htmlFor={id}
         className="text-sm font-medium text-foreground cursor-pointer"
       >
         {label}
@@ -511,8 +512,10 @@ function EditVaProfileForm({
 
 export default function AccountManagementPage() {
   const queryClient = useQueryClient()
-  const { data: accounts = [], isLoading: loadingAccounts } = useClientAccountsQuery()
-  const { data: profiles = [], isLoading: loadingProfiles } = useVaProfilesQuery()
+  const { data: accounts = [], isLoading: loadingAccounts } =
+    useClientAccountsQuery()
+  const { data: profiles = [], isLoading: loadingProfiles } =
+    useVaProfilesQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
   const { data: atsVas = [] } = useAtsVAsQuery()
   const isLoading = loadingAccounts || loadingProfiles

@@ -1,13 +1,13 @@
 import type { AuthState, IUser } from '@/types/auth'
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
-const storedToken = localStorage.getItem('accessToken')
-
+// Access token lives in memory only — never persisted to localStorage.
+// Session continuity relies on the HttpOnly refresh token cookie.
 const initialState: AuthState = {
   user: null,
-  accessToken: storedToken,
-  isAuthenticated: !!storedToken,
-  isHydrated: !storedToken, // no token → nothing to hydrate → already done
+  accessToken: null,
+  isAuthenticated: false,
+  isHydrated: false, // always check session on startup via AuthInitializer
 }
 
 const authSlice = createSlice({
@@ -23,17 +23,20 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken
       state.isAuthenticated = true
       state.isHydrated = true
-      localStorage.setItem('accessToken', action.payload.accessToken)
     },
-    // Hydration only — sets user without touching the token
-    setUser(state, action: PayloadAction<IUser>) {
-      state.user = action.payload
+    // Hydration only — sets user + token after startup refresh
+    setUser(
+      state,
+      action: PayloadAction<{ user: IUser; accessToken: string }>
+    ) {
+      state.user = action.payload.user
+      state.accessToken = action.payload.accessToken
       state.isAuthenticated = true
+      state.isHydrated = true
     },
     // Token refresh — updates token only (called by Axios interceptor)
     setAccessToken(state, action: PayloadAction<string>) {
       state.accessToken = action.payload
-      localStorage.setItem('accessToken', action.payload)
     },
     // Marks initial hydration check as complete
     setHydrated(state) {
@@ -45,7 +48,6 @@ const authSlice = createSlice({
       state.accessToken = null
       state.isAuthenticated = false
       state.isHydrated = true
-      localStorage.removeItem('accessToken')
     },
   },
 })

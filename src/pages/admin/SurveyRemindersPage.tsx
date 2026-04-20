@@ -1,5 +1,5 @@
-import type { ColumnDef } from '@tanstack/react-table'
 import { useQueryClient } from '@tanstack/react-query'
+import type { ColumnDef } from '@tanstack/react-table'
 import { BellIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { QK, useSurveyRemindersQuery } from '@/hooks/queries'
+import { todayString } from '@/lib/time'
 import { updateSurveyReminder } from '@/services/survey-reminders.service'
 import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder'
 
@@ -34,7 +35,7 @@ const STATUS_STYLES: Record<SurveyStatus, string> = {
   skipped: 'bg-muted text-muted-foreground border-border',
 }
 
-const todayStr = () => new Date().toISOString().split('T')[0]
+const todayStr = () => todayString()
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export default function SurveyRemindersPage() {
   const { data: reminders = [], isLoading } = useSurveyRemindersQuery()
   const [statusFilter, setStatusFilter] = useState<SurveyStatus | 'all'>('all')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [updateError, setUpdateError] = useState<string | null>(null)
 
   const filtered = useMemo(
     () =>
@@ -54,6 +56,7 @@ export default function SurveyRemindersPage() {
 
   async function handleUpdateStatus(id: string, status: SurveyStatus) {
     setUpdatingId(id)
+    setUpdateError(null)
     try {
       await updateSurveyReminder(id, {
         status,
@@ -61,7 +64,7 @@ export default function SurveyRemindersPage() {
       })
       queryClient.invalidateQueries({ queryKey: QK.surveyReminders })
     } catch {
-      // silently ignore
+      setUpdateError('Failed to update status. Please try again.')
     } finally {
       setUpdatingId(null)
     }
@@ -84,7 +87,9 @@ export default function SurveyRemindersPage() {
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground capitalize">
             {row.original.relatedType} ·{' '}
-            <span className="font-mono">{row.original.relatedId.slice(-8)}</span>
+            <span className="font-mono">
+              {row.original.relatedId.slice(-8)}
+            </span>
           </span>
         ),
         enableSorting: false,
@@ -204,6 +209,9 @@ export default function SurveyRemindersPage() {
             )}
           </div>
 
+          {updateError && (
+            <p className="mb-2 text-sm text-destructive">{updateError}</p>
+          )}
           <DataTable columns={columns} data={filtered} isLoading={isLoading} />
         </div>
       </div>

@@ -32,5 +32,5 @@ export async function exportReport(params: ExportReportParams): Promise<void> {
   document.body.appendChild(link)
   link.click()
   link.remove()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 100)
 }

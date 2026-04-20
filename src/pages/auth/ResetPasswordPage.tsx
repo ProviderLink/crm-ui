@@ -53,8 +53,12 @@ function RequestStep() {
     try {
       await forgotPassword(data.email)
       setSent(true)
-    } catch {
-      setError('Something went wrong. Please try again.')
+    } catch (err) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        setError('Something went wrong. Please try again.')
+      } else {
+        setError('Unable to connect. Check your internet and try again.')
+      }
     }
   }
 

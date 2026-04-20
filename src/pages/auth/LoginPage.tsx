@@ -44,8 +44,18 @@ export default function LoginPage() {
       const result = await login(data)
       dispatch(setAuth({ user: result.user, accessToken: result.accessToken }))
       navigate(roleRedirect[result.user.role], { replace: true })
-    } catch {
-      setError('Invalid email or password.')
+    } catch (err) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const status = (err as { response?: { status?: number } }).response
+          ?.status
+        if (status === 401 || status === 400) {
+          setError('Invalid email or password.')
+        } else {
+          setError('Something went wrong. Please try again.')
+        }
+      } else {
+        setError('Unable to connect. Check your internet and try again.')
+      }
     }
   }
 
@@ -55,10 +65,10 @@ export default function LoginPage() {
         {/* Wordmark */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center gap-2">
-          <img src={aristaLogo} alt="" className="h-6 w-6 object-contain" />
-          <span className="text-xl font-semibold text-foreground tracking-tight">
-            Arista CRM
-          </span>
+            <img src={aristaLogo} alt="" className="h-6 w-6 object-contain" />
+            <span className="text-xl font-semibold text-foreground tracking-tight">
+              Arista CRM
+            </span>
           </div>
         </div>
 

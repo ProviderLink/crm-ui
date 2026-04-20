@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { ColumnDef } from '@tanstack/react-table'
 import { useQueryClient } from '@tanstack/react-query'
-import { useMemo, useEffect, useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
+import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
 import { z } from 'zod'
@@ -123,6 +123,7 @@ function EditWorkEntryForm({
           <Label>Date</Label>
           <Input
             type="date"
+            max={todayString()}
             {...register('entryDate')}
             className="rounded-md border-input"
           />

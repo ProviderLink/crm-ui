@@ -1,5 +1,5 @@
-import type { ColumnDef } from '@tanstack/react-table'
 import { useQueryClient } from '@tanstack/react-query'
+import type { ColumnDef } from '@tanstack/react-table'
 import { BarChart3Icon, RefreshCwIcon } from 'lucide-react'
 import { useState } from 'react'
 
@@ -26,6 +26,7 @@ export default function ScorecardsPage() {
   const queryClient = useQueryClient()
   const [vaFilter, setVaFilter] = useState<string>('all')
   const [generating, setGenerating] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
 
   const vaId = vaFilter === 'all' ? undefined : vaFilter
   const { data: scorecards = [], isLoading } = useScorecardsQuery(vaId)
@@ -36,11 +37,12 @@ export default function ScorecardsPage() {
 
   async function handleGenerate() {
     setGenerating(true)
+    setGenerateError(null)
     try {
       await generateScorecards()
       queryClient.invalidateQueries({ queryKey: ['scorecards'] })
     } catch {
-      // silently ignore
+      setGenerateError('Failed to generate scorecards. Please try again.')
     } finally {
       setGenerating(false)
     }
@@ -152,7 +154,10 @@ export default function ScorecardsPage() {
                 Clear
               </button>
             )}
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              {generateError && (
+                <p className="text-xs text-destructive">{generateError}</p>
+              )}
               <Button
                 size="sm"
                 variant="outline"

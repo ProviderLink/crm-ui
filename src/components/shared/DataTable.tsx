@@ -145,6 +145,7 @@ export function DataTable<T>({
               variant="outline"
               size="sm"
               className="h-7 w-7 p-0"
+              aria-label="Previous page"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
@@ -154,6 +155,7 @@ export function DataTable<T>({
               variant="outline"
               size="sm"
               className="h-7 w-7 p-0"
+              aria-label="Next page"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >

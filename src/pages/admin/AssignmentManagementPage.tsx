@@ -24,7 +24,6 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
-import { useQueryClient } from '@tanstack/react-query'
 import {
   QK,
   useAllAssignmentsQuery,
@@ -38,6 +37,7 @@ import {
 } from '@/services/assignments.service'
 import type { IAssignment } from '@/types/assignment'
 import type { IAtsCandidate, IAtsClient, IAtsUser } from '@/types/ats'
+import { useQueryClient } from '@tanstack/react-query'
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -467,13 +467,19 @@ export default function AssignmentManagementPage() {
 
   const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null)
   const [editTarget, setEditTarget] = useState<IAssignment | null>(null)
+  const [deactivateError, setDeactivateError] = useState<string | null>(null)
 
   async function handleDeactivate(a: IAssignment) {
+    const confirmed = window.confirm(
+      `Deactivate assignment for "${a.serviceType ?? a.id}"? This will end the active VA–client relationship.`
+    )
+    if (!confirmed) return
+    setDeactivateError(null)
     try {
       await updateAssignment(a.id, { status: 'ended' })
       queryClient.invalidateQueries({ queryKey: QK.allAssignments })
     } catch {
-      // silently fail
+      setDeactivateError('Failed to deactivate assignment. Please try again.')
     }
   }
 
@@ -522,6 +528,9 @@ export default function AssignmentManagementPage() {
 
         {/* Table */}
         <div className="px-4 lg:px-6">
+          {deactivateError && (
+            <p className="mb-2 text-sm text-destructive">{deactivateError}</p>
+          )}
           <DataTable
             columns={columns}
             data={assignments}

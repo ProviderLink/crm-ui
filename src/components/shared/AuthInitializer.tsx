@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@/hooks/store'
-import { getMe } from '@/services/auth.service'
-import { clearAuth, setHydrated, setUser } from '@/store/slices/authSlice'
+import { hydrate } from '@/services/auth.service'
+import { clearAuth, setUser } from '@/store/slices/authSlice'
 import type { ReactNode } from 'react'
 import { useEffect, useRef } from 'react'
 
@@ -9,12 +9,12 @@ interface Props {
 }
 
 /**
- * Runs once on mount. If a stored access token exists, fetches /auth/me
- * to rehydrate the user object. Blocks the app from rendering until done.
+ * Runs once on mount. Calls /auth/refresh to obtain a fresh access token
+ * from the HttpOnly cookie, then fetches /auth/me to rehydrate the user.
+ * Shows a full-page spinner while this is in progress.
  */
 export function AuthInitializer({ children }: Props) {
   const dispatch = useAppDispatch()
-  const accessToken = useAppSelector(s => s.auth.accessToken)
   const isHydrated = useAppSelector(s => s.auth.isHydrated)
   const initialized = useRef(false)
 
@@ -22,22 +22,22 @@ export function AuthInitializer({ children }: Props) {
     if (initialized.current) return
     initialized.current = true
 
-    if (!accessToken) {
-      dispatch(setHydrated())
-      return
-    }
-
-    getMe()
-      .then(user => {
-        dispatch(setUser(user))
-        dispatch(setHydrated())
+    hydrate()
+      .then(({ user, accessToken }) => {
+        dispatch(setUser({ user, accessToken }))
       })
       .catch(() => {
-        dispatch(clearAuth()) // clearAuth also sets isHydrated = true
+        dispatch(clearAuth())
       })
-  }, []) // intentionally empty — one-time mount check
+  }, [dispatch]) // dispatch is stable — safe to include
 
-  if (!isHydrated) return null
+  if (!isHydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    )
+  }
 
   return <>{children}</>
 }
