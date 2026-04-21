@@ -53,7 +53,6 @@ export default function ClientDashboardPage() {
     useAllAssignmentsQuery()
   const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery()
   const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery()
-  const loading = loadingAssignments || loadingWork || loadingEods
 
   const assignments = assignmentList.filter(a => a.status === 'active')
   const activeAssignments = assignments.length
@@ -76,7 +75,7 @@ export default function ClientDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Active Assignments</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? (
+                {loadingAssignments ? (
                   <Skeleton className="h-8 w-12" />
                 ) : (
                   activeAssignments
@@ -95,7 +94,7 @@ export default function ClientDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>This Week's Hours</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading || weekHours === null ? (
+                {loadingWork || weekHours === null ? (
                   <Skeleton className="h-8 w-20" />
                 ) : (
                   `${weekHours.toFixed(1)}h`
@@ -116,7 +115,7 @@ export default function ClientDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Last EOD Submitted</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? (
+                {loadingEods ? (
                   <Skeleton className="h-8 w-28" />
                 ) : (
                   (lastEodDate ?? 'None yet')
@@ -137,7 +136,7 @@ export default function ClientDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Entries Today</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? <Skeleton className="h-8 w-12" /> : todayCount}
+                {loadingWork ? <Skeleton className="h-8 w-12" /> : todayCount}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ActivityIcon className="size-4 text-muted-foreground" />
@@ -154,7 +153,7 @@ export default function ClientDashboardPage() {
         {/* Your VA Engagements */}
         <div className="px-4 lg:px-6">
           <h2 className="mb-3 text-base font-semibold">Your VA Engagements</h2>
-          {loading ? (
+          {loadingAssignments ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2].map(n => (
                 <Card key={n}>

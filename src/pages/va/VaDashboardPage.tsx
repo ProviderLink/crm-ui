@@ -41,7 +41,6 @@ export default function VaDashboardPage() {
   const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery()
   const { data: scorecards = [], isLoading: loadingScores } =
     useScorecardsQuery()
-  const loading = loadingWork || loadingEods || loadingScores
 
   const todayEntries = workAll.filter(e => e.entryDate.slice(0, 10) === today)
   const eodToday = eods.find(e => e.date.slice(0, 10) === today) ?? null
@@ -65,7 +64,7 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Entries Today</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? (
+                {loadingWork ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
                   todayEntries.length
@@ -86,7 +85,7 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>EOD Status</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? (
+                {loadingEods ? (
                   <Skeleton className="h-8 w-28" />
                 ) : eodSubmitted ? (
                   'Submitted'
@@ -96,7 +95,7 @@ export default function VaDashboardPage() {
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ClipboardCheckIcon
-                  className={`size-4 ${!loading && eodSubmitted ? 'text-green-500' : 'text-muted-foreground'}`}
+                  className={`size-4 ${!loadingEods && eodSubmitted ? 'text-green-500' : 'text-muted-foreground'}`}
                 />
               </div>
             </CardHeader>
@@ -111,7 +110,7 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>This Week's Hours</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading || weekHours === null ? (
+                {loadingWork ? (
                   <Skeleton className="h-8 w-20" />
                 ) : (
                   `${weekHours.toFixed(1)}h`
@@ -132,7 +131,7 @@ export default function VaDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Productivity Score</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? (
+                {loadingScores ? (
                   <Skeleton className="h-8 w-16" />
                 ) : latestScore !== null ? (
                   `${latestScore}`
