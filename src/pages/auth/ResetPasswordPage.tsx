@@ -223,7 +223,7 @@ function AuthShell({
 }) {
   return (
     <div
-      className="h-screen flex flex-col overflow-hidden"
+      className="relative min-h-screen sm:h-screen flex flex-col sm:overflow-hidden"
       style={{ background: '#07101c' }}
     >
       {/* ── Background ── */}

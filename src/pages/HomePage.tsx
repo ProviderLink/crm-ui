@@ -47,7 +47,7 @@ const flow = [
 export default function HomePage() {
   return (
     <div
-      className="h-screen flex flex-col overflow-hidden"
+      className="relative min-h-screen sm:h-screen flex flex-col sm:overflow-hidden"
       style={{ background: '#07101c' }}
     >
       {/* ── Background ── */}
@@ -101,10 +101,10 @@ export default function HomePage() {
       </nav>
 
       {/* ── Main ── */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 min-h-0">
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 min-h-0 py-10 sm:py-0">
 
         {/* Intro text */}
-        <p className="text-xs font-semibold tracking-[0.2em] uppercase text-slate-600 mb-3">
+        <p className="text-xs font-semibold tracking-[0.2em] uppercase text-slate-600 mb-3 text-center">
           Internal operations platform
         </p>
         <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight text-center mb-3">
@@ -203,7 +203,7 @@ export default function HomePage() {
         </div>
 
         {/* CTA */}
-        <div className="mt-10">
+        <div className="mt-10 mb-2 sm:mb-0">
           <Link
             to="/login"
             className="group inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-[#07101c] hover:opacity-90 transition-opacity"
