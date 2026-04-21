@@ -4,10 +4,12 @@ import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { lazy, Suspense } from 'react'
 import {
   createBrowserRouter,
-  Navigate,
   Outlet,
   RouterProvider,
 } from 'react-router-dom'
+
+// Home (public)
+const HomePage = lazy(() => import('@/pages/HomePage'))
 
 // Auth (public)
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
@@ -67,7 +69,7 @@ const router = createBrowserRouter([
     element: <SuspenseLayout />,
     children: [
       // Public routes
-      { path: '/', element: <Navigate to="/login" replace /> },
+      { path: '/', element: <HomePage /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/reset-password', element: <ResetPasswordPage /> },
 
