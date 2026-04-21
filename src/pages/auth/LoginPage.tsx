@@ -24,7 +24,7 @@ type FormData = z.infer<typeof schema>
 
 const roleRedirect: Record<UserRole, string> = {
   admin: '/admin/dashboard',
-  account_manager: '/admin/dashboard',
+  account_manager: '/am/dashboard',
   va: '/va/dashboard',
   client: '/client/dashboard',
 }
@@ -234,9 +234,13 @@ export default function LoginPage() {
       <footer className="relative z-10 shrink-0 border-t border-white/[0.05] px-6 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-          <span className="text-xs text-slate-600">All systems operational</span>
+          <span className="text-xs text-slate-600">
+            All systems operational
+          </span>
         </div>
-        <p className="text-xs text-slate-700">© {new Date().getFullYear()} Arista CRM</p>
+        <p className="text-xs text-slate-700">
+          © {new Date().getFullYear()} Arista CRM
+        </p>
       </footer>
     </div>
   )

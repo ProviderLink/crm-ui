@@ -55,8 +55,12 @@ const columns: ColumnDef<IEodSubmission>[] = [
 
 export default function EodHistoryPage() {
   const { data: eods = [], isLoading } = useEodSubmissionsQuery()
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [dateFrom, setDateFrom] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 90)
+    return d.toISOString().split('T')[0]
+  })
+  const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0])
 
   const filtered = useMemo(
     () =>

@@ -118,7 +118,9 @@ export default function ClientDashboardPage() {
                 {loadingEods ? (
                   <Skeleton className="h-8 w-28" />
                 ) : (
-                  (lastEodDate ?? 'None yet')
+                  lastEodDate
+                    ? new Date(lastEodDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : 'None yet'
                 )}
               </CardTitle>
               <div className="absolute right-4 top-4">

@@ -15,7 +15,15 @@ import { calcHours, todayString } from '@/lib/time'
 import { createEodSubmission } from '@/services/eod-submissions.service'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2 } from 'lucide-react'
+import {
+  AlertCircle,
+  Briefcase,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  ClipboardList,
+  StickyNote,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -27,9 +35,7 @@ const schema = z.object({
   date: z.string().min(1, 'Date is required'),
   shiftStart: z.string().min(1, 'Shift start is required'),
   shiftEnd: z.string().min(1, 'Shift end is required'),
-  summaryOfWork: z
-    .string()
-    .min(10, 'Please provide a summary (min 10 characters)'),
+  summaryOfWork: z.string().min(10, 'Please provide a summary (min 10 characters)'),
   pendingTasks: z.string().min(1, 'List pending tasks or write "None"'),
   blockers: z.string().min(1, 'Describe blockers or write "None"'),
   notes: z.string().optional(),
@@ -41,18 +47,13 @@ export default function EodSubmitPage() {
   const navigate = useNavigate()
   const today = todayString()
   const { assignments, isLoading: loadingAssignments, isError: assignmentsError } = useMyAssignments()
-
   const queryClient = useQueryClient()
   const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery()
   const submittedDates = new Set(eods.map(e => e.date.slice(0, 10)))
   const [error, setError] = useState<string | null>(null)
 
   const {
-    register,
-    handleSubmit,
-    control,
-    setValue,
-    watch,
+    register, handleSubmit, control, setValue, watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -65,7 +66,6 @@ export default function EodSubmitPage() {
   const hoursWorked = calcHours(shiftStart, shiftEnd)
   const alreadySubmitted = submittedDates.has(selectedDate)
 
-  // Auto-select when only one assignment
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
       setValue('assignmentId', assignments[0].id)
@@ -87,265 +87,283 @@ export default function EodSubmitPage() {
 
   if (assignmentsError) {
     return (
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <div className="px-4 lg:px-6">
-            <div className="max-w-2xl">
-              <PageHeader />
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
-                <p className="text-sm text-destructive">
-                  Failed to load assignments. Please refresh the page.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageShell>
+        <PageHeader />
+        <EmptyCard>
+          <p className="text-sm text-destructive">Failed to load assignments. Please refresh the page.</p>
+        </EmptyCard>
+      </PageShell>
     )
   }
 
   if (assignments.length === 0) {
     return (
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <div className="px-4 lg:px-6">
-            <div className="max-w-2xl">
-              <PageHeader />
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No active assignments found. Contact your account manager.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageShell>
+        <PageHeader />
+        <EmptyCard>
+          <p className="text-sm text-muted-foreground">No active assignments found. Contact your account manager.</p>
+        </EmptyCard>
+      </PageShell>
     )
   }
 
   if (alreadySubmitted) {
     return (
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <div className="px-4 lg:px-6">
-            <div className="max-w-2xl">
-              <PageHeader />
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center space-y-3">
-                <CheckCircle2 size={36} className="text-green-500 mx-auto" />
-                <p className="text-base font-medium text-foreground">
-                  EOD already submitted for {selectedDate === today ? 'today' : selectedDate}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  You can view it in your EOD history.
-                </p>
-                <button
-                  onClick={() => navigate('/va/eod/history')}
-                  className="text-sm text-muted-foreground hover:text-foreground hover:underline"
-                >
-                  View EOD History →
-                </button>
-              </div>
-            </div>
+      <PageShell>
+        <PageHeader />
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-10 flex flex-col items-center gap-4 text-center">
+          <div className="h-14 w-14 rounded-full bg-emerald-500/10 flex items-center justify-center">
+            <CheckCircle2 size={28} className="text-emerald-500" />
           </div>
+          <div>
+            <p className="text-base font-semibold text-foreground">
+              EOD already submitted for {selectedDate === today ? 'today' : selectedDate}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              You're all done for the day. Great work!
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/va/eod/history')}
+            className="text-sm text-primary hover:underline underline-offset-4"
+          >
+            View EOD History →
+          </button>
         </div>
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
+    <PageShell>
+      <PageHeader />
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+        {error && (
+          <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+            <AlertCircle size={15} className="mt-0.5 shrink-0" />
+            {error}
+          </div>
+        )}
+
+        {/* ── Section: Assignment ── */}
+        <Section icon={<Briefcase size={14} />} title="Assignment">
+          <Field label="Assigned Role" error={errors.assignmentId?.message}>
+            <Controller
+              control={control}
+              name="assignmentId"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange} disabled={assignments.length === 1}>
+                  <SelectTrigger className="rounded-xl border-input h-10">
+                    <SelectValue placeholder="Select assignment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {assignments.map(a => (
+                      <SelectItem key={a.id} value={a.id}>{a.serviceType ?? a.id}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+        </Section>
+
+        {/* ── Section: Shift ── */}
+        <Section icon={<CalendarDays size={14} />} title="Shift">
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Date" error={errors.date?.message}>
+              <Input type="date" max={today} className="rounded-xl border-input h-10" {...register('date')} />
+            </Field>
+            <Field label="Shift Start" error={errors.shiftStart?.message}>
+              <Input type="time" className="rounded-xl border-input h-10" {...register('shiftStart')} />
+            </Field>
+            <Field label="Shift End" error={errors.shiftEnd?.message}>
+              <Input type="time" className="rounded-xl border-input h-10" {...register('shiftEnd')} />
+            </Field>
+          </div>
+
+          {/* Hours worked pill */}
+          {hoursWorked > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/60 border border-border/50 w-fit">
+              <Clock size={13} className="text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">{hoursWorked}h</span>
+              <span className="text-xs text-muted-foreground">total hours</span>
+            </div>
+          )}
+        </Section>
+
+        {/* ── Section: Work Summary ── */}
+        <Section icon={<ClipboardList size={14} />} title="Work Summary">
+          <Field
+            label="What did you accomplish today?"
+            error={errors.summaryOfWork?.message}
+            hint="Include key tasks, outcomes, and any notable progress made."
+          >
+            <Textarea
+              placeholder="e.g. Completed appointment scheduling for 15 patients, processed 32 inbox emails, resolved 2 urgent pre-auth requests…"
+              className="rounded-xl border-input resize-none"
+              rows={4}
+              {...register('summaryOfWork')}
+            />
+          </Field>
+
+          <Field
+            label="Pending Tasks"
+            error={errors.pendingTasks?.message}
+            hint='Tasks carrying over to tomorrow. Write "None" if everything is resolved.'
+          >
+            <Textarea
+              placeholder="e.g. Follow up on 2 insurance pre-auth requests. Or: None"
+              className="rounded-xl border-input resize-none"
+              rows={3}
+              {...register('pendingTasks')}
+            />
+          </Field>
+
+          <Field
+            label="Blockers"
+            error={errors.blockers?.message}
+            hint='Anything preventing you from moving forward? Write "None" if clear.'
+          >
+            <Textarea
+              placeholder="e.g. Waiting on client response for appointment confirmation. Or: None"
+              className="rounded-xl border-input resize-none"
+              rows={2}
+              {...register('blockers')}
+            />
+          </Field>
+        </Section>
+
+        {/* ── Section: Notes (optional) ── */}
+        <Section icon={<StickyNote size={14} />} title="Notes" optional>
+          <Field label="" error={errors.notes?.message}>
+            <Textarea
+              placeholder="Additional context, links, or anything else worth noting…"
+              className="rounded-xl border-input resize-none"
+              rows={2}
+              {...register('notes')}
+            />
+          </Field>
+        </Section>
+
+        {/* ── Actions ── */}
+        <div className="flex items-center gap-3 pt-1">
+          <Button type="submit" disabled={isSubmitting} className="flex-1 rounded-xl h-10 font-medium gap-2">
+            {isSubmitting ? (
+              <>
+                <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                Submitting…
+              </>
+            ) : (
+              <>
+                <CheckCircle2 size={15} />
+                Submit EOD Report
+              </>
+            )}
+          </Button>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="px-4 h-10 rounded-xl text-sm text-muted-foreground hover:text-foreground border border-border hover:border-input transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </PageShell>
+  )
+}
+
+// ─── Shared layout pieces ──────────────────────────────────────
+
+function PageShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="@container/main flex flex-1 flex-col">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
-          <div className="max-w-2xl">
-            <PageHeader />
-
-            <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
-              <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="space-y-5"
-                noValidate
-              >
-                {error && (
-                  <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-                    {error}
-                  </div>
-                )}
-
-                {/* Assignment */}
-                <Field label="Assignment" error={errors.assignmentId?.message}>
-                  <Controller
-                    control={control}
-                    name="assignmentId"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        disabled={assignments.length === 1}
-                      >
-                        <SelectTrigger className="rounded-xl border-input">
-                          <SelectValue placeholder="Select assignment" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {assignments.map(a => (
-                            <SelectItem key={a.id} value={a.id}>
-                              {a.serviceType ?? a.id}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </Field>
-
-                {/* Date */}
-                <Field label="Date" error={errors.date?.message}>
-                  <Input
-                    type="date"
-                    max={today}
-                    className="rounded-xl border-input max-w-[200px]"
-                    {...register('date')}
-                  />
-                </Field>
-
-                {/* Shift times + hours */}
-                <div className="grid grid-cols-3 gap-4">
-                  <Field label="Shift Start" error={errors.shiftStart?.message}>
-                    <Input
-                      type="time"
-                      className="rounded-xl border-input"
-                      {...register('shiftStart')}
-                    />
-                  </Field>
-                  <Field label="Shift End" error={errors.shiftEnd?.message}>
-                    <Input
-                      type="time"
-                      className="rounded-xl border-input"
-                      {...register('shiftEnd')}
-                    />
-                  </Field>
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-foreground">
-                      Hours Worked
-                    </Label>
-                    <div className="h-10 flex items-center px-3 rounded-xl bg-muted border border-input text-sm text-muted-foreground">
-                      {hoursWorked}h
-                    </div>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <Field
-                  label="Summary of Work"
-                  error={errors.summaryOfWork?.message}
-                >
-                  <Textarea
-                    placeholder="What did you accomplish today?"
-                    className="rounded-xl border-input resize-none"
-                    rows={4}
-                    {...register('summaryOfWork')}
-                  />
-                </Field>
-
-                {/* Pending tasks */}
-                <Field
-                  label="Pending Tasks"
-                  error={errors.pendingTasks?.message}
-                >
-                  <Textarea
-                    placeholder="List pending tasks or write 'None'"
-                    className="rounded-xl border-input resize-none"
-                    rows={3}
-                    {...register('pendingTasks')}
-                  />
-                </Field>
-
-                {/* Blockers */}
-                <Field label="Blockers" error={errors.blockers?.message}>
-                  <Textarea
-                    placeholder="Describe blockers or write 'None'"
-                    className="rounded-xl border-input resize-none"
-                    rows={2}
-                    {...register('blockers')}
-                  />
-                </Field>
-
-                {/* Notes */}
-                <Field label="Notes (optional)" error={errors.notes?.message}>
-                  <Textarea
-                    placeholder="Any additional notes…"
-                    className="rounded-xl border-input resize-none"
-                    rows={2}
-                    {...register('notes')}
-                  />
-                </Field>
-
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full rounded-xl h-10 font-medium"
-                >
-                  {isSubmitting ? 'Submitting…' : 'Submit EOD'}
-                </Button>
-              </form>
-            </div>
-          </div>
+          <div className="max-w-2xl">{children}</div>
         </div>
       </div>
     </div>
   )
 }
 
-// ─── Micro-components ─────────────────────────────────────────
-
 function PageHeader() {
   return (
-    <div className="mb-6">
-      <h1 className="text-2xl font-semibold text-foreground">
-        End of Day Report
-      </h1>
-      <p className="text-sm text-muted-foreground mt-0.5">
-        Submit your daily work summary
-      </p>
+    <div className="mb-5">
+      <div className="flex items-center gap-2 mb-1">
+        <ClipboardList size={18} className="text-muted-foreground" />
+        <h1 className="text-xl font-semibold text-foreground">End of Day Report</h1>
+      </div>
+      <p className="text-sm text-muted-foreground ml-7">Submit your daily work summary to keep your team updated</p>
+    </div>
+  )
+}
+
+function Section({
+  icon, title, optional = false, children,
+}: {
+  icon: ReactNode
+  title: string
+  optional?: boolean
+  children: ReactNode
+}) {
+  return (
+    <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 border-b border-border/60 bg-muted/30">
+        <span className="text-muted-foreground">{icon}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
+        {optional && (
+          <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">Optional</span>
+        )}
+      </div>
+      <div className="p-5 space-y-4">{children}</div>
     </div>
   )
 }
 
 function Field({
-  label,
-  error,
-  children,
+  label, error, hint, children,
 }: {
   label: string
   error?: string
+  hint?: string
   children: ReactNode
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-foreground">{label}</Label>
+      {label && <Label className="text-sm font-medium text-foreground block mb-1">{label}</Label>}
+      {hint && <p className="text-[11px] text-muted-foreground leading-relaxed">{hint}</p>}
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
 }
 
+function EmptyCard({ children }: { children: ReactNode }) {
+  return (
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
+      {children}
+    </div>
+  )
+}
+
 function PageSkeleton() {
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <div className="max-w-2xl space-y-4">
-            <div className="h-8 w-48 rounded-xl bg-muted animate-pulse" />
-            <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-10 rounded-xl bg-muted animate-pulse"
-                />
-              ))}
-            </div>
+    <PageShell>
+      <div className="mb-5 space-y-2">
+        <div className="h-6 w-48 rounded-lg bg-muted animate-pulse" />
+        <div className="h-4 w-72 rounded-lg bg-muted animate-pulse" />
+      </div>
+      {[1, 2, 3].map(i => (
+        <div key={i} className="bg-card rounded-2xl border border-border mb-4">
+          <div className="h-10 border-b border-border bg-muted/30 rounded-t-2xl animate-pulse" />
+          <div className="p-5 space-y-3">
+            <div className="h-10 rounded-xl bg-muted animate-pulse" />
+            <div className="h-20 rounded-xl bg-muted animate-pulse" />
           </div>
         </div>
-      </div>
-    </div>
+      ))}
+    </PageShell>
   )
 }

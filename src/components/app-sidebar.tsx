@@ -79,19 +79,19 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
     navMain: [
       {
         title: 'Dashboard',
-        url: '/admin/dashboard',
+        url: '/am/dashboard',
         icon: LayoutDashboardIcon,
       },
-      { title: 'Assignments', url: '/admin/assignments', icon: LinkIcon },
+      { title: 'Assignments', url: '/am/assignments', icon: LinkIcon },
       {
         title: 'Work Entries',
-        url: '/admin/work-entries',
+        url: '/am/work-entries',
         icon: ListChecksIcon,
       },
-      { title: 'EOD Reports', url: '/admin/eod-reports', icon: FileTextIcon },
-      { title: 'Accounts', url: '/admin/accounts', icon: UsersIcon },
-      { title: 'Reminders', url: '/admin/reminders', icon: BellIcon },
-      { title: 'Scorecards', url: '/admin/scorecards', icon: BarChart3Icon },
+      { title: 'EOD Reports', url: '/am/eod-reports', icon: FileTextIcon },
+      { title: 'Accounts', url: '/am/accounts', icon: UsersIcon },
+      { title: 'Reminders', url: '/am/reminders', icon: BellIcon },
+      { title: 'Scorecards', url: '/am/scorecards', icon: BarChart3Icon },
     ],
   },
   client: {

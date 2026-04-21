@@ -166,8 +166,13 @@ export default function WorkActivityPage() {
     useEodSubmissionsQuery()
   const isLoading = loadingAssignments || loadingEntries || loadingEods
 
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const today = new Date().toISOString().split('T')[0]
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]
+
+  const [dateFrom, setDateFrom] = useState(ninetyDaysAgo)
+  const [dateTo, setDateTo] = useState(today)
   const [assignmentFilter, setAssignmentFilter] = useState('all')
 
   const filteredEntries = useMemo(

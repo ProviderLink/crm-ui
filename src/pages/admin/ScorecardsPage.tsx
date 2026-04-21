@@ -175,7 +175,8 @@ export default function ScorecardsPage() {
               )}
               <Button
                 size="sm"
-                variant="outline"
+                variant="ghost"
+                className="border border-white/10 hover:border-white/20 hover:bg-white/5 text-muted-foreground hover:text-foreground"
                 onClick={handleGenerate}
                 disabled={generating}
               >

@@ -2,11 +2,7 @@ import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
 import { RoleGuard } from '@/components/shared/RoleGuard'
 import { DashboardLayout } from '@/layouts/DashboardLayout'
 import { lazy, Suspense } from 'react'
-import {
-  createBrowserRouter,
-  Outlet,
-  RouterProvider,
-} from 'react-router-dom'
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom'
 
 // Home (public)
 const HomePage = lazy(() => import('@/pages/HomePage'))
@@ -95,10 +91,33 @@ const router = createBrowserRouter([
             ],
           },
 
-          // Admin portal — admin + account_manager
+          // Admin portal — admin only
           {
             path: '/admin',
-            element: <RoleGuard roles={['admin', 'account_manager']} />,
+            element: <RoleGuard roles={['admin']} />,
+            children: [
+              {
+                element: <DashboardLayout />,
+                children: [
+                  { path: 'dashboard', element: <AdminDashboardPage /> },
+                  {
+                    path: 'assignments',
+                    element: <AssignmentManagementPage />,
+                  },
+                  { path: 'accounts', element: <AccountManagementPage /> },
+                  { path: 'reminders', element: <SurveyRemindersPage /> },
+                  { path: 'scorecards', element: <ScorecardsPage /> },
+                  { path: 'work-entries', element: <WorkEntriesPage /> },
+                  { path: 'eod-reports', element: <EodReportsPage /> },
+                ],
+              },
+            ],
+          },
+
+          // Account Manager portal
+          {
+            path: '/am',
+            element: <RoleGuard roles={['account_manager']} />,
             children: [
               {
                 element: <DashboardLayout />,

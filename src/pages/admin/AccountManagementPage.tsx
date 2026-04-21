@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon } from 'lucide-react'
+import { PenLineIcon } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -581,12 +581,12 @@ export default function AccountManagementPage() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="size-7"
+                className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
                 onClick={() => setEditAccount(row.original)}
               >
-                <PencilIcon className="size-3.5" />
+                <PenLineIcon className="size-3.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top">Edit</TooltipContent>
@@ -640,12 +640,12 @@ export default function AccountManagementPage() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="size-7"
+                className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
                 onClick={() => setEditProfile(row.original)}
               >
-                <PencilIcon className="size-3.5" />
+                <PenLineIcon className="size-3.5" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top">Edit</TooltipContent>
