@@ -80,9 +80,11 @@ export default function AddWorkEntryPage() {
     try {
       await createWorkEntry(data)
       queryClient.invalidateQueries({ queryKey: QK.workEntries })
+      toast.success('Work entry saved.')
       navigate('/va/work/history')
     } catch {
       setSubmitError('Failed to save work entry. Please try again.')
+      toast.error('Failed to save work entry. Please try again.')
     }
   }
 

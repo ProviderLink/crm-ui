@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 // ─── Schemas ────────────────────────────────────────────────
@@ -55,11 +56,14 @@ function RequestStep() {
     try {
       await forgotPassword(data.email)
       setSent(true)
+      toast.success('Reset link sent — check your inbox.')
     } catch (err) {
       if (err && typeof err === 'object' && 'response' in err) {
         setError('Something went wrong. Please try again.')
+        toast.error('Something went wrong. Please try again.')
       } else {
         setError('Unable to connect. Check your internet and try again.')
+        toast.error('Something went wrong. Please try again.')
       }
     }
   }
@@ -131,8 +135,10 @@ function ConfirmStep({ token }: { token: string }) {
     try {
       await resetPassword(token, data.password)
       setDone(true)
+      toast.success('Password updated successfully.')
     } catch {
       setError('This reset link is invalid or has expired.')
+      toast.error('This reset link is invalid or has expired.')
     }
   }
 

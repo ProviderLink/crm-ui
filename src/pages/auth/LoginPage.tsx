@@ -12,6 +12,7 @@ import { CheckCircle2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -44,6 +45,7 @@ export default function LoginPage() {
     try {
       const result = await login(data)
       dispatch(setAuth({ user: result.user, accessToken: result.accessToken }))
+      toast.success('Welcome back!')
       navigate(roleRedirect[result.user.role], { replace: true })
     } catch (err) {
       if (err && typeof err === 'object' && 'response' in err) {
@@ -51,11 +53,14 @@ export default function LoginPage() {
           ?.status
         if (status === 401 || status === 400) {
           setError('Invalid email or password.')
+          toast.error('Invalid email or password.')
         } else {
           setError('Something went wrong. Please try again.')
+          toast.error('Something went wrong. Please try again.')
         }
       } else {
         setError('Unable to connect. Check your internet and try again.')
+        toast.error('Unable to connect. Check your internet.')
       }
     }
   }
