@@ -65,17 +65,27 @@ function RequestStep() {
   }
 
   return (
-    <AuthShell title="Reset password" subtitle="Enter your email to receive a reset link.">
+    <AuthShell
+      title="Reset password"
+      subtitle="Enter your email to receive a reset link."
+    >
       {sent ? (
         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
           Check your inbox — a reset link is on its way.
         </div>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          noValidate
+        >
           {error && <ErrorBanner message={error} />}
           <div className="space-y-1.5">
             <div className="flex items-center">
-              <Label htmlFor="email" className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+              <Label
+                htmlFor="email"
+                className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest"
+              >
                 Email
               </Label>
             </div>
@@ -127,7 +137,10 @@ function ConfirmStep({ token }: { token: string }) {
   }
 
   return (
-    <AuthShell title="Set new password" subtitle="Choose a strong password for your account.">
+    <AuthShell
+      title="Set new password"
+      subtitle="Choose a strong password for your account."
+    >
       {done ? (
         <div className="space-y-4">
           <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
@@ -136,11 +149,18 @@ function ConfirmStep({ token }: { token: string }) {
           <BackToLogin />
         </div>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+          noValidate
+        >
           {error && <ErrorBanner message={error} />}
           <div className="space-y-1.5">
             <div className="flex items-center">
-              <Label htmlFor="password" className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+              <Label
+                htmlFor="password"
+                className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest"
+              >
                 New password
               </Label>
             </div>
@@ -153,11 +173,16 @@ function ConfirmStep({ token }: { token: string }) {
               style={{ background: 'rgba(255,255,255,0.04)' }}
               {...register('password')}
             />
-            {errors.password && <FieldError message={errors.password.message!} />}
+            {errors.password && (
+              <FieldError message={errors.password.message!} />
+            )}
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center">
-              <Label htmlFor="confirm" className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">
+              <Label
+                htmlFor="confirm"
+                className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest"
+              >
                 Confirm password
               </Label>
             </div>
@@ -197,7 +222,50 @@ function AuthShell({
   children: ReactNode
 }) {
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: '#07101c' }}>
+    <div
+      className="h-screen flex flex-col overflow-hidden"
+      style={{ background: '#07101c' }}
+    >
+      {/* ── Background ── */}
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(199,243,60,0.02) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(199,243,60,0.02) 1px, transparent 1px)
+            `,
+            backgroundSize: '5px 5px',
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(7,16,28,0.85) 100%)',
+          }}
+        />
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[320px] blur-[120px] opacity-[0.10]"
+          style={{ background: '#c7f33c' }}
+        />
+        <svg className="absolute inset-0 w-full h-full opacity-[0.04]">
+          <filter id="grain-rp">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.65"
+              numOctaves="3"
+              stitchTiles="stitch"
+            />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#grain-rp)" />
+        </svg>
+      </div>
+
       <div className="relative z-10 flex-1 flex items-center justify-center px-4 min-h-0">
         <div className="w-full max-w-[360px]">
           {/* Logo */}
@@ -221,14 +289,12 @@ function AuthShell({
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 shrink-0 border-t border-white/[0.06] px-6 py-3 flex items-center justify-between">
+      <footer className="relative z-10 shrink-0 border-t border-white/[0.05] px-6 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-          <span className="text-[11px] text-slate-500">All systems operational</span>
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+          <span className="text-xs text-slate-600">All systems operational</span>
         </div>
-        <p className="text-[11px] text-slate-600">
-          © {new Date().getFullYear()} Arista CRM
-        </p>
+        <p className="text-xs text-slate-700">© {new Date().getFullYear()} Arista CRM</p>
       </footer>
     </div>
   )
@@ -256,4 +322,3 @@ function BackToLogin() {
     </p>
   )
 }
-

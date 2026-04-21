@@ -47,7 +47,8 @@ export default function LoginPage() {
       navigate(roleRedirect[result.user.role], { replace: true })
     } catch (err) {
       if (err && typeof err === 'object' && 'response' in err) {
-        const status = (err as { response?: { status?: number } }).response?.status
+        const status = (err as { response?: { status?: number } }).response
+          ?.status
         if (status === 401 || status === 400) {
           setError('Invalid email or password.')
         } else {
@@ -60,7 +61,49 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: '#07101c' }}>
+    <div
+      className="h-screen flex flex-col overflow-hidden"
+      style={{ background: '#07101c' }}
+    >
+      {/* ── Background ── */}
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(199,243,60,0.02) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(199,243,60,0.02) 1px, transparent 1px)
+            `,
+            backgroundSize: '5px 5px',
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(7,16,28,0.85) 100%)',
+          }}
+        />
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[320px] blur-[120px] opacity-[0.10]"
+          style={{ background: '#c7f33c' }}
+        />
+        <svg className="absolute inset-0 w-full h-full opacity-[0.04]">
+          <filter id="grain">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.65"
+              numOctaves="3"
+              stitchTiles="stitch"
+            />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#grain)" />
+        </svg>
+      </div>
 
       {/* ── Form area ── */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-4 min-h-0">
@@ -92,7 +135,11 @@ export default function LoginPage() {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-4"
+            noValidate
+          >
             <div className="space-y-1.5">
               <div className="flex items-center">
                 <Label
@@ -141,7 +188,9 @@ export default function LoginPage() {
                 {...register('password')}
               />
               {errors.password && (
-                <p className="text-xs text-red-400">{errors.password.message}</p>
+                <p className="text-xs text-red-400">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -166,18 +215,23 @@ export default function LoginPage() {
               <DevQuickLogin />
             </div>
           )}
+
+          {/* Back to home */}
+          <p className="mt-6 text-center text-xs text-slate-600">
+            <Link to="/" className="hover:text-slate-400 transition-colors">
+              ← Back to home
+            </Link>
+          </p>
         </div>
       </div>
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 shrink-0 border-t border-white/[0.06] px-6 py-3 flex items-center justify-between">
+      <footer className="relative z-10 shrink-0 border-t border-white/[0.05] px-6 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-          <span className="text-[11px] text-slate-500">All systems operational</span>
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+          <span className="text-xs text-slate-600">All systems operational</span>
         </div>
-        <p className="text-[11px] text-slate-600">
-          © {new Date().getFullYear()} Arista CRM
-        </p>
+        <p className="text-xs text-slate-700">© {new Date().getFullYear()} Arista CRM</p>
       </footer>
     </div>
   )
