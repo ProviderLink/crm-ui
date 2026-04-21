@@ -11,12 +11,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { formatMinutes } from '@/lib/time'
 import {
   useAllAssignmentsQuery,
   useEodSubmissionsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries'
+import { formatMinutes } from '@/lib/time'
 import type { IAssignment } from '@/types/assignment'
 import type { IEodSubmission } from '@/types/eod-submission'
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
@@ -35,6 +35,7 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
   {
     accessorKey: 'entryDate',
     header: 'Date',
+    size: 105,
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">
         {getValue<string>()?.slice(0, 10)}
@@ -44,6 +45,7 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
   {
     accessorKey: 'entryTime',
     header: 'Time',
+    size: 75,
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">
         {getValue<string>()}
@@ -53,8 +55,9 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
   {
     accessorKey: 'taskCategory',
     header: 'Category',
+    size: 160,
     cell: ({ getValue }) => (
-      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
         {getValue<string>()}
       </span>
     ),
@@ -63,18 +66,14 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
     accessorKey: 'taskDescription',
     header: 'Description',
     enableSorting: false,
-    cell: ({ getValue }) => {
-      const v = getValue<string>()
-      return (
-        <span className="text-sm">
-          {v.length > 55 ? `${v.slice(0, 55)}…` : v}
-        </span>
-      )
-    },
+    cell: ({ getValue }) => (
+      <span className="text-sm">{getValue<string>()}</span>
+    ),
   },
   {
     accessorKey: 'timeSpent',
     header: 'Time Spent',
+    size: 95,
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">
         {formatMinutes(getValue<number>())}
@@ -84,11 +83,12 @@ const workColumns: ColumnDef<IWorkEntry>[] = [
   {
     accessorKey: 'status',
     header: 'Status',
+    size: 125,
     cell: ({ getValue }) => {
       const s = getValue<WorkEntryStatus>()
       return (
         <span
-          className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
+          className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
         >
           {s.replace('_', ' ')}
         </span>
@@ -103,6 +103,7 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
   {
     accessorKey: 'date',
     header: 'Date',
+    size: 105,
     cell: ({ getValue }) => (
       <span className="text-xs text-muted-foreground">
         {getValue<string>()?.slice(0, 10)}
@@ -112,6 +113,7 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
   {
     accessorKey: 'shiftStart',
     header: 'Start',
+    size: 70,
     cell: ({ getValue }) => (
       <span className="text-sm">{getValue<string>()}</span>
     ),
@@ -119,6 +121,7 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
   {
     accessorKey: 'shiftEnd',
     header: 'End',
+    size: 70,
     cell: ({ getValue }) => (
       <span className="text-sm">{getValue<string>()}</span>
     ),
@@ -126,6 +129,7 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
   {
     accessorKey: 'hoursWorked',
     header: 'Hours',
+    size: 75,
     cell: ({ getValue }) => (
       <span className="text-sm font-medium text-foreground">
         {getValue<number>()}h
@@ -136,36 +140,30 @@ const eodColumns: ColumnDef<IEodSubmission>[] = [
     accessorKey: 'summaryOfWork',
     header: 'Summary',
     enableSorting: false,
-    cell: ({ getValue }) => {
-      const v = getValue<string>()
-      return (
-        <span className="text-sm">
-          {v.length > 60 ? `${v.slice(0, 60)}…` : v}
-        </span>
-      )
-    },
+    cell: ({ getValue }) => (
+      <span className="text-sm">{getValue<string>()}</span>
+    ),
   },
   {
     accessorKey: 'pendingTasks',
     header: 'Pending Tasks',
+    size: 200,
     enableSorting: false,
-    cell: ({ getValue }) => {
-      const v = getValue<string>()
-      return (
-        <span className="text-sm text-muted-foreground">
-          {v.length > 50 ? `${v.slice(0, 50)}…` : v}
-        </span>
-      )
-    },
+    cell: ({ getValue }) => (
+      <span className="text-sm text-muted-foreground">{getValue<string>()}</span>
+    ),
   },
 ]
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function WorkActivityPage() {
-  const { data: assignments = [], isLoading: loadingAssignments } = useAllAssignmentsQuery()
-  const { data: allEntries = [], isLoading: loadingEntries } = useWorkEntriesQuery()
-  const { data: allEods = [], isLoading: loadingEods } = useEodSubmissionsQuery()
+  const { data: assignments = [], isLoading: loadingAssignments } =
+    useAllAssignmentsQuery()
+  const { data: allEntries = [], isLoading: loadingEntries } =
+    useWorkEntriesQuery()
+  const { data: allEods = [], isLoading: loadingEods } =
+    useEodSubmissionsQuery()
   const isLoading = loadingAssignments || loadingEntries || loadingEods
 
   const [dateFrom, setDateFrom] = useState('')

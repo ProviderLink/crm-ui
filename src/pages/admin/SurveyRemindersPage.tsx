@@ -69,10 +69,8 @@ export default function SurveyRemindersPage() {
         ...(status === 'completed' ? { completedDate: todayStr() } : {}),
       })
       queryClient.invalidateQueries({ queryKey: QK.surveyReminders })
-      toast.success('Reminder status updated.')
     } catch {
       setUpdateError('Failed to update status. Please try again.')
-      toast.error('Failed to update status.')
     } finally {
       setUpdatingId(null)
     }
@@ -151,9 +149,9 @@ export default function SurveyRemindersPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
-                      className="size-7 bg-green-500/[0.04] text-green-500/60 hover:text-green-500 hover:bg-green-500/[0.08]"
+                      className="size-7 text-green-600 border-green-500/30 hover:bg-green-500/10 hover:text-green-700 hover:border-green-500/50"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(id, 'completed')}
                     >
@@ -166,9 +164,9 @@ export default function SurveyRemindersPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
-                      className="size-7 bg-white/[0.02] text-muted-foreground/60 hover:text-muted-foreground hover:bg-white/[0.05]"
+                      className="size-7 text-muted-foreground hover:text-foreground"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(id, 'skipped')}
                     >

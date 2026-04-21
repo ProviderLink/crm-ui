@@ -84,7 +84,7 @@ export default function AdminDashboardPage() {
   const user = useAppSelector(s => s.auth.user)
   const isAccountManager = user?.role === 'account_manager'
 
-  const { data: stats, isFetching: loadingStats } = useDashboardStatsQuery()
+  const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery()
   const { data: atsVAs = [], isLoading: loadingVAs } = useAtsVAsQuery()
   const { data: atsClients = [], isLoading: loadingClients } =
     useAtsClientsQuery()

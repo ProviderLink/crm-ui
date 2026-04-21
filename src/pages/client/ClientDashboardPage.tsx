@@ -137,11 +137,7 @@ export default function ClientDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>Entries Today</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loading ? (
-                  <Skeleton className="h-8 w-12" />
-                ) : (
-                  todayCount
-                )}
+                {loading ? <Skeleton className="h-8 w-12" /> : todayCount}
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ActivityIcon className="size-4 text-muted-foreground" />

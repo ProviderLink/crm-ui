@@ -40,11 +40,7 @@ type FormData = z.infer<typeof schema>
 export default function EodSubmitPage() {
   const navigate = useNavigate()
   const today = todayString()
-  const {
-    assignments,
-    isLoading: loadingAssignments,
-    isError: assignmentsError,
-  } = useMyAssignments()
+  const { assignments, isLoading: loadingAssignments, isError: assignmentsError } = useMyAssignments()
 
   const queryClient = useQueryClient()
   const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery()
@@ -81,11 +77,9 @@ export default function EodSubmitPage() {
     try {
       await createEodSubmission({ ...data, hoursWorked })
       queryClient.invalidateQueries({ queryKey: QK.eodSubmissions })
-      toast.success('EOD report submitted.')
       navigate('/va/eod/history')
     } catch {
       setError('Failed to submit EOD. Please try again.')
-      toast.error('Failed to submit EOD. Please try again.')
     }
   }
 
@@ -139,8 +133,7 @@ export default function EodSubmitPage() {
               <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center space-y-3">
                 <CheckCircle2 size={36} className="text-green-500 mx-auto" />
                 <p className="text-base font-medium text-foreground">
-                  EOD already submitted for{' '}
-                  {selectedDate === today ? 'today' : selectedDate}
+                  EOD already submitted for {selectedDate === today ? 'today' : selectedDate}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   You can view it in your EOD history.

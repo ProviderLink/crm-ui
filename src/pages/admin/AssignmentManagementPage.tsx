@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PenLineIcon, PlusIcon, XIcon } from 'lucide-react'
+import { BanIcon, PencilIcon, PlusIcon } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -109,18 +109,13 @@ function buildColumns(
       size: 90,
       cell: ({ getValue }) => {
         const v = getValue<string>()
-        const styles =
-          {
-            active:
-              'bg-green-500/10 text-green-700 dark:text-green-400 ring-1 ring-green-500/20',
-            paused:
-              'bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20',
-            ended: 'bg-muted text-muted-foreground ring-1 ring-border',
-          }[v] ?? 'bg-muted text-muted-foreground ring-1 ring-border'
+        const styles = {
+          active:  'bg-green-500/10 text-green-700 dark:text-green-400 ring-1 ring-green-500/20',
+          paused:  'bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20',
+          ended:   'bg-muted text-muted-foreground ring-1 ring-border',
+        }[v] ?? 'bg-muted text-muted-foreground ring-1 ring-border'
         return (
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize whitespace-nowrap ${styles}`}
-          >
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize whitespace-nowrap ${styles}`}>
             {v}
           </span>
         )
@@ -142,12 +137,12 @@ function buildColumns(
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="icon"
-                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                  className="size-7"
                   onClick={() => onEdit(row.original)}
                 >
-                  <PenLineIcon className="size-3.5" />
+                  <PencilIcon className="size-3.5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top">Edit</TooltipContent>
@@ -157,12 +152,12 @@ function buildColumns(
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="icon"
-                    className="size-7 bg-destructive/[0.04] text-destructive/60 hover:text-destructive hover:bg-destructive/[0.08]"
+                  className="size-7 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
                     onClick={() => onDeactivate(row.original)}
                   >
-                    <XIcon className="size-3.5" />
+                    <BanIcon className="size-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top">End Assignment</TooltipContent>
@@ -226,11 +221,9 @@ function CreateAssignmentForm({
     setServerError('')
     try {
       await createAssignment(data)
-      toast.success('Assignment created.')
       onSuccess()
     } catch {
       setServerError('Failed to create assignment. Please try again.')
-      toast.error('Failed to create assignment. Please try again.')
     }
   }
 
@@ -401,11 +394,9 @@ function EditAssignmentForm({
     setServerError('')
     try {
       await updateAssignment(assignment.id, data)
-      toast.success('Assignment updated.')
       onSuccess()
     } catch {
       setServerError('Failed to save changes. Please try again.')
-      toast.error('Failed to save changes. Please try again.')
     }
   }
 
@@ -513,10 +504,8 @@ export default function AssignmentManagementPage() {
     try {
       await updateAssignment(a.id, { status: 'ended' })
       queryClient.invalidateQueries({ queryKey: QK.allAssignments })
-      toast.success('Assignment deactivated.')
     } catch {
       setDeactivateError('Failed to deactivate assignment. Please try again.')
-      toast.error('Failed to deactivate assignment. Please try again.')
     }
   }
 

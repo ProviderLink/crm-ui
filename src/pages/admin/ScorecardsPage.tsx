@@ -41,10 +41,8 @@ export default function ScorecardsPage() {
     try {
       await generateScorecards()
       queryClient.invalidateQueries({ queryKey: ['scorecards'] })
-      toast.success('Scorecards generated.')
     } catch {
       setGenerateError('Failed to generate scorecards. Please try again.')
-      toast.error('Failed to generate scorecards.')
     } finally {
       setGenerating(false)
     }
@@ -177,8 +175,7 @@ export default function ScorecardsPage() {
               )}
               <Button
                 size="sm"
-                variant="ghost"
-                className="border border-white/10 hover:border-white/20 hover:bg-white/5 text-muted-foreground hover:text-foreground"
+                variant="outline"
                 onClick={handleGenerate}
                 disabled={generating}
               >

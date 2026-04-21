@@ -274,6 +274,7 @@ export default function WorkHistoryPage() {
       {
         accessorKey: 'entryDate',
         header: 'Date',
+        size: 105,
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {getValue<string>()?.slice(0, 10)}
@@ -283,6 +284,7 @@ export default function WorkHistoryPage() {
       {
         accessorKey: 'entryTime',
         header: 'Time',
+        size: 75,
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {getValue<string>()}
@@ -292,8 +294,9 @@ export default function WorkHistoryPage() {
       {
         accessorKey: 'taskCategory',
         header: 'Category',
+        size: 160,
         cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
             {getValue<string>()}
           </span>
         ),
@@ -302,18 +305,14 @@ export default function WorkHistoryPage() {
         accessorKey: 'taskDescription',
         header: 'Description',
         enableSorting: false,
-        cell: ({ getValue }) => {
-          const v = getValue<string>()
-          return (
-            <span className="text-sm">
-              {v.length > 55 ? `${v.slice(0, 55)}…` : v}
-            </span>
-          )
-        },
+        cell: ({ getValue }) => (
+          <span className="text-sm">{getValue<string>()}</span>
+        ),
       },
       {
         accessorKey: 'timeSpent',
         header: 'Time Spent',
+        size: 95,
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {formatMinutes(getValue<number>())}
@@ -323,11 +322,12 @@ export default function WorkHistoryPage() {
       {
         accessorKey: 'status',
         header: 'Status',
+        size: 125,
         cell: ({ getValue }) => {
           const s = getValue<WorkEntryStatus>()
           return (
             <span
-              className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_STYLES[s]}`}
+              className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
             >
               {s.replace('_', ' ')}
             </span>
@@ -338,11 +338,12 @@ export default function WorkHistoryPage() {
         id: 'actions',
         header: '',
         enableSorting: false,
+        size: 60,
         cell: ({ row }) => (
           <button
             type="button"
             onClick={() => setEditEntry(row.original)}
-            className="text-xs text-blue-600 hover:underline"
+            className="text-xs text-primary hover:underline"
           >
             Edit
           </button>

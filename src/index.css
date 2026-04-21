@@ -175,3 +175,9 @@
   --sidebar-border: rgba(255, 255, 255, 0.08);
   --sidebar-ring: #c7f33c;
 }
+
+@keyframes navprogress {
+  0%   { width: 0%; opacity: 1; }
+  50%  { width: 70%; opacity: 1; }
+  100% { width: 95%; opacity: 0.6; }
+}
