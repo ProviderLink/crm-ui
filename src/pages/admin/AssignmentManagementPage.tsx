@@ -1,6 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PenLineIcon, PlusIcon, XIcon } from 'lucide-react'
+import {
+  AlertCircle,
+  Briefcase,
+  CalendarDays,
+  CheckCircle2,
+  PenLineIcon,
+  PlusIcon,
+  StickyNote,
+  Users2,
+  XIcon,
+} from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -177,20 +187,60 @@ function buildColumns(
   ]
 }
 
+// ─── Section card ─────────────────────────────────────────────────────────────
+
+function Section({
+  icon,
+  title,
+  optional = false,
+  children,
+}: {
+  icon: ReactNode
+  title: string
+  optional?: boolean
+  children: ReactNode
+}) {
+  return (
+    <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+      <div className="flex items-center gap-2 px-5 py-3 border-b border-border/60 bg-muted/30">
+        <span className="text-muted-foreground">{icon}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </span>
+        {optional && (
+          <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">
+            Optional
+          </span>
+        )}
+      </div>
+      <div className="p-5 space-y-4">{children}</div>
+    </div>
+  )
+}
+
 // ─── Field wrapper ────────────────────────────────────────────────────────────
 
 function Field({
   label,
   error,
+  hint,
   children,
 }: {
   label: string
   error?: string
+  hint?: string
   children: ReactNode
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-sm font-medium text-foreground">{label}</Label>
+      {label && (
+        <Label className="text-sm font-medium text-foreground block mb-1">
+          {label}
+        </Label>
+      )}
+      {hint && (
+        <p className="text-[11px] text-muted-foreground -mt-0.5">{hint}</p>
+      )}
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
@@ -204,11 +254,13 @@ function CreateAssignmentForm({
   vas,
   team,
   onSuccess,
+  onClose,
 }: {
   clients: IAtsClient[]
   vas: IAtsCandidate[]
   team: IAtsUser[]
   onSuccess: () => void
+  onClose: () => void
 }) {
   const {
     register,
@@ -235,131 +287,182 @@ function CreateAssignmentForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="mt-6 flex flex-col gap-4"
+      noValidate
+      className="mt-6 space-y-4"
     >
       {serverError && (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+          <AlertCircle size={15} className="mt-0.5 shrink-0" />
           {serverError}
-        </p>
+        </div>
       )}
 
-      <Field label="Client" error={errors.clientId?.message}>
-        <Controller
-          control={control}
-          name="clientId"
-          render={({ field }) => (
-            <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
-                <SelectValue placeholder="Select client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.companyName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* ── People ── */}
+      <Section icon={<Users2 size={14} />} title="People">
+        <Field label="Client" error={errors.clientId?.message}>
+          <Controller
+            control={control}
+            name="clientId"
+            render={({ field }) => (
+              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                <SelectTrigger className="rounded-xl border-input h-10">
+                  <SelectValue placeholder="Select client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.companyName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+
+        <Field label="Virtual Assistant" error={errors.vaId?.message}>
+          <Controller
+            control={control}
+            name="vaId"
+            render={({ field }) => (
+              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                <SelectTrigger className="rounded-xl border-input h-10">
+                  <SelectValue placeholder="Select VA" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vas.map(v => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.firstName} {v.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+
+        <Field label="Account Manager" error={errors.accountManagerId?.message}>
+          <Controller
+            control={control}
+            name="accountManagerId"
+            render={({ field }) => (
+              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                <SelectTrigger className="rounded-xl border-input h-10">
+                  <SelectValue placeholder="Select account manager" />
+                </SelectTrigger>
+                <SelectContent>
+                  {team.map(u => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.firstName} {u.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+      </Section>
+
+      {/* ── Service ── */}
+      <Section icon={<Briefcase size={14} />} title="Service">
+        <div className="grid grid-cols-2 gap-4 items-end">
+          <Field
+            label="Service Type"
+            error={errors.serviceType?.message}
+            hint="e.g. Medical VA, Admin Support"
+          >
+            <Input
+              {...register('serviceType')}
+              placeholder="Service type"
+              className="rounded-xl border-input h-10"
+            />
+          </Field>
+
+          <Field label="Status" error={errors.status?.message} hint="Active, Paused, or Ended">
+            <Controller
+              control={control}
+              name="status"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="rounded-xl border-input h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="paused">Paused</SelectItem>
+                    <SelectItem value="ended">Ended</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+        </div>
+      </Section>
+
+      {/* ── Timeline ── */}
+      <Section icon={<CalendarDays size={14} />} title="Timeline">
+        <div className="grid grid-cols-2 gap-4 items-end">
+          <Field label="Start Date" error={errors.startDate?.message}>
+            <Input
+              type="date"
+              {...register('startDate')}
+              className="rounded-xl border-input h-10"
+            />
+          </Field>
+
+          <Field
+            label="End Date"
+            error={errors.endDate?.message}
+            hint="Leave blank if ongoing"
+          >
+            <Input
+              type="date"
+              {...register('endDate')}
+              className="rounded-xl border-input h-10"
+            />
+          </Field>
+        </div>
+      </Section>
+
+      {/* ── Notes ── */}
+      <Section icon={<StickyNote size={14} />} title="Notes" optional>
+        <Field label="" error={errors.notes?.message}>
+          <Textarea
+            {...register('notes')}
+            placeholder="Any additional notes…"
+            className="rounded-xl border-input resize-none"
+            rows={3}
+          />
+        </Field>
+      </Section>
+
+      {/* ── Actions ── */}
+      <div className="flex items-center gap-3 pt-1">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 rounded-xl h-10 font-medium gap-2"
+        >
+          {isSubmitting ? (
+            <>
+              <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              Creating…
+            </>
+          ) : (
+            <>
+              <CheckCircle2 size={15} />
+              Create Assignment
+            </>
           )}
-        />
-      </Field>
-
-      <Field label="VA" error={errors.vaId?.message}>
-        <Controller
-          control={control}
-          name="vaId"
-          render={({ field }) => (
-            <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
-                <SelectValue placeholder="Select VA" />
-              </SelectTrigger>
-              <SelectContent>
-                {vas.map(v => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.firstName} {v.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Field>
-
-      <Field label="Account Manager" error={errors.accountManagerId?.message}>
-        <Controller
-          control={control}
-          name="accountManagerId"
-          render={({ field }) => (
-            <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
-                <SelectValue placeholder="Select account manager" />
-              </SelectTrigger>
-              <SelectContent>
-                {team.map(u => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.firstName} {u.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Field>
-
-      <Field label="Service Type" error={errors.serviceType?.message}>
-        <Input
-          {...register('serviceType')}
-          placeholder="e.g. Medical VA, Admin Support"
-          className="rounded-xl border-input"
-        />
-      </Field>
-
-      <Field label="Start Date" error={errors.startDate?.message}>
-        <Input
-          type="date"
-          {...register('startDate')}
-          className="rounded-xl border-input"
-        />
-      </Field>
-
-      <Field label="End Date (optional)" error={errors.endDate?.message}>
-        <Input
-          type="date"
-          {...register('endDate')}
-          className="rounded-xl border-input"
-        />
-      </Field>
-
-      <Field label="Status" error={errors.status?.message}>
-        <Controller
-          control={control}
-          name="status"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
-                <SelectItem value="ended">Ended</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Field>
-
-      <Field label="Notes (optional)" error={errors.notes?.message}>
-        <Textarea
-          {...register('notes')}
-          placeholder="Any additional notes…"
-          className="rounded-xl border-input"
-        />
-      </Field>
-
-      <Button type="submit" disabled={isSubmitting} className="mt-2">
-        {isSubmitting ? 'Creating…' : 'Create Assignment'}
-      </Button>
+        </Button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 h-10 rounded-xl text-sm text-muted-foreground hover:text-foreground border border-border hover:border-input transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   )
 }
@@ -370,10 +473,12 @@ function EditAssignmentForm({
   assignment,
   team,
   onSuccess,
+  onClose,
 }: {
   assignment: IAssignment
   team: IAtsUser[]
   onSuccess: () => void
+  onClose: () => void
 }) {
   const {
     register,
@@ -408,81 +513,127 @@ function EditAssignmentForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="mt-6 flex flex-col gap-4"
+      noValidate
+      className="mt-6 space-y-4"
     >
       {serverError && (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+          <AlertCircle size={15} className="mt-0.5 shrink-0" />
           {serverError}
-        </p>
+        </div>
       )}
 
-      <Field label="Account Manager" error={errors.accountManagerId?.message}>
-        <Controller
-          control={control}
-          name="accountManagerId"
-          render={({ field }) => (
-            <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
-                <SelectValue placeholder="Select account manager" />
-              </SelectTrigger>
-              <SelectContent>
-                {team.map(u => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.firstName} {u.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* ── Assignment Details ── */}
+      <Section icon={<Briefcase size={14} />} title="Assignment Details">
+        <Field label="Account Manager" error={errors.accountManagerId?.message}>
+          <Controller
+            control={control}
+            name="accountManagerId"
+            render={({ field }) => (
+              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                <SelectTrigger className="rounded-xl border-input h-10">
+                  <SelectValue placeholder="Select account manager" />
+                </SelectTrigger>
+                <SelectContent>
+                  {team.map(u => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.firstName} {u.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-4 items-end">
+          <Field
+            label="Service Type"
+            error={errors.serviceType?.message}
+            hint="e.g. Medical VA, Admin Support"
+          >
+            <Input
+              {...register('serviceType')}
+              placeholder="Service type"
+              className="rounded-xl border-input h-10"
+            />
+          </Field>
+
+          <Field label="Status" error={errors.status?.message} hint="Active, Paused, or Ended">
+            <Controller
+              control={control}
+              name="status"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="rounded-xl border-input h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="paused">Paused</SelectItem>
+                    <SelectItem value="ended">Ended</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+        </div>
+      </Section>
+
+      {/* ── Timeline ── */}
+      <Section icon={<CalendarDays size={14} />} title="Timeline">
+        <Field
+          label="End Date"
+          error={errors.endDate?.message}
+          hint="Leave blank if still ongoing"
+        >
+          <Input
+            type="date"
+            {...register('endDate')}
+            className="rounded-xl border-input h-10 max-w-[200px]"
+          />
+        </Field>
+      </Section>
+
+      {/* ── Notes ── */}
+      <Section icon={<StickyNote size={14} />} title="Notes" optional>
+        <Field label="" error={errors.notes?.message}>
+          <Textarea
+            {...register('notes')}
+            placeholder="Any additional notes…"
+            className="rounded-xl border-input resize-none"
+            rows={3}
+          />
+        </Field>
+      </Section>
+
+      {/* ── Actions ── */}
+      <div className="flex items-center gap-3 pt-1">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex-1 rounded-xl h-10 font-medium gap-2"
+        >
+          {isSubmitting ? (
+            <>
+              <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              Saving…
+            </>
+          ) : (
+            <>
+              <CheckCircle2 size={15} />
+              Save Changes
+            </>
           )}
-        />
-      </Field>
-
-      <Field label="Status" error={errors.status?.message}>
-        <Controller
-          control={control}
-          name="status"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-xl border-input">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
-                <SelectItem value="ended">Ended</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Field>
-
-      <Field label="Service Type" error={errors.serviceType?.message}>
-        <Input
-          {...register('serviceType')}
-          placeholder="e.g. Medical VA, Admin Support"
-          className="rounded-xl border-input"
-        />
-      </Field>
-
-      <Field label="End Date (optional)" error={errors.endDate?.message}>
-        <Input
-          type="date"
-          {...register('endDate')}
-          className="rounded-xl border-input"
-        />
-      </Field>
-
-      <Field label="Notes (optional)" error={errors.notes?.message}>
-        <Textarea
-          {...register('notes')}
-          placeholder="Any additional notes…"
-          className="rounded-xl border-input"
-        />
-      </Field>
-
-      <Button type="submit" disabled={isSubmitting} className="mt-2">
-        {isSubmitting ? 'Saving…' : 'Save Changes'}
-      </Button>
+        </Button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 h-10 rounded-xl text-sm text-muted-foreground hover:text-foreground border border-border hover:border-input transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   )
 }
@@ -593,6 +744,7 @@ export default function AssignmentManagementPage() {
                 setSheetMode(null)
                 queryClient.invalidateQueries({ queryKey: QK.allAssignments })
               }}
+              onClose={() => setSheetMode(null)}
             />
           )}
 
@@ -604,6 +756,7 @@ export default function AssignmentManagementPage() {
                 setSheetMode(null)
                 queryClient.invalidateQueries({ queryKey: QK.allAssignments })
               }}
+              onClose={() => setSheetMode(null)}
             />
           )}
         </SheetContent>

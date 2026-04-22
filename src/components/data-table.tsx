@@ -206,7 +206,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       <form
         onSubmit={e => {
           e.preventDefault()
-          toast.success(`${row.original.header} target saved.`)
+          toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
+            loading: `Saving ${row.original.header}`,
+            success: 'Done',
+            error: 'Error',
+          })
         }}
       >
         <Label htmlFor={`${row.original.id}-target`} className="sr-only">
@@ -227,7 +231,11 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       <form
         onSubmit={e => {
           e.preventDefault()
-          toast.success(`${row.original.header} limit saved.`)
+          toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
+            loading: `Saving ${row.original.header}`,
+            success: 'Done',
+            error: 'Error',
+          })
         }}
       >
         <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
