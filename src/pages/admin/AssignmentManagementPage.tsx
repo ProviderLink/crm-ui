@@ -232,14 +232,14 @@ function Field({
   children: ReactNode
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="flex flex-col gap-1.5">
       {label && (
-        <Label className="text-sm font-medium text-foreground block mb-1">
+        <Label className="text-sm font-medium text-foreground">
           {label}
         </Label>
       )}
       {hint && (
-        <p className="text-[11px] text-muted-foreground -mt-0.5">{hint}</p>
+        <p className="text-[11px] text-muted-foreground">{hint}</p>
       )}
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
@@ -365,7 +365,7 @@ function CreateAssignmentForm({
 
       {/* ── Service ── */}
       <Section icon={<Briefcase size={14} />} title="Service">
-        <div className="grid grid-cols-2 gap-4 items-end">
+        <div className="grid grid-cols-[3fr_2fr] gap-4 items-end">
           <Field
             label="Service Type"
             error={errors.serviceType?.message}
@@ -378,7 +378,7 @@ function CreateAssignmentForm({
             />
           </Field>
 
-          <Field label="Status" error={errors.status?.message} hint="Active, Paused, or Ended">
+          <Field label="Status" error={errors.status?.message}>
             <Controller
               control={control}
               name="status"
@@ -546,7 +546,7 @@ function EditAssignmentForm({
           />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4 items-end">
+        <div className="grid grid-cols-[3fr_2fr] gap-4 items-end">
           <Field
             label="Service Type"
             error={errors.serviceType?.message}
@@ -559,7 +559,7 @@ function EditAssignmentForm({
             />
           </Field>
 
-          <Field label="Status" error={errors.status?.message} hint="Active, Paused, or Ended">
+          <Field label="Status" error={errors.status?.message}>
             <Controller
               control={control}
               name="status"
