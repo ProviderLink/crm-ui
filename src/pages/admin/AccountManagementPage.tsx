@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PenLineIcon } from 'lucide-react'
+import { EyeIcon, KeyRoundIcon, PenLineIcon, UserPlusIcon, XCircleIcon } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { DataTable } from '@/components/shared/DataTable'
@@ -24,6 +25,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -37,10 +45,19 @@ import {
   useAtsClientsQuery,
   useAtsVAsQuery,
   useClientAccountsQuery,
+  useCrmClientUsersQuery,
+  useCrmVaUsersQuery,
   useVaProfilesQuery,
 } from '@/hooks/queries'
+import {
+  createCrmUser,
+  deactivateCrmUser,
+  resetCrmUserPassword,
+  type ICrmUser,
+} from '@/services/account-managers.service'
 import { updateClientAccount } from '@/services/client-accounts.service'
 import { updateVaProfile } from '@/services/va-profiles.service'
+import type { IAtsCandidate, IAtsClient } from '@/types/ats'
 import type { IClientAccount } from '@/types/client-account'
 import type { IVaProfile } from '@/types/va-profile'
 import { useQueryClient } from '@tanstack/react-query'
@@ -73,7 +90,37 @@ const vaProfileSchema = z.object({
 })
 type VaProfileFormData = z.infer<typeof vaProfileSchema>
 
+const provisionLoginSchema = z.object({
+  email: z.string().email('Invalid email'),
+  firstName: z.string().min(1, 'Required'),
+  lastName: z.string().min(1, 'Required'),
+  phone: z.string().optional(),
+})
+type ProvisionLoginFormData = z.infer<typeof provisionLoginSchema>
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function LoginStatusBadge({ user }: { user: ICrmUser | undefined }) {
+  if (!user) {
+    return (
+      <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
+        Not provisioned
+      </span>
+    )
+  }
+  if (!user.isActive) {
+    return (
+      <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
+        Deactivated
+      </span>
+    )
+  }
+  return (
+    <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-400">
+      Active
+    </span>
+  )
+}
 
 function HealthBadge({ status }: { status: string }) {
   const cls =
@@ -153,6 +200,111 @@ function CheckboxField({
         {label}
       </Label>
     </div>
+  )
+}
+
+// ─── Provision Login Form ─────────────────────────────────────────────────────
+
+function ProvisionLoginForm({
+  role,
+  atsId,
+  defaultFirstName,
+  defaultLastName,
+  onSuccess,
+}: {
+  role: 'va' | 'client'
+  atsId: string
+  defaultFirstName?: string
+  defaultLastName?: string
+  onSuccess: () => void
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ProvisionLoginFormData>({
+    resolver: zodResolver(provisionLoginSchema),
+    defaultValues: {
+      firstName: defaultFirstName ?? '',
+      lastName: defaultLastName ?? '',
+    },
+  })
+  const [serverError, setServerError] = useState('')
+
+  async function onSubmit(data: ProvisionLoginFormData) {
+    setServerError('')
+    try {
+      await createCrmUser({ ...data, role, atsId })
+      toast.success('Login provisioned — credentials emailed.')
+      onSuccess()
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : 'Failed to provision login.'
+      setServerError(msg)
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="mt-6 flex flex-col gap-5 pb-6"
+    >
+      {serverError && (
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {serverError}
+        </p>
+      )}
+      <p className="text-sm text-muted-foreground">
+        A temporary password will be auto-generated and emailed to the user.
+      </p>
+      <div className="flex flex-col gap-1.5">
+        <Label>Email *</Label>
+        <Input
+          {...register('email')}
+          type="email"
+          placeholder="user@example.com"
+          className="rounded-md border-input"
+        />
+        {errors.email && (
+          <p className="text-xs text-destructive">{errors.email.message}</p>
+        )}
+      </div>
+      <div className="flex gap-3">
+        <div className="flex flex-col gap-1.5 flex-1">
+          <Label>First Name *</Label>
+          <Input
+            {...register('firstName')}
+            placeholder="First"
+            className="rounded-md border-input"
+          />
+          {errors.firstName && (
+            <p className="text-xs text-destructive">{errors.firstName.message}</p>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5 flex-1">
+          <Label>Last Name *</Label>
+          <Input
+            {...register('lastName')}
+            placeholder="Last"
+            className="rounded-md border-input"
+          />
+          {errors.lastName && (
+            <p className="text-xs text-destructive">{errors.lastName.message}</p>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>Phone</Label>
+        <Input
+          {...register('phone')}
+          placeholder="+1 555 000 0000"
+          className="rounded-md border-input"
+        />
+      </div>
+      <Button type="submit" disabled={isSubmitting} className="mt-2">
+        {isSubmitting ? 'Provisioning…' : 'Provision Login'}
+      </Button>
+    </form>
   )
 }
 
@@ -519,79 +671,201 @@ function EditVaProfileForm({
 
 export default function AccountManagementPage() {
   const queryClient = useQueryClient()
-  const { data: accounts = [], isLoading: loadingAccounts } =
-    useClientAccountsQuery()
-  const { data: profiles = [], isLoading: loadingProfiles } =
-    useVaProfilesQuery()
+  const { data: accounts = [], isLoading: loadingAccounts } = useClientAccountsQuery()
+  const { data: profiles = [], isLoading: loadingProfiles } = useVaProfilesQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
   const { data: atsVas = [] } = useAtsVAsQuery()
+  const { data: crmVaUsers = [] } = useCrmVaUsersQuery()
+  const { data: crmClientUsers = [] } = useCrmClientUsersQuery()
   const isLoading = loadingAccounts || loadingProfiles
 
   const [editAccount, setEditAccount] = useState<IClientAccount | null>(null)
   const [editProfile, setEditProfile] = useState<IVaProfile | null>(null)
+  const [viewAccount, setViewAccount] = useState<IClientAccount | null>(null)
+  const [viewProfile, setViewProfile] = useState<IVaProfile | null>(null)
 
-  const clientMap: Record<string, string> = {}
-  for (const c of atsClients) clientMap[c.id] = c.companyName
+  // Provision login sheet state
+  type ProvisionTarget = { role: 'va' | 'client'; atsId: string; firstName?: string; lastName?: string; label: string }
+  const [provisionTarget, setProvisionTarget] = useState<ProvisionTarget | null>(null)
 
-  const vaMap: Record<string, string> = {}
-  for (const v of atsVas) vaMap[v.id] = `${v.firstName} ${v.lastName}`
+  const clientMap: Record<string, IAtsClient> = {}
+  for (const c of atsClients) clientMap[c.id] = c
+
+  const vaMap: Record<string, IAtsCandidate> = {}
+  for (const v of atsVas) vaMap[v.id] = v
+
+  // Build atsId → CRM user maps for login status
+  const crmClientMap: Record<string, ICrmUser> = {}
+  for (const u of crmClientUsers) if (u.atsId) crmClientMap[u.atsId] = u
+
+  const crmVaMap: Record<string, ICrmUser> = {}
+  for (const u of crmVaUsers) if (u.atsId) crmVaMap[u.atsId] = u
+
+  function invalidateCrmUsers() {
+    queryClient.invalidateQueries({ queryKey: QK.crmClientUsers })
+    queryClient.invalidateQueries({ queryKey: QK.crmVaUsers })
+  }
+
+  function ActionButtons({
+    crmUser,
+    onProvision,
+  }: {
+    crmUser: ICrmUser | undefined
+    onProvision: () => void
+  }) {
+    async function handleResetPassword() {
+      if (!crmUser) return
+      if (!window.confirm(`Reset password for ${crmUser.firstName} ${crmUser.lastName}?`)) return
+      try {
+        await resetCrmUserPassword(crmUser.id)
+        toast.success('Password reset — new credentials emailed.')
+      } catch {
+        toast.error('Failed to reset password.')
+      }
+    }
+    async function handleDeactivate() {
+      if (!crmUser) return
+      if (!window.confirm(`Deactivate CRM login for ${crmUser.firstName} ${crmUser.lastName}?`)) return
+      try {
+        await deactivateCrmUser(crmUser.id)
+        toast.success('Login deactivated.')
+        invalidateCrmUsers()
+      } catch {
+        toast.error('Failed to deactivate login.')
+      }
+    }
+
+    return (
+      <TooltipProvider delayDuration={300}>
+        <div className="flex items-center gap-1">
+          {!crmUser ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                  onClick={onProvision}
+                >
+                  <UserPlusIcon className="size-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Provision Login</TooltipContent>
+            </Tooltip>
+          ) : (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                    onClick={handleResetPassword}
+                    disabled={!crmUser.isActive}
+                  >
+                    <KeyRoundIcon className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Reset Password</TooltipContent>
+              </Tooltip>
+              {crmUser.isActive && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 bg-white/[0.02] text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                      onClick={handleDeactivate}
+                    >
+                      <XCircleIcon className="size-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Deactivate Login</TooltipContent>
+                </Tooltip>
+              )}
+            </>
+          )}
+        </div>
+      </TooltipProvider>
+    )
+  }
 
   // ── Client Accounts columns ──────────────────────────────────────────────
   const accountColumns: ColumnDef<IClientAccount>[] = [
     {
       accessorKey: 'clientId',
       header: 'Company',
-      size: 220,
       cell: ({ getValue }) =>
-        clientMap[getValue<string>()] ?? getValue<string>(),
+        clientMap[getValue<string>()]?.companyName ?? getValue<string>(),
     },
     {
       accessorKey: 'healthStatus',
       header: 'Health',
+      size: 90,
       cell: ({ getValue }) => <HealthBadge status={getValue<string>()} />,
     },
     {
       accessorKey: 'baaSigned',
       header: 'BAA',
+      size: 60,
       cell: ({ getValue }) => (getValue<boolean>() ? '✓' : '—'),
       enableSorting: false,
     },
     {
-      accessorKey: 'onboardingComplete',
-      header: 'Onboarding',
-      cell: ({ getValue }) => (getValue<boolean>() ? '✓' : '—'),
+      id: 'crmLogin',
+      header: 'CRM Login',
       enableSorting: false,
-    },
-    {
-      accessorKey: 'openIssuesCount',
-      header: 'Open Issues',
-    },
-    {
-      accessorKey: 'lastClientCheckin',
-      header: 'Last Check-in',
-      cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
+      size: 120,
+      cell: ({ row }) => (
+        <LoginStatusBadge user={crmClientMap[row.original.clientId]} />
+      ),
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: '',
       enableSorting: false,
-      size: 70,
+      size: 110,
       cell: ({ row }) => (
-        <TooltipProvider delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                onClick={() => setEditAccount(row.original)}
-              >
-                <PenLineIcon className="size-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Edit</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex items-center gap-1">
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                  onClick={() => setViewAccount(row.original)}
+                >
+                  <EyeIcon className="size-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">View Details</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                  onClick={() => setEditAccount(row.original)}
+                >
+                  <PenLineIcon className="size-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Edit</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <ActionButtons
+            crmUser={crmClientMap[row.original.clientId]}
+            onProvision={() =>
+              setProvisionTarget({
+                role: 'client',
+                atsId: row.original.clientId,
+                label: clientMap[row.original.clientId]?.companyName ?? row.original.clientId,
+              })
+            }
+          />
+        </div>
       ),
     },
   ]
@@ -601,57 +875,85 @@ export default function AccountManagementPage() {
     {
       accessorKey: 'vaId',
       header: 'VA',
-      cell: ({ getValue }) => vaMap[getValue<string>()] ?? getValue<string>(),
+      cell: ({ getValue }) => {
+        const v = vaMap[getValue<string>()]
+        return v ? `${v.firstName} ${v.lastName}` : getValue<string>()
+      },
     },
     {
       accessorKey: 'workloadLevel',
       header: 'Workload',
+      size: 110,
       cell: ({ getValue }) => <WorkloadBadge level={getValue<string>()} />,
     },
     {
-      accessorKey: 'satisfactionScore',
-      header: 'Satisfaction',
-      cell: ({ getValue }) => getValue<number | undefined>() ?? '—',
-    },
-    {
       accessorKey: 'burnoutRiskFlag',
-      header: 'Burnout Risk',
+      header: 'Burnout',
+      size: 80,
       cell: ({ getValue }) => (getValue<boolean>() ? '🔴' : '—'),
       enableSorting: false,
     },
     {
-      accessorKey: 'replacementRiskFlag',
-      header: 'Replacement Risk',
-      cell: ({ getValue }) => (getValue<boolean>() ? '🔴' : '—'),
+      id: 'crmLogin',
+      header: 'CRM Login',
       enableSorting: false,
-    },
-    {
-      accessorKey: 'lastVaCheckin',
-      header: 'Last Check-in',
-      cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
+      size: 120,
+      cell: ({ row }) => (
+        <LoginStatusBadge user={crmVaMap[row.original.vaId]} />
+      ),
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: '',
       enableSorting: false,
-      size: 70,
-      cell: ({ row }) => (
-        <TooltipProvider delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                onClick={() => setEditProfile(row.original)}
-              >
-                <PenLineIcon className="size-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Edit</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ),
+      size: 110,
+      cell: ({ row }) => {
+        const va = vaMap[row.original.vaId]
+        return (
+          <div className="flex items-center gap-1">
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                    onClick={() => setViewProfile(row.original)}
+                  >
+                    <EyeIcon className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">View Details</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                    onClick={() => setEditProfile(row.original)}
+                  >
+                    <PenLineIcon className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Edit</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <ActionButtons
+              crmUser={crmVaMap[row.original.vaId]}
+              onProvision={() =>
+                setProvisionTarget({
+                  role: 'va',
+                  atsId: row.original.vaId,
+                  firstName: va?.firstName,
+                  lastName: va?.lastName,
+                  label: va ? `${va.firstName} ${va.lastName}` : row.original.vaId,
+                })
+              }
+            />
+          </div>
+        )
+      },
     },
   ]
 
@@ -663,7 +965,7 @@ export default function AccountManagementPage() {
             Account Management
           </h1>
           <p className="text-sm text-muted-foreground">
-            Client accounts and VA operational profiles
+            Client accounts and VA profiles — manage health metrics and CRM login access
           </p>
         </div>
 
@@ -693,6 +995,122 @@ export default function AccountManagementPage() {
         </div>
       </div>
 
+      {/* Client Account View Dialog */}
+      <Dialog open={viewAccount !== null} onOpenChange={o => !o && setViewAccount(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {viewAccount ? (clientMap[viewAccount.clientId]?.companyName ?? viewAccount.clientId) : ''}
+            </DialogTitle>
+            <DialogDescription>Client account details</DialogDescription>
+          </DialogHeader>
+          {viewAccount && (
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mt-2">
+              <div className="col-span-2 flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Health Status</span>
+                <HealthBadge status={viewAccount.healthStatus} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">BAA Signed</span>
+                <span>{viewAccount.baaSigned ? 'Yes' : 'No'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">BAA Date</span>
+                <span>{viewAccount.baaSignedDate?.slice(0, 10) ?? '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Onboarding</span>
+                <span>{viewAccount.onboardingComplete ? 'Complete' : 'Pending'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">SOP Received</span>
+                <span>{viewAccount.sopReceived ? 'Yes' : 'No'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">EMR System</span>
+                <span>{viewAccount.emrSystem ?? '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Satisfaction</span>
+                <span>{viewAccount.satisfactionScore ?? '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Open Issues</span>
+                <span>{viewAccount.openIssuesCount}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Primary Contact</span>
+                <span>{viewAccount.primaryContact ?? '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Secondary Contact</span>
+                <span>{viewAccount.secondaryContact ?? '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Last Check-in</span>
+                <span>{viewAccount.lastClientCheckin?.slice(0, 10) ?? '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">CRM Login</span>
+                <LoginStatusBadge user={crmClientMap[viewAccount.clientId]} />
+              </div>
+              {viewAccount.notes && (
+                <div className="col-span-2 pt-2 border-t">
+                  <p className="text-muted-foreground text-xs mb-1">Notes</p>
+                  <p className="text-sm whitespace-pre-wrap">{viewAccount.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* VA Profile View Dialog */}
+      <Dialog open={viewProfile !== null} onOpenChange={o => !o && setViewProfile(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {viewProfile ? (() => { const v = vaMap[viewProfile.vaId]; return v ? `${v.firstName} ${v.lastName}` : viewProfile.vaId })() : ''}
+            </DialogTitle>
+            <DialogDescription>VA profile details</DialogDescription>
+          </DialogHeader>
+          {viewProfile && (
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mt-2">
+              <div className="col-span-2 flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Workload Level</span>
+                <WorkloadBadge level={viewProfile.workloadLevel} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Satisfaction</span>
+                <span>{viewProfile.satisfactionScore ?? '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Last Check-in</span>
+                <span>{viewProfile.lastVaCheckin?.slice(0, 10) ?? '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Burnout Risk</span>
+                <span>{viewProfile.burnoutRiskFlag ? '🔴 Yes' : 'No'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">Replacement Risk</span>
+                <span>{viewProfile.replacementRiskFlag ? '🔴 Yes' : 'No'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">CRM Login</span>
+                <LoginStatusBadge user={crmVaMap[viewProfile.vaId]} />
+              </div>
+              {viewProfile.notes && (
+                <div className="col-span-2 pt-2 border-t">
+                  <p className="text-muted-foreground text-xs mb-1">Notes</p>
+                  <p className="text-sm whitespace-pre-wrap">{viewProfile.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Client Account Edit Sheet */}
       <Sheet
         open={editAccount !== null}
@@ -703,7 +1121,7 @@ export default function AccountManagementPage() {
             <SheetTitle>Edit Client Account</SheetTitle>
             <SheetDescription>
               {editAccount
-                ? (clientMap[editAccount.clientId] ?? editAccount.clientId)
+                ? (clientMap[editAccount.clientId]?.companyName ?? editAccount.clientId)
                 : ''}
             </SheetDescription>
           </SheetHeader>
@@ -728,7 +1146,9 @@ export default function AccountManagementPage() {
           <SheetHeader>
             <SheetTitle>Edit VA Profile</SheetTitle>
             <SheetDescription>
-              {editProfile ? (vaMap[editProfile.vaId] ?? editProfile.vaId) : ''}
+              {editProfile
+                ? (() => { const v = vaMap[editProfile.vaId]; return v ? `${v.firstName} ${v.lastName}` : editProfile.vaId })()
+                : ''}
             </SheetDescription>
           </SheetHeader>
           {editProfile && (
@@ -737,6 +1157,33 @@ export default function AccountManagementPage() {
               onSuccess={() => {
                 setEditProfile(null)
                 queryClient.invalidateQueries({ queryKey: QK.vaProfiles })
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Provision Login Sheet */}
+      <Sheet
+        open={provisionTarget !== null}
+        onOpenChange={o => !o && setProvisionTarget(null)}
+      >
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Provision CRM Login</SheetTitle>
+            <SheetDescription>
+              {provisionTarget?.label ?? ''}
+            </SheetDescription>
+          </SheetHeader>
+          {provisionTarget && (
+            <ProvisionLoginForm
+              role={provisionTarget.role}
+              atsId={provisionTarget.atsId}
+              defaultFirstName={provisionTarget.firstName}
+              defaultLastName={provisionTarget.lastName}
+              onSuccess={() => {
+                setProvisionTarget(null)
+                invalidateCrmUsers()
               }}
             />
           )}

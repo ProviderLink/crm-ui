@@ -13,11 +13,33 @@ export interface IAccountManager {
   createdAt?: string
 }
 
+export interface ICrmUser {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  role: 'va' | 'client' | 'account_manager' | 'admin'
+  isActive: boolean
+  phone?: string
+  atsId?: string
+  lastLogin?: string
+  createdAt?: string
+}
+
 export interface CreateAccountManagerPayload {
   email: string
   firstName: string
   lastName: string
   role: 'account_manager'
+  phone?: string
+  atsId?: string
+}
+
+export interface CreateCrmUserPayload {
+  email: string
+  firstName: string
+  lastName: string
+  role: 'va' | 'client'
   phone?: string
   atsId?: string
 }
@@ -39,10 +61,22 @@ export async function getAccountManagers(activeOnly = false): Promise<IAccountMa
   return data.data
 }
 
+export async function getCrmUsersByRole(role: 'va' | 'client'): Promise<ICrmUser[]> {
+  const { data } = await api.get<{ data: ICrmUser[] }>(`/users?role=${role}`)
+  return data.data
+}
+
 export async function createAccountManager(
   payload: CreateAccountManagerPayload
 ): Promise<IAccountManager> {
   const { data } = await api.post<{ data: IAccountManager }>('/users', payload)
+  return data.data
+}
+
+export async function createCrmUser(
+  payload: CreateCrmUserPayload
+): Promise<ICrmUser> {
+  const { data } = await api.post<{ data: ICrmUser }>('/users', payload)
   return data.data
 }
 
@@ -63,4 +97,12 @@ export async function deactivateAccountManager(id: string): Promise<void> {
 
 export async function resetAccountManagerPassword(id: string): Promise<void> {
   await api.post(`/users/${id}/reset-password`)
+}
+
+export async function resetCrmUserPassword(id: string): Promise<void> {
+  await api.post(`/users/${id}/reset-password`)
+}
+
+export async function deactivateCrmUser(id: string): Promise<void> {
+  await api.delete(`/users/${id}`)
 }
