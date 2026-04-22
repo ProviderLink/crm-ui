@@ -19,10 +19,10 @@ interface DevAccount {
 }
 
 const DEMO_ACCOUNTS: DevAccount[] = [
-  { label: 'Admin', email: 'demo.admin@arista-crm.com', password: 'DemoArista2026!' },
-  { label: 'Acc. Mgr', email: 'demo.am@arista-crm.com', password: 'DemoArista2026!' },
-  { label: 'VA', email: 'demo.va@arista-crm.com', password: 'DemoArista2026!' },
-  { label: 'Client', email: 'demo.client@arista-crm.com', password: 'DemoArista2026!' },
+  { label: 'Admin', email: 'admin@crm.dev', password: 'Dev1234!' },
+  { label: 'Acc. Mgr', email: 'am@arista.dev', password: 'Dev1234!' },
+  { label: 'VA', email: 'va@arista.dev', password: 'Dev1234!' },
+  { label: 'Client', email: 'client@arista.dev', password: 'Dev1234!' },
 ]
 
 export function DevQuickLogin() {
@@ -53,7 +53,10 @@ export function DevQuickLogin() {
     return accounts.map(account => (
       <button
         key={account.email}
-        onClick={() => { setError(null); quickLogin(account) }}
+        onClick={() => {
+          setError(null)
+          quickLogin(account)
+        }}
         disabled={loading !== null}
         className="flex-1 h-8 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-colors duration-150 disabled:opacity-40"
         style={{
@@ -89,9 +92,7 @@ export function DevQuickLogin() {
         {accountButtons(DEMO_ACCOUNTS, 'rgba(99,102,241,0.25)')}
       </div>
 
-      {error && (
-        <p className="text-center text-[11px] text-red-400">{error}</p>
-      )}
+      {error && <p className="text-center text-[11px] text-red-400">{error}</p>}
     </div>
   )
 }
