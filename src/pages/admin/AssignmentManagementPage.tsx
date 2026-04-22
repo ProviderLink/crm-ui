@@ -253,12 +253,14 @@ function Field({
 function CreateAssignmentForm({
   clients,
   vas,
+  assignments,
   team,
   onSuccess,
   onClose,
 }: {
   clients: IAtsClient[]
   vas: IAtsCandidate[]
+  assignments: IAssignment[]
   team: IAccountManager[]
   onSuccess: () => void
   onClose: () => void
@@ -267,11 +269,27 @@ function CreateAssignmentForm({
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateFormData>({
     resolver: zodResolver(createSchema),
     defaultValues: { status: 'active' },
   })
+
+  const selectedClientId = watch('clientId')
+
+  // Filter VAs to only those hired by the selected client
+  const filteredVas = selectedClientId
+    ? vas.filter(v => v.clientId === selectedClientId)
+    : []
+
+  // Build a set of vaIds that have an active/paused assignment
+  const activeVaIds = new Set(
+    assignments
+      .filter(a => a.status === 'active' || a.status === 'paused')
+      .map(a => a.vaId)
+  )
 
   const [serverError, setServerError] = useState('')
 
@@ -305,7 +323,13 @@ function CreateAssignmentForm({
             control={control}
             name="clientId"
             render={({ field }) => (
-              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+              <Select
+                value={field.value ?? ''}
+                onValueChange={v => {
+                  field.onChange(v)
+                  setValue('vaId', '')
+                }}
+              >
                 <SelectTrigger className="rounded-xl border-input h-10">
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
@@ -321,21 +345,49 @@ function CreateAssignmentForm({
           />
         </Field>
 
-        <Field label="Virtual Assistant" error={errors.vaId?.message}>
+        <Field
+          label="Virtual Assistant"
+          error={errors.vaId?.message}
+          hint={
+            !selectedClientId
+              ? 'Select a client first to see their hired VAs'
+              : filteredVas.length === 0
+                ? 'No hired VAs found for this client'
+                : undefined
+          }
+        >
           <Controller
             control={control}
             name="vaId"
             render={({ field }) => (
-              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+              <Select
+                value={field.value ?? ''}
+                onValueChange={field.onChange}
+                disabled={!selectedClientId || filteredVas.length === 0}
+              >
                 <SelectTrigger className="rounded-xl border-input h-10">
-                  <SelectValue placeholder="Select VA" />
+                  <SelectValue placeholder={selectedClientId ? 'Select VA' : 'Select client first'} />
                 </SelectTrigger>
                 <SelectContent>
-                  {vas.map(v => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.firstName} {v.lastName}
-                    </SelectItem>
-                  ))}
+                  {filteredVas.map(v => {
+                    const hasAssignment = activeVaIds.has(v.id)
+                    return (
+                      <SelectItem key={v.id} value={v.id}>
+                        <span className="flex items-center gap-2">
+                          {v.firstName} {v.lastName}
+                          {hasAssignment ? (
+                            <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/20">
+                              Assigned
+                            </span>
+                          ) : (
+                            <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 bg-green-500/15 text-green-700 ring-1 ring-green-500/20">
+                              Free
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             )}
@@ -740,6 +792,7 @@ export default function AssignmentManagementPage() {
             <CreateAssignmentForm
               clients={atsClients}
               vas={atsVas}
+              assignments={assignments}
               team={accountManagers}
               onSuccess={() => {
                 setSheetMode(null)

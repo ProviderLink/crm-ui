@@ -8,6 +8,7 @@ export interface IAtsCandidate {
   id: string
   firstName: string
   lastName: string
+  clientId?: string
   status:
     | 'active'
     | 'hired'
