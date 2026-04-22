@@ -25,13 +25,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -995,121 +988,121 @@ export default function AccountManagementPage() {
         </div>
       </div>
 
-      {/* Client Account View Dialog */}
-      <Dialog open={viewAccount !== null} onOpenChange={o => !o && setViewAccount(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
+      {/* Client Account View Sheet */}
+      <Sheet open={viewAccount !== null} onOpenChange={o => !o && setViewAccount(null)}>
+        <SheetContent className="sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>
               {viewAccount ? (clientMap[viewAccount.clientId]?.companyName ?? viewAccount.clientId) : ''}
-            </DialogTitle>
-            <DialogDescription>Client account details</DialogDescription>
-          </DialogHeader>
+            </SheetTitle>
+            <SheetDescription>Client account details</SheetDescription>
+          </SheetHeader>
           {viewAccount && (
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mt-2">
-              <div className="col-span-2 flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Health Status</span>
+            <div className="mt-6 flex flex-col gap-3 text-sm">
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Health Status</span>
                 <HealthBadge status={viewAccount.healthStatus} />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">BAA Signed</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">BAA Signed</span>
                 <span>{viewAccount.baaSigned ? 'Yes' : 'No'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">BAA Date</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">BAA Date</span>
                 <span>{viewAccount.baaSignedDate?.slice(0, 10) ?? '—'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Onboarding</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Onboarding</span>
                 <span>{viewAccount.onboardingComplete ? 'Complete' : 'Pending'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">SOP Received</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">SOP Received</span>
                 <span>{viewAccount.sopReceived ? 'Yes' : 'No'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">EMR System</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">EMR System</span>
                 <span>{viewAccount.emrSystem ?? '—'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Satisfaction</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Satisfaction Score</span>
                 <span>{viewAccount.satisfactionScore ?? '—'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Open Issues</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Open Issues</span>
                 <span>{viewAccount.openIssuesCount}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Primary Contact</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Primary Contact</span>
                 <span>{viewAccount.primaryContact ?? '—'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Secondary Contact</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Secondary Contact</span>
                 <span>{viewAccount.secondaryContact ?? '—'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Last Check-in</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Last Check-in</span>
                 <span>{viewAccount.lastClientCheckin?.slice(0, 10) ?? '—'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">CRM Login</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">CRM Login</span>
                 <LoginStatusBadge user={crmClientMap[viewAccount.clientId]} />
               </div>
               {viewAccount.notes && (
-                <div className="col-span-2 pt-2 border-t">
+                <div className="pt-2">
                   <p className="text-muted-foreground text-xs mb-1">Notes</p>
                   <p className="text-sm whitespace-pre-wrap">{viewAccount.notes}</p>
                 </div>
               )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
-      {/* VA Profile View Dialog */}
-      <Dialog open={viewProfile !== null} onOpenChange={o => !o && setViewProfile(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
+      {/* VA Profile View Sheet */}
+      <Sheet open={viewProfile !== null} onOpenChange={o => !o && setViewProfile(null)}>
+        <SheetContent className="sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>
               {viewProfile ? (() => { const v = vaMap[viewProfile.vaId]; return v ? `${v.firstName} ${v.lastName}` : viewProfile.vaId })() : ''}
-            </DialogTitle>
-            <DialogDescription>VA profile details</DialogDescription>
-          </DialogHeader>
+            </SheetTitle>
+            <SheetDescription>VA profile details</SheetDescription>
+          </SheetHeader>
           {viewProfile && (
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm mt-2">
-              <div className="col-span-2 flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Workload Level</span>
+            <div className="mt-6 flex flex-col gap-3 text-sm">
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Workload Level</span>
                 <WorkloadBadge level={viewProfile.workloadLevel} />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Satisfaction</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Satisfaction Score</span>
                 <span>{viewProfile.satisfactionScore ?? '—'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Last Check-in</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Last Check-in</span>
                 <span>{viewProfile.lastVaCheckin?.slice(0, 10) ?? '—'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Burnout Risk</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Burnout Risk</span>
                 <span>{viewProfile.burnoutRiskFlag ? '🔴 Yes' : 'No'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">Replacement Risk</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">Replacement Risk</span>
                 <span>{viewProfile.replacementRiskFlag ? '🔴 Yes' : 'No'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground w-36 shrink-0">CRM Login</span>
+              <div className="flex items-center justify-between py-2 border-b">
+                <span className="text-muted-foreground">CRM Login</span>
                 <LoginStatusBadge user={crmVaMap[viewProfile.vaId]} />
               </div>
               {viewProfile.notes && (
-                <div className="col-span-2 pt-2 border-t">
+                <div className="pt-2">
                   <p className="text-muted-foreground text-xs mb-1">Notes</p>
                   <p className="text-sm whitespace-pre-wrap">{viewProfile.notes}</p>
                 </div>
               )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Client Account Edit Sheet */}
       <Sheet
