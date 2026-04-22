@@ -215,11 +215,10 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {import.meta.env.DEV && (
-            <div className="mt-6">
-              <DevQuickLogin />
-            </div>
-          )}
+          {/* TODO: remove before final go-live */}
+          <div className="mt-6">
+            <DevQuickLogin />
+          </div>
 
           {/* Back to home */}
           <p className="mt-6 text-center text-xs text-slate-600">
