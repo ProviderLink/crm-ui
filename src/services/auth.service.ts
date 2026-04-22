@@ -12,6 +12,7 @@ interface BackendUser {
   firstName: string
   lastName: string
   role: UserRole
+  atsId?: string
 }
 
 export interface LoginResponse {
@@ -25,6 +26,7 @@ function mapUser(u: BackendUser): IUser {
     email: u.email,
     name: `${u.firstName} ${u.lastName}`,
     role: u.role,
+    atsId: u.atsId,
   }
 }
 
@@ -37,9 +39,9 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
 
 /** Called once on startup — uses the HttpOnly refresh cookie to get a fresh token, then fetches the user. */
 export async function hydrate(): Promise<LoginResponse> {
-  const { data: refreshData } = await api.post<{ data: { accessToken: string } }>(
-    '/auth/refresh'
-  )
+  const { data: refreshData } = await api.post<{
+    data: { accessToken: string }
+  }>('/auth/refresh')
   const accessToken = refreshData.data.accessToken
 
   // Pass the new token explicitly since it's not yet in the Redux store
