@@ -21,8 +21,18 @@ interface DevAccount {
 const DEMO_ACCOUNTS: DevAccount[] = [
   { label: 'Admin', email: 'admin@crm.dev', password: 'Dev1234!' },
   { label: 'Acc. Mgr', email: 'am@arista.dev', password: 'Dev1234!' },
-  { label: 'VA', email: 'va@arista.dev', password: 'Dev1234!' },
-  { label: 'Client', email: 'client@arista.dev', password: 'Dev1234!' },
+  { label: 'VA — Maria', email: 'va@arista.dev', password: 'Dev1234!' },
+  { label: 'VA — James', email: 'va2@arista.dev', password: 'Dev1234!' },
+  {
+    label: 'Client — Sunrise',
+    email: 'client@arista.dev',
+    password: 'Dev1234!',
+  },
+  {
+    label: 'Client — BrightCare',
+    email: 'client2@arista.dev',
+    password: 'Dev1234!',
+  },
 ]
 
 export function DevQuickLogin() {
