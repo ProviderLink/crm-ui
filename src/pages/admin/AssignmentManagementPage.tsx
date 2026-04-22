@@ -42,9 +42,9 @@ import {
 } from '@/components/ui/tooltip'
 import {
   QK,
+  useActiveAccountManagersQuery,
   useAllAssignmentsQuery,
   useAtsClientsQuery,
-  useAtsTeamQuery,
   useAtsVAsQuery,
 } from '@/hooks/queries'
 import {
@@ -52,7 +52,8 @@ import {
   updateAssignment,
 } from '@/services/assignments.service'
 import type { IAssignment } from '@/types/assignment'
-import type { IAtsCandidate, IAtsClient, IAtsUser } from '@/types/ats'
+import type { IAtsCandidate, IAtsClient } from '@/types/ats'
+import type { IAccountManager } from '@/services/account-managers.service'
 import { useQueryClient } from '@tanstack/react-query'
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -258,7 +259,7 @@ function CreateAssignmentForm({
 }: {
   clients: IAtsClient[]
   vas: IAtsCandidate[]
-  team: IAtsUser[]
+  team: IAccountManager[]
   onSuccess: () => void
   onClose: () => void
 }) {
@@ -476,7 +477,7 @@ function EditAssignmentForm({
   onClose,
 }: {
   assignment: IAssignment
-  team: IAtsUser[]
+  team: IAccountManager[]
   onSuccess: () => void
   onClose: () => void
 }) {
@@ -645,7 +646,7 @@ export default function AssignmentManagementPage() {
   const { data: assignments = [], isLoading } = useAllAssignmentsQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
   const { data: atsVas = [] } = useAtsVAsQuery()
-  const { data: atsTeam = [] } = useAtsTeamQuery()
+  const { data: accountManagers = [] } = useActiveAccountManagersQuery()
 
   const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null)
   const [editTarget, setEditTarget] = useState<IAssignment | null>(null)
@@ -676,7 +677,7 @@ export default function AssignmentManagementPage() {
   for (const v of atsVas) vaMap[v.id] = `${v.firstName} ${v.lastName}`
 
   const amMap: Record<string, string> = {}
-  for (const u of atsTeam) amMap[u.id] = `${u.firstName} ${u.lastName}`
+  for (const u of accountManagers) amMap[u.id] = `${u.firstName} ${u.lastName}`
 
   const columns = buildColumns(
     clientMap,
@@ -739,7 +740,7 @@ export default function AssignmentManagementPage() {
             <CreateAssignmentForm
               clients={atsClients}
               vas={atsVas}
-              team={atsTeam}
+              team={accountManagers}
               onSuccess={() => {
                 setSheetMode(null)
                 queryClient.invalidateQueries({ queryKey: QK.allAssignments })
@@ -751,7 +752,7 @@ export default function AssignmentManagementPage() {
           {sheetMode === 'edit' && editTarget && (
             <EditAssignmentForm
               assignment={editTarget}
-              team={atsTeam}
+              team={accountManagers}
               onSuccess={() => {
                 setSheetMode(null)
                 queryClient.invalidateQueries({ queryKey: QK.allAssignments })

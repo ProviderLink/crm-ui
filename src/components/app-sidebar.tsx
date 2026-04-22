@@ -9,6 +9,7 @@ import {
   LayoutDashboardIcon,
   LinkIcon,
   ListChecksIcon,
+  UserCogIcon,
   UsersIcon,
   type LucideIcon,
 } from 'lucide-react'
@@ -71,6 +72,7 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       },
       { title: 'EOD Reports', url: '/admin/eod-reports', icon: FileTextIcon },
       { title: 'Accounts', url: '/admin/accounts', icon: UsersIcon },
+      { title: 'Account Managers', url: '/admin/account-managers', icon: UserCogIcon },
       { title: 'Reminders', url: '/admin/reminders', icon: BellIcon },
       { title: 'Scorecards', url: '/admin/scorecards', icon: BarChart3Icon },
     ],

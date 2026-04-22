@@ -4,6 +4,7 @@ import {
   getMyAssignments,
 } from '@/services/assignments.service'
 import { getAtsClients, getAtsTeam, getAtsVAs } from '@/services/ats.service'
+import { getAccountManagers } from '@/services/account-managers.service'
 import { getClientAccounts } from '@/services/client-accounts.service'
 import { getEodSubmissions } from '@/services/eod-submissions.service'
 import { getScorecards } from '@/services/scorecards.service'
@@ -20,6 +21,8 @@ export const QK = {
   atsVAs: ['ats', 'vas'] as const,
   atsClients: ['ats', 'clients'] as const,
   atsTeam: ['ats', 'team'] as const,
+  accountManagers: ['account-managers'] as const,
+  activeAccountManagers: ['account-managers', 'active'] as const,
   dashboardStats: ['dashboard-stats'] as const,
   surveyReminders: ['survey-reminders'] as const,
   clientAccounts: ['client-accounts'] as const,
@@ -32,7 +35,10 @@ export function useWorkEntriesQuery() {
 }
 
 export function useEodSubmissionsQuery() {
-  return useQuery({ queryKey: QK.eodSubmissions, queryFn: () => getEodSubmissions() })
+  return useQuery({
+    queryKey: QK.eodSubmissions,
+    queryFn: () => getEodSubmissions(),
+  })
 }
 
 export function useMyAssignmentsQuery() {
@@ -44,7 +50,10 @@ export function useMyAssignmentsQuery() {
 }
 
 export function useAllAssignmentsQuery() {
-  return useQuery({ queryKey: QK.allAssignments, queryFn: () => getAllAssignments() })
+  return useQuery({
+    queryKey: QK.allAssignments,
+    queryFn: () => getAllAssignments(),
+  })
 }
 
 export function useAtsVAsQuery() {
@@ -57,6 +66,17 @@ export function useAtsClientsQuery() {
 
 export function useAtsTeamQuery() {
   return useQuery({ queryKey: QK.atsTeam, queryFn: getAtsTeam })
+}
+
+export function useAccountManagersQuery() {
+  return useQuery({ queryKey: QK.accountManagers, queryFn: () => getAccountManagers() })
+}
+
+export function useActiveAccountManagersQuery() {
+  return useQuery({
+    queryKey: QK.activeAccountManagers,
+    queryFn: () => getAccountManagers(true),
+  })
 }
 
 export function useDashboardStatsQuery() {

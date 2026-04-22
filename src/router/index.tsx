@@ -28,6 +28,9 @@ const AssignmentManagementPage = lazy(
 const AccountManagementPage = lazy(
   () => import('@/pages/admin/AccountManagementPage')
 )
+const AccountManagersPage = lazy(
+  () => import('@/pages/admin/AccountManagersPage')
+)
 const SurveyRemindersPage = lazy(
   () => import('@/pages/admin/SurveyRemindersPage')
 )
@@ -105,6 +108,7 @@ const router = createBrowserRouter([
                     element: <AssignmentManagementPage />,
                   },
                   { path: 'accounts', element: <AccountManagementPage /> },
+                  { path: 'account-managers', element: <AccountManagersPage /> },
                   { path: 'reminders', element: <SurveyRemindersPage /> },
                   { path: 'scorecards', element: <ScorecardsPage /> },
                   { path: 'work-entries', element: <WorkEntriesPage /> },

@@ -24,7 +24,6 @@ import {
   Clock,
   FileText,
   StickyNote,
-  Tag,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
@@ -38,8 +37,13 @@ const schema = z.object({
   entryDate: z.string().min(1, 'Date is required'),
   entryTime: z.string().min(1, 'Time is required'),
   taskCategory: z.enum([
-    'Administrative', 'Clinical Coordination', 'Data Entry',
-    'Communication', 'Research', 'Scheduling', 'Other',
+    'Administrative',
+    'Clinical Coordination',
+    'Data Entry',
+    'Communication',
+    'Research',
+    'Scheduling',
+    'Other',
   ]),
   taskDescription: z.string().min(1, 'Description is required'),
   timeSpent: z.number().int().min(1, 'Enter at least 1 minute'),
@@ -50,19 +54,26 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  completed:   { label: 'Completed',   color: 'text-emerald-400' },
-  in_progress: { label: 'In Progress', color: 'text-amber-400'  },
-  pending:     { label: 'Pending',     color: 'text-slate-400'  },
+  completed: { label: 'Completed', color: 'text-emerald-400' },
+  in_progress: { label: 'In Progress', color: 'text-amber-400' },
+  pending: { label: 'Pending', color: 'text-slate-400' },
 }
 
 export default function AddWorkEntryPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { assignments, isLoading: loadingAssignments, isError: assignmentsError } = useMyAssignments()
+  const {
+    assignments,
+    isLoading: loadingAssignments,
+    isError: assignmentsError,
+  } = useMyAssignments()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
-    register, handleSubmit, control, setValue,
+    register,
+    handleSubmit,
+    control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -99,7 +110,9 @@ export default function AddWorkEntryPage() {
       <PageShell>
         <PageHeader />
         <EmptyCard>
-          <p className="text-sm text-destructive">Failed to load assignments. Please refresh the page.</p>
+          <p className="text-sm text-destructive">
+            Failed to load assignments. Please refresh the page.
+          </p>
         </EmptyCard>
       </PageShell>
     )
@@ -110,7 +123,9 @@ export default function AddWorkEntryPage() {
       <PageShell>
         <PageHeader />
         <EmptyCard>
-          <p className="text-sm text-muted-foreground">No active assignments found. Contact your account manager.</p>
+          <p className="text-sm text-muted-foreground">
+            No active assignments found. Contact your account manager.
+          </p>
         </EmptyCard>
       </PageShell>
     )
@@ -134,13 +149,19 @@ export default function AddWorkEntryPage() {
               control={control}
               name="assignmentId"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange} disabled={assignments.length === 1}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={assignments.length === 1}
+                >
                   <SelectTrigger className="rounded-xl border-input h-10">
                     <SelectValue placeholder="Select assignment" />
                   </SelectTrigger>
                   <SelectContent>
                     {assignments.map(a => (
-                      <SelectItem key={a.id} value={a.id}>{a.serviceType ?? a.id}</SelectItem>
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.serviceType ?? a.id}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -153,10 +174,19 @@ export default function AddWorkEntryPage() {
         <Section icon={<CalendarDays size={14} />} title="When">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Date" error={errors.entryDate?.message}>
-              <Input type="date" max={todayString()} className="rounded-xl border-input h-10" {...register('entryDate')} />
+              <Input
+                type="date"
+                max={todayString()}
+                className="rounded-xl border-input h-10"
+                {...register('entryDate')}
+              />
             </Field>
             <Field label="Start Time" error={errors.entryTime?.message}>
-              <Input type="time" className="rounded-xl border-input h-10" {...register('entryTime')} />
+              <Input
+                type="time"
+                className="rounded-xl border-input h-10"
+                {...register('entryTime')}
+              />
             </Field>
           </div>
         </Section>
@@ -175,7 +205,9 @@ export default function AddWorkEntryPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {WORK_ENTRY_CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -206,7 +238,11 @@ export default function AddWorkEntryPage() {
             </Field>
           </div>
 
-          <Field label="Description" error={errors.taskDescription?.message} hint="Be specific — what did you do?">
+          <Field
+            label="Description"
+            error={errors.taskDescription?.message}
+            hint="Be specific — what did you do?"
+          >
             <Textarea
               placeholder="e.g. Updated 12 patient records in Epic, responded to 8 emails…"
               className="rounded-xl border-input resize-none"
@@ -218,7 +254,11 @@ export default function AddWorkEntryPage() {
 
         {/* ── Section: Time ── */}
         <Section icon={<Clock size={14} />} title="Time Spent">
-          <Field label="Duration (minutes)" error={errors.timeSpent?.message} hint="Total minutes spent on this task">
+          <Field
+            label="Duration (minutes)"
+            error={errors.timeSpent?.message}
+            hint="Total minutes spent on this task"
+          >
             <div className="relative max-w-[180px]">
               <Input
                 type="number"
@@ -248,7 +288,11 @@ export default function AddWorkEntryPage() {
 
         {/* ── Actions ── */}
         <div className="flex items-center gap-3 pt-1">
-          <Button type="submit" disabled={isSubmitting} className="flex-1 rounded-xl h-10 font-medium gap-2">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 rounded-xl h-10 font-medium gap-2"
+          >
             {isSubmitting ? (
               <>
                 <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -293,15 +337,22 @@ function PageHeader() {
     <div className="mb-5">
       <div className="flex items-center gap-2 mb-1">
         <AlarmClock size={18} className="text-muted-foreground" />
-        <h1 className="text-xl font-semibold text-foreground">Log Work Entry</h1>
+        <h1 className="text-xl font-semibold text-foreground">
+          Log Work Entry
+        </h1>
       </div>
-      <p className="text-sm text-muted-foreground ml-7">Record a task you completed or are working on</p>
+      <p className="text-sm text-muted-foreground ml-7">
+        Record a task you completed or are working on
+      </p>
     </div>
   )
 }
 
 function Section({
-  icon, title, optional = false, children,
+  icon,
+  title,
+  optional = false,
+  children,
 }: {
   icon: ReactNode
   title: string
@@ -312,9 +363,13 @@ function Section({
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
       <div className="flex items-center gap-2 px-5 py-3 border-b border-border/60 bg-muted/30">
         <span className="text-muted-foreground">{icon}</span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </span>
         {optional && (
-          <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">Optional</span>
+          <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">
+            Optional
+          </span>
         )}
       </div>
       <div className="p-5 space-y-4">{children}</div>
@@ -323,7 +378,10 @@ function Section({
 }
 
 function Field({
-  label, error, hint, children,
+  label,
+  error,
+  hint,
+  children,
 }: {
   label: string
   error?: string
@@ -332,8 +390,14 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      {label && <Label className="text-sm font-medium text-foreground block mb-1">{label}</Label>}
-      {hint && <p className="text-[11px] text-muted-foreground -mt-0.5">{hint}</p>}
+      {label && (
+        <Label className="text-sm font-medium text-foreground block mb-1">
+          {label}
+        </Label>
+      )}
+      {hint && (
+        <p className="text-[11px] text-muted-foreground -mt-0.5">{hint}</p>
+      )}
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
