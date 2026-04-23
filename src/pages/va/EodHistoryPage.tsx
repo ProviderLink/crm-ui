@@ -1,6 +1,7 @@
 import { DataTable } from '@/components/shared/DataTable'
 import { DatePickerField } from '@/components/ui/date-picker-field'
-import { useAtsClientsQuery, useEodSubmissionsQuery } from '@/hooks/queries'
+import { useAtsClientsQuery, useEodSubmissionsQuery, useMyAssignmentsQuery } from '@/hooks/queries'
+import type { IAssignment } from '@/types/assignment'
 import type { IAtsClient } from '@/types/ats'
 import type { IEodSubmission } from '@/types/eod-submission'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -8,17 +9,23 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 function buildColumns(
-  clientMap: Map<string, string>
+  clientMap: Map<string, string>,
+  assignmentMap: Map<string, string>
 ): ColumnDef<IEodSubmission>[] {
   return [
     {
       accessorKey: 'clientId',
       header: 'Client',
-      size: 180,
-      cell: ({ getValue }) => (
-        <span className="text-sm font-medium text-foreground">
-          {clientMap.get(getValue<string>()) ?? '—'}
-        </span>
+      size: 200,
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-foreground">
+            {clientMap.get(row.original.clientId) ?? '—'}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {assignmentMap.get(row.original.assignmentId) ?? '—'}
+          </span>
+        </div>
       ),
     },
     {
@@ -71,6 +78,7 @@ function buildColumns(
 export default function EodHistoryPage() {
   const { data: eods = [], isLoading } = useEodSubmissionsQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
+  const { data: myAssignments = [] } = useMyAssignmentsQuery()
 
   const clientMap = useMemo(() => {
     const m = new Map<string, string>()
@@ -78,7 +86,13 @@ export default function EodHistoryPage() {
     return m
   }, [atsClients])
 
-  const columns = useMemo(() => buildColumns(clientMap), [clientMap])
+  const assignmentMap = useMemo(() => {
+    const m = new Map<string, string>()
+    myAssignments.forEach((a: IAssignment) => m.set(a.id, a.serviceType ?? 'VA Service'))
+    return m
+  }, [myAssignments])
+
+  const columns = useMemo(() => buildColumns(clientMap, assignmentMap), [clientMap, assignmentMap])
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 30)

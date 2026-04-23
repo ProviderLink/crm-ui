@@ -32,7 +32,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { QK, useAtsClientsQuery, useWorkEntriesQuery } from '@/hooks/queries'
+import { QK, useAtsClientsQuery, useMyAssignmentsQuery, useWorkEntriesQuery } from '@/hooks/queries'
 import { formatMinutes } from '@/lib/time'
 import { updateWorkEntry } from '@/services/work-entries.service'
 import {
@@ -274,12 +274,19 @@ export default function WorkHistoryPage() {
   const queryClient = useQueryClient()
   const { data: entries = [], isLoading } = useWorkEntriesQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
+  const { data: myAssignments = [] } = useMyAssignmentsQuery()
 
   const clientMap = useMemo(() => {
     const m = new Map<string, string>()
     atsClients.forEach(c => m.set(c.id, c.companyName))
     return m
   }, [atsClients])
+
+  const assignmentMap = useMemo(() => {
+    const m = new Map<string, string>()
+    myAssignments.forEach(a => m.set(a.id, a.serviceType ?? 'VA Service'))
+    return m
+  }, [myAssignments])
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -311,11 +318,16 @@ export default function WorkHistoryPage() {
       {
         accessorKey: 'clientId',
         header: 'Client',
-        size: 180,
-        cell: ({ getValue }) => (
-          <span className="text-sm font-medium text-foreground">
-            {clientMap.get(getValue<string>()) ?? '—'}
-          </span>
+        size: 200,
+        cell: ({ row }) => (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium text-foreground">
+              {clientMap.get(row.original.clientId) ?? '—'}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {assignmentMap.get(row.original.assignmentId) ?? '—'}
+            </span>
+          </div>
         ),
       },
       {
@@ -403,7 +415,7 @@ export default function WorkHistoryPage() {
         ),
       },
     ],
-    [setEditEntry, clientMap]
+    [setEditEntry, clientMap, assignmentMap]
   )
 
   return (
