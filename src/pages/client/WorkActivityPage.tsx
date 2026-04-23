@@ -33,16 +33,24 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
   pending: 'bg-muted text-muted-foreground border-border',
 }
 
-function buildWorkColumns(vaMap: Map<string, string>): ColumnDef<IWorkEntry>[] {
+function buildWorkColumns(
+  vaMap: Map<string, string>,
+  assignmentMap: Map<string, string>
+): ColumnDef<IWorkEntry>[] {
   return [
     {
       accessorKey: 'vaId',
       header: 'VA',
-      size: 140,
-      cell: ({ getValue }) => (
-        <span className="text-sm font-medium text-foreground">
-          {vaMap.get(getValue<string>()) ?? '—'}
-        </span>
+      size: 200,
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-foreground">
+            {vaMap.get(row.original.vaId) ?? '—'}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {assignmentMap.get(row.original.assignmentId) ?? '—'}
+          </span>
+        </div>
       ),
     },
     {
@@ -114,17 +122,23 @@ function buildWorkColumns(vaMap: Map<string, string>): ColumnDef<IWorkEntry>[] {
 // ── EOD Report columns ────────────────────────────────────────────────────────
 
 function buildEodColumns(
-  vaMap: Map<string, string>
+  vaMap: Map<string, string>,
+  assignmentMap: Map<string, string>
 ): ColumnDef<IEodSubmission>[] {
   return [
     {
       accessorKey: 'vaId',
       header: 'VA',
-      size: 140,
-      cell: ({ getValue }) => (
-        <span className="text-sm font-medium text-foreground">
-          {vaMap.get(getValue<string>()) ?? '—'}
-        </span>
+      size: 200,
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-sm font-medium text-foreground">
+            {vaMap.get(row.original.vaId) ?? '—'}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {assignmentMap.get(row.original.assignmentId) ?? '—'}
+          </span>
+        </div>
       ),
     },
     {
@@ -205,8 +219,14 @@ export default function WorkActivityPage() {
     return m
   }, [atsVAs])
 
-  const workColumns = useMemo(() => buildWorkColumns(vaMap), [vaMap])
-  const eodColumns = useMemo(() => buildEodColumns(vaMap), [vaMap])
+  const assignmentMap = useMemo(() => {
+    const m = new Map<string, string>()
+    assignments.forEach(a => m.set(a.id, a.serviceType ?? 'VA Service'))
+    return m
+  }, [assignments])
+
+  const workColumns = useMemo(() => buildWorkColumns(vaMap, assignmentMap), [vaMap, assignmentMap])
+  const eodColumns  = useMemo(() => buildEodColumns(vaMap, assignmentMap),  [vaMap, assignmentMap])
 
   const [dateFrom, setDateFrom] = useState(
     () =>
