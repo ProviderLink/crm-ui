@@ -57,7 +57,7 @@ export default function EodHistoryPage() {
   const { data: eods = [], isLoading } = useEodSubmissionsQuery()
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date()
-    d.setDate(d.getDate() - 90)
+    d.setDate(d.getDate() - 30)
     return d.toISOString().split('T')[0]
   })
   const [dateTo, setDateTo] = useState(

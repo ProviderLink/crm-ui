@@ -256,8 +256,12 @@ function EditWorkEntryForm({
 export default function WorkHistoryPage() {
   const queryClient = useQueryClient()
   const { data: entries = [], isLoading } = useWorkEntriesQuery()
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [dateFrom, setDateFrom] = useState(
+    () => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  )
+  const [dateTo, setDateTo] = useState(
+    () => new Date().toISOString().split('T')[0]
+  )
   const [editEntry, setEditEntry] = useState<IWorkEntry | null>(null)
 
   const filtered = useMemo(

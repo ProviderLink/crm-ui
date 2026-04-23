@@ -31,13 +31,12 @@ export default function WorkEntriesPage() {
   const { data: atsVAs = [] } = useAtsVAsQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
 
-  const today = new Date().toISOString().split('T')[0]
-  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0]
-
-  const [dateFrom, setDateFrom] = useState(ninetyDaysAgo)
-  const [dateTo, setDateTo] = useState(today)
+  const [dateFrom, setDateFrom] = useState(
+    () => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  )
+  const [dateTo, setDateTo] = useState(
+    () => new Date().toISOString().split('T')[0]
+  )
   const [vaFilter, setVaFilter] = useState('all')
   const [clientFilter, setClientFilter] = useState('all')
 
