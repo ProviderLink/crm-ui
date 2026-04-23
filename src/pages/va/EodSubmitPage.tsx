@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { TimePickerField } from '@/components/ui/time-picker-field'
 import { QK, useEodSubmissionsQuery } from '@/hooks/queries'
 import { useMyAssignments } from '@/hooks/useMyAssignments'
 import { calcHours, todayString } from '@/lib/time'
@@ -207,17 +208,27 @@ export default function EodSubmitPage() {
               />
             </Field>
             <Field label="Shift Start" error={errors.shiftStart?.message}>
-              <Input
-                type="time"
-                className="rounded-xl border-input h-10"
-                {...register('shiftStart')}
+              <Controller
+                name="shiftStart"
+                control={control}
+                render={({ field }) => (
+                  <TimePickerField
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
               />
             </Field>
             <Field label="Shift End" error={errors.shiftEnd?.message}>
-              <Input
-                type="time"
-                className="rounded-xl border-input h-10"
-                {...register('shiftEnd')}
+              <Controller
+                name="shiftEnd"
+                control={control}
+                render={({ field }) => (
+                  <TimePickerField
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
               />
             </Field>
           </div>

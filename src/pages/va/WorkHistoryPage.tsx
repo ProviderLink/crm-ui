@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
+import { PenLineIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router-dom'
@@ -26,6 +27,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { QK, useWorkEntriesQuery } from '@/hooks/queries'
 import { formatMinutes } from '@/lib/time'
 import { updateWorkEntry } from '@/services/work-entries.service'
@@ -82,7 +88,18 @@ function EditWorkEntryForm({
     control,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<EditFormData>({ resolver: zodResolver(editSchema) })
+  } = useForm<EditFormData>({
+    resolver: zodResolver(editSchema),
+    defaultValues: {
+      entryDate: entry.entryDate?.slice(0, 10) ?? '',
+      entryTime: entry.entryTime ?? '',
+      taskCategory: entry.taskCategory,
+      taskDescription: entry.taskDescription,
+      timeSpent: entry.timeSpent,
+      status: entry.status,
+      notes: entry.notes ?? '',
+    },
+  })
 
   const [serverError, setServerError] = useState('')
 
@@ -257,7 +274,10 @@ export default function WorkHistoryPage() {
   const queryClient = useQueryClient()
   const { data: entries = [], isLoading } = useWorkEntriesQuery()
   const [dateFrom, setDateFrom] = useState(
-    () => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    () =>
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0]
   )
   const [dateTo, setDateTo] = useState(
     () => new Date().toISOString().split('T')[0]
@@ -350,13 +370,19 @@ export default function WorkHistoryPage() {
         enableSorting: false,
         size: 60,
         cell: ({ row }) => (
-          <button
-            type="button"
-            onClick={() => setEditEntry(row.original)}
-            className="text-xs text-primary hover:underline"
-          >
-            Edit
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                onClick={() => setEditEntry(row.original)}
+              >
+                <PenLineIcon className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Edit</TooltipContent>
+          </Tooltip>
         ),
       },
     ],
@@ -387,7 +413,10 @@ export default function WorkHistoryPage() {
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">From</span>
-              <DatePickerField value={dateFrom} onChange={v => setDateFrom(v)} />
+              <DatePickerField
+                value={dateFrom}
+                onChange={v => setDateFrom(v)}
+              />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">To</span>
@@ -423,6 +452,7 @@ export default function WorkHistoryPage() {
           </SheetHeader>
           {editEntry && (
             <EditWorkEntryForm
+              key={editEntry.id}
               entry={editEntry}
               onSuccess={() => {
                 queryClient.invalidateQueries({ queryKey: QK.workEntries })
