@@ -1,8 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table'
+import { DatePickerField } from '@/components/ui/date-picker-field'
 import { useMemo, useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -201,21 +201,11 @@ export default function WorkEntriesPage() {
 
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">From</span>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
-                className="rounded-xl border-input h-8 text-sm w-36"
-              />
+              <DatePickerField value={dateFrom} onChange={v => setDateFrom(v)} />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">To</span>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
-                className="rounded-xl border-input h-8 text-sm w-36"
-              />
+              <DatePickerField value={dateTo} onChange={v => setDateTo(v)} />
             </div>
 
             {hasFilter && (

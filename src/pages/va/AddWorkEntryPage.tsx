@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { DatePickerField } from '@/components/ui/date-picker-field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -174,11 +175,16 @@ export default function AddWorkEntryPage() {
         <Section icon={<CalendarDays size={14} />} title="When">
           <div className="grid grid-cols-2 gap-4">
             <Field label="Date" error={errors.entryDate?.message}>
-              <Input
-                type="date"
-                max={todayString()}
-                className="rounded-xl border-input h-10"
-                {...register('entryDate')}
+              <Controller
+                name="entryDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePickerField
+                    value={field.value}
+                    onChange={field.onChange}
+                    toDate={new Date()}
+                  />
+                )}
               />
             </Field>
             <Field label="Start Time" error={errors.entryTime?.message}>

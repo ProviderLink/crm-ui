@@ -444,36 +444,36 @@ export default function AccountManagersPage() {
   const [sheetMode, setSheetMode] = useState<SheetMode>(null)
   const [editTarget, setEditTarget] = useState<IAccountManager | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [deactivateTarget, setDeactivateTarget] = useState<IAccountManager | null>(null)
+  const [resetPwTarget, setResetPwTarget] = useState<IAccountManager | null>(null)
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: QK.accountManagers })
   }
 
-  async function handleDeactivate(am: IAccountManager) {
-    const confirmed = window.confirm(
-      `Deactivate account for ${am.firstName} ${am.lastName}? They will no longer be able to log in.`
-    )
-    if (!confirmed) return
+  async function confirmDeactivate() {
+    if (!deactivateTarget) return
     setActionError(null)
     try {
-      await deactivateAccountManager(am.id)
+      await deactivateAccountManager(deactivateTarget.id)
       invalidate()
     } catch {
       setActionError('Failed to deactivate account. Please try again.')
+    } finally {
+      setDeactivateTarget(null)
     }
   }
 
-  async function handleResetPassword(am: IAccountManager) {
-    const confirmed = window.confirm(
-      `Reset password for ${am.firstName} ${am.lastName}? A new temporary password will be emailed to them.`
-    )
-    if (!confirmed) return
+  async function confirmResetPassword() {
+    if (!resetPwTarget) return
     setActionError(null)
     try {
-      await resetAccountManagerPassword(am.id)
+      await resetAccountManagerPassword(resetPwTarget.id)
       invalidate()
     } catch {
       setActionError('Failed to reset password. Please try again.')
+    } finally {
+      setResetPwTarget(null)
     }
   }
 
@@ -482,8 +482,8 @@ export default function AccountManagersPage() {
       setEditTarget(am)
       setSheetMode('edit')
     },
-    handleDeactivate,
-    handleResetPassword
+    am => setDeactivateTarget(am),
+    am => setResetPwTarget(am)
   )
 
   return (
@@ -562,6 +562,35 @@ export default function AccountManagersPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Deactivate confirmation */}
+      <ConfirmDialog
+        open={deactivateTarget !== null}
+        title="Deactivate Account"
+        description={
+          deactivateTarget
+            ? `Deactivate account for ${deactivateTarget.firstName} ${deactivateTarget.lastName}? They will no longer be able to log in.`
+            : ''
+        }
+        confirmLabel="Deactivate"
+        onConfirm={confirmDeactivate}
+        onCancel={() => setDeactivateTarget(null)}
+      />
+
+      {/* Reset password confirmation */}
+      <ConfirmDialog
+        open={resetPwTarget !== null}
+        title="Reset Password"
+        description={
+          resetPwTarget
+            ? `Reset password for ${resetPwTarget.firstName} ${resetPwTarget.lastName}? A new temporary password will be emailed to them.`
+            : ''
+        }
+        confirmLabel="Reset Password"
+        variant="default"
+        onConfirm={confirmResetPassword}
+        onCancel={() => setResetPwTarget(null)}
+      />
     </div>
   )
 }

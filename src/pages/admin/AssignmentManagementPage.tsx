@@ -11,12 +11,14 @@ import {
   Users2,
   XIcon,
 } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
+import { DatePickerField } from '@/components/ui/date-picker-field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -47,13 +49,13 @@ import {
   useAtsClientsQuery,
   useAtsVAsQuery,
 } from '@/hooks/queries'
+import type { IAccountManager } from '@/services/account-managers.service'
 import {
   createAssignment,
   updateAssignment,
 } from '@/services/assignments.service'
 import type { IAssignment } from '@/types/assignment'
 import type { IAtsCandidate, IAtsClient } from '@/types/ats'
-import type { IAccountManager } from '@/services/account-managers.service'
 import { useQueryClient } from '@tanstack/react-query'
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -80,6 +82,15 @@ const editSchema = z.object({
 type EditFormData = z.infer<typeof editSchema>
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Returns the date string (yyyy-MM-dd) only if it represents a real date after year 2000.
+ *  Filters out epoch garbage (1970-01-01) that Firestore stores when null is passed. */
+function sanitizeDate(value: string | undefined | null): string {
+  if (!value) return ''
+  const d = new Date(value)
+  if (isNaN(d.getTime()) || d.getFullYear() < 2000) return ''
+  return value.slice(0, 10)
+}
 
 function buildColumns(
   clientMap: Record<string, string>,
@@ -235,13 +246,9 @@ function Field({
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <Label className="text-sm font-medium text-foreground">
-          {label}
-        </Label>
+        <Label className="text-sm font-medium text-foreground">{label}</Label>
       )}
-      {hint && (
-        <p className="text-[11px] text-muted-foreground">{hint}</p>
-      )}
+      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
@@ -298,8 +305,10 @@ function CreateAssignmentForm({
     try {
       await createAssignment(data)
       onSuccess()
-    } catch {
-      setServerError('Failed to create assignment. Please try again.')
+    } catch (err: unknown) {
+      const apiMsg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message
+      setServerError(apiMsg ?? 'Failed to create assignment. Please try again.')
     }
   }
 
@@ -366,7 +375,11 @@ function CreateAssignmentForm({
                 disabled={!selectedClientId || filteredVas.length === 0}
               >
                 <SelectTrigger className="rounded-xl border-input h-10">
-                  <SelectValue placeholder={selectedClientId ? 'Select VA' : 'Select client first'} />
+                  <SelectValue
+                    placeholder={
+                      selectedClientId ? 'Select VA' : 'Select client first'
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredVas.map(v => {
@@ -456,10 +469,12 @@ function CreateAssignmentForm({
       <Section icon={<CalendarDays size={14} />} title="Timeline">
         <div className="grid grid-cols-2 gap-4 items-end">
           <Field label="Start Date" error={errors.startDate?.message}>
-            <Input
-              type="date"
-              {...register('startDate')}
-              className="rounded-xl border-input h-10"
+            <Controller
+              name="startDate"
+              control={control}
+              render={({ field }) => (
+                <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+              )}
             />
           </Field>
 
@@ -468,10 +483,12 @@ function CreateAssignmentForm({
             error={errors.endDate?.message}
             hint="Leave blank if ongoing"
           >
-            <Input
-              type="date"
-              {...register('endDate')}
-              className="rounded-xl border-input h-10"
+            <Controller
+              name="endDate"
+              control={control}
+              render={({ field }) => (
+                <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+              )}
             />
           </Field>
         </div>
@@ -537,29 +554,35 @@ function EditAssignmentForm({
     register,
     handleSubmit,
     control,
-    reset,
     formState: { errors, isSubmitting },
-  } = useForm<EditFormData>({ resolver: zodResolver(editSchema) })
-
-  const [serverError, setServerError] = useState('')
-
-  useEffect(() => {
-    reset({
+  } = useForm<EditFormData>({
+    resolver: zodResolver(editSchema),
+    defaultValues: {
       accountManagerId: assignment.accountManagerId ?? '',
       status: assignment.status,
       serviceType: assignment.serviceType ?? '',
-      endDate: assignment.endDate ?? '',
+      endDate: sanitizeDate(assignment.endDate),
       notes: assignment.notes ?? '',
-    })
-  }, [assignment, reset])
+    },
+  })
+
+  const [serverError, setServerError] = useState('')
 
   async function onSubmit(data: EditFormData) {
     setServerError('')
     try {
-      await updateAssignment(assignment.id, data)
+      const { endDate, ...rest } = data
+      await updateAssignment(assignment.id, {
+        ...rest,
+        // Empty string = user cleared the field → send null so backend deletes it from Firestore
+        // Value present → send as-is
+        endDate: endDate || null,
+      })
       onSuccess()
-    } catch {
-      setServerError('Failed to save changes. Please try again.')
+    } catch (err: unknown) {
+      const apiMsg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message
+      setServerError(apiMsg ?? 'Failed to save changes. Please try again.')
     }
   }
 
@@ -640,10 +663,28 @@ function EditAssignmentForm({
           error={errors.endDate?.message}
           hint="Leave blank if still ongoing"
         >
-          <Input
-            type="date"
-            {...register('endDate')}
-            className="rounded-xl border-input h-10 max-w-[200px]"
+          <Controller
+            name="endDate"
+            control={control}
+            render={({ field }) => (
+              <div className="flex items-center gap-2">
+                <DatePickerField
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  className="flex-1"
+                />
+                {field.value && (
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('')}
+                    className="text-xs text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                    title="Clear date"
+                  >
+                    <XIcon size={14} />
+                  </button>
+                )}
+              </div>
+            )}
           />
         </Field>
       </Section>
@@ -702,19 +743,19 @@ export default function AssignmentManagementPage() {
 
   const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null)
   const [editTarget, setEditTarget] = useState<IAssignment | null>(null)
+  const [deactivateTarget, setDeactivateTarget] = useState<IAssignment | null>(null)
   const [deactivateError, setDeactivateError] = useState<string | null>(null)
 
-  async function handleDeactivate(a: IAssignment) {
-    const confirmed = window.confirm(
-      `Deactivate assignment for "${a.serviceType ?? a.id}"? This will end the active VA–client relationship.`
-    )
-    if (!confirmed) return
+  async function confirmDeactivate() {
+    if (!deactivateTarget) return
     setDeactivateError(null)
     try {
-      await updateAssignment(a.id, { status: 'ended' })
+      await updateAssignment(deactivateTarget.id, { status: 'ended' })
       queryClient.invalidateQueries({ queryKey: QK.allAssignments })
     } catch {
       setDeactivateError('Failed to deactivate assignment. Please try again.')
+    } finally {
+      setDeactivateTarget(null)
     }
   }
 
@@ -739,7 +780,7 @@ export default function AssignmentManagementPage() {
       setEditTarget(a)
       setSheetMode('edit')
     },
-    handleDeactivate
+    a => setDeactivateTarget(a)
   )
 
   return (
@@ -804,6 +845,7 @@ export default function AssignmentManagementPage() {
 
           {sheetMode === 'edit' && editTarget && (
             <EditAssignmentForm
+              key={editTarget.id}
               assignment={editTarget}
               team={accountManagers}
               onSuccess={() => {
@@ -815,6 +857,20 @@ export default function AssignmentManagementPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* End Assignment confirmation */}
+      <ConfirmDialog
+        open={deactivateTarget !== null}
+        title="End Assignment"
+        description={
+          deactivateTarget
+            ? `End the assignment for "${deactivateTarget.serviceType ?? deactivateTarget.id}"? This will end the active VA–client relationship.`
+            : ''
+        }
+        confirmLabel="End Assignment"
+        onConfirm={confirmDeactivate}
+        onCancel={() => setDeactivateTarget(null)}
+      />
     </div>
   )
 }

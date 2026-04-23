@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { DatePickerField } from '@/components/ui/date-picker-field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -20,8 +21,8 @@ import {
   Briefcase,
   CalendarDays,
   CheckCircle2,
-  Clock,
   ClipboardList,
+  Clock,
   StickyNote,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -35,7 +36,9 @@ const schema = z.object({
   date: z.string().min(1, 'Date is required'),
   shiftStart: z.string().min(1, 'Shift start is required'),
   shiftEnd: z.string().min(1, 'Shift end is required'),
-  summaryOfWork: z.string().min(10, 'Please provide a summary (min 10 characters)'),
+  summaryOfWork: z
+    .string()
+    .min(10, 'Please provide a summary (min 10 characters)'),
   pendingTasks: z.string().min(1, 'List pending tasks or write "None"'),
   blockers: z.string().min(1, 'Describe blockers or write "None"'),
   notes: z.string().optional(),
@@ -46,14 +49,22 @@ type FormData = z.infer<typeof schema>
 export default function EodSubmitPage() {
   const navigate = useNavigate()
   const today = todayString()
-  const { assignments, isLoading: loadingAssignments, isError: assignmentsError } = useMyAssignments()
+  const {
+    assignments,
+    isLoading: loadingAssignments,
+    isError: assignmentsError,
+  } = useMyAssignments()
   const queryClient = useQueryClient()
   const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery()
   const submittedDates = new Set(eods.map(e => e.date.slice(0, 10)))
   const [error, setError] = useState<string | null>(null)
 
   const {
-    register, handleSubmit, control, setValue, watch,
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -90,7 +101,9 @@ export default function EodSubmitPage() {
       <PageShell>
         <PageHeader />
         <EmptyCard>
-          <p className="text-sm text-destructive">Failed to load assignments. Please refresh the page.</p>
+          <p className="text-sm text-destructive">
+            Failed to load assignments. Please refresh the page.
+          </p>
         </EmptyCard>
       </PageShell>
     )
@@ -101,7 +114,9 @@ export default function EodSubmitPage() {
       <PageShell>
         <PageHeader />
         <EmptyCard>
-          <p className="text-sm text-muted-foreground">No active assignments found. Contact your account manager.</p>
+          <p className="text-sm text-muted-foreground">
+            No active assignments found. Contact your account manager.
+          </p>
         </EmptyCard>
       </PageShell>
     )
@@ -117,7 +132,8 @@ export default function EodSubmitPage() {
           </div>
           <div>
             <p className="text-base font-semibold text-foreground">
-              EOD already submitted for {selectedDate === today ? 'today' : selectedDate}
+              EOD already submitted for{' '}
+              {selectedDate === today ? 'today' : selectedDate}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               You're all done for the day. Great work!
@@ -153,13 +169,19 @@ export default function EodSubmitPage() {
               control={control}
               name="assignmentId"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange} disabled={assignments.length === 1}>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={assignments.length === 1}
+                >
                   <SelectTrigger className="rounded-xl border-input h-10">
                     <SelectValue placeholder="Select assignment" />
                   </SelectTrigger>
                   <SelectContent>
                     {assignments.map(a => (
-                      <SelectItem key={a.id} value={a.id}>{a.serviceType ?? a.id}</SelectItem>
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.serviceType ?? a.id}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -172,13 +194,31 @@ export default function EodSubmitPage() {
         <Section icon={<CalendarDays size={14} />} title="Shift">
           <div className="grid grid-cols-3 gap-4">
             <Field label="Date" error={errors.date?.message}>
-              <Input type="date" max={today} className="rounded-xl border-input h-10" {...register('date')} />
+              <Controller
+                name="date"
+                control={control}
+                render={({ field }) => (
+                  <DatePickerField
+                    value={field.value}
+                    onChange={field.onChange}
+                    toDate={new Date()}
+                  />
+                )}
+              />
             </Field>
             <Field label="Shift Start" error={errors.shiftStart?.message}>
-              <Input type="time" className="rounded-xl border-input h-10" {...register('shiftStart')} />
+              <Input
+                type="time"
+                className="rounded-xl border-input h-10"
+                {...register('shiftStart')}
+              />
             </Field>
             <Field label="Shift End" error={errors.shiftEnd?.message}>
-              <Input type="time" className="rounded-xl border-input h-10" {...register('shiftEnd')} />
+              <Input
+                type="time"
+                className="rounded-xl border-input h-10"
+                {...register('shiftEnd')}
+              />
             </Field>
           </div>
 
@@ -186,7 +226,9 @@ export default function EodSubmitPage() {
           {hoursWorked > 0 && (
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/60 border border-border/50 w-fit">
               <Clock size={13} className="text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">{hoursWorked}h</span>
+              <span className="text-sm font-medium text-foreground">
+                {hoursWorked}h
+              </span>
               <span className="text-xs text-muted-foreground">total hours</span>
             </div>
           )}
@@ -248,7 +290,11 @@ export default function EodSubmitPage() {
 
         {/* ── Actions ── */}
         <div className="flex items-center gap-3 pt-1">
-          <Button type="submit" disabled={isSubmitting} className="flex-1 rounded-xl h-10 font-medium gap-2">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 rounded-xl h-10 font-medium gap-2"
+          >
             {isSubmitting ? (
               <>
                 <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -293,15 +339,22 @@ function PageHeader() {
     <div className="mb-5">
       <div className="flex items-center gap-2 mb-1">
         <ClipboardList size={18} className="text-muted-foreground" />
-        <h1 className="text-xl font-semibold text-foreground">End of Day Report</h1>
+        <h1 className="text-xl font-semibold text-foreground">
+          End of Day Report
+        </h1>
       </div>
-      <p className="text-sm text-muted-foreground ml-7">Submit your daily work summary to keep your team updated</p>
+      <p className="text-sm text-muted-foreground ml-7">
+        Submit your daily work summary to keep your team updated
+      </p>
     </div>
   )
 }
 
 function Section({
-  icon, title, optional = false, children,
+  icon,
+  title,
+  optional = false,
+  children,
 }: {
   icon: ReactNode
   title: string
@@ -312,9 +365,13 @@ function Section({
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
       <div className="flex items-center gap-2 px-5 py-3 border-b border-border/60 bg-muted/30">
         <span className="text-muted-foreground">{icon}</span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </span>
         {optional && (
-          <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">Optional</span>
+          <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">
+            Optional
+          </span>
         )}
       </div>
       <div className="p-5 space-y-4">{children}</div>
@@ -323,7 +380,10 @@ function Section({
 }
 
 function Field({
-  label, error, hint, children,
+  label,
+  error,
+  hint,
+  children,
 }: {
   label: string
   error?: string
@@ -332,8 +392,16 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      {label && <Label className="text-sm font-medium text-foreground block mb-1">{label}</Label>}
-      {hint && <p className="text-[11px] text-muted-foreground leading-relaxed">{hint}</p>}
+      {label && (
+        <Label className="text-sm font-medium text-foreground block mb-1">
+          {label}
+        </Label>
+      )}
+      {hint && (
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          {hint}
+        </p>
+      )}
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>

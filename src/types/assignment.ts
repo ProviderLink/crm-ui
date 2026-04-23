@@ -24,7 +24,7 @@ export interface CreateAssignmentPayload {
 
 export interface UpdateAssignmentPayload {
   accountManagerId?: string
-  endDate?: string
+  endDate?: string | null  // null = delete the field from Firestore
   status?: 'active' | 'paused' | 'ended'
   serviceType?: string
   notes?: string

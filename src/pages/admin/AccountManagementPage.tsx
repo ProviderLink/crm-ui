@@ -1,14 +1,22 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ColumnDef } from '@tanstack/react-table'
-import { EyeIcon, KeyRoundIcon, PenLineIcon, UserPlusIcon, XCircleIcon } from 'lucide-react'
+import {
+  EyeIcon,
+  KeyRoundIcon,
+  PenLineIcon,
+  UserPlusIcon,
+  XCircleIcon,
+} from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { DatePickerField } from '@/components/ui/date-picker-field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -271,7 +279,9 @@ function ProvisionLoginForm({
             className="rounded-md border-input"
           />
           {errors.firstName && (
-            <p className="text-xs text-destructive">{errors.firstName.message}</p>
+            <p className="text-xs text-destructive">
+              {errors.firstName.message}
+            </p>
           )}
         </div>
         <div className="flex flex-col gap-1.5 flex-1">
@@ -282,7 +292,9 @@ function ProvisionLoginForm({
             className="rounded-md border-input"
           />
           {errors.lastName && (
-            <p className="text-xs text-destructive">{errors.lastName.message}</p>
+            <p className="text-xs text-destructive">
+              {errors.lastName.message}
+            </p>
           )}
         </div>
       </div>
@@ -423,10 +435,12 @@ function EditClientAccountForm({
       />
 
       <Field label="BAA Signed Date" error={errors.baaSignedDate?.message}>
-        <Input
-          type="date"
-          {...register('baaSignedDate')}
-          className="rounded-md border-input"
+        <Controller
+          name="baaSignedDate"
+          control={control}
+          render={({ field }) => (
+            <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+          )}
         />
       </Field>
 
@@ -482,10 +496,12 @@ function EditClientAccountForm({
         label="Last Client Check-in"
         error={errors.lastClientCheckin?.message}
       >
-        <Input
-          type="date"
-          {...register('lastClientCheckin')}
-          className="rounded-md border-input"
+        <Controller
+          name="lastClientCheckin"
+          control={control}
+          render={({ field }) => (
+            <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+          )}
         />
       </Field>
 
@@ -638,10 +654,12 @@ function EditVaProfileForm({
       />
 
       <Field label="Last VA Check-in" error={errors.lastVaCheckin?.message}>
-        <Input
-          type="date"
-          {...register('lastVaCheckin')}
-          className="rounded-md border-input"
+        <Controller
+          name="lastVaCheckin"
+          control={control}
+          render={({ field }) => (
+            <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+          )}
         />
       </Field>
 
@@ -664,8 +682,10 @@ function EditVaProfileForm({
 
 export default function AccountManagementPage() {
   const queryClient = useQueryClient()
-  const { data: accounts = [], isLoading: loadingAccounts } = useClientAccountsQuery()
-  const { data: profiles = [], isLoading: loadingProfiles } = useVaProfilesQuery()
+  const { data: accounts = [], isLoading: loadingAccounts } =
+    useClientAccountsQuery()
+  const { data: profiles = [], isLoading: loadingProfiles } =
+    useVaProfilesQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
   const { data: atsVas = [] } = useAtsVAsQuery()
   const { data: crmVaUsers = [] } = useCrmVaUsersQuery()
@@ -678,8 +698,41 @@ export default function AccountManagementPage() {
   const [viewProfile, setViewProfile] = useState<IVaProfile | null>(null)
 
   // Provision login sheet state
-  type ProvisionTarget = { role: 'va' | 'client'; atsId: string; firstName?: string; lastName?: string; label: string }
-  const [provisionTarget, setProvisionTarget] = useState<ProvisionTarget | null>(null)
+  type ProvisionTarget = {
+    role: 'va' | 'client'
+    atsId: string
+    firstName?: string
+    lastName?: string
+    label: string
+  }
+  const [provisionTarget, setProvisionTarget] =
+    useState<ProvisionTarget | null>(null)
+
+  // Confirm dialog state for CRM user actions
+  type CrmConfirmAction = { type: 'resetPw' | 'deactivate'; user: ICrmUser }
+  const [crmConfirm, setCrmConfirm] = useState<CrmConfirmAction | null>(null)
+
+  async function executeCrmConfirm() {
+    if (!crmConfirm) return
+    const { type, user } = crmConfirm
+    setCrmConfirm(null)
+    if (type === 'resetPw') {
+      try {
+        await resetCrmUserPassword(user.id)
+        toast.success('Password reset — new credentials emailed.')
+      } catch {
+        toast.error('Failed to reset password.')
+      }
+    } else {
+      try {
+        await deactivateCrmUser(user.id)
+        toast.success('Login deactivated.')
+        invalidateCrmUsers()
+      } catch {
+        toast.error('Failed to deactivate login.')
+      }
+    }
+  }
 
   const clientMap: Record<string, IAtsClient> = {}
   for (const c of atsClients) clientMap[c.id] = c
@@ -702,30 +755,21 @@ export default function AccountManagementPage() {
   function ActionButtons({
     crmUser,
     onProvision,
+    onResetPassword,
+    onDeactivate,
   }: {
     crmUser: ICrmUser | undefined
     onProvision: () => void
+    onResetPassword: (u: ICrmUser) => void
+    onDeactivate: (u: ICrmUser) => void
   }) {
     async function handleResetPassword() {
       if (!crmUser) return
-      if (!window.confirm(`Reset password for ${crmUser.firstName} ${crmUser.lastName}?`)) return
-      try {
-        await resetCrmUserPassword(crmUser.id)
-        toast.success('Password reset — new credentials emailed.')
-      } catch {
-        toast.error('Failed to reset password.')
-      }
+      onResetPassword(crmUser)
     }
     async function handleDeactivate() {
       if (!crmUser) return
-      if (!window.confirm(`Deactivate CRM login for ${crmUser.firstName} ${crmUser.lastName}?`)) return
-      try {
-        await deactivateCrmUser(crmUser.id)
-        toast.success('Login deactivated.')
-        invalidateCrmUsers()
-      } catch {
-        toast.error('Failed to deactivate login.')
-      }
+      onDeactivate(crmUser)
     }
 
     return (
@@ -854,9 +898,13 @@ export default function AccountManagementPage() {
               setProvisionTarget({
                 role: 'client',
                 atsId: row.original.clientId,
-                label: clientMap[row.original.clientId]?.companyName ?? row.original.clientId,
+                label:
+                  clientMap[row.original.clientId]?.companyName ??
+                  row.original.clientId,
               })
             }
+            onResetPassword={u => setCrmConfirm({ type: 'resetPw', user: u })}
+            onDeactivate={u => setCrmConfirm({ type: 'deactivate', user: u })}
           />
         </div>
       ),
@@ -940,9 +988,13 @@ export default function AccountManagementPage() {
                   atsId: row.original.vaId,
                   firstName: va?.firstName,
                   lastName: va?.lastName,
-                  label: va ? `${va.firstName} ${va.lastName}` : row.original.vaId,
+                  label: va
+                    ? `${va.firstName} ${va.lastName}`
+                    : row.original.vaId,
                 })
               }
+              onResetPassword={u => setCrmConfirm({ type: 'resetPw', user: u })}
+              onDeactivate={u => setCrmConfirm({ type: 'deactivate', user: u })}
             />
           </div>
         )
@@ -958,7 +1010,8 @@ export default function AccountManagementPage() {
             Account Management
           </h1>
           <p className="text-sm text-muted-foreground">
-            Client accounts and VA profiles — manage health metrics and CRM login access
+            Client accounts and VA profiles — manage health metrics and CRM
+            login access
           </p>
         </div>
 
@@ -989,11 +1042,17 @@ export default function AccountManagementPage() {
       </div>
 
       {/* Client Account View Sheet */}
-      <Sheet open={viewAccount !== null} onOpenChange={o => !o && setViewAccount(null)}>
+      <Sheet
+        open={viewAccount !== null}
+        onOpenChange={o => !o && setViewAccount(null)}
+      >
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>
-              {viewAccount ? (clientMap[viewAccount.clientId]?.companyName ?? viewAccount.clientId) : ''}
+              {viewAccount
+                ? (clientMap[viewAccount.clientId]?.companyName ??
+                  viewAccount.clientId)
+                : ''}
             </SheetTitle>
             <SheetDescription>Client account details</SheetDescription>
           </SheetHeader>
@@ -1013,7 +1072,9 @@ export default function AccountManagementPage() {
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-muted-foreground">Onboarding</span>
-                <span>{viewAccount.onboardingComplete ? 'Complete' : 'Pending'}</span>
+                <span>
+                  {viewAccount.onboardingComplete ? 'Complete' : 'Pending'}
+                </span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-muted-foreground">SOP Received</span>
@@ -1024,7 +1085,9 @@ export default function AccountManagementPage() {
                 <span>{viewAccount.emrSystem ?? '—'}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Satisfaction Score</span>
+                <span className="text-muted-foreground">
+                  Satisfaction Score
+                </span>
                 <span>{viewAccount.satisfactionScore ?? '—'}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
@@ -1041,7 +1104,9 @@ export default function AccountManagementPage() {
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-muted-foreground">Last Check-in</span>
-                <span>{viewAccount.lastClientCheckin?.slice(0, 10) ?? '—'}</span>
+                <span>
+                  {viewAccount.lastClientCheckin?.slice(0, 10) ?? '—'}
+                </span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
                 <span className="text-muted-foreground">CRM Login</span>
@@ -1050,7 +1115,9 @@ export default function AccountManagementPage() {
               {viewAccount.notes && (
                 <div className="pt-2">
                   <p className="text-muted-foreground text-xs mb-1">Notes</p>
-                  <p className="text-sm whitespace-pre-wrap">{viewAccount.notes}</p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {viewAccount.notes}
+                  </p>
                 </div>
               )}
             </div>
@@ -1059,11 +1126,19 @@ export default function AccountManagementPage() {
       </Sheet>
 
       {/* VA Profile View Sheet */}
-      <Sheet open={viewProfile !== null} onOpenChange={o => !o && setViewProfile(null)}>
+      <Sheet
+        open={viewProfile !== null}
+        onOpenChange={o => !o && setViewProfile(null)}
+      >
         <SheetContent className="sm:max-w-lg overflow-y-auto">
           <SheetHeader>
             <SheetTitle>
-              {viewProfile ? (() => { const v = vaMap[viewProfile.vaId]; return v ? `${v.firstName} ${v.lastName}` : viewProfile.vaId })() : ''}
+              {viewProfile
+                ? (() => {
+                    const v = vaMap[viewProfile.vaId]
+                    return v ? `${v.firstName} ${v.lastName}` : viewProfile.vaId
+                  })()
+                : ''}
             </SheetTitle>
             <SheetDescription>VA profile details</SheetDescription>
           </SheetHeader>
@@ -1074,7 +1149,9 @@ export default function AccountManagementPage() {
                 <WorkloadBadge level={viewProfile.workloadLevel} />
               </div>
               <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Satisfaction Score</span>
+                <span className="text-muted-foreground">
+                  Satisfaction Score
+                </span>
                 <span>{viewProfile.satisfactionScore ?? '—'}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
@@ -1096,7 +1173,9 @@ export default function AccountManagementPage() {
               {viewProfile.notes && (
                 <div className="pt-2">
                   <p className="text-muted-foreground text-xs mb-1">Notes</p>
-                  <p className="text-sm whitespace-pre-wrap">{viewProfile.notes}</p>
+                  <p className="text-sm whitespace-pre-wrap">
+                    {viewProfile.notes}
+                  </p>
                 </div>
               )}
             </div>
@@ -1114,7 +1193,8 @@ export default function AccountManagementPage() {
             <SheetTitle>Edit Client Account</SheetTitle>
             <SheetDescription>
               {editAccount
-                ? (clientMap[editAccount.clientId]?.companyName ?? editAccount.clientId)
+                ? (clientMap[editAccount.clientId]?.companyName ??
+                  editAccount.clientId)
                 : ''}
             </SheetDescription>
           </SheetHeader>
@@ -1140,7 +1220,10 @@ export default function AccountManagementPage() {
             <SheetTitle>Edit VA Profile</SheetTitle>
             <SheetDescription>
               {editProfile
-                ? (() => { const v = vaMap[editProfile.vaId]; return v ? `${v.firstName} ${v.lastName}` : editProfile.vaId })()
+                ? (() => {
+                    const v = vaMap[editProfile.vaId]
+                    return v ? `${v.firstName} ${v.lastName}` : editProfile.vaId
+                  })()
                 : ''}
             </SheetDescription>
           </SheetHeader>
@@ -1164,9 +1247,7 @@ export default function AccountManagementPage() {
         <SheetContent className="sm:max-w-md overflow-y-auto">
           <SheetHeader>
             <SheetTitle>Provision CRM Login</SheetTitle>
-            <SheetDescription>
-              {provisionTarget?.label ?? ''}
-            </SheetDescription>
+            <SheetDescription>{provisionTarget?.label ?? ''}</SheetDescription>
           </SheetHeader>
           {provisionTarget && (
             <ProvisionLoginForm
@@ -1182,6 +1263,23 @@ export default function AccountManagementPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* CRM user action confirmation */}
+      <ConfirmDialog
+        open={crmConfirm !== null}
+        title={crmConfirm?.type === 'resetPw' ? 'Reset Password' : 'Deactivate Login'}
+        description={
+          crmConfirm
+            ? crmConfirm.type === 'resetPw'
+              ? `Reset password for ${crmConfirm.user.firstName} ${crmConfirm.user.lastName}? A new temporary password will be emailed to them.`
+              : `Deactivate CRM login for ${crmConfirm.user.firstName} ${crmConfirm.user.lastName}?`
+            : ''
+        }
+        confirmLabel={crmConfirm?.type === 'resetPw' ? 'Reset Password' : 'Deactivate'}
+        variant={crmConfirm?.type === 'deactivate' ? 'destructive' : 'default'}
+        onConfirm={executeCrmConfirm}
+        onCancel={() => setCrmConfirm(null)}
+      />
     </div>
   )
 }

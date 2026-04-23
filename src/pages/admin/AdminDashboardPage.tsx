@@ -29,7 +29,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart'
-import { Input } from '@/components/ui/input'
+import { DatePickerField } from '@/components/ui/date-picker-field'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -114,7 +114,6 @@ export default function AdminDashboardPage() {
   const [exportError, setExportError] = useState<string | null>(null)
 
   const {
-    register,
     control,
     handleSubmit,
     formState: { errors },
@@ -315,7 +314,17 @@ export default function AdminDashboardPage() {
                 {/* Date from */}
                 <div className="grid gap-1.5">
                   <Label>From</Label>
-                  <Input type="date" {...register('dateFrom')} />
+                  <Controller
+                    name="dateFrom"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePickerField
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Pick a date"
+                      />
+                    )}
+                  />
                   {errors.dateFrom && (
                     <p className="text-xs text-destructive">
                       {errors.dateFrom.message}
@@ -326,7 +335,17 @@ export default function AdminDashboardPage() {
                 {/* Date to */}
                 <div className="grid gap-1.5">
                   <Label>To</Label>
-                  <Input type="date" {...register('dateTo')} />
+                  <Controller
+                    name="dateTo"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePickerField
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Pick a date"
+                      />
+                    )}
+                  />
                   {errors.dateTo && (
                     <p className="text-xs text-destructive">
                       {errors.dateTo.message}

@@ -1,5 +1,5 @@
 import { DataTable } from '@/components/shared/DataTable'
-import { Input } from '@/components/ui/input'
+import { DatePickerField } from '@/components/ui/date-picker-field'
 import { useEodSubmissionsQuery } from '@/hooks/queries'
 import type { IEodSubmission } from '@/types/eod-submission'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -60,7 +60,9 @@ export default function EodHistoryPage() {
     d.setDate(d.getDate() - 90)
     return d.toISOString().split('T')[0]
   })
-  const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0])
+  const [dateTo, setDateTo] = useState(
+    () => new Date().toISOString().split('T')[0]
+  )
 
   const filtered = useMemo(
     () =>
@@ -102,21 +104,11 @@ export default function EodHistoryPage() {
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">From</span>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
-                className="rounded-xl border-input h-8 text-sm w-36"
-              />
+              <DatePickerField value={dateFrom} onChange={v => setDateFrom(v)} />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">To</span>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
-                className="rounded-xl border-input h-8 text-sm w-36"
-              />
+              <DatePickerField value={dateTo} onChange={v => setDateTo(v)} />
             </div>
             {(dateFrom || dateTo) && (
               <button

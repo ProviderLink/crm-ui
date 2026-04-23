@@ -8,6 +8,7 @@ import { z } from 'zod'
 
 import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
+import { DatePickerField } from '@/components/ui/date-picker-field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -121,11 +122,16 @@ function EditWorkEntryForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-2">
           <Label>Date</Label>
-          <Input
-            type="date"
-            max={todayString()}
-            {...register('entryDate')}
-            className="rounded-md border-input"
+          <Controller
+            name="entryDate"
+            control={control}
+            render={({ field }) => (
+              <DatePickerField
+                value={field.value}
+                onChange={field.onChange}
+                toDate={new Date()}
+              />
+            )}
           />
           {errors.entryDate && (
             <p className="text-xs text-destructive">
@@ -377,21 +383,11 @@ export default function WorkHistoryPage() {
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">From</span>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
-                className="rounded-xl border-input h-8 text-sm w-36"
-              />
+              <DatePickerField value={dateFrom} onChange={v => setDateFrom(v)} />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">To</span>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
-                className="rounded-xl border-input h-8 text-sm w-36"
-              />
+              <DatePickerField value={dateTo} onChange={v => setDateTo(v)} />
             </div>
             {(dateFrom || dateTo) && (
               <button
