@@ -1,5 +1,5 @@
-import type { ColumnDef } from '@tanstack/react-table'
 import { DatePickerField } from '@/components/ui/date-picker-field'
+import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
@@ -30,9 +30,13 @@ export default function WorkEntriesPage() {
   const { data: allEntries = [], isLoading } = useWorkEntriesQuery()
   const { data: atsVAs = [] } = useAtsVAsQuery()
   const { data: atsClients = [] } = useAtsClientsQuery()
+  const { data: assignments = [] } = useAllAssignmentsQuery()
 
   const [dateFrom, setDateFrom] = useState(
-    () => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    () =>
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0]
   )
   const [dateTo, setDateTo] = useState(
     () => new Date().toISOString().split('T')[0]
@@ -51,6 +55,12 @@ export default function WorkEntriesPage() {
     for (const c of atsClients) m[c.id] = c.companyName
     return m
   }, [atsClients])
+
+  const assignmentMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const a of assignments) m[a.id] = a.serviceType ?? 'VA Service'
+    return m
+  }, [assignments])
 
   const filtered = useMemo(
     () =>
@@ -89,11 +99,16 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'clientId',
         header: 'Client',
-        size: 210,
-        cell: ({ getValue }) => (
-          <span className="text-sm">
-            {clientMap[getValue<string>()] ?? getValue<string>()}
-          </span>
+        size: 220,
+        cell: ({ row }) => (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm">
+              {clientMap[row.original.clientId] ?? row.original.clientId}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {assignmentMap[row.original.assignmentId] ?? '—'}
+            </span>
+          </div>
         ),
       },
       {
@@ -140,7 +155,7 @@ export default function WorkEntriesPage() {
         },
       },
     ],
-    [vaMap, clientMap]
+    [vaMap, clientMap, assignmentMap]
   )
 
   function clearFilters() {
@@ -200,7 +215,10 @@ export default function WorkEntriesPage() {
 
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">From</span>
-              <DatePickerField value={dateFrom} onChange={v => setDateFrom(v)} />
+              <DatePickerField
+                value={dateFrom}
+                onChange={v => setDateFrom(v)}
+              />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">To</span>
