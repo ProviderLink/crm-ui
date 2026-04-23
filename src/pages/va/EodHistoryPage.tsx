@@ -1,60 +1,84 @@
 import { DataTable } from '@/components/shared/DataTable'
 import { DatePickerField } from '@/components/ui/date-picker-field'
-import { useEodSubmissionsQuery } from '@/hooks/queries'
+import { useAtsClientsQuery, useEodSubmissionsQuery } from '@/hooks/queries'
+import type { IAtsClient } from '@/types/ats'
 import type { IEodSubmission } from '@/types/eod-submission'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-const columns: ColumnDef<IEodSubmission>[] = [
-  {
-    accessorKey: 'date',
-    header: 'Date',
-    size: 105,
-    cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">
-        {getValue<string>()?.slice(0, 10)}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'shiftStart',
-    header: 'Start',
-    size: 70,
-    cell: ({ getValue }) => (
-      <span className="text-sm">{getValue<string>()}</span>
-    ),
-  },
-  {
-    accessorKey: 'shiftEnd',
-    header: 'End',
-    size: 70,
-    cell: ({ getValue }) => (
-      <span className="text-sm">{getValue<string>()}</span>
-    ),
-  },
-  {
-    accessorKey: 'hoursWorked',
-    header: 'Hours',
-    size: 75,
-    cell: ({ getValue }) => (
-      <span className="text-sm font-medium text-foreground">
-        {getValue<number>()}h
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'summaryOfWork',
-    header: 'Summary',
-    enableSorting: false,
-    cell: ({ getValue }) => (
-      <span className="text-sm">{getValue<string>()}</span>
-    ),
-  },
-]
+function buildColumns(
+  clientMap: Map<string, string>
+): ColumnDef<IEodSubmission>[] {
+  return [
+    {
+      accessorKey: 'clientId',
+      header: 'Client',
+      size: 180,
+      cell: ({ getValue }) => (
+        <span className="text-sm font-medium text-foreground">
+          {clientMap.get(getValue<string>()) ?? '—'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'date',
+      header: 'Date',
+      size: 105,
+      cell: ({ getValue }) => (
+        <span className="text-xs text-muted-foreground">
+          {getValue<string>()?.slice(0, 10)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'shiftStart',
+      header: 'Start',
+      size: 70,
+      cell: ({ getValue }) => (
+        <span className="text-sm">{getValue<string>()}</span>
+      ),
+    },
+    {
+      accessorKey: 'shiftEnd',
+      header: 'End',
+      size: 70,
+      cell: ({ getValue }) => (
+        <span className="text-sm">{getValue<string>()}</span>
+      ),
+    },
+    {
+      accessorKey: 'hoursWorked',
+      header: 'Hours',
+      size: 75,
+      cell: ({ getValue }) => (
+        <span className="text-sm font-medium text-foreground">
+          {getValue<number>()}h
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'summaryOfWork',
+      header: 'Summary',
+      enableSorting: false,
+      cell: ({ getValue }) => (
+        <span className="text-sm">{getValue<string>()}</span>
+      ),
+    },
+  ]
+}
 
 export default function EodHistoryPage() {
   const { data: eods = [], isLoading } = useEodSubmissionsQuery()
+  const { data: atsClients = [] } = useAtsClientsQuery()
+
+  const clientMap = useMemo(() => {
+    const m = new Map<string, string>()
+    atsClients.forEach((c: IAtsClient) => m.set(c.id, c.companyName))
+    return m
+  }, [atsClients])
+
+  const columns = useMemo(() => buildColumns(clientMap), [clientMap])
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 30)
@@ -104,7 +128,10 @@ export default function EodHistoryPage() {
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">From</span>
-              <DatePickerField value={dateFrom} onChange={v => setDateFrom(v)} />
+              <DatePickerField
+                value={dateFrom}
+                onChange={v => setDateFrom(v)}
+              />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">To</span>

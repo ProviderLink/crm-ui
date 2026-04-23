@@ -32,7 +32,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { QK, useWorkEntriesQuery } from '@/hooks/queries'
+import { QK, useAtsClientsQuery, useWorkEntriesQuery } from '@/hooks/queries'
 import { formatMinutes } from '@/lib/time'
 import { updateWorkEntry } from '@/services/work-entries.service'
 import {
@@ -273,6 +273,13 @@ function EditWorkEntryForm({
 export default function WorkHistoryPage() {
   const queryClient = useQueryClient()
   const { data: entries = [], isLoading } = useWorkEntriesQuery()
+  const { data: atsClients = [] } = useAtsClientsQuery()
+
+  const clientMap = useMemo(() => {
+    const m = new Map<string, string>()
+    atsClients.forEach(c => m.set(c.id, c.companyName))
+    return m
+  }, [atsClients])
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -301,6 +308,16 @@ export default function WorkHistoryPage() {
 
   const columns = useMemo<ColumnDef<IWorkEntry>[]>(
     () => [
+      {
+        accessorKey: 'clientId',
+        header: 'Client',
+        size: 180,
+        cell: ({ getValue }) => (
+          <span className="text-sm font-medium text-foreground">
+            {clientMap.get(getValue<string>()) ?? '—'}
+          </span>
+        ),
+      },
       {
         accessorKey: 'entryDate',
         header: 'Date',
@@ -386,7 +403,7 @@ export default function WorkHistoryPage() {
         ),
       },
     ],
-    [setEditEntry]
+    [setEditEntry, clientMap]
   )
 
   return (
