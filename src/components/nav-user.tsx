@@ -1,4 +1,4 @@
-import { LogOutIcon, MoreVerticalIcon } from 'lucide-react'
+import { LogOutIcon, MoreVerticalIcon, UserIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -127,6 +127,11 @@ export function NavUser({
                 {role.label}
               </span>
             </div>
+            <DropdownMenuSeparator className="bg-border" />
+            <DropdownMenuItem onClick={() => navigate('/profile')}>
+              <UserIcon />
+              Profile &amp; Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-border" />
             <DropdownMenuItem
               onClick={handleLogout}

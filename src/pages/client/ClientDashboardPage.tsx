@@ -23,7 +23,16 @@ import {
   useEodSubmissionsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries'
+import { useAppSelector } from '@/hooks/store'
 import type { IAssignment } from '@/types/assignment'
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
 
 function todayStr() {
   return new Date().toISOString().split('T')[0]
@@ -46,6 +55,7 @@ const statusVariant: Record<
 }
 
 export default function ClientDashboardPage() {
+  const user = useAppSelector(s => s.auth.user)
   const today = todayStr()
   const weekStart = weekStartStr()
 
@@ -69,6 +79,21 @@ export default function ClientDashboardPage() {
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+        {/* Page heading */}
+        <div className="px-4 lg:px-6">
+          <p className="text-sm font-medium text-muted-foreground mb-0.5">Welcome back,</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {user?.name ?? 'Dashboard'}
+          </h1>
+          {user?.companyName && (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1">
+              <span className="size-1.5 rounded-full bg-primary shrink-0" />
+              <span className="text-xs font-semibold text-primary tracking-wide">
+                {user.companyName}
+              </span>
+            </div>
+          )}
+        </div>
         {/* Stat cards */}
         <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card lg:px-6">
           <Card className="@container/card">
@@ -117,10 +142,14 @@ export default function ClientDashboardPage() {
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
                 {loadingEods ? (
                   <Skeleton className="h-8 w-28" />
+                ) : lastEodDate ? (
+                  new Date(lastEodDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })
                 ) : (
-                  lastEodDate
-                    ? new Date(lastEodDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                    : 'None yet'
+                  'None yet'
                 )}
               </CardTitle>
               <div className="absolute right-4 top-4">
@@ -198,8 +227,8 @@ export default function ClientDashboardPage() {
                       </Badge>
                     </div>
                     <CardDescription className="text-xs">
-                      Started {a.startDate}
-                      {a.endDate ? ` · Ends ${a.endDate}` : ''}
+                      Started {fmtDate(a.startDate)}
+                      {a.endDate ? ` · Ends ${fmtDate(a.endDate)}` : ''}
                     </CardDescription>
                   </CardHeader>
                   {a.notes && (

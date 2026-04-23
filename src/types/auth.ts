@@ -6,6 +6,7 @@ export interface IUser {
   name: string
   role: UserRole
   atsId?: string
+  companyName?: string
 }
 
 export interface AuthState {

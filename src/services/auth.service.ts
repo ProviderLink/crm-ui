@@ -13,6 +13,7 @@ interface BackendUser {
   lastName: string
   role: UserRole
   atsId?: string
+  companyName?: string
 }
 
 export interface LoginResponse {
@@ -27,6 +28,7 @@ function mapUser(u: BackendUser): IUser {
     name: `${u.firstName} ${u.lastName}`,
     role: u.role,
     atsId: u.atsId,
+    companyName: u.companyName,
   }
 }
 
@@ -71,4 +73,11 @@ export async function resetPassword(
   password: string
 ): Promise<void> {
   await api.post('/auth/reset-password', { token, password })
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  await api.post('/auth/change-password', { currentPassword, newPassword })
 }

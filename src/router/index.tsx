@@ -11,6 +11,9 @@ const HomePage = lazy(() => import('@/pages/HomePage'))
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage'))
 
+// Shared (all authenticated roles)
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
+
 // VA portal
 const VaDashboardPage = lazy(() => import('@/pages/va/VaDashboardPage'))
 const AddWorkEntryPage = lazy(() => import('@/pages/va/AddWorkEntryPage'))
@@ -76,6 +79,14 @@ const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
+          // Shared profile page (all roles)
+          {
+            element: <DashboardLayout />,
+            children: [
+              { path: 'profile', element: <ProfilePage /> },
+            ],
+          },
+
           // VA portal
           {
             path: '/va',
@@ -108,7 +119,10 @@ const router = createBrowserRouter([
                     element: <AssignmentManagementPage />,
                   },
                   { path: 'accounts', element: <AccountManagementPage /> },
-                  { path: 'account-managers', element: <AccountManagersPage /> },
+                  {
+                    path: 'account-managers',
+                    element: <AccountManagersPage />,
+                  },
                   { path: 'reminders', element: <SurveyRemindersPage /> },
                   { path: 'scorecards', element: <ScorecardsPage /> },
                   { path: 'work-entries', element: <WorkEntriesPage /> },
