@@ -1,5 +1,5 @@
-import type { ColumnDef } from '@tanstack/react-table'
 import { DatePickerField } from '@/components/ui/date-picker-field'
+import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 
 import { DataTable } from '@/components/shared/DataTable'
@@ -13,11 +13,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   useAllAssignmentsQuery,
+  useAtsVAsQuery,
   useEodSubmissionsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries'
 import { formatMinutes } from '@/lib/time'
 import type { IAssignment } from '@/types/assignment'
+import type { IAtsCandidate } from '@/types/ats'
 import type { IEodSubmission } from '@/types/eod-submission'
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
 
@@ -31,131 +33,157 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
   pending: 'bg-muted text-muted-foreground border-border',
 }
 
-const workColumns: ColumnDef<IWorkEntry>[] = [
-  {
-    accessorKey: 'entryDate',
-    header: 'Date',
-    size: 105,
-    cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">
-        {getValue<string>()?.slice(0, 10)}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'entryTime',
-    header: 'Time',
-    size: 75,
-    cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">
-        {getValue<string>()}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'taskCategory',
-    header: 'Category',
-    size: 160,
-    cell: ({ getValue }) => (
-      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
-        {getValue<string>()}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'taskDescription',
-    header: 'Description',
-    enableSorting: false,
-    cell: ({ getValue }) => (
-      <span className="text-sm">{getValue<string>()}</span>
-    ),
-  },
-  {
-    accessorKey: 'timeSpent',
-    header: 'Time Spent',
-    size: 95,
-    cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">
-        {formatMinutes(getValue<number>())}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    size: 125,
-    cell: ({ getValue }) => {
-      const s = getValue<WorkEntryStatus>()
-      return (
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
-        >
-          {s.replace('_', ' ')}
+function buildWorkColumns(vaMap: Map<string, string>): ColumnDef<IWorkEntry>[] {
+  return [
+    {
+      accessorKey: 'vaId',
+      header: 'VA',
+      size: 140,
+      cell: ({ getValue }) => (
+        <span className="text-sm font-medium text-foreground">
+          {vaMap.get(getValue<string>()) ?? '—'}
         </span>
-      )
+      ),
     },
-  },
-]
+    {
+      accessorKey: 'entryDate',
+      header: 'Date',
+      size: 105,
+      cell: ({ getValue }) => (
+        <span className="text-xs text-muted-foreground">
+          {getValue<string>()?.slice(0, 10)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'entryTime',
+      header: 'Time',
+      size: 75,
+      cell: ({ getValue }) => (
+        <span className="text-xs text-muted-foreground">
+          {getValue<string>()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'taskCategory',
+      header: 'Category',
+      size: 160,
+      cell: ({ getValue }) => (
+        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
+          {getValue<string>()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'taskDescription',
+      header: 'Description',
+      enableSorting: false,
+      cell: ({ getValue }) => (
+        <span className="text-sm">{getValue<string>()}</span>
+      ),
+    },
+    {
+      accessorKey: 'timeSpent',
+      header: 'Time Spent',
+      size: 95,
+      cell: ({ getValue }) => (
+        <span className="text-xs text-muted-foreground">
+          {formatMinutes(getValue<number>())}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      size: 125,
+      cell: ({ getValue }) => {
+        const s = getValue<WorkEntryStatus>()
+        return (
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
+          >
+            {s.replace('_', ' ')}
+          </span>
+        )
+      },
+    },
+  ]
+}
 
 // ── EOD Report columns ────────────────────────────────────────────────────────
 
-const eodColumns: ColumnDef<IEodSubmission>[] = [
-  {
-    accessorKey: 'date',
-    header: 'Date',
-    size: 105,
-    cell: ({ getValue }) => (
-      <span className="text-xs text-muted-foreground">
-        {getValue<string>()?.slice(0, 10)}
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'shiftStart',
-    header: 'Start',
-    size: 70,
-    cell: ({ getValue }) => (
-      <span className="text-sm">{getValue<string>()}</span>
-    ),
-  },
-  {
-    accessorKey: 'shiftEnd',
-    header: 'End',
-    size: 70,
-    cell: ({ getValue }) => (
-      <span className="text-sm">{getValue<string>()}</span>
-    ),
-  },
-  {
-    accessorKey: 'hoursWorked',
-    header: 'Hours',
-    size: 75,
-    cell: ({ getValue }) => (
-      <span className="text-sm font-medium text-foreground">
-        {getValue<number>()}h
-      </span>
-    ),
-  },
-  {
-    accessorKey: 'summaryOfWork',
-    header: 'Summary',
-    enableSorting: false,
-    cell: ({ getValue }) => (
-      <span className="text-sm">{getValue<string>()}</span>
-    ),
-  },
-  {
-    accessorKey: 'pendingTasks',
-    header: 'Pending Tasks',
-    size: 200,
-    enableSorting: false,
-    cell: ({ getValue }) => (
-      <span className="text-sm text-muted-foreground">
-        {getValue<string>()}
-      </span>
-    ),
-  },
-]
+function buildEodColumns(
+  vaMap: Map<string, string>
+): ColumnDef<IEodSubmission>[] {
+  return [
+    {
+      accessorKey: 'vaId',
+      header: 'VA',
+      size: 140,
+      cell: ({ getValue }) => (
+        <span className="text-sm font-medium text-foreground">
+          {vaMap.get(getValue<string>()) ?? '—'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'date',
+      header: 'Date',
+      size: 105,
+      cell: ({ getValue }) => (
+        <span className="text-xs text-muted-foreground">
+          {getValue<string>()?.slice(0, 10)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'shiftStart',
+      header: 'Start',
+      size: 70,
+      cell: ({ getValue }) => (
+        <span className="text-sm">{getValue<string>()}</span>
+      ),
+    },
+    {
+      accessorKey: 'shiftEnd',
+      header: 'End',
+      size: 70,
+      cell: ({ getValue }) => (
+        <span className="text-sm">{getValue<string>()}</span>
+      ),
+    },
+    {
+      accessorKey: 'hoursWorked',
+      header: 'Hours',
+      size: 75,
+      cell: ({ getValue }) => (
+        <span className="text-sm font-medium text-foreground">
+          {getValue<number>()}h
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'summaryOfWork',
+      header: 'Summary',
+      enableSorting: false,
+      cell: ({ getValue }) => (
+        <span className="text-sm">{getValue<string>()}</span>
+      ),
+    },
+    {
+      accessorKey: 'pendingTasks',
+      header: 'Pending Tasks',
+      size: 200,
+      enableSorting: false,
+      cell: ({ getValue }) => (
+        <span className="text-sm text-muted-foreground">
+          {getValue<string>()}
+        </span>
+      ),
+    },
+  ]
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -166,10 +194,25 @@ export default function WorkActivityPage() {
     useWorkEntriesQuery()
   const { data: allEods = [], isLoading: loadingEods } =
     useEodSubmissionsQuery()
+  const { data: atsVAs = [] } = useAtsVAsQuery()
   const isLoading = loadingAssignments || loadingEntries || loadingEods
 
+  const vaMap = useMemo(() => {
+    const m = new Map<string, string>()
+    atsVAs.forEach((v: IAtsCandidate) =>
+      m.set(v.id, `${v.firstName} ${v.lastName}`)
+    )
+    return m
+  }, [atsVAs])
+
+  const workColumns = useMemo(() => buildWorkColumns(vaMap), [vaMap])
+  const eodColumns = useMemo(() => buildEodColumns(vaMap), [vaMap])
+
   const [dateFrom, setDateFrom] = useState(
-    () => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    () =>
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split('T')[0]
   )
   const [dateTo, setDateTo] = useState(
     () => new Date().toISOString().split('T')[0]
@@ -211,8 +254,8 @@ export default function WorkActivityPage() {
   const multipleAssignments = assignments.length > 1
 
   function assignmentLabel(a: IAssignment): string {
-    const type = a.serviceType ?? 'VA Service'
-    return `${type} (from ${a.startDate})`
+    const name = vaMap.get(a.vaId)
+    return name ? `${name} — ${a.serviceType ?? 'VA Service'}` : (a.serviceType ?? 'VA Service')
   }
 
   return (
@@ -251,7 +294,10 @@ export default function WorkActivityPage() {
 
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">From</span>
-              <DatePickerField value={dateFrom} onChange={v => setDateFrom(v)} />
+              <DatePickerField
+                value={dateFrom}
+                onChange={v => setDateFrom(v)}
+              />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">To</span>
