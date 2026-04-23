@@ -14,6 +14,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { DataTable } from '@/components/shared/DataTable'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

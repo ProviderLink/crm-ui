@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
 import { QK, useWorkEntriesQuery } from '@/hooks/queries'
-import { formatMinutes, todayString } from '@/lib/time'
+import { formatMinutes } from '@/lib/time'
 import { updateWorkEntry } from '@/services/work-entries.service'
 import {
   WORK_ENTRY_CATEGORIES,
