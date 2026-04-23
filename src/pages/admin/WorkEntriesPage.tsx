@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
   useWorkEntriesQuery,
