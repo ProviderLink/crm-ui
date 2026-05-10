@@ -1,77 +1,77 @@
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import type { ColumnDef } from '@tanstack/react-table'
-import { useMemo, useState } from 'react'
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
-import { DataTable } from '@/components/shared/DataTable'
+import { DataTable } from '@/components/shared/DataTable';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
   useEodSubmissionsQuery,
-} from '@/hooks/queries'
-import type { IEodSubmission } from '@/types/eod-submission'
+} from '@/hooks/queries';
+import type { IEodSubmission } from '@/types/eod-submission';
 
 export default function EodReportsPage() {
-  const { data: allEods = [], isLoading } = useEodSubmissionsQuery()
-  const { data: atsVAs = [] } = useAtsVAsQuery()
-  const { data: atsClients = [] } = useAtsClientsQuery()
-  const { data: assignments = [] } = useAllAssignmentsQuery()
+  const { data: allEods = [], isLoading } = useEodSubmissionsQuery();
+  const { data: atsVAs = [] } = useAtsVAsQuery();
+  const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: assignments = [] } = useAllAssignmentsQuery();
 
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split('T')[0]
-  )
+  );
   const [dateTo, setDateTo] = useState(
     () => new Date().toISOString().split('T')[0]
-  )
-  const [vaFilter, setVaFilter] = useState('all')
-  const [clientFilter, setClientFilter] = useState('all')
+  );
+  const [vaFilter, setVaFilter] = useState('all');
+  const [clientFilter, setClientFilter] = useState('all');
 
   const vaMap = useMemo(() => {
-    const m: Record<string, string> = {}
-    for (const v of atsVAs) m[v.id] = `${v.firstName} ${v.lastName}`
-    return m
-  }, [atsVAs])
+    const m: Record<string, string> = {};
+    for (const v of atsVAs) m[v.id] = `${v.firstName} ${v.lastName}`;
+    return m;
+  }, [atsVAs]);
 
   const clientMap = useMemo(() => {
-    const m: Record<string, string> = {}
-    for (const c of atsClients) m[c.id] = c.companyName
-    return m
-  }, [atsClients])
+    const m: Record<string, string> = {};
+    for (const c of atsClients) m[c.id] = c.companyName;
+    return m;
+  }, [atsClients]);
 
   const assignmentMap = useMemo(() => {
-    const m: Record<string, string> = {}
-    for (const a of assignments) m[a.id] = a.serviceType ?? 'VA Service'
-    return m
-  }, [assignments])
+    const m: Record<string, string> = {};
+    for (const a of assignments) m[a.id] = a.serviceType ?? 'VA Service';
+    return m;
+  }, [assignments]);
 
   const filtered = useMemo(
     () =>
       allEods.filter(e => {
-        if (vaFilter !== 'all' && e.vaId !== vaFilter) return false
-        if (clientFilter !== 'all' && e.clientId !== clientFilter) return false
-        if (dateFrom && e.date < dateFrom) return false
-        if (dateTo && e.date > dateTo) return false
-        return true
+        if (vaFilter !== 'all' && e.vaId !== vaFilter) return false;
+        if (clientFilter !== 'all' && e.clientId !== clientFilter) return false;
+        if (dateFrom && e.date < dateFrom) return false;
+        if (dateTo && e.date > dateTo) return false;
+        return true;
       }),
     [allEods, vaFilter, clientFilter, dateFrom, dateTo]
-  )
+  );
 
   const columns = useMemo<ColumnDef<IEodSubmission>[]>(
     () => [
       {
         accessorKey: 'date',
         header: 'Date',
-        size: 105,
+        size: 115,
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {getValue<string>()?.slice(0, 10)}
@@ -81,7 +81,7 @@ export default function EodReportsPage() {
       {
         accessorKey: 'vaId',
         header: 'VA',
-        size: 130,
+        size: 140,
         cell: ({ getValue }) => (
           <span className="text-sm">
             {vaMap[getValue<string>()] ?? getValue<string>()}
@@ -106,7 +106,7 @@ export default function EodReportsPage() {
       {
         accessorKey: 'shiftStart',
         header: 'Start',
-        size: 70,
+        size: 45,
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string>()}</span>
         ),
@@ -114,7 +114,7 @@ export default function EodReportsPage() {
       {
         accessorKey: 'shiftEnd',
         header: 'End',
-        size: 70,
+        size: 45,
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string>()}</span>
         ),
@@ -122,7 +122,8 @@ export default function EodReportsPage() {
       {
         accessorKey: 'hoursWorked',
         header: 'Hours',
-        size: 70,
+        size: 30,
+        meta: { headerClassName: 'text-center', cellClassName: 'text-center' },
         cell: ({ getValue }) => (
           <span className="text-sm font-medium text-foreground">
             {getValue<number>()}h
@@ -133,26 +134,27 @@ export default function EodReportsPage() {
         accessorKey: 'summaryOfWork',
         header: 'Summary',
         enableSorting: false,
+        meta: { fill: true, cellClassName: 'bg-white/[0.04] border-l border-white/[0.06]' },
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string>()}</span>
         ),
       },
     ],
     [vaMap, clientMap, assignmentMap]
-  )
+  );
 
   function clearFilters() {
-    setDateFrom('')
-    setDateTo('')
-    setVaFilter('all')
-    setClientFilter('all')
+    setDateFrom('');
+    setDateTo('');
+    setVaFilter('all');
+    setClientFilter('all');
   }
 
   const hasFilter =
     dateFrom !== '' ||
     dateTo !== '' ||
     vaFilter !== 'all' ||
-    clientFilter !== 'all'
+    clientFilter !== 'all';
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -225,5 +227,5 @@ export default function EodReportsPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

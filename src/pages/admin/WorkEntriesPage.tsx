@@ -1,23 +1,23 @@
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import type { ColumnDef } from '@tanstack/react-table'
-import { useMemo, useState } from 'react'
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
-import { DataTable } from '@/components/shared/DataTable'
+import { DataTable } from '@/components/shared/DataTable';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
   useWorkEntriesQuery,
-} from '@/hooks/queries'
-import { formatMinutes } from '@/lib/time'
-import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
+} from '@/hooks/queries';
+import { formatMinutes } from '@/lib/time';
+import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
   completed:
@@ -25,62 +25,62 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
   in_progress:
     'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
   pending: 'bg-muted text-muted-foreground border-border',
-}
+};
 
 export default function WorkEntriesPage() {
-  const { data: allEntries = [], isLoading } = useWorkEntriesQuery()
-  const { data: atsVAs = [] } = useAtsVAsQuery()
-  const { data: atsClients = [] } = useAtsClientsQuery()
-  const { data: assignments = [] } = useAllAssignmentsQuery()
+  const { data: allEntries = [], isLoading } = useWorkEntriesQuery();
+  const { data: atsVAs = [] } = useAtsVAsQuery();
+  const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: assignments = [] } = useAllAssignmentsQuery();
 
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split('T')[0]
-  )
+  );
   const [dateTo, setDateTo] = useState(
     () => new Date().toISOString().split('T')[0]
-  )
-  const [vaFilter, setVaFilter] = useState('all')
-  const [clientFilter, setClientFilter] = useState('all')
+  );
+  const [vaFilter, setVaFilter] = useState('all');
+  const [clientFilter, setClientFilter] = useState('all');
 
   const vaMap = useMemo(() => {
-    const m: Record<string, string> = {}
-    for (const v of atsVAs) m[v.id] = `${v.firstName} ${v.lastName}`
-    return m
-  }, [atsVAs])
+    const m: Record<string, string> = {};
+    for (const v of atsVAs) m[v.id] = `${v.firstName} ${v.lastName}`;
+    return m;
+  }, [atsVAs]);
 
   const clientMap = useMemo(() => {
-    const m: Record<string, string> = {}
-    for (const c of atsClients) m[c.id] = c.companyName
-    return m
-  }, [atsClients])
+    const m: Record<string, string> = {};
+    for (const c of atsClients) m[c.id] = c.companyName;
+    return m;
+  }, [atsClients]);
 
   const assignmentMap = useMemo(() => {
-    const m: Record<string, string> = {}
-    for (const a of assignments) m[a.id] = a.serviceType ?? 'VA Service'
-    return m
-  }, [assignments])
+    const m: Record<string, string> = {};
+    for (const a of assignments) m[a.id] = a.serviceType ?? 'VA Service';
+    return m;
+  }, [assignments]);
 
   const filtered = useMemo(
     () =>
       allEntries.filter(e => {
-        if (vaFilter !== 'all' && e.vaId !== vaFilter) return false
-        if (clientFilter !== 'all' && e.clientId !== clientFilter) return false
-        if (dateFrom && e.entryDate < dateFrom) return false
-        if (dateTo && e.entryDate > dateTo) return false
-        return true
+        if (vaFilter !== 'all' && e.vaId !== vaFilter) return false;
+        if (clientFilter !== 'all' && e.clientId !== clientFilter) return false;
+        if (dateFrom && e.entryDate < dateFrom) return false;
+        if (dateTo && e.entryDate > dateTo) return false;
+        return true;
       }),
     [allEntries, vaFilter, clientFilter, dateFrom, dateTo]
-  )
+  );
 
   const columns = useMemo<ColumnDef<IWorkEntry>[]>(
     () => [
       {
         accessorKey: 'entryDate',
         header: 'Date',
-        size: 105,
+        size: 115,
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {getValue<string>()?.slice(0, 10)}
@@ -90,7 +90,7 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'vaId',
         header: 'VA',
-        size: 155,
+        size: 140,
         cell: ({ getValue }) => (
           <span className="text-sm">
             {vaMap[getValue<string>()] ?? getValue<string>()}
@@ -115,7 +115,7 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'taskCategory',
         header: 'Category',
-        size: 160,
+        meta: { shrink: true, cellClassName: 'whitespace-nowrap' },
         cell: ({ getValue }) => (
           <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
             {getValue<string>()}
@@ -126,6 +126,7 @@ export default function WorkEntriesPage() {
         accessorKey: 'taskDescription',
         header: 'Description',
         enableSorting: false,
+        meta: { fill: true, cellClassName: 'bg-white/[0.04] border-l border-white/[0.06]' },
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string>()}</span>
         ),
@@ -133,7 +134,8 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'timeSpent',
         header: 'Time',
-        size: 75,
+        size: 85,
+        meta: { headerClassName: 'text-center', cellClassName: 'text-center' },
         cell: ({ getValue }) => (
           <span className="text-xs text-muted-foreground">
             {formatMinutes(getValue<number>())}
@@ -143,34 +145,34 @@ export default function WorkEntriesPage() {
       {
         accessorKey: 'status',
         header: 'Status',
-        size: 125,
+        meta: { shrink: true, cellClassName: 'whitespace-nowrap' },
         cell: ({ getValue }) => {
-          const s = getValue<WorkEntryStatus>()
+          const s = getValue<WorkEntryStatus>();
           return (
             <span
               className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
             >
               {s.replace('_', ' ')}
             </span>
-          )
+          );
         },
       },
     ],
     [vaMap, clientMap, assignmentMap]
-  )
+  );
 
   function clearFilters() {
-    setDateFrom('')
-    setDateTo('')
-    setVaFilter('all')
-    setClientFilter('all')
+    setDateFrom('');
+    setDateTo('');
+    setVaFilter('all');
+    setClientFilter('all');
   }
 
   const hasFilter =
     dateFrom !== '' ||
     dateTo !== '' ||
     vaFilter !== 'all' ||
-    clientFilter !== 'all'
+    clientFilter !== 'all';
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -243,5 +245,5 @@ export default function WorkEntriesPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
-import type { ColumnDef } from '@tanstack/react-table'
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
 import {
   AlertCircle,
   KeyRoundIcon,
@@ -8,38 +8,38 @@ import {
   PlusIcon,
   ShieldOffIcon,
   UserCogIcon,
-} from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { DataTable } from '@/components/shared/DataTable'
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { DataTable } from '@/components/shared/DataTable';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
+} from '@/components/ui/sheet';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { QK, useAccountManagersQuery } from '@/hooks/queries'
+} from '@/components/ui/tooltip';
+import { QK, useAccountManagersQuery } from '@/hooks/queries';
 import {
   createAccountManager,
   deactivateAccountManager,
   resetAccountManagerPassword,
   updateAccountManager,
   type IAccountManager,
-} from '@/services/account-managers.service'
+} from '@/services/account-managers.service';
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -49,16 +49,16 @@ const createSchema = z.object({
   email: z.string().email('Valid email required'),
   phone: z.string().optional(),
   atsId: z.string().optional(),
-})
-type CreateFormData = z.infer<typeof createSchema>
+});
+type CreateFormData = z.infer<typeof createSchema>;
 
 const editSchema = z.object({
   firstName: z.string().min(1, 'Required'),
   lastName: z.string().min(1, 'Required'),
   phone: z.string().optional(),
   atsId: z.string().optional(),
-})
-type EditFormData = z.infer<typeof editSchema>
+});
+type EditFormData = z.infer<typeof editSchema>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -68,10 +68,10 @@ function Field({
   hint,
   children,
 }: {
-  label: string
-  error?: string
-  hint?: string
-  children: React.ReactNode
+  label: string;
+  error?: string;
+  hint?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -82,7 +82,7 @@ function Field({
       )}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
-  )
+  );
 }
 
 // ─── Columns ──────────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ function buildColumns(
       accessorKey: 'firstName',
       header: 'Name',
       cell: ({ row }) => {
-        const am = row.original
+        const am = row.original;
         return (
           <div>
             <p className="font-medium text-sm">
@@ -105,7 +105,7 @@ function buildColumns(
             </p>
             <p className="text-xs text-muted-foreground">{am.email}</p>
           </div>
-        )
+        );
       },
     },
     {
@@ -119,7 +119,7 @@ function buildColumns(
       accessorKey: 'atsId',
       header: 'ATS Link',
       cell: ({ getValue }) => {
-        const val = getValue() as string | undefined
+        const val = getValue() as string | undefined;
         return val ? (
           <span className="font-mono text-xs text-muted-foreground truncate max-w-[120px] block">
             {val}
@@ -128,7 +128,7 @@ function buildColumns(
           <span className="text-xs text-muted-foreground italic">
             Not linked
           </span>
-        )
+        );
       },
     },
     {
@@ -155,22 +155,23 @@ function buildColumns(
       accessorKey: 'lastLogin',
       header: 'Last Login',
       cell: ({ getValue }) => {
-        const v = getValue() as string | undefined
+        const v = getValue() as string | undefined;
         return (
           <span className="text-sm text-muted-foreground">
             {v ? new Date(v).toLocaleDateString() : '—'}
           </span>
-        )
+        );
       },
     },
     {
       id: 'actions',
-      header: '',
+      header: 'Actions',
+      meta: { headerClassName: 'text-center' },
       cell: ({ row }) => {
-        const am = row.original
+        const am = row.original;
         return (
           <TooltipProvider>
-            <div className="flex items-center gap-1 justify-end">
+            <div className="flex items-center gap-1 justify-center">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -216,10 +217,10 @@ function buildColumns(
               )}
             </div>
           </TooltipProvider>
-        )
+        );
       },
     },
-  ]
+  ];
 }
 
 // ─── Create Form ──────────────────────────────────────────────────────────────
@@ -228,26 +229,26 @@ function CreateACMForm({
   onSuccess,
   onClose,
 }: {
-  onSuccess: () => void
-  onClose: () => void
+  onSuccess: () => void;
+  onClose: () => void;
 }) {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CreateFormData>({ resolver: zodResolver(createSchema) })
+  } = useForm<CreateFormData>({ resolver: zodResolver(createSchema) });
 
-  const [serverError, setServerError] = useState('')
+  const [serverError, setServerError] = useState('');
 
   async function onSubmit(data: CreateFormData) {
-    setServerError('')
+    setServerError('');
     try {
-      await createAccountManager({ ...data, role: 'account_manager' })
-      onSuccess()
+      await createAccountManager({ ...data, role: 'account_manager' });
+      onSuccess();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })
-        ?.response?.data?.error
-      setServerError(msg ?? 'Failed to create account. Please try again.')
+        ?.response?.data?.error;
+      setServerError(msg ?? 'Failed to create account. Please try again.');
     }
   }
 
@@ -328,7 +329,7 @@ function CreateACMForm({
         </Button>
       </div>
     </form>
-  )
+  );
 }
 
 // ─── Edit Form ────────────────────────────────────────────────────────────────
@@ -338,18 +339,18 @@ function EditACMForm({
   onSuccess,
   onClose,
 }: {
-  am: IAccountManager
-  onSuccess: () => void
-  onClose: () => void
+  am: IAccountManager;
+  onSuccess: () => void;
+  onClose: () => void;
 }) {
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<EditFormData>({ resolver: zodResolver(editSchema) })
+  } = useForm<EditFormData>({ resolver: zodResolver(editSchema) });
 
-  const [serverError, setServerError] = useState('')
+  const [serverError, setServerError] = useState('');
 
   useEffect(() => {
     reset({
@@ -357,16 +358,16 @@ function EditACMForm({
       lastName: am.lastName,
       phone: am.phone ?? '',
       atsId: am.atsId ?? '',
-    })
-  }, [am, reset])
+    });
+  }, [am, reset]);
 
   async function onSubmit(data: EditFormData) {
-    setServerError('')
+    setServerError('');
     try {
-      await updateAccountManager(am.id, data)
-      onSuccess()
+      await updateAccountManager(am.id, data);
+      onSuccess();
     } catch {
-      setServerError('Failed to save changes. Please try again.')
+      setServerError('Failed to save changes. Please try again.');
     }
   }
 
@@ -431,61 +432,64 @@ function EditACMForm({
         </Button>
       </div>
     </form>
-  )
+  );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-type SheetMode = 'create' | 'edit' | null
+type SheetMode = 'create' | 'edit' | null;
 
 export default function AccountManagersPage() {
-  const queryClient = useQueryClient()
-  const { data: accountManagers = [], isLoading } = useAccountManagersQuery()
+  const queryClient = useQueryClient();
+  const { data: accountManagers = [], isLoading } = useAccountManagersQuery();
 
-  const [sheetMode, setSheetMode] = useState<SheetMode>(null)
-  const [editTarget, setEditTarget] = useState<IAccountManager | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
-  const [deactivateTarget, setDeactivateTarget] = useState<IAccountManager | null>(null)
-  const [resetPwTarget, setResetPwTarget] = useState<IAccountManager | null>(null)
+  const [sheetMode, setSheetMode] = useState<SheetMode>(null);
+  const [editTarget, setEditTarget] = useState<IAccountManager | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [deactivateTarget, setDeactivateTarget] =
+    useState<IAccountManager | null>(null);
+  const [resetPwTarget, setResetPwTarget] = useState<IAccountManager | null>(
+    null
+  );
 
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: QK.accountManagers })
+    queryClient.invalidateQueries({ queryKey: QK.accountManagers });
   }
 
   async function confirmDeactivate() {
-    if (!deactivateTarget) return
-    setActionError(null)
+    if (!deactivateTarget) return;
+    setActionError(null);
     try {
-      await deactivateAccountManager(deactivateTarget.id)
-      invalidate()
+      await deactivateAccountManager(deactivateTarget.id);
+      invalidate();
     } catch {
-      setActionError('Failed to deactivate account. Please try again.')
+      setActionError('Failed to deactivate account. Please try again.');
     } finally {
-      setDeactivateTarget(null)
+      setDeactivateTarget(null);
     }
   }
 
   async function confirmResetPassword() {
-    if (!resetPwTarget) return
-    setActionError(null)
+    if (!resetPwTarget) return;
+    setActionError(null);
     try {
-      await resetAccountManagerPassword(resetPwTarget.id)
-      invalidate()
+      await resetAccountManagerPassword(resetPwTarget.id);
+      invalidate();
     } catch {
-      setActionError('Failed to reset password. Please try again.')
+      setActionError('Failed to reset password. Please try again.');
     } finally {
-      setResetPwTarget(null)
+      setResetPwTarget(null);
     }
   }
 
   const columns = buildColumns(
     am => {
-      setEditTarget(am)
-      setSheetMode('edit')
+      setEditTarget(am);
+      setSheetMode('edit');
     },
     am => setDeactivateTarget(am),
     am => setResetPwTarget(am)
-  )
+  );
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -524,7 +528,7 @@ export default function AccountManagersPage() {
       <Sheet
         open={sheetMode !== null}
         onOpenChange={open => {
-          if (!open) setSheetMode(null)
+          if (!open) setSheetMode(null);
         }}
       >
         <SheetContent className="sm:max-w-lg overflow-y-auto">
@@ -544,8 +548,8 @@ export default function AccountManagersPage() {
           {sheetMode === 'create' && (
             <CreateACMForm
               onSuccess={() => {
-                setSheetMode(null)
-                invalidate()
+                setSheetMode(null);
+                invalidate();
               }}
               onClose={() => setSheetMode(null)}
             />
@@ -555,8 +559,8 @@ export default function AccountManagersPage() {
             <EditACMForm
               am={editTarget}
               onSuccess={() => {
-                setSheetMode(null)
-                invalidate()
+                setSheetMode(null);
+                invalidate();
               }}
               onClose={() => setSheetMode(null)}
             />
@@ -593,5 +597,5 @@ export default function AccountManagersPage() {
         onCancel={() => setResetPwTarget(null)}
       />
     </div>
-  )
+  );
 }

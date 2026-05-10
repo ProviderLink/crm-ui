@@ -1,27 +1,27 @@
-import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import type { ColumnDef, SortingState } from '@tanstack/react-table';
 import {
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table'
+} from '@tanstack/react-table';
 import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
   ChevronUp,
-} from 'lucide-react'
-import { useState } from 'react'
+} from 'lucide-react';
+import { useState } from 'react';
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 
 interface DataTableProps<T> {
-  columns: ColumnDef<T>[]
-  data: T[]
-  isLoading?: boolean
-  pageSize?: number
+  columns: ColumnDef<T>[];
+  data: T[];
+  isLoading?: boolean;
+  pageSize?: number;
 }
 
 export function DataTable<T>({
@@ -30,8 +30,8 @@ export function DataTable<T>({
   isLoading = false,
   pageSize = 10,
 }: DataTableProps<T>) {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize })
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize });
 
   const table = useReactTable({
     data,
@@ -42,11 +42,11 @@ export function DataTable<T>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-  })
+  });
 
-  const totalPages = table.getPageCount()
-  const currentPage = table.getState().pagination.pageIndex + 1
-  const showPagination = totalPages > 1
+  const totalPages = table.getPageCount();
+  const currentPage = table.getState().pagination.pageIndex + 1;
+  const showPagination = totalPages > 1;
 
   if (isLoading) {
     return (
@@ -55,7 +55,7 @@ export function DataTable<T>({
           <div key={i} className="h-12 rounded-xl bg-muted animate-pulse" />
         ))}
       </div>
-    )
+    );
   }
 
   return (
@@ -71,14 +71,21 @@ export function DataTable<T>({
                 {headerGroup.headers.map(header => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                    className={`px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide ${(header.column.columnDef.meta as { headerClassName?: string })?.headerClassName ?? 'text-left'} ${(header.column.columnDef.meta as { thClassName?: string })?.thClassName ?? ''}`}
                     style={
-                      header.column.columnDef.size
-                        ? {
-                            width: header.column.columnDef.size,
-                            minWidth: header.column.columnDef.size,
-                          }
-                        : undefined
+                      (header.column.columnDef.meta as { shrink?: boolean })
+                        ?.shrink
+                        ? { width: '1px' }
+                        : (header.column.columnDef.meta as { fill?: boolean })
+                              ?.fill
+                          ? { width: '100%' }
+                          : header.column.columnDef.size &&
+                              header.column.columnDef.size !== 150
+                            ? {
+                                width: header.column.columnDef.size,
+                                minWidth: header.column.columnDef.size,
+                              }
+                            : undefined
                     }
                   >
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
@@ -131,14 +138,21 @@ export function DataTable<T>({
                   {row.getVisibleCells().map(cell => (
                     <td
                       key={cell.id}
-                      className="px-4 py-3 text-foreground"
+                      className={`px-4 py-3 text-foreground ${(cell.column.columnDef.meta as { cellClassName?: string })?.cellClassName ?? ''}`}
                       style={
-                        cell.column.columnDef.size
-                          ? {
-                              width: cell.column.columnDef.size,
-                              minWidth: cell.column.columnDef.size,
-                            }
-                          : undefined
+                        (cell.column.columnDef.meta as { shrink?: boolean })
+                          ?.shrink
+                          ? { width: '1px' }
+                          : (cell.column.columnDef.meta as { fill?: boolean })
+                                ?.fill
+                            ? { width: '100%' }
+                            : cell.column.columnDef.size &&
+                                cell.column.columnDef.size !== 150
+                              ? {
+                                  width: cell.column.columnDef.size,
+                                  minWidth: cell.column.columnDef.size,
+                                }
+                              : undefined
                       }
                     >
                       {flexRender(
@@ -184,5 +198,5 @@ export function DataTable<T>({
         </div>
       )}
     </div>
-  )
+  );
 }

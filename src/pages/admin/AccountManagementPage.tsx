@@ -1,46 +1,46 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import type { ColumnDef } from '@tanstack/react-table'
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { ColumnDef } from '@tanstack/react-table';
 import {
   EyeIcon,
   KeyRoundIcon,
   PenLineIcon,
   UserPlusIcon,
   XCircleIcon,
-} from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
-import { z } from 'zod'
+} from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
-import { DataTable } from '@/components/shared/DataTable'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { DataTable } from '@/components/shared/DataTable';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
+} from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@/components/ui/tooltip';
 import {
   QK,
   useAtsClientsQuery,
@@ -49,19 +49,19 @@ import {
   useCrmClientUsersQuery,
   useCrmVaUsersQuery,
   useVaProfilesQuery,
-} from '@/hooks/queries'
+} from '@/hooks/queries';
 import {
   createCrmUser,
   deactivateCrmUser,
   resetCrmUserPassword,
   type ICrmUser,
-} from '@/services/account-managers.service'
-import { updateClientAccount } from '@/services/client-accounts.service'
-import { updateVaProfile } from '@/services/va-profiles.service'
-import type { IAtsCandidate, IAtsClient } from '@/types/ats'
-import type { IClientAccount } from '@/types/client-account'
-import type { IVaProfile } from '@/types/va-profile'
-import { useQueryClient } from '@tanstack/react-query'
+} from '@/services/account-managers.service';
+import { updateClientAccount } from '@/services/client-accounts.service';
+import { updateVaProfile } from '@/services/va-profiles.service';
+import type { IAtsCandidate, IAtsClient } from '@/types/ats';
+import type { IClientAccount } from '@/types/client-account';
+import type { IVaProfile } from '@/types/va-profile';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -78,8 +78,8 @@ const clientAccountSchema = z.object({
   emrSystem: z.string().optional(),
   openIssuesCount: z.number().int().min(0),
   notes: z.string().optional(),
-})
-type ClientAccountFormData = z.infer<typeof clientAccountSchema>
+});
+type ClientAccountFormData = z.infer<typeof clientAccountSchema>;
 
 const vaProfileSchema = z.object({
   workloadLevel: z.enum(['low', 'normal', 'high', 'overloaded']),
@@ -88,16 +88,16 @@ const vaProfileSchema = z.object({
   replacementRiskFlag: z.boolean(),
   lastVaCheckin: z.string().optional(),
   notes: z.string().optional(),
-})
-type VaProfileFormData = z.infer<typeof vaProfileSchema>
+});
+type VaProfileFormData = z.infer<typeof vaProfileSchema>;
 
 const provisionLoginSchema = z.object({
   email: z.string().email('Invalid email'),
   firstName: z.string().min(1, 'Required'),
   lastName: z.string().min(1, 'Required'),
   phone: z.string().optional(),
-})
-type ProvisionLoginFormData = z.infer<typeof provisionLoginSchema>
+});
+type ProvisionLoginFormData = z.infer<typeof provisionLoginSchema>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -107,20 +107,20 @@ function LoginStatusBadge({ user }: { user: ICrmUser | undefined }) {
       <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
         Not provisioned
       </span>
-    )
+    );
   }
   if (!user.isActive) {
     return (
       <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
         Deactivated
       </span>
-    )
+    );
   }
   return (
     <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-400">
       Active
     </span>
-  )
+  );
 }
 
 function HealthBadge({ status }: { status: string }) {
@@ -129,14 +129,14 @@ function HealthBadge({ status }: { status: string }) {
       ? 'bg-green-500/10 text-green-600 dark:text-green-400'
       : status === 'yellow'
         ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-        : 'bg-red-500/10 text-red-600 dark:text-red-400'
+        : 'bg-red-500/10 text-red-600 dark:text-red-400';
   return (
     <span
       className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${cls}`}
     >
       {status}
     </span>
-  )
+  );
 }
 
 function WorkloadBadge({ level }: { level: string }) {
@@ -147,14 +147,14 @@ function WorkloadBadge({ level }: { level: string }) {
         ? 'bg-green-500/10 text-green-600 dark:text-green-400'
         : level === 'high'
           ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-          : 'bg-red-500/10 text-red-600 dark:text-red-400'
+          : 'bg-red-500/10 text-red-600 dark:text-red-400';
   return (
     <span
       className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${cls}`}
     >
       {level}
     </span>
-  )
+  );
 }
 
 function Field({
@@ -162,9 +162,9 @@ function Field({
   error,
   children,
 }: {
-  label: string
-  error?: string
-  children: ReactNode
+  label: string;
+  error?: string;
+  children: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -174,7 +174,7 @@ function Field({
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
-  )
+  );
 }
 
 function CheckboxField({
@@ -182,11 +182,11 @@ function CheckboxField({
   checked,
   onCheckedChange,
 }: {
-  label: string
-  checked: boolean
-  onCheckedChange: (v: boolean) => void
+  label: string;
+  checked: boolean;
+  onCheckedChange: (v: boolean) => void;
 }) {
-  const id = `checkbox-${label.toLowerCase().replace(/\s+/g, '-')}`
+  const id = `checkbox-${label.toLowerCase().replace(/\s+/g, '-')}`;
   return (
     <div className="flex items-center gap-2">
       <Checkbox
@@ -201,7 +201,7 @@ function CheckboxField({
         {label}
       </Label>
     </div>
-  )
+  );
 }
 
 // ─── Provision Login Form ─────────────────────────────────────────────────────
@@ -213,11 +213,11 @@ function ProvisionLoginForm({
   defaultLastName,
   onSuccess,
 }: {
-  role: 'va' | 'client'
-  atsId: string
-  defaultFirstName?: string
-  defaultLastName?: string
-  onSuccess: () => void
+  role: 'va' | 'client';
+  atsId: string;
+  defaultFirstName?: string;
+  defaultLastName?: string;
+  onSuccess: () => void;
 }) {
   const {
     register,
@@ -229,19 +229,19 @@ function ProvisionLoginForm({
       firstName: defaultFirstName ?? '',
       lastName: defaultLastName ?? '',
     },
-  })
-  const [serverError, setServerError] = useState('')
+  });
+  const [serverError, setServerError] = useState('');
 
   async function onSubmit(data: ProvisionLoginFormData) {
-    setServerError('')
+    setServerError('');
     try {
-      await createCrmUser({ ...data, role, atsId })
-      toast.success('Login provisioned — credentials emailed.')
-      onSuccess()
+      await createCrmUser({ ...data, role, atsId });
+      toast.success('Login provisioned — credentials emailed.');
+      onSuccess();
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : 'Failed to provision login.'
-      setServerError(msg)
+        err instanceof Error ? err.message : 'Failed to provision login.';
+      setServerError(msg);
     }
   }
 
@@ -310,7 +310,7 @@ function ProvisionLoginForm({
         {isSubmitting ? 'Provisioning…' : 'Provision Login'}
       </Button>
     </form>
-  )
+  );
 }
 
 // ─── Client Account Edit Form ─────────────────────────────────────────────────
@@ -319,8 +319,8 @@ function EditClientAccountForm({
   account,
   onSuccess,
 }: {
-  account: IClientAccount
-  onSuccess: () => void
+  account: IClientAccount;
+  onSuccess: () => void;
 }) {
   const {
     register,
@@ -330,9 +330,9 @@ function EditClientAccountForm({
     formState: { errors, isSubmitting },
   } = useForm<ClientAccountFormData>({
     resolver: zodResolver(clientAccountSchema),
-  })
+  });
 
-  const [serverError, setServerError] = useState('')
+  const [serverError, setServerError] = useState('');
 
   useEffect(() => {
     reset({
@@ -348,21 +348,21 @@ function EditClientAccountForm({
       emrSystem: account.emrSystem ?? '',
       openIssuesCount: account.openIssuesCount,
       notes: account.notes ?? '',
-    })
-  }, [account, reset])
+    });
+  }, [account, reset]);
 
   async function onSubmit(data: ClientAccountFormData) {
-    setServerError('')
+    setServerError('');
     try {
       await updateClientAccount(account.clientId, {
         ...data,
         satisfactionScore: data.satisfactionScore
           ? parseInt(data.satisfactionScore, 10)
           : undefined,
-      })
-      onSuccess()
+      });
+      onSuccess();
     } catch {
-      setServerError('Failed to save changes. Please try again.')
+      setServerError('Failed to save changes. Please try again.');
     }
   }
 
@@ -439,7 +439,10 @@ function EditClientAccountForm({
           name="baaSignedDate"
           control={control}
           render={({ field }) => (
-            <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+            <DatePickerField
+              value={field.value ?? ''}
+              onChange={field.onChange}
+            />
           )}
         />
       </Field>
@@ -500,7 +503,10 @@ function EditClientAccountForm({
           name="lastClientCheckin"
           control={control}
           render={({ field }) => (
-            <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+            <DatePickerField
+              value={field.value ?? ''}
+              onChange={field.onChange}
+            />
           )}
         />
       </Field>
@@ -526,7 +532,7 @@ function EditClientAccountForm({
         {isSubmitting ? 'Saving…' : 'Save Changes'}
       </Button>
     </form>
-  )
+  );
 }
 
 // ─── VA Profile Edit Form ─────────────────────────────────────────────────────
@@ -535,8 +541,8 @@ function EditVaProfileForm({
   profile,
   onSuccess,
 }: {
-  profile: IVaProfile
-  onSuccess: () => void
+  profile: IVaProfile;
+  onSuccess: () => void;
 }) {
   const {
     register,
@@ -544,9 +550,9 @@ function EditVaProfileForm({
     control,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<VaProfileFormData>({ resolver: zodResolver(vaProfileSchema) })
+  } = useForm<VaProfileFormData>({ resolver: zodResolver(vaProfileSchema) });
 
-  const [serverError, setServerError] = useState('')
+  const [serverError, setServerError] = useState('');
 
   useEffect(() => {
     reset({
@@ -556,21 +562,21 @@ function EditVaProfileForm({
       replacementRiskFlag: profile.replacementRiskFlag,
       lastVaCheckin: profile.lastVaCheckin?.slice(0, 10) ?? '',
       notes: profile.notes ?? '',
-    })
-  }, [profile, reset])
+    });
+  }, [profile, reset]);
 
   async function onSubmit(data: VaProfileFormData) {
-    setServerError('')
+    setServerError('');
     try {
       await updateVaProfile(profile.vaId, {
         ...data,
         satisfactionScore: data.satisfactionScore
           ? parseInt(data.satisfactionScore, 10)
           : undefined,
-      })
-      onSuccess()
+      });
+      onSuccess();
     } catch {
-      setServerError('Failed to save changes. Please try again.')
+      setServerError('Failed to save changes. Please try again.');
     }
   }
 
@@ -658,7 +664,10 @@ function EditVaProfileForm({
           name="lastVaCheckin"
           control={control}
           render={({ field }) => (
-            <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+            <DatePickerField
+              value={field.value ?? ''}
+              onChange={field.onChange}
+            />
           )}
         />
       </Field>
@@ -675,81 +684,81 @@ function EditVaProfileForm({
         {isSubmitting ? 'Saving…' : 'Save Changes'}
       </Button>
     </form>
-  )
+  );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AccountManagementPage() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
   const { data: accounts = [], isLoading: loadingAccounts } =
-    useClientAccountsQuery()
+    useClientAccountsQuery();
   const { data: profiles = [], isLoading: loadingProfiles } =
-    useVaProfilesQuery()
-  const { data: atsClients = [] } = useAtsClientsQuery()
-  const { data: atsVas = [] } = useAtsVAsQuery()
-  const { data: crmVaUsers = [] } = useCrmVaUsersQuery()
-  const { data: crmClientUsers = [] } = useCrmClientUsersQuery()
-  const isLoading = loadingAccounts || loadingProfiles
+    useVaProfilesQuery();
+  const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: atsVas = [] } = useAtsVAsQuery();
+  const { data: crmVaUsers = [] } = useCrmVaUsersQuery();
+  const { data: crmClientUsers = [] } = useCrmClientUsersQuery();
+  const isLoading = loadingAccounts || loadingProfiles;
 
-  const [editAccount, setEditAccount] = useState<IClientAccount | null>(null)
-  const [editProfile, setEditProfile] = useState<IVaProfile | null>(null)
-  const [viewAccount, setViewAccount] = useState<IClientAccount | null>(null)
-  const [viewProfile, setViewProfile] = useState<IVaProfile | null>(null)
+  const [editAccount, setEditAccount] = useState<IClientAccount | null>(null);
+  const [editProfile, setEditProfile] = useState<IVaProfile | null>(null);
+  const [viewAccount, setViewAccount] = useState<IClientAccount | null>(null);
+  const [viewProfile, setViewProfile] = useState<IVaProfile | null>(null);
 
   // Provision login sheet state
   type ProvisionTarget = {
-    role: 'va' | 'client'
-    atsId: string
-    firstName?: string
-    lastName?: string
-    label: string
-  }
+    role: 'va' | 'client';
+    atsId: string;
+    firstName?: string;
+    lastName?: string;
+    label: string;
+  };
   const [provisionTarget, setProvisionTarget] =
-    useState<ProvisionTarget | null>(null)
+    useState<ProvisionTarget | null>(null);
 
   // Confirm dialog state for CRM user actions
-  type CrmConfirmAction = { type: 'resetPw' | 'deactivate'; user: ICrmUser }
-  const [crmConfirm, setCrmConfirm] = useState<CrmConfirmAction | null>(null)
+  type CrmConfirmAction = { type: 'resetPw' | 'deactivate'; user: ICrmUser };
+  const [crmConfirm, setCrmConfirm] = useState<CrmConfirmAction | null>(null);
 
   async function executeCrmConfirm() {
-    if (!crmConfirm) return
-    const { type, user } = crmConfirm
-    setCrmConfirm(null)
+    if (!crmConfirm) return;
+    const { type, user } = crmConfirm;
+    setCrmConfirm(null);
     if (type === 'resetPw') {
       try {
-        await resetCrmUserPassword(user.id)
-        toast.success('Password reset — new credentials emailed.')
+        await resetCrmUserPassword(user.id);
+        toast.success('Password reset — new credentials emailed.');
       } catch {
-        toast.error('Failed to reset password.')
+        toast.error('Failed to reset password.');
       }
     } else {
       try {
-        await deactivateCrmUser(user.id)
-        toast.success('Login deactivated.')
-        invalidateCrmUsers()
+        await deactivateCrmUser(user.id);
+        toast.success('Login deactivated.');
+        invalidateCrmUsers();
       } catch {
-        toast.error('Failed to deactivate login.')
+        toast.error('Failed to deactivate login.');
       }
     }
   }
 
-  const clientMap: Record<string, IAtsClient> = {}
-  for (const c of atsClients) clientMap[c.id] = c
+  const clientMap: Record<string, IAtsClient> = {};
+  for (const c of atsClients) clientMap[c.id] = c;
 
-  const vaMap: Record<string, IAtsCandidate> = {}
-  for (const v of atsVas) vaMap[v.id] = v
+  const vaMap: Record<string, IAtsCandidate> = {};
+  for (const v of atsVas) vaMap[v.id] = v;
 
   // Build atsId → CRM user maps for login status
-  const crmClientMap: Record<string, ICrmUser> = {}
-  for (const u of crmClientUsers) if (u.atsId) crmClientMap[u.atsId] = u
+  const crmClientMap: Record<string, ICrmUser> = {};
+  for (const u of crmClientUsers) if (u.atsId) crmClientMap[u.atsId] = u;
 
-  const crmVaMap: Record<string, ICrmUser> = {}
-  for (const u of crmVaUsers) if (u.atsId) crmVaMap[u.atsId] = u
+  const crmVaMap: Record<string, ICrmUser> = {};
+  for (const u of crmVaUsers) if (u.atsId) crmVaMap[u.atsId] = u;
 
   function invalidateCrmUsers() {
-    queryClient.invalidateQueries({ queryKey: QK.crmClientUsers })
-    queryClient.invalidateQueries({ queryKey: QK.crmVaUsers })
+    queryClient.invalidateQueries({ queryKey: QK.crmClientUsers });
+    queryClient.invalidateQueries({ queryKey: QK.crmVaUsers });
   }
 
   function ActionButtons({
@@ -758,18 +767,18 @@ export default function AccountManagementPage() {
     onResetPassword,
     onDeactivate,
   }: {
-    crmUser: ICrmUser | undefined
-    onProvision: () => void
-    onResetPassword: (u: ICrmUser) => void
-    onDeactivate: (u: ICrmUser) => void
+    crmUser: ICrmUser | undefined;
+    onProvision: () => void;
+    onResetPassword: (u: ICrmUser) => void;
+    onDeactivate: (u: ICrmUser) => void;
   }) {
     async function handleResetPassword() {
-      if (!crmUser) return
-      onResetPassword(crmUser)
+      if (!crmUser) return;
+      onResetPassword(crmUser);
     }
     async function handleDeactivate() {
-      if (!crmUser) return
-      onDeactivate(crmUser)
+      if (!crmUser) return;
+      onDeactivate(crmUser);
     }
 
     return (
@@ -824,7 +833,7 @@ export default function AccountManagementPage() {
           )}
         </div>
       </TooltipProvider>
-    )
+    );
   }
 
   // ── Client Accounts columns ──────────────────────────────────────────────
@@ -859,11 +868,12 @@ export default function AccountManagementPage() {
     },
     {
       id: 'actions',
-      header: '',
+      header: 'Actions',
+      meta: { headerClassName: 'text-center' },
       enableSorting: false,
       size: 110,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-center gap-1">
           <TooltipProvider delayDuration={300}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -909,7 +919,7 @@ export default function AccountManagementPage() {
         </div>
       ),
     },
-  ]
+  ];
 
   // ── VA Profile columns ───────────────────────────────────────────────────
   const profileColumns: ColumnDef<IVaProfile>[] = [
@@ -917,8 +927,8 @@ export default function AccountManagementPage() {
       accessorKey: 'vaId',
       header: 'VA',
       cell: ({ getValue }) => {
-        const v = vaMap[getValue<string>()]
-        return v ? `${v.firstName} ${v.lastName}` : getValue<string>()
+        const v = vaMap[getValue<string>()];
+        return v ? `${v.firstName} ${v.lastName}` : getValue<string>();
       },
     },
     {
@@ -945,13 +955,14 @@ export default function AccountManagementPage() {
     },
     {
       id: 'actions',
-      header: '',
+      header: 'Actions',
+      meta: { headerClassName: 'text-center' },
       enableSorting: false,
       size: 110,
       cell: ({ row }) => {
-        const va = vaMap[row.original.vaId]
+        const va = vaMap[row.original.vaId];
         return (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center gap-1">
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -997,10 +1008,10 @@ export default function AccountManagementPage() {
               onDeactivate={u => setCrmConfirm({ type: 'deactivate', user: u })}
             />
           </div>
-        )
+        );
       },
     },
-  ]
+  ];
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -1135,8 +1146,10 @@ export default function AccountManagementPage() {
             <SheetTitle>
               {viewProfile
                 ? (() => {
-                    const v = vaMap[viewProfile.vaId]
-                    return v ? `${v.firstName} ${v.lastName}` : viewProfile.vaId
+                    const v = vaMap[viewProfile.vaId];
+                    return v
+                      ? `${v.firstName} ${v.lastName}`
+                      : viewProfile.vaId;
                   })()
                 : ''}
             </SheetTitle>
@@ -1202,8 +1215,8 @@ export default function AccountManagementPage() {
             <EditClientAccountForm
               account={editAccount}
               onSuccess={() => {
-                setEditAccount(null)
-                queryClient.invalidateQueries({ queryKey: QK.clientAccounts })
+                setEditAccount(null);
+                queryClient.invalidateQueries({ queryKey: QK.clientAccounts });
               }}
             />
           )}
@@ -1221,8 +1234,10 @@ export default function AccountManagementPage() {
             <SheetDescription>
               {editProfile
                 ? (() => {
-                    const v = vaMap[editProfile.vaId]
-                    return v ? `${v.firstName} ${v.lastName}` : editProfile.vaId
+                    const v = vaMap[editProfile.vaId];
+                    return v
+                      ? `${v.firstName} ${v.lastName}`
+                      : editProfile.vaId;
                   })()
                 : ''}
             </SheetDescription>
@@ -1231,8 +1246,8 @@ export default function AccountManagementPage() {
             <EditVaProfileForm
               profile={editProfile}
               onSuccess={() => {
-                setEditProfile(null)
-                queryClient.invalidateQueries({ queryKey: QK.vaProfiles })
+                setEditProfile(null);
+                queryClient.invalidateQueries({ queryKey: QK.vaProfiles });
               }}
             />
           )}
@@ -1256,8 +1271,8 @@ export default function AccountManagementPage() {
               defaultFirstName={provisionTarget.firstName}
               defaultLastName={provisionTarget.lastName}
               onSuccess={() => {
-                setProvisionTarget(null)
-                invalidateCrmUsers()
+                setProvisionTarget(null);
+                invalidateCrmUsers();
               }}
             />
           )}
@@ -1267,7 +1282,9 @@ export default function AccountManagementPage() {
       {/* CRM user action confirmation */}
       <ConfirmDialog
         open={crmConfirm !== null}
-        title={crmConfirm?.type === 'resetPw' ? 'Reset Password' : 'Deactivate Login'}
+        title={
+          crmConfirm?.type === 'resetPw' ? 'Reset Password' : 'Deactivate Login'
+        }
         description={
           crmConfirm
             ? crmConfirm.type === 'resetPw'
@@ -1275,11 +1292,13 @@ export default function AccountManagementPage() {
               : `Deactivate CRM login for ${crmConfirm.user.firstName} ${crmConfirm.user.lastName}?`
             : ''
         }
-        confirmLabel={crmConfirm?.type === 'resetPw' ? 'Reset Password' : 'Deactivate'}
+        confirmLabel={
+          crmConfirm?.type === 'resetPw' ? 'Reset Password' : 'Deactivate'
+        }
         variant={crmConfirm?.type === 'deactivate' ? 'destructive' : 'default'}
         onConfirm={executeCrmConfirm}
         onCancel={() => setCrmConfirm(null)}
       />
     </div>
-  )
+  );
 }
