@@ -1,7 +1,7 @@
-import { LogOutIcon, MoreVerticalIcon, UserIcon } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { LogOutIcon, MoreVerticalIcon, UserIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,17 +9,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar'
-import { useAppDispatch } from '@/hooks/store'
-import { logout } from '@/services/auth.service'
-import { clearAuth } from '@/store/slices/authSlice'
-import type { UserRole } from '@/types/auth'
+} from '@/components/ui/sidebar';
+import { useAppDispatch } from '@/hooks/store';
+import { logout } from '@/services/auth.service';
+import { clearAuth } from '@/store/slices/authSlice';
+import type { UserRole } from '@/types/auth';
 
 const roleConfig: Record<UserRole, { label: string; className: string }> = {
   admin: {
@@ -39,35 +39,35 @@ const roleConfig: Record<UserRole, { label: string; className: string }> = {
     label: 'Client',
     className: 'bg-green-500/10 text-green-600 dark:text-green-400',
   },
-}
+};
 
 export function NavUser({
   user,
 }: {
   user: {
-    name: string
-    email: string
-    avatar: string
-    role: UserRole
-  }
+    name: string;
+    email: string;
+    avatar: string;
+    role: UserRole;
+  };
 }) {
-  const { isMobile } = useSidebar()
-  const dispatch = useAppDispatch()
-  const navigate = useNavigate()
+  const { isMobile } = useSidebar();
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const initials = user.name
     .split(' ')
     .map(n => n[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2);
 
-  const role = roleConfig[user.role]
+  const role = roleConfig[user.role];
 
   async function handleLogout() {
-    await logout()
-    dispatch(clearAuth())
-    navigate('/login')
+    await logout();
+    dispatch(clearAuth());
+    navigate('/login');
   }
 
   return (
@@ -79,9 +79,9 @@ export function NavUser({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
+              <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">
+                <AvatarFallback className="rounded-lg bg-muted text-muted-foreground text-xs font-semibold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -91,7 +91,7 @@ export function NavUser({
                   {user.email}
                 </span>
               </div>
-              <MoreVerticalIcon className="ml-auto size-4" />
+              <MoreVerticalIcon className="ml-auto size-4 text-sidebar-foreground/40" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -144,5 +144,5 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

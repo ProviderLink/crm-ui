@@ -1,4 +1,3 @@
-import aristaLogo from '@/assets/arista_crm.png'
 import {
   BarChart3Icon,
   BellIcon,
@@ -12,39 +11,37 @@ import {
   UserCogIcon,
   UsersIcon,
   type LucideIcon,
-} from 'lucide-react'
-import * as React from 'react'
+} from 'lucide-react';
+import * as React from 'react';
 
-import { NavMain } from '@/components/nav-main'
-import { NavUser } from '@/components/nav-user'
+import { AppLogo } from '@/components/app-logo';
+import { NavMain } from '@/components/nav-main';
+import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar'
-import { useAppSelector } from '@/hooks/store'
-import type { UserRole } from '@/types/auth'
+} from '@/components/ui/sidebar';
+import { useAppSelector } from '@/hooks/store';
+import type { UserRole } from '@/types/auth';
 
 type NavItem = {
-  title: string
-  url: string
-  icon?: LucideIcon
-}
+  title: string;
+  url: string;
+  icon?: LucideIcon;
+};
 
 type QuickAction = {
-  label: string
-  icon?: LucideIcon
-  to: string
-}
+  label: string;
+  icon?: LucideIcon;
+  to: string;
+};
 
 type RoleConfig = {
-  navMain: NavItem[]
-  quickAction?: QuickAction
-}
+  navMain: NavItem[];
+  quickAction?: QuickAction;
+};
 
 const roleConfigs: Record<UserRole, RoleConfig> = {
   va: {
@@ -72,7 +69,11 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       },
       { title: 'EOD Reports', url: '/admin/eod-reports', icon: FileTextIcon },
       { title: 'Accounts', url: '/admin/accounts', icon: UsersIcon },
-      { title: 'Account Managers', url: '/admin/account-managers', icon: UserCogIcon },
+      {
+        title: 'Account Managers',
+        url: '/admin/account-managers',
+        icon: UserCogIcon,
+      },
       { title: 'Reminders', url: '/admin/reminders', icon: BellIcon },
       { title: 'Scorecards', url: '/admin/scorecards', icon: BarChart3Icon },
     ],
@@ -106,35 +107,32 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       { title: 'Work Activity', url: '/client/work', icon: ClipboardListIcon },
     ],
   },
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const user = useAppSelector(s => s.auth.user)
-  const role: UserRole = user?.role ?? 'va'
-  const config = user ? roleConfigs[role] : { navMain: [] }
+  const user = useAppSelector(s => s.auth.user);
+  const role: UserRole = user?.role ?? 'va';
+  const config = user ? roleConfigs[role] : { navMain: [] };
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton className="data-[slot=sidebar-menu-button]:!p-1.5 pointer-events-none">
-              <img
-                src={aristaLogo}
-                alt="Arista CRM"
-                className="!size-5 object-contain"
-              />
-              <span className="text-base font-semibold">Arista CRM</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarHeader className="px-4 pt-5 pb-4">
+        {/* Expanded state */}
+        <div className="group-data-[collapsible=icon]:hidden">
+          <AppLogo size="md" />
+        </div>
+
+        {/* Collapsed icon-only state */}
+        <div className="hidden group-data-[collapsible=icon]:flex justify-center py-1">
+          <AppLogo size="sm" iconOnly />
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
         <NavMain items={config.navMain} quickAction={config.quickAction} />
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="mx-2 mb-2 rounded-xl bg-sidebar-accent/40 px-3 py-2 group-data-[collapsible=icon]:mx-1 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-1 group-data-[collapsible=icon]:[&_ul]:items-center">
         <NavUser
           user={{
             name: user?.name ?? '—',
@@ -145,5 +143,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

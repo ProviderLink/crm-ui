@@ -1,77 +1,92 @@
-'use client'
+'use client';
 
-import { PlusCircleIcon, type LucideIcon } from 'lucide-react'
-import { Link, useLocation } from 'react-router-dom'
+import { PlusCircleIcon, type LucideIcon } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 
 import {
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/ui/sidebar'
+} from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 
 type NavItem = {
-  title: string
-  url: string
-  icon?: LucideIcon
-}
+  title: string;
+  url: string;
+  icon?: LucideIcon;
+};
 
 type QuickAction = {
-  label: string
-  icon?: LucideIcon
-  to: string
-}
+  label: string;
+  icon?: LucideIcon;
+  to: string;
+};
 
 export function NavMain({
   items,
   quickAction,
 }: {
-  items: NavItem[]
-  quickAction?: QuickAction
+  items: NavItem[];
+  quickAction?: QuickAction;
 }) {
-  const { pathname } = useLocation()
+  const { pathname } = useLocation();
 
   return (
-    <SidebarGroup>
-      <SidebarGroupContent className="flex flex-col gap-2">
-        {quickAction && (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip={quickAction.label}
-                className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-                asChild
-              >
-                <Link to={quickAction.to}>
-                  {quickAction.icon ? <quickAction.icon /> : <PlusCircleIcon />}
-                  <span>{quickAction.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        )}
-        <SidebarMenu>
+    <SidebarGroup className="px-3 py-2">
+      {quickAction && (
+        <SidebarMenu className="mb-3">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip={quickAction.label}
+              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+              asChild
+            >
+              <Link to={quickAction.to}>
+                {quickAction.icon ? <quickAction.icon /> : <PlusCircleIcon />}
+                <span>{quickAction.label}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      )}
+
+      <SidebarGroupLabel className="mb-1 px-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden">
+        Menu
+      </SidebarGroupLabel>
+
+      <SidebarGroupContent>
+        <SidebarMenu className="gap-0.5">
           {items.map(item => {
             const isActive =
-              pathname === item.url || pathname.startsWith(item.url + '/')
+              pathname === item.url || pathname.startsWith(item.url + '/');
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   tooltip={item.title}
                   isActive={isActive}
                   asChild
+                  className={cn(
+                    'rounded-md',
+                    isActive
+                      ? 'text-sidebar-foreground'
+                      : 'text-sidebar-foreground/60'
+                  )}
                 >
                   <Link to={item.url}>
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
+                    {item.icon && <item.icon className="shrink-0" />}
+                    <span className={cn(isActive ? 'font-medium' : 'font-normal')}>
+                      {item.title}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            )
+            );
           })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 }

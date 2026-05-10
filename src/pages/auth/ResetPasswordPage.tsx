@@ -1,22 +1,22 @@
-import aristaLogo from '@/assets/arista_crm.png'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { forgotPassword, resetPassword } from '@/services/auth.service'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2 } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { Link, useSearchParams } from 'react-router-dom'
-import { toast } from 'sonner'
-import { z } from 'zod'
+import { AppLogo } from '@/components/app-logo';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { forgotPassword, resetPassword } from '@/services/auth.service';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CheckCircle2 } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 // ─── Schemas ────────────────────────────────────────────────
 
 const requestSchema = z.object({
   email: z.string().email('Enter a valid email'),
-})
+});
 
 const confirmSchema = z
   .object({
@@ -26,44 +26,44 @@ const confirmSchema = z
   .refine(d => d.password === d.confirm, {
     message: 'Passwords do not match',
     path: ['confirm'],
-  })
+  });
 
-type RequestForm = z.infer<typeof requestSchema>
-type ConfirmForm = z.infer<typeof confirmSchema>
+type RequestForm = z.infer<typeof requestSchema>;
+type ConfirmForm = z.infer<typeof confirmSchema>;
 
 // ─── Page root ───────────────────────────────────────────────
 
 export default function ResetPasswordPage() {
-  const [searchParams] = useSearchParams()
-  const token = searchParams.get('token')
-  return token ? <ConfirmStep token={token} /> : <RequestStep />
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
+  return token ? <ConfirmStep token={token} /> : <RequestStep />;
 }
 
 // ─── Request step (enter email) ──────────────────────────────
 
 function RequestStep() {
-  const [sent, setSent] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<RequestForm>({ resolver: zodResolver(requestSchema) })
+  } = useForm<RequestForm>({ resolver: zodResolver(requestSchema) });
 
   async function onSubmit(data: RequestForm) {
-    setError(null)
+    setError(null);
     try {
-      await forgotPassword(data.email)
-      setSent(true)
-      toast.success('Reset link sent — check your inbox.')
+      await forgotPassword(data.email);
+      setSent(true);
+      toast.success('Reset link sent — check your inbox.');
     } catch (err) {
       if (err && typeof err === 'object' && 'response' in err) {
-        setError('Something went wrong. Please try again.')
-        toast.error('Something went wrong. Please try again.')
+        setError('Something went wrong. Please try again.');
+        toast.error('Something went wrong. Please try again.');
       } else {
-        setError('Unable to connect. Check your internet and try again.')
-        toast.error('Something went wrong. Please try again.')
+        setError('Unable to connect. Check your internet and try again.');
+        toast.error('Something went wrong. Please try again.');
       }
     }
   }
@@ -115,30 +115,30 @@ function RequestStep() {
       )}
       <BackToLogin />
     </AuthShell>
-  )
+  );
 }
 
 // ─── Confirm step (set new password) ─────────────────────────
 
 function ConfirmStep({ token }: { token: string }) {
-  const [done, setDone] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ConfirmForm>({ resolver: zodResolver(confirmSchema) })
+  } = useForm<ConfirmForm>({ resolver: zodResolver(confirmSchema) });
 
   async function onSubmit(data: ConfirmForm) {
-    setError(null)
+    setError(null);
     try {
-      await resetPassword(token, data.password)
-      setDone(true)
-      toast.success('Password updated successfully.')
+      await resetPassword(token, data.password);
+      setDone(true);
+      toast.success('Password updated successfully.');
     } catch {
-      setError('This reset link is invalid or has expired.')
-      toast.error('This reset link is invalid or has expired.')
+      setError('This reset link is invalid or has expired.');
+      toast.error('This reset link is invalid or has expired.');
     }
   }
 
@@ -213,7 +213,7 @@ function ConfirmStep({ token }: { token: string }) {
         </form>
       )}
     </AuthShell>
-  )
+  );
 }
 
 // ─── Shared layout ────────────────────────────────────────────
@@ -223,9 +223,9 @@ function AuthShell({
   subtitle,
   children,
 }: {
-  title: string
-  subtitle: string
-  children: ReactNode
+  title: string;
+  subtitle: string;
+  children: ReactNode;
 }) {
   return (
     <div
@@ -275,11 +275,8 @@ function AuthShell({
       <div className="relative z-10 flex-1 flex items-center justify-center px-4 min-h-0">
         <div className="w-full max-w-[360px]">
           {/* Logo */}
-          <div className="flex items-center gap-2.5 mb-10">
-            <img src={aristaLogo} alt="" className="h-6 w-6 object-contain" />
-            <span className="text-white font-semibold text-base tracking-tight">
-              Arista CRM
-            </span>
+          <div className="mb-10">
+            <AppLogo size="md" className="text-white" />
           </div>
 
           {/* Heading */}
@@ -298,12 +295,16 @@ function AuthShell({
       <footer className="relative z-10 shrink-0 border-t border-white/[0.05] px-6 py-3.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-          <span className="text-xs text-slate-600">All systems operational</span>
+          <span className="text-xs text-slate-600">
+            All systems operational
+          </span>
         </div>
-        <p className="text-xs text-slate-700">© {new Date().getFullYear()} Arista CRM</p>
+        <p className="text-xs text-slate-700">
+          © {new Date().getFullYear()} Arista CRM
+        </p>
       </footer>
     </div>
-  )
+  );
 }
 
 function ErrorBanner({ message }: { message: string }) {
@@ -312,11 +313,11 @@ function ErrorBanner({ message }: { message: string }) {
       <span className="shrink-0 mt-0.5">⚠</span>
       {message}
     </div>
-  )
+  );
 }
 
 function FieldError({ message }: { message: string }) {
-  return <p className="text-xs text-red-400">{message}</p>
+  return <p className="text-xs text-red-400">{message}</p>;
 }
 
 function BackToLogin() {
@@ -326,5 +327,5 @@ function BackToLogin() {
         ← Back to sign in
       </Link>
     </p>
-  )
+  );
 }

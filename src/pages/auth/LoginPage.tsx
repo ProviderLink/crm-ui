@@ -1,66 +1,66 @@
-import aristaLogo from '@/assets/arista_crm.png'
-import { DevQuickLogin } from '@/components/dev/DevQuickLogin'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useAppDispatch } from '@/hooks/store'
-import { login } from '@/services/auth.service'
-import { setAuth } from '@/store/slices/authSlice'
-import type { UserRole } from '@/types/auth'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2 } from 'lucide-react'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { z } from 'zod'
+import { AppLogo } from '@/components/app-logo';
+import { DevQuickLogin } from '@/components/dev/DevQuickLogin';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAppDispatch } from '@/hooks/store';
+import { login } from '@/services/auth.service';
+import { setAuth } from '@/store/slices/authSlice';
+import type { UserRole } from '@/types/auth';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
   password: z.string().min(1, 'Password is required'),
-})
+});
 
-type FormData = z.infer<typeof schema>
+type FormData = z.infer<typeof schema>;
 
 const roleRedirect: Record<UserRole, string> = {
   admin: '/admin/dashboard',
   account_manager: '/am/dashboard',
   va: '/va/dashboard',
   client: '/client/dashboard',
-}
+};
 
 export default function LoginPage() {
-  const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) })
+  } = useForm<FormData>({ resolver: zodResolver(schema) });
 
   async function onSubmit(data: FormData) {
-    setError(null)
+    setError(null);
     try {
-      const result = await login(data)
-      dispatch(setAuth({ user: result.user, accessToken: result.accessToken }))
-      toast.success('Welcome back!')
-      navigate(roleRedirect[result.user.role], { replace: true })
+      const result = await login(data);
+      dispatch(setAuth({ user: result.user, accessToken: result.accessToken }));
+      toast.success('Welcome back!');
+      navigate(roleRedirect[result.user.role], { replace: true });
     } catch (err) {
       if (err && typeof err === 'object' && 'response' in err) {
         const status = (err as { response?: { status?: number } }).response
-          ?.status
+          ?.status;
         if (status === 401 || status === 400) {
-          setError('Invalid email or password.')
-          toast.error('Invalid email or password.')
+          setError('Invalid email or password.');
+          toast.error('Invalid email or password.');
         } else {
-          setError('Something went wrong. Please try again.')
-          toast.error('Something went wrong. Please try again.')
+          setError('Something went wrong. Please try again.');
+          toast.error('Something went wrong. Please try again.');
         }
       } else {
-        setError('Unable to connect. Check your internet and try again.')
-        toast.error('Unable to connect. Check your internet.')
+        setError('Unable to connect. Check your internet and try again.');
+        toast.error('Unable to connect. Check your internet.');
       }
     }
   }
@@ -114,11 +114,8 @@ export default function LoginPage() {
       <div className="relative z-10 flex-1 flex items-center justify-center px-4 min-h-0">
         <div className="w-full max-w-[360px]">
           {/* Logo */}
-          <div className="flex items-center gap-2.5 mb-10">
-            <img src={aristaLogo} alt="" className="h-6 w-6 object-contain" />
-            <span className="text-white font-semibold text-base tracking-tight">
-              Arista CRM
-            </span>
+          <div className="mb-10">
+            <AppLogo size="md" className="text-white" />
           </div>
 
           {/* Heading */}
@@ -242,5 +239,5 @@ export default function LoginPage() {
         </p>
       </footer>
     </div>
-  )
+  );
 }

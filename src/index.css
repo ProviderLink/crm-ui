@@ -136,10 +136,10 @@
   --sidebar-foreground: #0f172a;
   --sidebar-primary: #000000;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e1f2ae; /* pale lime — active nav bg */
-  --sidebar-accent-hover: #f7fce9; /* lighter pale lime — hover nav bg */
+  --sidebar-accent: #f1f5f9; /* slate-100 — active nav bg */
+  --sidebar-accent-hover: #f8fafc; /* slate-50  — hover nav bg */
   --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #f1f5f9; /* slate-100 */
+  --sidebar-border: #e2e8f0; /* slate-200 — visible separator */
   --sidebar-ring: #60a5fa; /* blue-400 focus ring */
 }
 
