@@ -10,12 +10,23 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   ChevronsUpDown,
   ChevronUp,
 } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 interface DataTableProps<T> {
   columns: ColumnDef<T>[];
@@ -46,7 +57,23 @@ export function DataTable<T>({
 
   const totalPages = table.getPageCount();
   const currentPage = table.getState().pagination.pageIndex + 1;
-  const showPagination = totalPages > 1;
+  const currentPageSize = table.getState().pagination.pageSize;
+
+  // Build page number window (max 5 buttons)
+  function getPageNumbers() {
+    const delta = 2;
+    const pages: (number | '...')[] = [];
+    const left = Math.max(2, currentPage - delta);
+    const right = Math.min(totalPages - 1, currentPage + delta);
+
+    pages.push(1);
+    if (left > 2) pages.push('...');
+    for (let i = left; i <= right; i++) pages.push(i);
+    if (right < totalPages - 1) pages.push('...');
+    if (totalPages > 1) pages.push(totalPages);
+
+    return pages;
+  }
 
   if (isLoading) {
     return (
@@ -59,7 +86,7 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
         <table className="min-w-full text-sm">
           <thead>
@@ -168,33 +195,100 @@ export function DataTable<T>({
         </table>
       </div>
 
-      {showPagination && (
-        <div className="flex items-center justify-between px-1">
-          <span className="text-xs text-muted-foreground">
-            Page {currentPage} of {totalPages} · {data.length} total
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 w-7 p-0"
-              aria-label="Previous page"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronLeft size={14} />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 w-7 p-0"
-              aria-label="Next page"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <ChevronRight size={14} />
-            </Button>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1 flex-wrap gap-2">
+          {/* Left: total info + rows per page */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">
+              {data.length} total records
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Rows per page</span>
+              <Select
+                value={String(currentPageSize)}
+                onValueChange={val => {
+                  table.setPageSize(Number(val));
+                  table.setPageIndex(0);
+                }}
+              >
+                <SelectTrigger className="h-7 w-16 text-xs rounded-lg border-input">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map(size => (
+                    <SelectItem key={size} value={String(size)} className="text-xs">
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          {/* Right: page navigation */}
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0"
+                aria-label="First page"
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <ChevronsLeft size={14} />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0"
+                aria-label="Previous page"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <ChevronLeft size={14} />
+              </Button>
+
+              {getPageNumbers().map((page, i) =>
+                page === '...' ? (
+                  <span key={`ellipsis-${i}`} className="px-1 text-xs text-muted-foreground">
+                    …
+                  </span>
+                ) : (
+                  <Button
+                    key={page}
+                    variant={page === currentPage ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-7 w-7 p-0 text-xs"
+                    onClick={() => table.setPageIndex((page as number) - 1)}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0"
+                aria-label="Next page"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                <ChevronRight size={14} />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0"
+                aria-label="Last page"
+                onClick={() => table.setPageIndex(totalPages - 1)}
+                disabled={!table.getCanNextPage()}
+              >
+                <ChevronsRight size={14} />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

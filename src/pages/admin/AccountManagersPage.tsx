@@ -497,7 +497,7 @@ export default function AccountManagersPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 lg:px-6">
           <div>
-            <h1 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
               <UserCogIcon size={20} />
               Account Managers
             </h1>

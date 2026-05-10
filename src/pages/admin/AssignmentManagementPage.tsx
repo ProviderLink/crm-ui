@@ -1,5 +1,5 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import type { ColumnDef } from '@tanstack/react-table'
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { ColumnDef } from '@tanstack/react-table';
 import {
   AlertCircle,
   Briefcase,
@@ -10,53 +10,53 @@ import {
   StickyNote,
   Users2,
   XIcon,
-} from 'lucide-react'
-import { useState, type ReactNode } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { z } from 'zod'
+} from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
-import { DataTable } from '@/components/shared/DataTable'
-import { Button } from '@/components/ui/button'
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { DataTable } from '@/components/shared/DataTable';
+import { Button } from '@/components/ui/button';
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
-import { Textarea } from '@/components/ui/textarea'
+} from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@/components/ui/tooltip';
 import {
   QK,
   useActiveAccountManagersQuery,
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
-} from '@/hooks/queries'
-import type { IAccountManager } from '@/services/account-managers.service'
+} from '@/hooks/queries';
+import type { IAccountManager } from '@/services/account-managers.service';
 import {
   createAssignment,
   updateAssignment,
-} from '@/services/assignments.service'
-import type { IAssignment } from '@/types/assignment'
-import type { IAtsCandidate, IAtsClient } from '@/types/ats'
-import { useQueryClient } from '@tanstack/react-query'
+} from '@/services/assignments.service';
+import type { IAssignment } from '@/types/assignment';
+import type { IAtsCandidate, IAtsClient } from '@/types/ats';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -69,8 +69,8 @@ const createSchema = z.object({
   status: z.enum(['active', 'paused', 'ended']),
   serviceType: z.string().min(1, 'Required'),
   notes: z.string().optional(),
-})
-type CreateFormData = z.infer<typeof createSchema>
+});
+type CreateFormData = z.infer<typeof createSchema>;
 
 const editSchema = z.object({
   accountManagerId: z.string().min(1, 'Required'),
@@ -78,18 +78,18 @@ const editSchema = z.object({
   serviceType: z.string().min(1, 'Required'),
   endDate: z.string().optional(),
   notes: z.string().optional(),
-})
-type EditFormData = z.infer<typeof editSchema>
+});
+type EditFormData = z.infer<typeof editSchema>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Returns the date string (yyyy-MM-dd) only if it represents a real date after year 2000.
  *  Filters out epoch garbage (1970-01-01) that Firestore stores when null is passed. */
 function sanitizeDate(value: string | undefined | null): string {
-  if (!value) return ''
-  const d = new Date(value)
-  if (isNaN(d.getTime()) || d.getFullYear() < 2000) return ''
-  return value.slice(0, 10)
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d.getTime()) || d.getFullYear() < 2000) return '';
+  return value.slice(0, 10);
 }
 
 function buildColumns(
@@ -130,7 +130,7 @@ function buildColumns(
       header: 'Status',
       size: 90,
       cell: ({ getValue }) => {
-        const v = getValue<string>()
+        const v = getValue<string>();
         const styles =
           {
             active:
@@ -138,14 +138,14 @@ function buildColumns(
             paused:
               'bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20',
             ended: 'bg-muted text-muted-foreground ring-1 ring-border',
-          }[v] ?? 'bg-muted text-muted-foreground ring-1 ring-border'
+          }[v] ?? 'bg-muted text-muted-foreground ring-1 ring-border';
         return (
           <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize whitespace-nowrap ${styles}`}
           >
             {v}
           </span>
-        )
+        );
       },
     },
     {
@@ -196,7 +196,7 @@ function buildColumns(
         </TooltipProvider>
       ),
     },
-  ]
+  ];
 }
 
 // ─── Section card ─────────────────────────────────────────────────────────────
@@ -207,10 +207,10 @@ function Section({
   optional = false,
   children,
 }: {
-  icon: ReactNode
-  title: string
-  optional?: boolean
-  children: ReactNode
+  icon: ReactNode;
+  title: string;
+  optional?: boolean;
+  children: ReactNode;
 }) {
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -227,7 +227,7 @@ function Section({
       </div>
       <div className="p-5 space-y-4">{children}</div>
     </div>
-  )
+  );
 }
 
 // ─── Field wrapper ────────────────────────────────────────────────────────────
@@ -238,10 +238,10 @@ function Field({
   hint,
   children,
 }: {
-  label: string
-  error?: string
-  hint?: string
-  children: ReactNode
+  label: string;
+  error?: string;
+  hint?: string;
+  children: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -252,7 +252,7 @@ function Field({
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
-  )
+  );
 }
 
 // ─── Create Form ──────────────────────────────────────────────────────────────
@@ -265,12 +265,12 @@ function CreateAssignmentForm({
   onSuccess,
   onClose,
 }: {
-  clients: IAtsClient[]
-  vas: IAtsCandidate[]
-  assignments: IAssignment[]
-  team: IAccountManager[]
-  onSuccess: () => void
-  onClose: () => void
+  clients: IAtsClient[];
+  vas: IAtsCandidate[];
+  assignments: IAssignment[];
+  team: IAccountManager[];
+  onSuccess: () => void;
+  onClose: () => void;
 }) {
   const {
     register,
@@ -282,33 +282,35 @@ function CreateAssignmentForm({
   } = useForm<CreateFormData>({
     resolver: zodResolver(createSchema),
     defaultValues: { status: 'active' },
-  })
+  });
 
-  const selectedClientId = watch('clientId')
+  const selectedClientId = watch('clientId');
 
   // Filter VAs to only those hired by the selected client
   const filteredVas = selectedClientId
     ? vas.filter(v => v.clientId === selectedClientId)
-    : []
+    : [];
 
   // Build a set of vaIds that have an active/paused assignment
   const activeVaIds = new Set(
     assignments
       .filter(a => a.status === 'active' || a.status === 'paused')
       .map(a => a.vaId)
-  )
+  );
 
-  const [serverError, setServerError] = useState('')
+  const [serverError, setServerError] = useState('');
 
   async function onSubmit(data: CreateFormData) {
-    setServerError('')
+    setServerError('');
     try {
-      await createAssignment(data)
-      onSuccess()
+      await createAssignment(data);
+      onSuccess();
     } catch (err: unknown) {
       const apiMsg = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message
-      setServerError(apiMsg ?? 'Failed to create assignment. Please try again.')
+        ?.response?.data?.message;
+      setServerError(
+        apiMsg ?? 'Failed to create assignment. Please try again.'
+      );
     }
   }
 
@@ -335,8 +337,8 @@ function CreateAssignmentForm({
               <Select
                 value={field.value ?? ''}
                 onValueChange={v => {
-                  field.onChange(v)
-                  setValue('vaId', '')
+                  field.onChange(v);
+                  setValue('vaId', '');
                 }}
               >
                 <SelectTrigger className="rounded-xl border-input h-10">
@@ -383,7 +385,7 @@ function CreateAssignmentForm({
                 </SelectTrigger>
                 <SelectContent>
                   {filteredVas.map(v => {
-                    const hasAssignment = activeVaIds.has(v.id)
+                    const hasAssignment = activeVaIds.has(v.id);
                     return (
                       <SelectItem key={v.id} value={v.id}>
                         <span className="flex items-center gap-2">
@@ -399,7 +401,7 @@ function CreateAssignmentForm({
                           )}
                         </span>
                       </SelectItem>
-                    )
+                    );
                   })}
                 </SelectContent>
               </Select>
@@ -473,7 +475,10 @@ function CreateAssignmentForm({
               name="startDate"
               control={control}
               render={({ field }) => (
-                <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+                <DatePickerField
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                />
               )}
             />
           </Field>
@@ -487,7 +492,10 @@ function CreateAssignmentForm({
               name="endDate"
               control={control}
               render={({ field }) => (
-                <DatePickerField value={field.value ?? ''} onChange={field.onChange} />
+                <DatePickerField
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                />
               )}
             />
           </Field>
@@ -534,7 +542,7 @@ function CreateAssignmentForm({
         </button>
       </div>
     </form>
-  )
+  );
 }
 
 // ─── Edit Form ────────────────────────────────────────────────────────────────
@@ -545,10 +553,10 @@ function EditAssignmentForm({
   onSuccess,
   onClose,
 }: {
-  assignment: IAssignment
-  team: IAccountManager[]
-  onSuccess: () => void
-  onClose: () => void
+  assignment: IAssignment;
+  team: IAccountManager[];
+  onSuccess: () => void;
+  onClose: () => void;
 }) {
   const {
     register,
@@ -564,25 +572,25 @@ function EditAssignmentForm({
       endDate: sanitizeDate(assignment.endDate),
       notes: assignment.notes ?? '',
     },
-  })
+  });
 
-  const [serverError, setServerError] = useState('')
+  const [serverError, setServerError] = useState('');
 
   async function onSubmit(data: EditFormData) {
-    setServerError('')
+    setServerError('');
     try {
-      const { endDate, ...rest } = data
+      const { endDate, ...rest } = data;
       await updateAssignment(assignment.id, {
         ...rest,
         // Empty string = user cleared the field → send null so backend deletes it from Firestore
         // Value present → send as-is
         endDate: endDate || null,
-      })
-      onSuccess()
+      });
+      onSuccess();
     } catch (err: unknown) {
       const apiMsg = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message
-      setServerError(apiMsg ?? 'Failed to save changes. Please try again.')
+        ?.response?.data?.message;
+      setServerError(apiMsg ?? 'Failed to save changes. Please try again.');
     }
   }
 
@@ -729,59 +737,61 @@ function EditAssignmentForm({
         </button>
       </div>
     </form>
-  )
+  );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AssignmentManagementPage() {
-  const queryClient = useQueryClient()
-  const { data: assignments = [], isLoading } = useAllAssignmentsQuery()
-  const { data: atsClients = [] } = useAtsClientsQuery()
-  const { data: atsVas = [] } = useAtsVAsQuery()
-  const { data: accountManagers = [] } = useActiveAccountManagersQuery()
+  const queryClient = useQueryClient();
+  const { data: assignments = [], isLoading } = useAllAssignmentsQuery();
+  const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: atsVas = [] } = useAtsVAsQuery();
+  const { data: accountManagers = [] } = useActiveAccountManagersQuery();
 
-  const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null)
-  const [editTarget, setEditTarget] = useState<IAssignment | null>(null)
-  const [deactivateTarget, setDeactivateTarget] = useState<IAssignment | null>(null)
-  const [deactivateError, setDeactivateError] = useState<string | null>(null)
+  const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null);
+  const [editTarget, setEditTarget] = useState<IAssignment | null>(null);
+  const [deactivateTarget, setDeactivateTarget] = useState<IAssignment | null>(
+    null
+  );
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
 
   async function confirmDeactivate() {
-    if (!deactivateTarget) return
-    setDeactivateError(null)
+    if (!deactivateTarget) return;
+    setDeactivateError(null);
     try {
-      await updateAssignment(deactivateTarget.id, { status: 'ended' })
-      queryClient.invalidateQueries({ queryKey: QK.allAssignments })
+      await updateAssignment(deactivateTarget.id, { status: 'ended' });
+      queryClient.invalidateQueries({ queryKey: QK.allAssignments });
     } catch {
-      setDeactivateError('Failed to deactivate assignment. Please try again.')
+      setDeactivateError('Failed to deactivate assignment. Please try again.');
     } finally {
-      setDeactivateTarget(null)
+      setDeactivateTarget(null);
     }
   }
 
   function handleSheetClose(open: boolean) {
-    if (!open) setSheetMode(null)
+    if (!open) setSheetMode(null);
   }
 
-  const clientMap: Record<string, string> = {}
-  for (const c of atsClients) clientMap[c.id] = c.companyName
+  const clientMap: Record<string, string> = {};
+  for (const c of atsClients) clientMap[c.id] = c.companyName;
 
-  const vaMap: Record<string, string> = {}
-  for (const v of atsVas) vaMap[v.id] = `${v.firstName} ${v.lastName}`
+  const vaMap: Record<string, string> = {};
+  for (const v of atsVas) vaMap[v.id] = `${v.firstName} ${v.lastName}`;
 
-  const amMap: Record<string, string> = {}
-  for (const u of accountManagers) amMap[u.id] = `${u.firstName} ${u.lastName}`
+  const amMap: Record<string, string> = {};
+  for (const u of accountManagers) amMap[u.id] = `${u.firstName} ${u.lastName}`;
 
   const columns = buildColumns(
     clientMap,
     vaMap,
     amMap,
     a => {
-      setEditTarget(a)
-      setSheetMode('edit')
+      setEditTarget(a);
+      setSheetMode('edit');
     },
     a => setDeactivateTarget(a)
-  )
+  );
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -789,7 +799,7 @@ export default function AssignmentManagementPage() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 lg:px-6">
           <div>
-            <h1 className="text-xl font-semibold text-foreground">
+            <h1 className="text-2xl font-semibold text-foreground">
               Assignments
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -836,8 +846,8 @@ export default function AssignmentManagementPage() {
               assignments={assignments}
               team={accountManagers}
               onSuccess={() => {
-                setSheetMode(null)
-                queryClient.invalidateQueries({ queryKey: QK.allAssignments })
+                setSheetMode(null);
+                queryClient.invalidateQueries({ queryKey: QK.allAssignments });
               }}
               onClose={() => setSheetMode(null)}
             />
@@ -849,8 +859,8 @@ export default function AssignmentManagementPage() {
               assignment={editTarget}
               team={accountManagers}
               onSuccess={() => {
-                setSheetMode(null)
-                queryClient.invalidateQueries({ queryKey: QK.allAssignments })
+                setSheetMode(null);
+                queryClient.invalidateQueries({ queryKey: QK.allAssignments });
               }}
               onClose={() => setSheetMode(null)}
             />
@@ -872,5 +882,5 @@ export default function AssignmentManagementPage() {
         onCancel={() => setDeactivateTarget(null)}
       />
     </div>
-  )
+  );
 }
