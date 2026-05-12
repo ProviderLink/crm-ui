@@ -1,5 +1,4 @@
 import { AppLogo } from '@/components/app-logo';
-import { DevQuickLogin } from '@/components/dev/DevQuickLogin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -211,11 +210,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-
-          {/* TODO: remove before final go-live */}
-          <div className="mt-6">
-            <DevQuickLogin />
-          </div>
 
           {/* Back to home */}
           <p className="mt-6 text-center text-xs text-slate-600">
