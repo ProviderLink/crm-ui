@@ -1,6 +1,7 @@
 import {
   BarChart3Icon,
   BellIcon,
+  ClipboardCheckIcon,
   ClipboardListIcon,
   ClockIcon,
   FileTextIcon,
@@ -76,6 +77,11 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       },
       { title: 'Reminders', url: '/admin/reminders', icon: BellIcon },
       { title: 'Scorecards', url: '/admin/scorecards', icon: BarChart3Icon },
+      {
+        title: 'Performance Reviews',
+        url: '/admin/performance-reviews',
+        icon: ClipboardCheckIcon,
+      },
     ],
   },
   account_manager: {
@@ -95,6 +101,11 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       { title: 'Accounts', url: '/am/accounts', icon: UsersIcon },
       { title: 'Reminders', url: '/am/reminders', icon: BellIcon },
       { title: 'Scorecards', url: '/am/scorecards', icon: BarChart3Icon },
+      {
+        title: 'Performance Reviews',
+        url: '/am/performance-reviews',
+        icon: ClipboardCheckIcon,
+      },
     ],
   },
   client: {

@@ -1,61 +1,67 @@
-import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
-import { RoleGuard } from '@/components/shared/RoleGuard'
-import { DashboardLayout } from '@/layouts/DashboardLayout'
-import { lazy, Suspense } from 'react'
-import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom'
+import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
+import { RoleGuard } from '@/components/shared/RoleGuard';
+import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { lazy, Suspense } from 'react';
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
 
 // Home (public)
-const HomePage = lazy(() => import('@/pages/HomePage'))
+const HomePage = lazy(() => import('@/pages/HomePage'));
 
 // Auth (public)
-const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
-const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage'))
+const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
+const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage'));
 
 // Shared (all authenticated roles)
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'))
+const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 
 // VA portal
-const VaDashboardPage = lazy(() => import('@/pages/va/VaDashboardPage'))
-const AddWorkEntryPage = lazy(() => import('@/pages/va/AddWorkEntryPage'))
-const WorkHistoryPage = lazy(() => import('@/pages/va/WorkHistoryPage'))
-const EodSubmitPage = lazy(() => import('@/pages/va/EodSubmitPage'))
-const EodHistoryPage = lazy(() => import('@/pages/va/EodHistoryPage'))
+const VaDashboardPage = lazy(() => import('@/pages/va/VaDashboardPage'));
+const AddWorkEntryPage = lazy(() => import('@/pages/va/AddWorkEntryPage'));
+const WorkHistoryPage = lazy(() => import('@/pages/va/WorkHistoryPage'));
+const EodSubmitPage = lazy(() => import('@/pages/va/EodSubmitPage'));
+const EodHistoryPage = lazy(() => import('@/pages/va/EodHistoryPage'));
 
 // Admin portal
 const AdminDashboardPage = lazy(
   () => import('@/pages/admin/AdminDashboardPage')
-)
+);
 const AssignmentManagementPage = lazy(
   () => import('@/pages/admin/AssignmentManagementPage')
-)
+);
 const AccountManagementPage = lazy(
   () => import('@/pages/admin/AccountManagementPage')
-)
+);
 const AccountManagersPage = lazy(
   () => import('@/pages/admin/AccountManagersPage')
-)
+);
 const SurveyRemindersPage = lazy(
   () => import('@/pages/admin/SurveyRemindersPage')
-)
-const ScorecardsPage = lazy(() => import('@/pages/admin/ScorecardsPage'))
-const WorkEntriesPage = lazy(() => import('@/pages/admin/WorkEntriesPage'))
-const EodReportsPage = lazy(() => import('@/pages/admin/EodReportsPage'))
+);
+const ScorecardsPage = lazy(() => import('@/pages/admin/ScorecardsPage'));
+const WorkEntriesPage = lazy(() => import('@/pages/admin/WorkEntriesPage'));
+const EodReportsPage = lazy(() => import('@/pages/admin/EodReportsPage'));
+const PerformanceReviewsPage = lazy(
+  () => import('@/pages/admin/PerformanceReviewsPage')
+);
+const PerformanceReviewEditorPage = lazy(
+  () => import('@/pages/admin/PerformanceReviewEditorPage')
+);
 
 // Client portal
 const ClientDashboardPage = lazy(
   () => import('@/pages/client/ClientDashboardPage')
-)
-const WorkActivityPage = lazy(() => import('@/pages/client/WorkActivityPage'))
+);
+const WorkActivityPage = lazy(() => import('@/pages/client/WorkActivityPage'));
 
 // 404
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 function PageSpinner() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
     </div>
-  )
+  );
 }
 
 function SuspenseLayout() {
@@ -63,7 +69,7 @@ function SuspenseLayout() {
     <Suspense fallback={<PageSpinner />}>
       <Outlet />
     </Suspense>
-  )
+  );
 }
 
 const router = createBrowserRouter([
@@ -82,9 +88,7 @@ const router = createBrowserRouter([
           // Shared profile page (all roles)
           {
             element: <DashboardLayout />,
-            children: [
-              { path: 'profile', element: <ProfilePage /> },
-            ],
+            children: [{ path: 'profile', element: <ProfilePage /> }],
           },
 
           // VA portal
@@ -127,6 +131,14 @@ const router = createBrowserRouter([
                   { path: 'scorecards', element: <ScorecardsPage /> },
                   { path: 'work-entries', element: <WorkEntriesPage /> },
                   { path: 'eod-reports', element: <EodReportsPage /> },
+                  {
+                    path: 'performance-reviews',
+                    element: <PerformanceReviewsPage />,
+                  },
+                  {
+                    path: 'performance-reviews/:id',
+                    element: <PerformanceReviewEditorPage />,
+                  },
                 ],
               },
             ],
@@ -150,6 +162,14 @@ const router = createBrowserRouter([
                   { path: 'scorecards', element: <ScorecardsPage /> },
                   { path: 'work-entries', element: <WorkEntriesPage /> },
                   { path: 'eod-reports', element: <EodReportsPage /> },
+                  {
+                    path: 'performance-reviews',
+                    element: <PerformanceReviewsPage />,
+                  },
+                  {
+                    path: 'performance-reviews/:id',
+                    element: <PerformanceReviewEditorPage />,
+                  },
                 ],
               },
             ],
@@ -175,8 +195,8 @@ const router = createBrowserRouter([
       { path: '*', element: <NotFoundPage /> },
     ],
   },
-])
+]);
 
 export function AppRouter() {
-  return <RouterProvider router={router} />
+  return <RouterProvider router={router} />;
 }
