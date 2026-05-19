@@ -1,83 +1,96 @@
-import api from '@/lib/api'
+import api from '@/lib/api';
 
 export interface IAccountManager {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  role: 'account_manager'
-  isActive: boolean
-  phone?: string
-  atsId?: string
-  lastLogin?: string
-  createdAt?: string
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'account_manager';
+  isActive: boolean;
+  phone?: string;
+  atsId?: string;
+  lastLogin?: string;
+  createdAt?: string;
 }
 
 export interface ICrmUser {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  role: 'va' | 'client' | 'account_manager' | 'admin'
-  isActive: boolean
-  phone?: string
-  atsId?: string
-  lastLogin?: string
-  createdAt?: string
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'va' | 'client' | 'account_manager' | 'admin';
+  isActive: boolean;
+  emailVerified: boolean;
+  phone?: string;
+  atsId?: string;
+  lastLogin?: string;
+  createdAt?: string;
 }
 
 export interface CreateAccountManagerPayload {
-  email: string
-  firstName: string
-  lastName: string
-  role: 'account_manager'
-  phone?: string
-  atsId?: string
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'account_manager';
+  phone?: string;
+  atsId?: string;
 }
 
 export interface CreateCrmUserPayload {
-  email: string
-  firstName: string
-  lastName: string
-  role: 'va' | 'client'
-  phone?: string
-  atsId?: string
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'va' | 'client';
+  phone?: string;
+  atsId?: string;
+}
+
+export interface InviteCrmUserPayload {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'va' | 'client';
+  atsId?: string;
 }
 
 export interface UpdateAccountManagerPayload {
-  firstName?: string
-  lastName?: string
-  phone?: string
-  isActive?: boolean
-  atsId?: string
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  isActive?: boolean;
+  atsId?: string;
 }
 
-export async function getAccountManagers(activeOnly = false): Promise<IAccountManager[]> {
-  const params = new URLSearchParams({ role: 'account_manager' })
-  if (activeOnly) params.set('active', 'true')
+export async function getAccountManagers(
+  activeOnly = false
+): Promise<IAccountManager[]> {
+  const params = new URLSearchParams({ role: 'account_manager' });
+  if (activeOnly) params.set('active', 'true');
   const { data } = await api.get<{ data: IAccountManager[] }>(
     `/users?${params.toString()}`
-  )
-  return data.data
+  );
+  return data.data;
 }
 
-export async function getCrmUsersByRole(role: 'va' | 'client'): Promise<ICrmUser[]> {
-  const { data } = await api.get<{ data: ICrmUser[] }>(`/users?role=${role}`)
-  return data.data
+export async function getCrmUsersByRole(
+  role: 'va' | 'client'
+): Promise<ICrmUser[]> {
+  const { data } = await api.get<{ data: ICrmUser[] }>(`/users?role=${role}`);
+  return data.data;
 }
 
 export async function createAccountManager(
   payload: CreateAccountManagerPayload
 ): Promise<IAccountManager> {
-  const { data } = await api.post<{ data: IAccountManager }>('/users', payload)
-  return data.data
+  const { data } = await api.post<{ data: IAccountManager }>('/users', payload);
+  return data.data;
 }
 
 export async function createCrmUser(
   payload: CreateCrmUserPayload
 ): Promise<ICrmUser> {
-  const { data } = await api.post<{ data: ICrmUser }>('/users', payload)
-  return data.data
+  const { data } = await api.post<{ data: ICrmUser }>('/users', payload);
+  return data.data;
 }
 
 export async function updateAccountManager(
@@ -87,22 +100,29 @@ export async function updateAccountManager(
   const { data } = await api.patch<{ data: IAccountManager }>(
     `/users/${id}`,
     payload
-  )
-  return data.data
+  );
+  return data.data;
 }
 
 export async function deactivateAccountManager(id: string): Promise<void> {
-  await api.delete(`/users/${id}`)
+  await api.delete(`/users/${id}`);
 }
 
 export async function resetAccountManagerPassword(id: string): Promise<void> {
-  await api.post(`/users/${id}/reset-password`)
+  await api.post(`/users/${id}/reset-password`);
 }
 
 export async function resetCrmUserPassword(id: string): Promise<void> {
-  await api.post(`/users/${id}/reset-password`)
+  await api.post(`/users/${id}/reset-password`);
 }
 
 export async function deactivateCrmUser(id: string): Promise<void> {
-  await api.delete(`/users/${id}`)
+  await api.delete(`/users/${id}`);
+}
+
+export async function inviteCrmUser(
+  payload: InviteCrmUserPayload
+): Promise<ICrmUser> {
+  const { data } = await api.post<{ data: ICrmUser }>('/users/invite', payload);
+  return data.data;
 }

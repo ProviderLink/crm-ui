@@ -10,6 +10,9 @@ const HomePage = lazy(() => import('@/pages/HomePage'));
 // Auth (public)
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage'));
+const AcceptInvitationPage = lazy(
+  () => import('@/pages/auth/AcceptInvitationPage')
+);
 
 // Shared (all authenticated roles)
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
@@ -80,6 +83,7 @@ const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/reset-password', element: <ResetPasswordPage /> },
+      { path: '/accept-invitation', element: <AcceptInvitationPage /> },
 
       // Protected — must be authenticated
       {

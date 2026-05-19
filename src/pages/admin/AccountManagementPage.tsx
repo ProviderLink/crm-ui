@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import {
   EyeIcon,
   KeyRoundIcon,
+  MailIcon,
   PenLineIcon,
   UserPlusIcon,
   XCircleIcon,
@@ -53,6 +54,7 @@ import {
 import {
   createCrmUser,
   deactivateCrmUser,
+  inviteCrmUser,
   resetCrmUserPassword,
   type ICrmUser,
 } from '@/services/account-managers.service';
@@ -99,6 +101,13 @@ const provisionLoginSchema = z.object({
 });
 type ProvisionLoginFormData = z.infer<typeof provisionLoginSchema>;
 
+const inviteAccessSchema = z.object({
+  email: z.string().email('Invalid email'),
+  firstName: z.string().min(1, 'Required'),
+  lastName: z.string().min(1, 'Required'),
+});
+type InviteAccessFormData = z.infer<typeof inviteAccessSchema>;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function LoginStatusBadge({ user }: { user: ICrmUser | undefined }) {
@@ -113,6 +122,13 @@ function LoginStatusBadge({ user }: { user: ICrmUser | undefined }) {
     return (
       <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
         Deactivated
+      </span>
+    );
+  }
+  if (!user.emailVerified) {
+    return (
+      <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
+        Invitation Sent
       </span>
     );
   }
@@ -314,6 +330,112 @@ function ProvisionLoginForm({
 }
 
 // ─── Client Account Edit Form ─────────────────────────────────────────────────
+
+function InviteAccessForm({
+  role,
+  atsId,
+  defaultEmail,
+  defaultFirstName,
+  defaultLastName,
+  onSuccess,
+}: {
+  role: 'va' | 'client';
+  atsId: string;
+  defaultEmail?: string;
+  defaultFirstName?: string;
+  defaultLastName?: string;
+  onSuccess: () => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<InviteAccessFormData>({
+    resolver: zodResolver(inviteAccessSchema),
+    defaultValues: {
+      email: defaultEmail ?? '',
+      firstName: defaultFirstName ?? '',
+      lastName: defaultLastName ?? '',
+    },
+  });
+  const [serverError, setServerError] = useState('');
+  const roleLabel = role === 'va' ? 'VA Portal' : 'Client Portal';
+
+  async function onSubmit(data: InviteAccessFormData) {
+    setServerError('');
+    try {
+      await inviteCrmUser({ ...data, role, atsId });
+      toast.success('Invitation email sent.');
+      onSuccess();
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : 'Failed to send invitation.';
+      setServerError(msg);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="mt-6 flex flex-col gap-5 pb-6"
+    >
+      {serverError && (
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {serverError}
+        </p>
+      )}
+      <p className="text-sm text-muted-foreground">
+        An invitation email will be sent with a secure link to activate their{' '}
+        <strong>{roleLabel}</strong> access.
+      </p>
+      <div className="flex flex-col gap-1.5">
+        <Label>Email *</Label>
+        <Input
+          {...register('email')}
+          type="email"
+          placeholder="user@example.com"
+          className="rounded-md border-input"
+        />
+        {errors.email && (
+          <p className="text-xs text-destructive">{errors.email.message}</p>
+        )}
+      </div>
+      <div className="flex gap-3">
+        <div className="flex flex-col gap-1.5 flex-1">
+          <Label>First Name *</Label>
+          <Input
+            {...register('firstName')}
+            placeholder="First"
+            className="rounded-md border-input"
+          />
+          {errors.firstName && (
+            <p className="text-xs text-destructive">
+              {errors.firstName.message}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5 flex-1">
+          <Label>Last Name *</Label>
+          <Input
+            {...register('lastName')}
+            placeholder="Last"
+            className="rounded-md border-input"
+          />
+          {errors.lastName && (
+            <p className="text-xs text-destructive">
+              {errors.lastName.message}
+            </p>
+          )}
+        </div>
+      </div>
+      <Button type="submit" disabled={isSubmitting} className="mt-2">
+        {isSubmitting ? 'Sending…' : 'Send Invitation'}
+      </Button>
+    </form>
+  );
+}
+
+// ─── Edit Client Account Form ─────────────────────────────────────────────────
 
 function EditClientAccountForm({
   account,
@@ -721,6 +843,17 @@ export default function AccountManagementPage() {
   type CrmConfirmAction = { type: 'resetPw' | 'deactivate'; user: ICrmUser };
   const [crmConfirm, setCrmConfirm] = useState<CrmConfirmAction | null>(null);
 
+  // Invite access sheet state
+  type InviteTarget = {
+    role: 'va' | 'client';
+    atsId: string;
+    defaultEmail?: string;
+    defaultFirstName?: string;
+    defaultLastName?: string;
+    label: string;
+  };
+  const [inviteTarget, setInviteTarget] = useState<InviteTarget | null>(null);
+
   async function executeCrmConfirm() {
     if (!crmConfirm) return;
     const { type, user } = crmConfirm;
@@ -755,6 +888,14 @@ export default function AccountManagementPage() {
 
   const crmVaMap: Record<string, ICrmUser> = {};
   for (const u of crmVaUsers) if (u.atsId) crmVaMap[u.atsId] = u;
+
+  // Clients that have at least one hired VA
+  const clientIdsWithHirings = new Set(
+    atsVas.flatMap(v => v.clientIds ?? [])
+  );
+  const clientsWithHirings = atsClients.filter(c =>
+    clientIdsWithHirings.has(c.id)
+  );
 
   function invalidateCrmUsers() {
     queryClient.invalidateQueries({ queryKey: QK.crmClientUsers });
@@ -1013,6 +1154,234 @@ export default function AccountManagementPage() {
     },
   ];
 
+  // ── VA Access columns ────────────────────────────────────────────────────
+  const vaAccessColumns: ColumnDef<IAtsCandidate>[] = [
+    {
+      id: 'name',
+      header: 'VA',
+      cell: ({ row }) =>
+        `${row.original.firstName} ${row.original.lastName}`,
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: ({ getValue }) => (getValue<string>() ?? '—'),
+    },
+    {
+      id: 'accessStatus',
+      header: 'Access Status',
+      size: 140,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <LoginStatusBadge user={crmVaMap[row.original.id]} />
+      ),
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      meta: { headerClassName: 'text-center' },
+      enableSorting: false,
+      size: 80,
+      cell: ({ row }) => {
+        const va = row.original;
+        const crmUser = crmVaMap[va.id];
+        return (
+          <div className="flex items-center justify-center gap-1">
+            <TooltipProvider delayDuration={300}>
+              {!crmUser ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                      onClick={() =>
+                        setInviteTarget({
+                          role: 'va',
+                          atsId: va.id,
+                          defaultEmail: va.email,
+                          defaultFirstName: va.firstName,
+                          defaultLastName: va.lastName,
+                          label: `${va.firstName} ${va.lastName}`,
+                        })
+                      }
+                    >
+                      <MailIcon className="size-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Grant Access</TooltipContent>
+                </Tooltip>
+              ) : crmUser.isActive ? (
+                <>
+                  {crmUser.emailVerified && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                          onClick={() =>
+                            setCrmConfirm({ type: 'resetPw', user: crmUser })
+                          }
+                        >
+                          <KeyRoundIcon className="size-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">Reset Password</TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 bg-white/[0.02] text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                        onClick={() =>
+                          setCrmConfirm({ type: 'deactivate', user: crmUser })
+                        }
+                      >
+                        <XCircleIcon className="size-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Revoke Access</TooltipContent>
+                  </Tooltip>
+                </>
+              ) : null}
+            </TooltipProvider>
+          </div>
+        );
+      },
+    },
+  ];
+
+  // ── Client Access columns ────────────────────────────────────────────────
+  const clientAccessColumns: ColumnDef<IAtsClient>[] = [
+    {
+      accessorKey: 'companyName',
+      header: 'Company',
+      cell: ({ getValue }) => {
+        const name = getValue<string>();
+        const initials = name
+          .split(' ')
+          .filter(Boolean)
+          .slice(0, 2)
+          .map(w => w[0].toUpperCase())
+          .join('');
+        return (
+          <div className="flex items-center gap-2.5">
+            <div
+              className="shrink-0 size-7 flex items-center justify-center text-[10px] font-bold text-white select-none"
+              style={{ borderRadius: '30%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
+            >
+              {initials}
+            </div>
+            <span>{name}</span>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'accessStatus',
+      header: 'Access Status',
+      size: 140,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <LoginStatusBadge user={crmClientMap[row.original.id]} />
+      ),
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: ({ row }) => {
+        const primary = row.original.contacts?.find(c => c.isPrimary) ?? row.original.contacts?.[0];
+        const email = primary?.email ?? row.original.email;
+        return <span className="text-muted-foreground text-xs">{email ?? '—'}</span>;
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      meta: { headerClassName: 'text-center' },
+      enableSorting: false,
+      size: 80,
+      cell: ({ row }) => {
+        const client = row.original;
+        const crmUser = crmClientMap[client.id];
+        const primaryContact =
+          client.contacts?.find(c => c.isPrimary) ?? client.contacts?.[0];
+        const [defaultFirstName, ...rest] = (
+          primaryContact?.name ?? ''
+        ).split(' ');
+        const defaultLastName = rest.join(' ');
+        return (
+          <div className="flex items-center justify-center gap-1">
+            <TooltipProvider delayDuration={300}>
+              {!crmUser ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                      onClick={() =>
+                        setInviteTarget({
+                          role: 'client',
+                          atsId: client.id,
+                          defaultEmail: primaryContact?.email ?? client.email,
+                          defaultFirstName: defaultFirstName || undefined,
+                          defaultLastName: defaultLastName || undefined,
+                          label: client.companyName,
+                        })
+                      }
+                    >
+                      <MailIcon className="size-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Grant Access</TooltipContent>
+                </Tooltip>
+              ) : crmUser.isActive ? (
+                <>
+                  {crmUser.emailVerified && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                          onClick={() =>
+                            setCrmConfirm({ type: 'resetPw', user: crmUser })
+                          }
+                        >
+                          <KeyRoundIcon className="size-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">Reset Password</TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 bg-white/[0.02] text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                        onClick={() =>
+                          setCrmConfirm({ type: 'deactivate', user: crmUser })
+                        }
+                      >
+                        <XCircleIcon className="size-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Revoke Access</TooltipContent>
+                  </Tooltip>
+                </>
+              ) : null}
+            </TooltipProvider>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
@@ -1031,6 +1400,8 @@ export default function AccountManagementPage() {
             <TabsList>
               <TabsTrigger value="client-accounts">Client Accounts</TabsTrigger>
               <TabsTrigger value="va-profiles">VA Profiles</TabsTrigger>
+              <TabsTrigger value="va-access">VA Access</TabsTrigger>
+              <TabsTrigger value="client-access">Client Access</TabsTrigger>
             </TabsList>
 
             <TabsContent value="client-accounts" className="mt-4">
@@ -1045,6 +1416,22 @@ export default function AccountManagementPage() {
               <DataTable
                 columns={profileColumns}
                 data={profiles}
+                isLoading={isLoading}
+              />
+            </TabsContent>
+
+            <TabsContent value="va-access" className="mt-4">
+              <DataTable
+                columns={vaAccessColumns}
+                data={atsVas}
+                isLoading={isLoading}
+              />
+            </TabsContent>
+
+            <TabsContent value="client-access" className="mt-4">
+              <DataTable
+                columns={clientAccessColumns}
+                data={clientsWithHirings}
                 isLoading={isLoading}
               />
             </TabsContent>
@@ -1299,6 +1686,36 @@ export default function AccountManagementPage() {
         onConfirm={executeCrmConfirm}
         onCancel={() => setCrmConfirm(null)}
       />
+
+      {/* Invite Access Sheet */}
+      <Sheet
+        open={inviteTarget !== null}
+        onOpenChange={o => !o && setInviteTarget(null)}
+      >
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>
+              {inviteTarget?.role === 'va'
+                ? 'Grant VA Portal Access'
+                : 'Grant Client Portal Access'}
+            </SheetTitle>
+            <SheetDescription>{inviteTarget?.label ?? ''}</SheetDescription>
+          </SheetHeader>
+          {inviteTarget && (
+            <InviteAccessForm
+              role={inviteTarget.role}
+              atsId={inviteTarget.atsId}
+              defaultEmail={inviteTarget.defaultEmail}
+              defaultFirstName={inviteTarget.defaultFirstName}
+              defaultLastName={inviteTarget.defaultLastName}
+              onSuccess={() => {
+                setInviteTarget(null);
+                invalidateCrmUsers();
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
