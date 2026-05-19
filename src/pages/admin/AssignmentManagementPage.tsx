@@ -288,7 +288,7 @@ function CreateAssignmentForm({
 
   // Filter VAs to only those hired by the selected client
   const filteredVas = selectedClientId
-    ? vas.filter(v => v.clientId === selectedClientId)
+    ? vas.filter(v => v.clientIds?.includes(selectedClientId))
     : [];
 
   // Build a set of vaIds that have an active/paused assignment
