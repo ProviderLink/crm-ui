@@ -4,56 +4,56 @@ import {
   PlusIcon,
   TrophyIcon,
   ZapIcon,
-} from 'lucide-react'
-import { Link } from 'react-router-dom'
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   useEodSubmissionsQuery,
   useScorecardsQuery,
   useWorkEntriesQuery,
-} from '@/hooks/queries'
+} from '@/hooks/queries';
 
 function todayStr() {
-  return new Date().toISOString().split('T')[0]
+  return new Date().toISOString().split('T')[0];
 }
 
 function weekStartStr() {
-  const d = new Date()
-  const dow = d.getDay()
-  d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1))
-  return d.toISOString().split('T')[0]
+  const d = new Date();
+  const dow = d.getDay();
+  d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+  return d.toISOString().split('T')[0];
 }
 
 export default function VaDashboardPage() {
-  const today = todayStr()
-  const weekStart = weekStartStr()
+  const today = todayStr();
+  const weekStart = weekStartStr();
 
-  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery()
-  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery()
+  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery();
+  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery();
   const { data: scorecards = [], isLoading: loadingScores } =
-    useScorecardsQuery()
+    useScorecardsQuery();
 
-  const todayEntries = workAll.filter(e => e.entryDate.slice(0, 10) === today)
-  const eodToday = eods.find(e => e.date.slice(0, 10) === today) ?? null
+  const todayEntries = workAll.filter(e => e.entryDate.slice(0, 10) === today);
+  const eodToday = eods.find(e => e.date.slice(0, 10) === today) ?? null;
   const weekHours =
     workAll
       .filter(e => e.entryDate.slice(0, 10) >= weekStart)
-      .reduce((sum, e) => sum + e.timeSpent, 0) / 60
+      .reduce((sum, e) => sum + e.timeSpent, 0) / 60;
   const sorted = [...scorecards].sort(
     (a, b) => new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
-  )
-  const latestScore = sorted[0]?.productivityScore ?? null
+  );
+  const latestScore = sorted[0]?.productivityScore ?? null;
 
-  const eodSubmitted = Boolean(eodToday)
+  const eodSubmitted = Boolean(eodToday);
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -168,5 +168,5 @@ export default function VaDashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
