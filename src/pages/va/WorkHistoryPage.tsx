@@ -1,46 +1,51 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
-import type { ColumnDef } from '@tanstack/react-table'
-import { PenLineIcon } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
-import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
+import { PenLineIcon } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
+import { z } from 'zod';
 
-import { DataTable } from '@/components/shared/DataTable'
-import { Button } from '@/components/ui/button'
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { DataTable } from '@/components/shared/DataTable';
+import { Button } from '@/components/ui/button';
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet'
-import { Textarea } from '@/components/ui/textarea'
+} from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { QK, useAtsClientsQuery, useMyAssignmentsQuery, useWorkEntriesQuery } from '@/hooks/queries'
-import { formatMinutes } from '@/lib/time'
-import { updateWorkEntry } from '@/services/work-entries.service'
+} from '@/components/ui/tooltip';
+import {
+  QK,
+  useAtsClientsQuery,
+  useMyAssignmentsQuery,
+  useWorkEntriesQuery,
+} from '@/hooks/queries';
+import { formatMinutes } from '@/lib/time';
+import { updateWorkEntry } from '@/services/work-entries.service';
 import {
   WORK_ENTRY_CATEGORIES,
   WORK_ENTRY_STATUSES,
   type IWorkEntry,
   type WorkEntryStatus,
-} from '@/types/work-entry'
+} from '@/types/work-entry';
 
 // ── Edit schema ───────────────────────────────────────────────────────────────
 
@@ -60,8 +65,8 @@ const editSchema = z.object({
   timeSpent: z.number().int().min(1, 'At least 1 minute'),
   status: z.enum(['completed', 'in_progress', 'pending']),
   notes: z.string().optional(),
-})
-type EditFormData = z.infer<typeof editSchema>
+});
+type EditFormData = z.infer<typeof editSchema>;
 
 // ── Status styles ───────────────────────────────────────────────────────────
 
@@ -71,7 +76,7 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
   in_progress:
     'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
   pending: 'bg-muted text-muted-foreground border-border',
-}
+};
 
 // ── Edit sheet form ──────────────────────────────────────────────────────────
 
@@ -79,8 +84,8 @@ function EditWorkEntryForm({
   entry,
   onSuccess,
 }: {
-  entry: IWorkEntry
-  onSuccess: () => void
+  entry: IWorkEntry;
+  onSuccess: () => void;
 }) {
   const {
     register,
@@ -99,9 +104,9 @@ function EditWorkEntryForm({
       status: entry.status,
       notes: entry.notes ?? '',
     },
-  })
+  });
 
-  const [serverError, setServerError] = useState('')
+  const [serverError, setServerError] = useState('');
 
   useEffect(() => {
     reset({
@@ -112,16 +117,16 @@ function EditWorkEntryForm({
       timeSpent: entry.timeSpent,
       status: entry.status,
       notes: entry.notes ?? '',
-    })
-  }, [entry, reset])
+    });
+  }, [entry, reset]);
 
   async function onSubmit(data: EditFormData) {
-    setServerError('')
+    setServerError('');
     try {
-      await updateWorkEntry(entry.id, data)
-      onSuccess()
+      await updateWorkEntry(entry._id, data);
+      onSuccess();
     } catch {
-      setServerError('Failed to save. Please try again.')
+      setServerError('Failed to save. Please try again.');
     }
   }
 
@@ -265,52 +270,52 @@ function EditWorkEntryForm({
         {isSubmitting ? 'Saving…' : 'Save Changes'}
       </Button>
     </form>
-  )
+  );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function WorkHistoryPage() {
-  const queryClient = useQueryClient()
-  const { data: entries = [], isLoading } = useWorkEntriesQuery()
-  const { data: atsClients = [] } = useAtsClientsQuery()
-  const { data: myAssignments = [] } = useMyAssignmentsQuery()
+  const queryClient = useQueryClient();
+  const { data: entries = [], isLoading } = useWorkEntriesQuery();
+  const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: myAssignments = [] } = useMyAssignmentsQuery();
 
   const clientMap = useMemo(() => {
-    const m = new Map<string, string>()
-    atsClients.forEach(c => m.set(c.id, c.companyName))
-    return m
-  }, [atsClients])
+    const m = new Map<string, string>();
+    atsClients.forEach(c => m.set(c.id, c.companyName));
+    return m;
+  }, [atsClients]);
 
   const assignmentMap = useMemo(() => {
-    const m = new Map<string, string>()
-    myAssignments.forEach(a => m.set(a.id, a.serviceType ?? 'VA Service'))
-    return m
-  }, [myAssignments])
+    const m = new Map<string, string>();
+    myAssignments.forEach(a => m.set(a._id, a.serviceType ?? 'VA Service'));
+    return m;
+  }, [myAssignments]);
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split('T')[0]
-  )
+  );
   const [dateTo, setDateTo] = useState(
     () => new Date().toISOString().split('T')[0]
-  )
-  const [editEntry, setEditEntry] = useState<IWorkEntry | null>(null)
+  );
+  const [editEntry, setEditEntry] = useState<IWorkEntry | null>(null);
 
   const filtered = useMemo(
     () =>
       entries.filter(e => {
-        if (dateFrom && e.entryDate < dateFrom) return false
-        if (dateTo && e.entryDate > dateTo) return false
-        return true
+        if (dateFrom && e.entryDate < dateFrom) return false;
+        if (dateTo && e.entryDate > dateTo) return false;
+        return true;
       }),
     [entries, dateFrom, dateTo]
-  )
+  );
 
   function clearFilters() {
-    setDateFrom('')
-    setDateTo('')
+    setDateFrom('');
+    setDateTo('');
   }
 
   const columns = useMemo<ColumnDef<IWorkEntry>[]>(
@@ -383,14 +388,14 @@ export default function WorkHistoryPage() {
         header: 'Status',
         size: 125,
         cell: ({ getValue }) => {
-          const s = getValue<WorkEntryStatus>()
+          const s = getValue<WorkEntryStatus>();
           return (
             <span
               className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
             >
               {s.replace('_', ' ')}
             </span>
-          )
+          );
         },
       },
       {
@@ -416,7 +421,7 @@ export default function WorkHistoryPage() {
       },
     ],
     [setEditEntry, clientMap, assignmentMap]
-  )
+  );
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -481,16 +486,16 @@ export default function WorkHistoryPage() {
           </SheetHeader>
           {editEntry && (
             <EditWorkEntryForm
-              key={editEntry.id}
+              key={editEntry._id}
               entry={editEntry}
               onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: QK.workEntries })
-                setEditEntry(null)
+                queryClient.invalidateQueries({ queryKey: QK.workEntries });
+                setEditEntry(null);
               }}
             />
           )}
         </SheetContent>
       </Sheet>
     </div>
-  )
+  );
 }

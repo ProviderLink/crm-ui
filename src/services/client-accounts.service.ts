@@ -1,21 +1,22 @@
-import api from '@/lib/api'
 import type {
   IClientAccount,
   UpdateClientAccountPayload,
-} from '@/types/client-account'
+} from '@/types/client-account';
+
+/**
+ * TODO: ats-crm-backend does not have a standalone /client-accounts resource.
+ * Client CRM profiles are stored as a sub-resource on ATS clients
+ * (PATCH /ats/clients/:id/crm-profile). Wire this up once the
+ * AccountManagementPage is adapted to the new data model.
+ */
 
 export async function getClientAccounts(): Promise<IClientAccount[]> {
-  const { data } = await api.get<{ data: IClientAccount[] }>('/client-accounts')
-  return data.data
+  return [];
 }
 
 export async function updateClientAccount(
-  id: string,
-  payload: UpdateClientAccountPayload
+  _id: string,
+  _payload: UpdateClientAccountPayload
 ): Promise<IClientAccount> {
-  const { data } = await api.patch<{ data: IClientAccount }>(
-    `/client-accounts/${id}`,
-    payload
-  )
-  return data.data
+  throw new Error('Not implemented — use PATCH /ats/clients/:id/crm-profile');
 }

@@ -1,36 +1,34 @@
-import api from '@/lib/api'
+import api from '@/lib/api';
 
-export type ReportType = 'work_entries' | 'eod'
-export type ReportFormat = 'csv' | 'excel'
+export type ReportType = 'work_entries' | 'eod' | 'performance';
 
-export interface ExportReportParams {
-  type: ReportType
-  dateFrom: string
+/**
+ * Export CSV from ats-crm-backend.
+ * Endpoints: /crm/reports/work-entries/export, /crm/reports/eod-submissions/export, /crm/reports/performance/export
+ */
+export async function exportReport(
+  type: ReportType,
+  dateFrom: string,
   dateTo: string
-  format: ReportFormat
-}
+): Promise<void> {
+  const endpointMap: Record<ReportType, string> = {
+    work_entries: '/crm/reports/work-entries/export',
+    eod: '/crm/reports/eod-submissions/export',
+    performance: '/crm/reports/performance/export',
+  };
 
-export async function exportReport(params: ExportReportParams): Promise<void> {
-  const query = new URLSearchParams({
-    type: params.type,
-    dateFrom: params.dateFrom,
-    dateTo: params.dateTo,
-    format: params.format,
-  })
-
-  const response = await api.get(`/reports/export?${query.toString()}`, {
+  const response = await api.get(endpointMap[type], {
+    params: { startDate: dateFrom, endDate: dateTo },
     responseType: 'blob',
-  })
+  });
 
-  const extension = params.format === 'excel' ? 'xlsx' : 'csv'
-  const fileName = `${params.type}_${params.dateFrom}_${params.dateTo}.${extension}`
-
-  const url = URL.createObjectURL(response.data as Blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 100)
+  const fileName = `${type}_${dateFrom}_${dateTo}.csv`;
+  const url = URL.createObjectURL(response.data as Blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }

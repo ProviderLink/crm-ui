@@ -1,38 +1,38 @@
-import api from '@/lib/api'
+import api from '@/lib/api';
 import type {
   CreateAssignmentPayload,
   IAssignment,
   UpdateAssignmentPayload,
-} from '@/types/assignment'
+} from '@/types/assignment';
 
 // VA — own active assignments only
 export async function getMyAssignments(): Promise<IAssignment[]> {
   const { data } = await api.get<{ data: IAssignment[] }>(
-    '/assignments?status=active'
-  )
-  return data.data
+    '/crm/assignments?status=active'
+  );
+  return data.data;
 }
 
 // Admin/AM — all assignments with optional status filter
 export async function getAllAssignments(
   query: { status?: string } = {}
 ): Promise<IAssignment[]> {
-  const params = new URLSearchParams()
-  if (query.status) params.set('status', query.status)
+  const params = new URLSearchParams();
+  if (query.status) params.set('status', query.status);
   const { data } = await api.get<{ data: IAssignment[] }>(
-    `/assignments?${params.toString()}`
-  )
-  return data.data
+    `/crm/assignments?${params.toString()}`
+  );
+  return data.data;
 }
 
 export async function createAssignment(
   payload: CreateAssignmentPayload
 ): Promise<IAssignment> {
   const { data } = await api.post<{ data: IAssignment }>(
-    '/assignments',
+    '/crm/assignments',
     payload
-  )
-  return data.data
+  );
+  return data.data;
 }
 
 export async function updateAssignment(
@@ -40,12 +40,12 @@ export async function updateAssignment(
   payload: UpdateAssignmentPayload
 ): Promise<IAssignment> {
   const { data } = await api.patch<{ data: IAssignment }>(
-    `/assignments/${id}`,
+    `/crm/assignments/${id}`,
     payload
-  )
-  return data.data
+  );
+  return data.data;
 }
 
 export async function deleteAssignment(id: string): Promise<void> {
-  await api.delete(`/assignments/${id}`)
+  await api.delete(`/crm/assignments/${id}`);
 }

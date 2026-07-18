@@ -2,7 +2,6 @@ import api from '@/lib/api';
 import type {
   IGenerateReviewPayload,
   IPerformanceReview,
-  IUpdateCategoryPayload,
   IUpdateReviewPayload,
 } from '@/types/performance-review';
 
@@ -13,11 +12,12 @@ export interface IReviewFilters {
   status?: string;
 }
 
+/** POST /crm/performance-reviews — AI-generate a new review */
 export async function generateReview(
   payload: IGenerateReviewPayload
 ): Promise<IPerformanceReview> {
   const { data } = await api.post<{ data: IPerformanceReview }>(
-    '/performance-reviews/generate',
+    '/crm/performance-reviews',
     payload
   );
   return data.data;
@@ -34,14 +34,14 @@ export async function getReviews(
       ).toString()
     : '';
   const { data } = await api.get<{ data: IPerformanceReview[] }>(
-    `/performance-reviews${params ? `?${params}` : ''}`
+    `/crm/performance-reviews${params ? `?${params}` : ''}`
   );
   return data.data;
 }
 
 export async function getReview(id: string): Promise<IPerformanceReview> {
   const { data } = await api.get<{ data: IPerformanceReview }>(
-    `/performance-reviews/${id}`
+    `/crm/performance-reviews/${id}`
   );
   return data.data;
 }
@@ -51,69 +51,65 @@ export async function updateReview(
   payload: IUpdateReviewPayload
 ): Promise<IPerformanceReview> {
   const { data } = await api.patch<{ data: IPerformanceReview }>(
-    `/performance-reviews/${id}`,
+    `/crm/performance-reviews/${id}`,
     payload
   );
   return data.data;
 }
 
+/**
+ * Update a single category — fetches the full review, patches the category,
+ * then sends the full categories array back (new backend updates whole array).
+ */
 export async function updateCategory(
   id: string,
   catId: string,
-  payload: IUpdateCategoryPayload
+  payload: { rating?: number | null; managerComments?: string }
 ): Promise<void> {
-  await api.patch(`/performance-reviews/${id}/categories/${catId}`, payload);
+  // Fetch current review to get full categories array
+  const { data: review } = await api.get<{ data: IPerformanceReview }>(
+    `/crm/performance-reviews/${id}`
+  );
+  const categories = (review.data.categories || []).map((c: any) =>
+    c._id === catId ? { ...c, ...payload } : c
+  );
+  await api.patch(`/crm/performance-reviews/${id}`, { categories });
 }
 
-export async function regenerateCategories(
-  id: string
+/** Regenerate a section via POST /:id/regenerate */
+async function _regenerateSection(
+  id: string,
+  section: 'categories' | 'goals' | 'summary'
 ): Promise<IPerformanceReview> {
   const { data } = await api.post<{ data: IPerformanceReview }>(
-    `/performance-reviews/${id}/regenerate-categories`
+    `/crm/performance-reviews/${id}/regenerate`,
+    { section }
   );
   return data.data;
 }
 
-export async function regenerateGoals(id: string): Promise<IPerformanceReview> {
-  const { data } = await api.post<{ data: IPerformanceReview }>(
-    `/performance-reviews/${id}/regenerate-goals`
-  );
-  return data.data;
-}
-
-export async function improveManagerSummary(
-  id: string
-): Promise<IPerformanceReview> {
-  const { data } = await api.post<{ data: IPerformanceReview }>(
-    `/performance-reviews/${id}/improve-manager-summary`
-  );
-  return data.data;
-}
+export const regenerateCategories = (id: string) =>
+  _regenerateSection(id, 'categories');
+export const regenerateGoals = (id: string) => _regenerateSection(id, 'goals');
+export const improveManagerSummary = (id: string) =>
+  _regenerateSection(id, 'summary');
 
 export async function completeReview(id: string): Promise<IPerformanceReview> {
   const { data } = await api.patch<{ data: IPerformanceReview }>(
-    `/performance-reviews/${id}/complete`
+    `/crm/performance-reviews/${id}/complete`
   );
   return data.data;
 }
 
-export async function deleteReview(id: string): Promise<void> {
-  await api.delete(`/performance-reviews/${id}`);
+/** Not available in new backend — no-op stub. */
+export async function deleteReview(_id: string): Promise<void> {
+  // DELETE not supported by ats-crm-backend performance-reviews
 }
 
+/** Not available in new backend — no-op stub. */
 export async function exportReviewPdf(
-  id: string,
-  filename = 'performance-review.pdf'
+  _id: string,
+  _filename = 'performance-review.pdf'
 ): Promise<void> {
-  const response = await api.get(`/performance-reviews/${id}/export-pdf`, {
-    responseType: 'blob',
-  });
-  const url = URL.createObjectURL(
-    new Blob([response.data as BlobPart], { type: 'application/pdf' })
-  );
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  // PDF export not supported by ats-crm-backend
 }

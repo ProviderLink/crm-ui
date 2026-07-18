@@ -4,11 +4,11 @@ import {
   CalendarCheckIcon,
   ClockIcon,
   UserIcon,
-} from 'lucide-react'
-import { Link } from 'react-router-dom'
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -16,33 +16,33 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   useAllAssignmentsQuery,
   useEodSubmissionsQuery,
   useWorkEntriesQuery,
-} from '@/hooks/queries'
-import { useAppSelector } from '@/hooks/store'
-import type { IAssignment } from '@/types/assignment'
+} from '@/hooks/queries';
+import { useAppSelector } from '@/hooks/store';
+import type { IAssignment } from '@/types/assignment';
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-  })
+  });
 }
 
 function todayStr() {
-  return new Date().toISOString().split('T')[0]
+  return new Date().toISOString().split('T')[0];
 }
 
 function weekStartStr() {
-  const d = new Date()
-  const dow = d.getDay()
-  d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1))
-  return d.toISOString().split('T')[0]
+  const d = new Date();
+  const dow = d.getDay();
+  d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+  return d.toISOString().split('T')[0];
 }
 
 const statusVariant: Record<
@@ -50,49 +50,43 @@ const statusVariant: Record<
   'default' | 'secondary' | 'destructive'
 > = {
   active: 'default',
-  paused: 'secondary',
+  on_hold: 'secondary',
   ended: 'destructive',
-}
+};
 
 export default function ClientDashboardPage() {
-  const user = useAppSelector(s => s.auth.user)
-  const today = todayStr()
-  const weekStart = weekStartStr()
+  const user = useAppSelector(s => s.auth.user);
+  const today = todayStr();
+  const weekStart = weekStartStr();
 
   const { data: assignmentList = [], isLoading: loadingAssignments } =
-    useAllAssignmentsQuery()
-  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery()
-  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery()
+    useAllAssignmentsQuery();
+  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery();
+  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery();
 
-  const assignments = assignmentList.filter(a => a.status === 'active')
-  const activeAssignments = assignments.length
+  const assignments = assignmentList.filter(a => a.status === 'active');
+  const activeAssignments = assignments.length;
   const weekHours =
     workAll
       .filter(e => e.entryDate.slice(0, 10) >= weekStart)
-      .reduce((sum, e) => sum + e.timeSpent, 0) / 60
+      .reduce((sum, e) => sum + e.timeSpent, 0) / 60;
   const todayCount = workAll.filter(
     e => e.entryDate.slice(0, 10) === today
-  ).length
-  const sortedEods = [...eods].sort((a, b) => (b.date > a.date ? 1 : -1))
-  const lastEodDate = sortedEods[0]?.date?.slice(0, 10) ?? null
+  ).length;
+  const sortedEods = [...eods].sort((a, b) => (b.date > a.date ? 1 : -1));
+  const lastEodDate = sortedEods[0]?.date?.slice(0, 10) ?? null;
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         {/* Page heading */}
         <div className="px-4 lg:px-6">
-          <p className="text-sm font-medium text-muted-foreground mb-0.5">Welcome back,</p>
+          <p className="text-sm font-medium text-muted-foreground mb-0.5">
+            Welcome back,
+          </p>
           <h1 className="text-3xl font-bold tracking-tight">
             {user?.name ?? 'Dashboard'}
           </h1>
-          {user?.companyName && (
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1">
-              <span className="size-1.5 rounded-full bg-primary shrink-0" />
-              <span className="text-xs font-semibold text-primary tracking-wide">
-                {user.companyName}
-              </span>
-            </div>
-          )}
         </div>
         {/* Stat cards */}
         <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card lg:px-6">
@@ -208,7 +202,7 @@ export default function ClientDashboardPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {assignments.map(a => (
                 <Card
-                  key={a.id}
+                  key={a._id}
                   className="bg-gradient-to-t from-primary/5 to-card shadow-xs"
                 >
                   <CardHeader className="pb-2">
@@ -255,5 +249,5 @@ export default function ClientDashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

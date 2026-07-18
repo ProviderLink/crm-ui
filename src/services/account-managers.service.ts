@@ -67,29 +67,34 @@ export async function getAccountManagers(
   const params = new URLSearchParams({ role: 'account_manager' });
   if (activeOnly) params.set('active', 'true');
   const { data } = await api.get<{ data: IAccountManager[] }>(
-    `/users?${params.toString()}`
+    `/shared/users?${params.toString()}`
   );
   return data.data;
 }
 
 export async function getCrmUsersByRole(
-  role: 'va' | 'client'
+  role: 'va' | 'client' | 'account_manager' | 'admin'
 ): Promise<ICrmUser[]> {
-  const { data } = await api.get<{ data: ICrmUser[] }>(`/users?role=${role}`);
+  const { data } = await api.get<{ data: ICrmUser[] }>(
+    `/shared/users?role=${role}`
+  );
   return data.data;
 }
 
 export async function createAccountManager(
   payload: CreateAccountManagerPayload
 ): Promise<IAccountManager> {
-  const { data } = await api.post<{ data: IAccountManager }>('/users', payload);
+  const { data } = await api.post<{ data: IAccountManager }>(
+    '/shared/users',
+    payload
+  );
   return data.data;
 }
 
 export async function createCrmUser(
   payload: CreateCrmUserPayload
 ): Promise<ICrmUser> {
-  const { data } = await api.post<{ data: ICrmUser }>('/users', payload);
+  const { data } = await api.post<{ data: ICrmUser }>('/shared/users', payload);
   return data.data;
 }
 
@@ -98,26 +103,26 @@ export async function updateAccountManager(
   payload: UpdateAccountManagerPayload
 ): Promise<IAccountManager> {
   const { data } = await api.patch<{ data: IAccountManager }>(
-    `/users/${id}`,
+    `/shared/users/${id}`,
     payload
   );
   return data.data;
 }
 
 export async function deactivateAccountManager(id: string): Promise<void> {
-  await api.delete(`/users/${id}`);
+  await api.delete(`/shared/users/${id}`);
 }
 
-export async function resetAccountManagerPassword(id: string): Promise<void> {
-  await api.post(`/users/${id}/reset-password`);
+export async function resetAccountManagerPassword(_id: string): Promise<void> {
+  // Not directly supported by ats-crm-backend — use forgot-password flow instead
 }
 
-export async function resetCrmUserPassword(id: string): Promise<void> {
-  await api.post(`/users/${id}/reset-password`);
+export async function resetCrmUserPassword(_id: string): Promise<void> {
+  // Not directly supported by ats-crm-backend — use forgot-password flow instead
 }
 
 export async function deactivateCrmUser(id: string): Promise<void> {
-  await api.delete(`/users/${id}`);
+  await api.delete(`/shared/users/${id}`);
 }
 
 export async function inviteCrmUser(

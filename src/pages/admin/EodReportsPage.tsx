@@ -50,14 +50,14 @@ export default function EodReportsPage() {
 
   const assignmentMap = useMemo(() => {
     const m: Record<string, string> = {};
-    for (const a of assignments) m[a.id] = a.serviceType ?? 'VA Service';
+    for (const a of assignments) m[a._id] = a.serviceType ?? 'VA Service';
     return m;
   }, [assignments]);
 
   const filtered = useMemo(
     () =>
       allEods.filter(e => {
-        if (vaFilter !== 'all' && e.vaId !== vaFilter) return false;
+        if (vaFilter !== 'all' && e.candidateId !== vaFilter) return false;
         if (clientFilter !== 'all' && e.clientId !== clientFilter) return false;
         if (dateFrom && e.date < dateFrom) return false;
         if (dateTo && e.date > dateTo) return false;
@@ -79,7 +79,7 @@ export default function EodReportsPage() {
         ),
       },
       {
-        accessorKey: 'vaId',
+        accessorKey: 'candidateId',
         header: 'VA',
         size: 140,
         cell: ({ getValue }) => (
@@ -134,7 +134,10 @@ export default function EodReportsPage() {
         accessorKey: 'summaryOfWork',
         header: 'Summary',
         enableSorting: false,
-        meta: { fill: true, cellClassName: 'bg-white/[0.04] border-l border-white/[0.06]' },
+        meta: {
+          fill: true,
+          cellClassName: 'bg-white/[0.04] border-l border-white/[0.06]',
+        },
         cell: ({ getValue }) => (
           <span className="text-sm">{getValue<string>()}</span>
         ),

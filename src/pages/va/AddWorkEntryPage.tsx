@@ -1,23 +1,23 @@
-import { Button } from '@/components/ui/button'
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button';
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { TimePickerField } from '@/components/ui/time-picker-field'
-import { QK } from '@/hooks/queries'
-import { useMyAssignments } from '@/hooks/useMyAssignments'
-import { nowTimeString, todayString } from '@/lib/time'
-import { createWorkEntry } from '@/services/work-entries.service'
-import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { TimePickerField } from '@/components/ui/time-picker-field';
+import { QK } from '@/hooks/queries';
+import { useMyAssignments } from '@/hooks/useMyAssignments';
+import { nowTimeString, todayString } from '@/lib/time';
+import { createWorkEntry } from '@/services/work-entries.service';
+import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   AlarmClock,
   Briefcase,
@@ -26,13 +26,13 @@ import {
   Clock,
   FileText,
   StickyNote,
-} from 'lucide-react'
-import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { z } from 'zod'
+} from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 const schema = z.object({
   assignmentId: z.string().min(1, 'Assignment is required'),
@@ -51,25 +51,25 @@ const schema = z.object({
   timeSpent: z.number().int().min(1, 'Enter at least 1 minute'),
   status: z.enum(['completed', 'in_progress', 'pending']),
   notes: z.string().optional(),
-})
+});
 
-type FormData = z.infer<typeof schema>
+type FormData = z.infer<typeof schema>;
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   completed: { label: 'Completed', color: 'text-emerald-400' },
   in_progress: { label: 'In Progress', color: 'text-amber-400' },
   pending: { label: 'Pending', color: 'text-slate-400' },
-}
+};
 
 export default function AddWorkEntryPage() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const {
     assignments,
     isLoading: loadingAssignments,
     isError: assignmentsError,
-  } = useMyAssignments()
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  } = useMyAssignments();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -84,28 +84,28 @@ export default function AddWorkEntryPage() {
       entryTime: nowTimeString(),
       status: 'completed',
     },
-  })
+  });
 
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
-      setValue('assignmentId', assignments[0].id)
+      setValue('assignmentId', assignments[0]._id);
     }
-  }, [assignments, setValue])
+  }, [assignments, setValue]);
 
   async function onSubmit(data: FormData) {
-    setSubmitError(null)
+    setSubmitError(null);
     try {
-      await createWorkEntry(data)
-      queryClient.invalidateQueries({ queryKey: QK.workEntries })
-      toast.success('Work entry saved.')
-      navigate('/va/work/history')
+      await createWorkEntry(data);
+      queryClient.invalidateQueries({ queryKey: QK.workEntries });
+      toast.success('Work entry saved.');
+      navigate('/va/work/history');
     } catch {
-      setSubmitError('Failed to save work entry. Please try again.')
-      toast.error('Failed to save work entry. Please try again.')
+      setSubmitError('Failed to save work entry. Please try again.');
+      toast.error('Failed to save work entry. Please try again.');
     }
   }
 
-  if (loadingAssignments) return <PageSkeleton />
+  if (loadingAssignments) return <PageSkeleton />;
 
   if (assignmentsError) {
     return (
@@ -117,7 +117,7 @@ export default function AddWorkEntryPage() {
           </p>
         </EmptyCard>
       </PageShell>
-    )
+    );
   }
 
   if (assignments.length === 0) {
@@ -130,7 +130,7 @@ export default function AddWorkEntryPage() {
           </p>
         </EmptyCard>
       </PageShell>
-    )
+    );
   }
 
   return (
@@ -161,8 +161,8 @@ export default function AddWorkEntryPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {assignments.map(a => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.serviceType ?? a.id}
+                      <SelectItem key={a._id} value={a._id}>
+                        {a.serviceType ?? a._id}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -327,7 +327,7 @@ export default function AddWorkEntryPage() {
         </div>
       </form>
     </PageShell>
-  )
+  );
 }
 
 // ─── Shared layout pieces ──────────────────────────────────────
@@ -341,7 +341,7 @@ function PageShell({ children }: { children: ReactNode }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function PageHeader() {
@@ -357,7 +357,7 @@ function PageHeader() {
         Record a task you completed or are working on
       </p>
     </div>
-  )
+  );
 }
 
 function Section({
@@ -366,10 +366,10 @@ function Section({
   optional = false,
   children,
 }: {
-  icon: ReactNode
-  title: string
-  optional?: boolean
-  children: ReactNode
+  icon: ReactNode;
+  title: string;
+  optional?: boolean;
+  children: ReactNode;
 }) {
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -386,7 +386,7 @@ function Section({
       </div>
       <div className="p-5 space-y-4">{children}</div>
     </div>
-  )
+  );
 }
 
 function Field({
@@ -395,10 +395,10 @@ function Field({
   hint,
   children,
 }: {
-  label: string
-  error?: string
-  hint?: string
-  children: ReactNode
+  label: string;
+  error?: string;
+  hint?: string;
+  children: ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
@@ -413,7 +413,7 @@ function Field({
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
-  )
+  );
 }
 
 function EmptyCard({ children }: { children: ReactNode }) {
@@ -421,7 +421,7 @@ function EmptyCard({ children }: { children: ReactNode }) {
     <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
       {children}
     </div>
-  )
+  );
 }
 
 function PageSkeleton() {
@@ -441,5 +441,5 @@ function PageSkeleton() {
         </div>
       ))}
     </PageShell>
-  )
+  );
 }

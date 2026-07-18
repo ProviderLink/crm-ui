@@ -1,27 +1,27 @@
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import type { ColumnDef } from '@tanstack/react-table'
-import { useMemo, useState } from 'react'
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
 
-import { DataTable } from '@/components/shared/DataTable'
+import { DataTable } from '@/components/shared/DataTable';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useAllAssignmentsQuery,
   useAtsVAsQuery,
   useEodSubmissionsQuery,
   useWorkEntriesQuery,
-} from '@/hooks/queries'
-import { formatMinutes } from '@/lib/time'
-import type { IAssignment } from '@/types/assignment'
-import type { IAtsCandidate } from '@/types/ats'
-import type { IEodSubmission } from '@/types/eod-submission'
-import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry'
+} from '@/hooks/queries';
+import { formatMinutes } from '@/lib/time';
+import type { IAssignment } from '@/types/assignment';
+import type { IAtsCandidate } from '@/types/ats';
+import type { IEodSubmission } from '@/types/eod-submission';
+import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
 // ── Work Entry columns ────────────────────────────────────────────────────────
 
@@ -31,7 +31,7 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
   in_progress:
     'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
   pending: 'bg-muted text-muted-foreground border-border',
-}
+};
 
 function buildWorkColumns(
   vaMap: Map<string, string>,
@@ -39,13 +39,13 @@ function buildWorkColumns(
 ): ColumnDef<IWorkEntry>[] {
   return [
     {
-      accessorKey: 'vaId',
+      accessorKey: 'candidateId',
       header: 'VA',
       size: 200,
       cell: ({ row }) => (
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-medium text-foreground">
-            {vaMap.get(row.original.vaId) ?? '—'}
+            {vaMap.get(row.original.candidateId) ?? '—'}
           </span>
           <span className="text-xs text-muted-foreground">
             {assignmentMap.get(row.original.assignmentId) ?? '—'}
@@ -106,17 +106,17 @@ function buildWorkColumns(
       header: 'Status',
       size: 125,
       cell: ({ getValue }) => {
-        const s = getValue<WorkEntryStatus>()
+        const s = getValue<WorkEntryStatus>();
         return (
           <span
             className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
           >
             {s.replace('_', ' ')}
           </span>
-        )
+        );
       },
     },
-  ]
+  ];
 }
 
 // ── EOD Report columns ────────────────────────────────────────────────────────
@@ -127,13 +127,13 @@ function buildEodColumns(
 ): ColumnDef<IEodSubmission>[] {
   return [
     {
-      accessorKey: 'vaId',
+      accessorKey: 'candidateId',
       header: 'VA',
       size: 200,
       cell: ({ row }) => (
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-medium text-foreground">
-            {vaMap.get(row.original.vaId) ?? '—'}
+            {vaMap.get(row.original.candidateId) ?? '—'}
           </span>
           <span className="text-xs text-muted-foreground">
             {assignmentMap.get(row.original.assignmentId) ?? '—'}
@@ -196,86 +196,94 @@ function buildEodColumns(
         </span>
       ),
     },
-  ]
+  ];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function WorkActivityPage() {
   const { data: assignments = [], isLoading: loadingAssignments } =
-    useAllAssignmentsQuery()
+    useAllAssignmentsQuery();
   const { data: allEntries = [], isLoading: loadingEntries } =
-    useWorkEntriesQuery()
+    useWorkEntriesQuery();
   const { data: allEods = [], isLoading: loadingEods } =
-    useEodSubmissionsQuery()
-  const { data: atsVAs = [] } = useAtsVAsQuery()
-  const isLoading = loadingAssignments || loadingEntries || loadingEods
+    useEodSubmissionsQuery();
+  const { data: atsVAs = [] } = useAtsVAsQuery();
+  const isLoading = loadingAssignments || loadingEntries || loadingEods;
 
   const vaMap = useMemo(() => {
-    const m = new Map<string, string>()
+    const m = new Map<string, string>();
     atsVAs.forEach((v: IAtsCandidate) =>
       m.set(v.id, `${v.firstName} ${v.lastName}`)
-    )
-    return m
-  }, [atsVAs])
+    );
+    return m;
+  }, [atsVAs]);
 
   const assignmentMap = useMemo(() => {
-    const m = new Map<string, string>()
-    assignments.forEach(a => m.set(a.id, a.serviceType ?? 'VA Service'))
-    return m
-  }, [assignments])
+    const m = new Map<string, string>();
+    assignments.forEach(a => m.set(a._id, a.serviceType ?? 'VA Service'));
+    return m;
+  }, [assignments]);
 
-  const workColumns = useMemo(() => buildWorkColumns(vaMap, assignmentMap), [vaMap, assignmentMap])
-  const eodColumns  = useMemo(() => buildEodColumns(vaMap, assignmentMap),  [vaMap, assignmentMap])
+  const workColumns = useMemo(
+    () => buildWorkColumns(vaMap, assignmentMap),
+    [vaMap, assignmentMap]
+  );
+  const eodColumns = useMemo(
+    () => buildEodColumns(vaMap, assignmentMap),
+    [vaMap, assignmentMap]
+  );
 
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split('T')[0]
-  )
+  );
   const [dateTo, setDateTo] = useState(
     () => new Date().toISOString().split('T')[0]
-  )
-  const [assignmentFilter, setAssignmentFilter] = useState('all')
+  );
+  const [assignmentFilter, setAssignmentFilter] = useState('all');
 
   const filteredEntries = useMemo(
     () =>
       allEntries.filter(e => {
         if (assignmentFilter !== 'all' && e.assignmentId !== assignmentFilter)
-          return false
-        if (dateFrom && e.entryDate < dateFrom) return false
-        if (dateTo && e.entryDate > dateTo) return false
-        return true
+          return false;
+        if (dateFrom && e.entryDate < dateFrom) return false;
+        if (dateTo && e.entryDate > dateTo) return false;
+        return true;
       }),
     [allEntries, dateFrom, dateTo, assignmentFilter]
-  )
+  );
 
   const filteredEods = useMemo(
     () =>
       allEods.filter(e => {
         if (assignmentFilter !== 'all' && e.assignmentId !== assignmentFilter)
-          return false
-        if (dateFrom && e.date < dateFrom) return false
-        if (dateTo && e.date > dateTo) return false
-        return true
+          return false;
+        if (dateFrom && e.date < dateFrom) return false;
+        if (dateTo && e.date > dateTo) return false;
+        return true;
       }),
     [allEods, dateFrom, dateTo, assignmentFilter]
-  )
+  );
 
   function clearFilters() {
-    setDateFrom('')
-    setDateTo('')
-    setAssignmentFilter('all')
+    setDateFrom('');
+    setDateTo('');
+    setAssignmentFilter('all');
   }
 
   const hasActiveFilters =
-    dateFrom !== '' || dateTo !== '' || assignmentFilter !== 'all'
-  const multipleAssignments = assignments.length > 1
+    dateFrom !== '' || dateTo !== '' || assignmentFilter !== 'all';
+  const multipleAssignments = assignments.length > 1;
 
   function assignmentLabel(a: IAssignment): string {
-    const name = vaMap.get(a.vaId)
-    return name ? `${name} — ${a.serviceType ?? 'VA Service'}` : (a.serviceType ?? 'VA Service')
+    const name = vaMap.get(a.candidateId);
+    return name
+      ? `${name} — ${a.serviceType ?? 'VA Service'}`
+      : (a.serviceType ?? 'VA Service');
   }
 
   return (
@@ -304,7 +312,7 @@ export default function WorkActivityPage() {
                 <SelectContent>
                   <SelectItem value="all">All assignments</SelectItem>
                   {assignments.map(a => (
-                    <SelectItem key={a.id} value={a.id}>
+                    <SelectItem key={a._id} value={a._id}>
                       {assignmentLabel(a)}
                     </SelectItem>
                   ))}
@@ -373,5 +381,5 @@ export default function WorkActivityPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,21 +1,21 @@
-import { Button } from '@/components/ui/button'
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button';
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { TimePickerField } from '@/components/ui/time-picker-field'
-import { QK, useEodSubmissionsQuery } from '@/hooks/queries'
-import { useMyAssignments } from '@/hooks/useMyAssignments'
-import { calcHours, todayString } from '@/lib/time'
-import { createEodSubmission } from '@/services/eod-submissions.service'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useQueryClient } from '@tanstack/react-query'
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { TimePickerField } from '@/components/ui/time-picker-field';
+import { QK, useEodSubmissionsQuery } from '@/hooks/queries';
+import { useMyAssignments } from '@/hooks/useMyAssignments';
+import { calcHours, todayString } from '@/lib/time';
+import { createEodSubmission } from '@/services/eod-submissions.service';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
   Briefcase,
@@ -24,12 +24,12 @@ import {
   ClipboardList,
   Clock,
   StickyNote,
-} from 'lucide-react'
-import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import { z } from 'zod'
+} from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
 
 const schema = z.object({
   assignmentId: z.string().min(1, 'Assignment is required'),
@@ -42,22 +42,22 @@ const schema = z.object({
   pendingTasks: z.string().min(1, 'List pending tasks or write "None"'),
   blockers: z.string().min(1, 'Describe blockers or write "None"'),
   notes: z.string().optional(),
-})
+});
 
-type FormData = z.infer<typeof schema>
+type FormData = z.infer<typeof schema>;
 
 export default function EodSubmitPage() {
-  const navigate = useNavigate()
-  const today = todayString()
+  const navigate = useNavigate();
+  const today = todayString();
   const {
     assignments,
     isLoading: loadingAssignments,
     isError: assignmentsError,
-  } = useMyAssignments()
-  const queryClient = useQueryClient()
-  const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery()
-  const submittedDates = new Set(eods.map(e => e.date.slice(0, 10)))
-  const [error, setError] = useState<string | null>(null)
+  } = useMyAssignments();
+  const queryClient = useQueryClient();
+  const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery();
+  const submittedDates = new Set(eods.map(e => e.date.slice(0, 10)));
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -69,32 +69,32 @@ export default function EodSubmitPage() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { date: today, shiftStart: '', shiftEnd: '' },
-  })
+  });
 
-  const selectedDate = watch('date') ?? today
-  const shiftStart = watch('shiftStart') ?? ''
-  const shiftEnd = watch('shiftEnd') ?? ''
-  const hoursWorked = calcHours(shiftStart, shiftEnd)
-  const alreadySubmitted = submittedDates.has(selectedDate)
+  const selectedDate = watch('date') ?? today;
+  const shiftStart = watch('shiftStart') ?? '';
+  const shiftEnd = watch('shiftEnd') ?? '';
+  const hoursWorked = calcHours(shiftStart, shiftEnd);
+  const alreadySubmitted = submittedDates.has(selectedDate);
 
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
-      setValue('assignmentId', assignments[0].id)
+      setValue('assignmentId', assignments[0]._id);
     }
-  }, [assignments, setValue])
+  }, [assignments, setValue]);
 
   async function onSubmit(data: FormData) {
-    setError(null)
+    setError(null);
     try {
-      await createEodSubmission({ ...data, hoursWorked })
-      queryClient.invalidateQueries({ queryKey: QK.eodSubmissions })
-      navigate('/va/eod/history')
+      await createEodSubmission({ ...data, hoursWorked });
+      queryClient.invalidateQueries({ queryKey: QK.eodSubmissions });
+      navigate('/va/eod/history');
     } catch {
-      setError('Failed to submit EOD. Please try again.')
+      setError('Failed to submit EOD. Please try again.');
     }
   }
 
-  if (loadingAssignments || checkingEod) return <PageSkeleton />
+  if (loadingAssignments || checkingEod) return <PageSkeleton />;
 
   if (assignmentsError) {
     return (
@@ -106,7 +106,7 @@ export default function EodSubmitPage() {
           </p>
         </EmptyCard>
       </PageShell>
-    )
+    );
   }
 
   if (assignments.length === 0) {
@@ -119,7 +119,7 @@ export default function EodSubmitPage() {
           </p>
         </EmptyCard>
       </PageShell>
-    )
+    );
   }
 
   if (alreadySubmitted) {
@@ -147,7 +147,7 @@ export default function EodSubmitPage() {
           </button>
         </div>
       </PageShell>
-    )
+    );
   }
 
   return (
@@ -179,8 +179,8 @@ export default function EodSubmitPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {assignments.map(a => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.serviceType ?? a.id}
+                      <SelectItem key={a._id} value={a._id}>
+                        {a.serviceType ?? a._id}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -327,7 +327,7 @@ export default function EodSubmitPage() {
         </div>
       </form>
     </PageShell>
-  )
+  );
 }
 
 // ─── Shared layout pieces ──────────────────────────────────────
@@ -341,7 +341,7 @@ function PageShell({ children }: { children: ReactNode }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function PageHeader() {
@@ -357,7 +357,7 @@ function PageHeader() {
         Submit your daily work summary to keep your team updated
       </p>
     </div>
-  )
+  );
 }
 
 function Section({
@@ -366,10 +366,10 @@ function Section({
   optional = false,
   children,
 }: {
-  icon: ReactNode
-  title: string
-  optional?: boolean
-  children: ReactNode
+  icon: ReactNode;
+  title: string;
+  optional?: boolean;
+  children: ReactNode;
 }) {
   return (
     <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -386,7 +386,7 @@ function Section({
       </div>
       <div className="p-5 space-y-4">{children}</div>
     </div>
-  )
+  );
 }
 
 function Field({
@@ -395,10 +395,10 @@ function Field({
   hint,
   children,
 }: {
-  label: string
-  error?: string
-  hint?: string
-  children: ReactNode
+  label: string;
+  error?: string;
+  hint?: string;
+  children: ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
@@ -415,7 +415,7 @@ function Field({
       {children}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
-  )
+  );
 }
 
 function EmptyCard({ children }: { children: ReactNode }) {
@@ -423,7 +423,7 @@ function EmptyCard({ children }: { children: ReactNode }) {
     <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
       {children}
     </div>
-  )
+  );
 }
 
 function PageSkeleton() {
@@ -443,5 +443,5 @@ function PageSkeleton() {
         </div>
       ))}
     </PageShell>
-  )
+  );
 }

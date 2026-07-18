@@ -1,12 +1,16 @@
-import { DataTable } from '@/components/shared/DataTable'
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import { useAtsClientsQuery, useEodSubmissionsQuery, useMyAssignmentsQuery } from '@/hooks/queries'
-import type { IAssignment } from '@/types/assignment'
-import type { IAtsClient } from '@/types/ats'
-import type { IEodSubmission } from '@/types/eod-submission'
-import type { ColumnDef } from '@tanstack/react-table'
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { DataTable } from '@/components/shared/DataTable';
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import {
+  useAtsClientsQuery,
+  useEodSubmissionsQuery,
+  useMyAssignmentsQuery,
+} from '@/hooks/queries';
+import type { IAssignment } from '@/types/assignment';
+import type { IAtsClient } from '@/types/ats';
+import type { IEodSubmission } from '@/types/eod-submission';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 function buildColumns(
   clientMap: Map<string, string>,
@@ -72,49 +76,54 @@ function buildColumns(
         <span className="text-sm">{getValue<string>()}</span>
       ),
     },
-  ]
+  ];
 }
 
 export default function EodHistoryPage() {
-  const { data: eods = [], isLoading } = useEodSubmissionsQuery()
-  const { data: atsClients = [] } = useAtsClientsQuery()
-  const { data: myAssignments = [] } = useMyAssignmentsQuery()
+  const { data: eods = [], isLoading } = useEodSubmissionsQuery();
+  const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: myAssignments = [] } = useMyAssignmentsQuery();
 
   const clientMap = useMemo(() => {
-    const m = new Map<string, string>()
-    atsClients.forEach((c: IAtsClient) => m.set(c.id, c.companyName))
-    return m
-  }, [atsClients])
+    const m = new Map<string, string>();
+    atsClients.forEach((c: IAtsClient) => m.set(c.id, c.companyName));
+    return m;
+  }, [atsClients]);
 
   const assignmentMap = useMemo(() => {
-    const m = new Map<string, string>()
-    myAssignments.forEach((a: IAssignment) => m.set(a.id, a.serviceType ?? 'VA Service'))
-    return m
-  }, [myAssignments])
+    const m = new Map<string, string>();
+    myAssignments.forEach((a: IAssignment) =>
+      m.set(a._id, a.serviceType ?? 'VA Service')
+    );
+    return m;
+  }, [myAssignments]);
 
-  const columns = useMemo(() => buildColumns(clientMap, assignmentMap), [clientMap, assignmentMap])
+  const columns = useMemo(
+    () => buildColumns(clientMap, assignmentMap),
+    [clientMap, assignmentMap]
+  );
   const [dateFrom, setDateFrom] = useState(() => {
-    const d = new Date()
-    d.setDate(d.getDate() - 30)
-    return d.toISOString().split('T')[0]
-  })
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
   const [dateTo, setDateTo] = useState(
     () => new Date().toISOString().split('T')[0]
-  )
+  );
 
   const filtered = useMemo(
     () =>
       eods.filter(e => {
-        if (dateFrom && e.date < dateFrom) return false
-        if (dateTo && e.date > dateTo) return false
-        return true
+        if (dateFrom && e.date < dateFrom) return false;
+        if (dateTo && e.date > dateTo) return false;
+        return true;
       }),
     [eods, dateFrom, dateTo]
-  )
+  );
 
   function clearFilters() {
-    setDateFrom('')
-    setDateTo('')
+    setDateFrom('');
+    setDateTo('');
   }
 
   return (
@@ -168,5 +177,5 @@ export default function EodHistoryPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

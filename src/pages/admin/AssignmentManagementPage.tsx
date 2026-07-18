@@ -49,6 +49,7 @@ import {
   useAtsClientsQuery,
   useAtsVAsQuery,
 } from '@/hooks/queries';
+import { useAppSelector } from '@/hooks/store';
 import type { IAccountManager } from '@/services/account-managers.service';
 import {
   createAssignment,
@@ -62,11 +63,11 @@ import { useQueryClient } from '@tanstack/react-query';
 
 const createSchema = z.object({
   clientId: z.string().min(1, 'Required'),
-  vaId: z.string().min(1, 'Required'),
+  candidateId: z.string().min(1, 'Required'),
   accountManagerId: z.string().min(1, 'Required'),
   startDate: z.string().min(1, 'Required'),
   endDate: z.string().optional(),
-  status: z.enum(['active', 'paused', 'ended']),
+  status: z.enum(['active', 'on_hold', 'ended']),
   serviceType: z.string().min(1, 'Required'),
   notes: z.string().optional(),
 });
@@ -74,7 +75,7 @@ type CreateFormData = z.infer<typeof createSchema>;
 
 const editSchema = z.object({
   accountManagerId: z.string().min(1, 'Required'),
-  status: z.enum(['active', 'paused', 'ended']),
+  status: z.enum(['active', 'on_hold', 'ended']),
   serviceType: z.string().min(1, 'Required'),
   endDate: z.string().optional(),
   notes: z.string().optional(),
@@ -97,9 +98,10 @@ function buildColumns(
   vaMap: Record<string, string>,
   amMap: Record<string, string>,
   onEdit: (a: IAssignment) => void,
-  onDeactivate: (a: IAssignment) => void
+  onDeactivate: (a: IAssignment) => void,
+  canManage: boolean
 ): ColumnDef<IAssignment>[] {
-  return [
+  const columns: ColumnDef<IAssignment>[] = [
     {
       accessorKey: 'clientId',
       header: 'Client',
@@ -108,7 +110,7 @@ function buildColumns(
         clientMap[getValue<string>()] ?? getValue<string>(),
     },
     {
-      accessorKey: 'vaId',
+      accessorKey: 'candidateId',
       header: 'VA',
       size: 130,
       cell: ({ getValue }) => vaMap[getValue<string>()] ?? getValue<string>(),
@@ -135,7 +137,7 @@ function buildColumns(
           {
             active:
               'bg-green-500/10 text-green-700 dark:text-green-400 ring-1 ring-green-500/20',
-            paused:
+            on_hold:
               'bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20',
             ended: 'bg-muted text-muted-foreground ring-1 ring-border',
           }[v] ?? 'bg-muted text-muted-foreground ring-1 ring-border';
@@ -153,7 +155,10 @@ function buildColumns(
       header: 'Service Type',
       cell: ({ getValue }) => getValue<string>() ?? '—',
     },
-    {
+  ];
+
+  if (canManage) {
+    columns.push({
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
@@ -195,8 +200,10 @@ function buildColumns(
           </div>
         </TooltipProvider>
       ),
-    },
-  ];
+    });
+  }
+
+  return columns;
 }
 
 // ─── Section card ─────────────────────────────────────────────────────────────
@@ -291,11 +298,11 @@ function CreateAssignmentForm({
     ? vas.filter(v => v.clientIds?.includes(selectedClientId))
     : [];
 
-  // Build a set of vaIds that have an active/paused assignment
-  const activeVaIds = new Set(
+  // Build a set of candidateIds that have an active/on_hold assignment
+  const activeCandidateIds = new Set(
     assignments
-      .filter(a => a.status === 'active' || a.status === 'paused')
-      .map(a => a.vaId)
+      .filter(a => a.status === 'active' || a.status === 'on_hold')
+      .map(a => a.candidateId)
   );
 
   const [serverError, setServerError] = useState('');
@@ -338,7 +345,7 @@ function CreateAssignmentForm({
                 value={field.value ?? ''}
                 onValueChange={v => {
                   field.onChange(v);
-                  setValue('vaId', '');
+                  setValue('candidateId', '');
                 }}
               >
                 <SelectTrigger className="rounded-xl border-input h-10">
@@ -358,7 +365,7 @@ function CreateAssignmentForm({
 
         <Field
           label="Virtual Assistant"
-          error={errors.vaId?.message}
+          error={errors.candidateId?.message}
           hint={
             !selectedClientId
               ? 'Select a client first to see their hired VAs'
@@ -369,7 +376,7 @@ function CreateAssignmentForm({
         >
           <Controller
             control={control}
-            name="vaId"
+            name="candidateId"
             render={({ field }) => (
               <Select
                 value={field.value ?? ''}
@@ -385,7 +392,7 @@ function CreateAssignmentForm({
                 </SelectTrigger>
                 <SelectContent>
                   {filteredVas.map(v => {
-                    const hasAssignment = activeVaIds.has(v.id);
+                    const hasAssignment = activeCandidateIds.has(v.id);
                     return (
                       <SelectItem key={v.id} value={v.id}>
                         <span className="flex items-center gap-2">
@@ -457,8 +464,7 @@ function CreateAssignmentForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
-                    <SelectItem value="ended">Ended</SelectItem>
+                    <SelectItem value="on_hold">On Hold</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -580,7 +586,7 @@ function EditAssignmentForm({
     setServerError('');
     try {
       const { endDate, ...rest } = data;
-      await updateAssignment(assignment.id, {
+      await updateAssignment(assignment._id, {
         ...rest,
         // Empty string = user cleared the field → send null so backend deletes it from Firestore
         // Value present → send as-is
@@ -654,7 +660,7 @@ function EditAssignmentForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
+                    <SelectItem value="on_hold">On Hold</SelectItem>
                     <SelectItem value="ended">Ended</SelectItem>
                   </SelectContent>
                 </Select>
@@ -744,6 +750,8 @@ function EditAssignmentForm({
 
 export default function AssignmentManagementPage() {
   const queryClient = useQueryClient();
+  const user = useAppSelector(s => s.auth.user);
+  const canManageAssignments = user?.role === 'admin';
   const { data: assignments = [], isLoading } = useAllAssignmentsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: atsVas = [] } = useAtsVAsQuery();
@@ -760,7 +768,7 @@ export default function AssignmentManagementPage() {
     if (!deactivateTarget) return;
     setDeactivateError(null);
     try {
-      await updateAssignment(deactivateTarget.id, { status: 'ended' });
+      await updateAssignment(deactivateTarget._id, { status: 'ended' });
       queryClient.invalidateQueries({ queryKey: QK.allAssignments });
     } catch {
       setDeactivateError('Failed to deactivate assignment. Please try again.');
@@ -790,7 +798,8 @@ export default function AssignmentManagementPage() {
       setEditTarget(a);
       setSheetMode('edit');
     },
-    a => setDeactivateTarget(a)
+    a => setDeactivateTarget(a),
+    canManageAssignments
   );
 
   return (
@@ -806,10 +815,12 @@ export default function AssignmentManagementPage() {
               Manage VA–client assignments
             </p>
           </div>
-          <Button onClick={() => setSheetMode('create')}>
-            <PlusIcon className="size-4" />
-            New Assignment
-          </Button>
+          {canManageAssignments && (
+            <Button onClick={() => setSheetMode('create')}>
+              <PlusIcon className="size-4" />
+              New Assignment
+            </Button>
+          )}
         </div>
 
         {/* Table */}
@@ -855,7 +866,7 @@ export default function AssignmentManagementPage() {
 
           {sheetMode === 'edit' && editTarget && (
             <EditAssignmentForm
-              key={editTarget.id}
+              key={editTarget._id}
               assignment={editTarget}
               team={accountManagers}
               onSuccess={() => {
@@ -874,7 +885,7 @@ export default function AssignmentManagementPage() {
         title="End Assignment"
         description={
           deactivateTarget
-            ? `End the assignment for "${deactivateTarget.serviceType ?? deactivateTarget.id}"? This will end the active VA–client relationship.`
+            ? `End the assignment for "${deactivateTarget.serviceType ?? deactivateTarget._id}"? This will end the active VA–client relationship.`
             : ''
         }
         confirmLabel="End Assignment"

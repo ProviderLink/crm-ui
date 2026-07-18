@@ -1,14 +1,14 @@
-import api from '@/lib/api'
+import api from '@/lib/api';
 import type {
   ISurveyReminder,
   UpdateSurveyReminderPayload,
-} from '@/types/survey-reminder'
+} from '@/types/survey-reminder';
 
 export async function getSurveyReminders(): Promise<ISurveyReminder[]> {
   const { data } = await api.get<{ data: ISurveyReminder[] }>(
-    '/survey-reminders'
-  )
-  return data.data
+    '/crm/survey-reminders'
+  );
+  return data.data;
 }
 
 export async function updateSurveyReminder(
@@ -16,8 +16,8 @@ export async function updateSurveyReminder(
   payload: UpdateSurveyReminderPayload
 ): Promise<ISurveyReminder> {
   const { data } = await api.patch<{ data: ISurveyReminder }>(
-    `/survey-reminders/${id}`,
+    `/crm/survey-reminders/${id}`,
     payload
-  )
-  return data.data
+  );
+  return data.data;
 }

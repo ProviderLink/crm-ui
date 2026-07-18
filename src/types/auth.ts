@@ -5,8 +5,6 @@ export interface IUser {
   email: string;
   name: string;
   role: UserRole;
-  atsId?: string;
-  companyName?: string;
 }
 
 export interface AuthState {

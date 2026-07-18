@@ -1,18 +1,18 @@
-import api from '@/lib/api'
-import type { IVaProfile, UpdateVaProfilePayload } from '@/types/va-profile'
+import type { IVaProfile, UpdateVaProfilePayload } from '@/types/va-profile';
+
+/**
+ * TODO: ats-crm-backend does not have a standalone /va-profiles resource.
+ * VA workload/risk data should be stored on the Candidate model or a
+ * dedicated CRM sub-resource. Wire this up once the data model is settled.
+ */
 
 export async function getVaProfiles(): Promise<IVaProfile[]> {
-  const { data } = await api.get<{ data: IVaProfile[] }>('/va-profiles')
-  return data.data
+  return [];
 }
 
 export async function updateVaProfile(
-  id: string,
-  payload: UpdateVaProfilePayload
+  _id: string,
+  _payload: UpdateVaProfilePayload
 ): Promise<IVaProfile> {
-  const { data } = await api.patch<{ data: IVaProfile }>(
-    `/va-profiles/${id}`,
-    payload
-  )
-  return data.data
+  throw new Error('Not implemented — VA profile updates not yet supported');
 }

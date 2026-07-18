@@ -1,32 +1,9 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import type { ColumnDef } from '@tanstack/react-table';
-import {
-  EyeIcon,
-  KeyRoundIcon,
-  MailIcon,
-  PenLineIcon,
-  UserPlusIcon,
-  XCircleIcon,
-} from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { z } from 'zod';
+import { EyeIcon, MailIcon, ShieldCheckIcon, UsersIcon } from 'lucide-react';
+import { useState } from 'react';
 
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { DatePickerField } from '@/components/ui/date-picker-field';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -35,1403 +12,289 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  QK,
-  useAtsClientsQuery,
-  useAtsVAsQuery,
-  useClientAccountsQuery,
-  useCrmClientUsersQuery,
-  useCrmVaUsersQuery,
-  useVaProfilesQuery,
-} from '@/hooks/queries';
-import {
-  createCrmUser,
-  deactivateCrmUser,
-  inviteCrmUser,
-  resetCrmUserPassword,
+  getAccountManagers,
+  getCrmUsersByRole,
+  type IAccountManager,
   type ICrmUser,
 } from '@/services/account-managers.service';
-import { updateClientAccount } from '@/services/client-accounts.service';
-import { updateVaProfile } from '@/services/va-profiles.service';
-import type { IAtsCandidate, IAtsClient } from '@/types/ats';
-import type { IClientAccount } from '@/types/client-account';
-import type { IVaProfile } from '@/types/va-profile';
-import { useQueryClient } from '@tanstack/react-query';
-
-// ─── Schemas ─────────────────────────────────────────────────────────────────
-
-const clientAccountSchema = z.object({
-  healthStatus: z.enum(['green', 'yellow', 'red']),
-  satisfactionScore: z.string().optional(),
-  baaSigned: z.boolean(),
-  baaSignedDate: z.string().optional(),
-  onboardingComplete: z.boolean(),
-  sopReceived: z.boolean(),
-  primaryContact: z.string().optional(),
-  secondaryContact: z.string().optional(),
-  lastClientCheckin: z.string().optional(),
-  emrSystem: z.string().optional(),
-  openIssuesCount: z.number().int().min(0),
-  notes: z.string().optional(),
-});
-type ClientAccountFormData = z.infer<typeof clientAccountSchema>;
-
-const vaProfileSchema = z.object({
-  workloadLevel: z.enum(['low', 'normal', 'high', 'overloaded']),
-  satisfactionScore: z.string().optional(),
-  burnoutRiskFlag: z.boolean(),
-  replacementRiskFlag: z.boolean(),
-  lastVaCheckin: z.string().optional(),
-  notes: z.string().optional(),
-});
-type VaProfileFormData = z.infer<typeof vaProfileSchema>;
-
-const provisionLoginSchema = z.object({
-  email: z.string().email('Invalid email'),
-  firstName: z.string().min(1, 'Required'),
-  lastName: z.string().min(1, 'Required'),
-  phone: z.string().optional(),
-});
-type ProvisionLoginFormData = z.infer<typeof provisionLoginSchema>;
-
-const inviteAccessSchema = z.object({
-  email: z.string().email('Invalid email'),
-  firstName: z.string().min(1, 'Required'),
-  lastName: z.string().min(1, 'Required'),
-});
-type InviteAccessFormData = z.infer<typeof inviteAccessSchema>;
+import { useQuery } from '@tanstack/react-query';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function LoginStatusBadge({ user }: { user: ICrmUser | undefined }) {
-  if (!user) {
-    return (
-      <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
-        Not provisioned
-      </span>
-    );
-  }
-  if (!user.isActive) {
-    return (
-      <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
-        Deactivated
-      </span>
-    );
-  }
-  if (!user.emailVerified) {
-    return (
-      <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
-        Invitation Sent
-      </span>
-    );
-  }
+function RoleBadge({ role }: { role: string }) {
+  const styles: Record<string, string> = {
+    admin: 'bg-red-500/10 text-red-700 dark:text-red-400 ring-red-500/20',
+    account_manager:
+      'bg-blue-500/10 text-blue-700 dark:text-blue-400 ring-blue-500/20',
+    va: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 ring-purple-500/20',
+    client:
+      'bg-green-500/10 text-green-700 dark:text-green-400 ring-green-500/20',
+  };
+  const labels: Record<string, string> = {
+    admin: 'Admin',
+    account_manager: 'AM',
+    va: 'VA',
+    client: 'Client',
+  };
   return (
-    <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-400">
+    <span
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${styles[role] ?? 'bg-muted text-muted-foreground ring-border'}`}
+    >
+      {labels[role] ?? role}
+    </span>
+  );
+}
+
+function ActiveBadge({ active }: { active: boolean }) {
+  return active ? (
+    <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-500/20">
+      <span className="size-1.5 rounded-full bg-green-500" />
       Active
     </span>
-  );
-}
-
-function HealthBadge({ status }: { status: string }) {
-  const cls =
-    status === 'green'
-      ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-      : status === 'yellow'
-        ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-        : 'bg-red-500/10 text-red-600 dark:text-red-400';
-  return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${cls}`}
-    >
-      {status}
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
+      <span className="size-1.5 rounded-full bg-muted-foreground/40" />
+      Inactive
     </span>
   );
 }
 
-function WorkloadBadge({ level }: { level: string }) {
-  const cls =
-    level === 'low'
-      ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-      : level === 'normal'
-        ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-        : level === 'high'
-          ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-          : 'bg-red-500/10 text-red-600 dark:text-red-400';
-  return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${cls}`}
-    >
-      {level}
-    </span>
-  );
-}
+// ─── User tables ──────────────────────────────────────────────────────────────
 
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <Label className="text-sm font-medium leading-none text-foreground">
-        {label}
-      </Label>
-      {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
-    </div>
-  );
-}
+type UserRow = { name: string; email: string; role: string; isActive: boolean };
 
-function CheckboxField({
-  label,
-  checked,
-  onCheckedChange,
-}: {
-  label: string;
-  checked: boolean;
-  onCheckedChange: (v: boolean) => void;
-}) {
-  const id = `checkbox-${label.toLowerCase().replace(/\s+/g, '-')}`;
-  return (
-    <div className="flex items-center gap-2">
-      <Checkbox
-        checked={checked}
-        onCheckedChange={v => onCheckedChange(v === true)}
-        id={id}
-      />
-      <Label
-        htmlFor={id}
-        className="text-sm font-medium text-foreground cursor-pointer"
-      >
-        {label}
-      </Label>
-    </div>
-  );
-}
-
-// ─── Provision Login Form ─────────────────────────────────────────────────────
-
-function ProvisionLoginForm({
-  role,
-  atsId,
-  defaultFirstName,
-  defaultLastName,
-  onSuccess,
-}: {
-  role: 'va' | 'client';
-  atsId: string;
-  defaultFirstName?: string;
-  defaultLastName?: string;
-  onSuccess: () => void;
-}) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<ProvisionLoginFormData>({
-    resolver: zodResolver(provisionLoginSchema),
-    defaultValues: {
-      firstName: defaultFirstName ?? '',
-      lastName: defaultLastName ?? '',
+function buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
+  return [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-xs">
+            {row.original.name
+              .split(' ')
+              .map(n => n[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2)}
+          </div>
+          <span className="text-sm font-medium">{row.original.name}</span>
+        </div>
+      ),
     },
-  });
-  const [serverError, setServerError] = useState('');
-
-  async function onSubmit(data: ProvisionLoginFormData) {
-    setServerError('');
-    try {
-      await createCrmUser({ ...data, role, atsId });
-      toast.success('Login provisioned — credentials emailed.');
-      onSuccess();
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to provision login.';
-      setServerError(msg);
-    }
-  }
-
-  return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mt-6 flex flex-col gap-5 pb-6"
-    >
-      {serverError && (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {serverError}
-        </p>
-      )}
-      <p className="text-sm text-muted-foreground">
-        A temporary password will be auto-generated and emailed to the user.
-      </p>
-      <div className="flex flex-col gap-1.5">
-        <Label>Email *</Label>
-        <Input
-          {...register('email')}
-          type="email"
-          placeholder="user@example.com"
-          className="rounded-md border-input"
-        />
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
-        )}
-      </div>
-      <div className="flex gap-3">
-        <div className="flex flex-col gap-1.5 flex-1">
-          <Label>First Name *</Label>
-          <Input
-            {...register('firstName')}
-            placeholder="First"
-            className="rounded-md border-input"
-          />
-          {errors.firstName && (
-            <p className="text-xs text-destructive">
-              {errors.firstName.message}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5 flex-1">
-          <Label>Last Name *</Label>
-          <Input
-            {...register('lastName')}
-            placeholder="Last"
-            className="rounded-md border-input"
-          />
-          {errors.lastName && (
-            <p className="text-xs text-destructive">
-              {errors.lastName.message}
-            </p>
-          )}
-        </div>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label>Phone</Label>
-        <Input
-          {...register('phone')}
-          placeholder="+1 555 000 0000"
-          className="rounded-md border-input"
-        />
-      </div>
-      <Button type="submit" disabled={isSubmitting} className="mt-2">
-        {isSubmitting ? 'Provisioning…' : 'Provision Login'}
-      </Button>
-    </form>
-  );
-}
-
-// ─── Client Account Edit Form ─────────────────────────────────────────────────
-
-function InviteAccessForm({
-  role,
-  atsId,
-  defaultEmail,
-  defaultFirstName,
-  defaultLastName,
-  onSuccess,
-}: {
-  role: 'va' | 'client';
-  atsId: string;
-  defaultEmail?: string;
-  defaultFirstName?: string;
-  defaultLastName?: string;
-  onSuccess: () => void;
-}) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<InviteAccessFormData>({
-    resolver: zodResolver(inviteAccessSchema),
-    defaultValues: {
-      email: defaultEmail ?? '',
-      firstName: defaultFirstName ?? '',
-      lastName: defaultLastName ?? '',
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: ({ getValue }) => (
+        <span className="text-sm text-muted-foreground">
+          {getValue<string>()}
+        </span>
+      ),
     },
-  });
-  const [serverError, setServerError] = useState('');
-  const roleLabel = role === 'va' ? 'VA Portal' : 'Client Portal';
+    {
+      accessorKey: 'role',
+      header: 'Role',
+      cell: ({ getValue }) => <RoleBadge role={getValue<string>()} />,
+    },
+    {
+      accessorKey: 'isActive',
+      header: 'Status',
+      cell: ({ getValue }) => <ActiveBadge active={getValue<boolean>()} />,
+    },
+    {
+      id: 'actions',
+      header: '',
+      size: 50,
+      cell: ({ row }) => (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          onClick={() => onView(row.original)}
+        >
+          <EyeIcon className="size-3.5" />
+        </Button>
+      ),
+    },
+  ];
+}
 
-  async function onSubmit(data: InviteAccessFormData) {
-    setServerError('');
-    try {
-      await inviteCrmUser({ ...data, role, atsId });
-      toast.success('Invitation email sent.');
-      onSuccess();
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to send invitation.';
-      setServerError(msg);
-    }
-  }
+// ─── Detail Sheet ─────────────────────────────────────────────────────────────
 
+function UserDetailSheet({
+  user,
+  open,
+  onClose,
+}: {
+  user: UserRow | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  if (!user) return null;
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mt-6 flex flex-col gap-5 pb-6"
-    >
-      {serverError && (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {serverError}
-        </p>
-      )}
-      <p className="text-sm text-muted-foreground">
-        An invitation email will be sent with a secure link to activate their{' '}
-        <strong>{roleLabel}</strong> access.
-      </p>
-      <div className="flex flex-col gap-1.5">
-        <Label>Email *</Label>
-        <Input
-          {...register('email')}
-          type="email"
-          placeholder="user@example.com"
-          className="rounded-md border-input"
-        />
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
-        )}
-      </div>
-      <div className="flex gap-3">
-        <div className="flex flex-col gap-1.5 flex-1">
-          <Label>First Name *</Label>
-          <Input
-            {...register('firstName')}
-            placeholder="First"
-            className="rounded-md border-input"
-          />
-          {errors.firstName && (
-            <p className="text-xs text-destructive">
-              {errors.firstName.message}
-            </p>
-          )}
+    <Sheet open={open} onOpenChange={o => !o && onClose()}>
+      <SheetContent className="sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Account Details</SheetTitle>
+          <SheetDescription>
+            Read-only view — manage access from the ATS.
+          </SheetDescription>
+        </SheetHeader>
+        <div className="mt-6 space-y-5">
+          <div className="flex items-center gap-4">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-xl">
+              {user.name
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)}
+            </div>
+            <div>
+              <p className="text-lg font-semibold">{user.name}</p>
+              <RoleBadge role={user.role} />
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-4 space-y-3">
+            <DetailRow
+              icon={<MailIcon className="size-3.5" />}
+              label="Email"
+              value={user.email}
+            />
+            <DetailRow
+              icon={<ShieldCheckIcon className="size-3.5" />}
+              label="Role"
+              value={user.role}
+            />
+            <DetailRow
+              icon={<UsersIcon className="size-3.5" />}
+              label="Access Status"
+              value={
+                user.isActive
+                  ? 'Active — has CRM access'
+                  : 'Inactive — no CRM access'
+              }
+            />
+          </div>
         </div>
-        <div className="flex flex-col gap-1.5 flex-1">
-          <Label>Last Name *</Label>
-          <Input
-            {...register('lastName')}
-            placeholder="Last"
-            className="rounded-md border-input"
-          />
-          {errors.lastName && (
-            <p className="text-xs text-destructive">
-              {errors.lastName.message}
-            </p>
-          )}
-        </div>
-      </div>
-      <Button type="submit" disabled={isSubmitting} className="mt-2">
-        {isSubmitting ? 'Sending…' : 'Send Invitation'}
-      </Button>
-    </form>
+      </SheetContent>
+    </Sheet>
   );
 }
 
-// ─── Edit Client Account Form ─────────────────────────────────────────────────
-
-function EditClientAccountForm({
-  account,
-  onSuccess,
+function DetailRow({
+  icon,
+  label,
+  value,
 }: {
-  account: IClientAccount;
-  onSuccess: () => void;
+  icon: React.ReactNode;
+  label: string;
+  value: string;
 }) {
-  const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<ClientAccountFormData>({
-    resolver: zodResolver(clientAccountSchema),
-  });
-
-  const [serverError, setServerError] = useState('');
-
-  useEffect(() => {
-    reset({
-      healthStatus: account.healthStatus,
-      satisfactionScore: account.satisfactionScore?.toString() ?? '',
-      baaSigned: account.baaSigned,
-      baaSignedDate: account.baaSignedDate?.slice(0, 10) ?? '',
-      onboardingComplete: account.onboardingComplete,
-      sopReceived: account.sopReceived,
-      primaryContact: account.primaryContact ?? '',
-      secondaryContact: account.secondaryContact ?? '',
-      lastClientCheckin: account.lastClientCheckin?.slice(0, 10) ?? '',
-      emrSystem: account.emrSystem ?? '',
-      openIssuesCount: account.openIssuesCount,
-      notes: account.notes ?? '',
-    });
-  }, [account, reset]);
-
-  async function onSubmit(data: ClientAccountFormData) {
-    setServerError('');
-    try {
-      await updateClientAccount(account.clientId, {
-        ...data,
-        satisfactionScore: data.satisfactionScore
-          ? parseInt(data.satisfactionScore, 10)
-          : undefined,
-      });
-      onSuccess();
-    } catch {
-      setServerError('Failed to save changes. Please try again.');
-    }
-  }
-
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mt-6 flex flex-col gap-7 pb-6"
-    >
-      {serverError && (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {serverError}
-        </p>
-      )}
-
-      <Field label="Health Status" error={errors.healthStatus?.message}>
-        <Controller
-          control={control}
-          name="healthStatus"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-md border-input">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="green">Green — Healthy</SelectItem>
-                <SelectItem value="yellow">
-                  Yellow — Attention needed
-                </SelectItem>
-                <SelectItem value="red">Red — At risk</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Field>
-
-      <Field
-        label="Satisfaction Score (1–5)"
-        error={errors.satisfactionScore?.message}
-      >
-        <Controller
-          control={control}
-          name="satisfactionScore"
-          render={({ field }) => (
-            <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-md border-input">
-                <SelectValue placeholder="Select score" />
-              </SelectTrigger>
-              <SelectContent>
-                {['1', '2', '3', '4', '5'].map(v => (
-                  <SelectItem key={v} value={v}>
-                    {v}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Field>
-
-      <Controller
-        control={control}
-        name="baaSigned"
-        render={({ field }) => (
-          <CheckboxField
-            label="BAA Signed"
-            checked={field.value}
-            onCheckedChange={field.onChange}
-          />
-        )}
-      />
-
-      <Field label="BAA Signed Date" error={errors.baaSignedDate?.message}>
-        <Controller
-          name="baaSignedDate"
-          control={control}
-          render={({ field }) => (
-            <DatePickerField
-              value={field.value ?? ''}
-              onChange={field.onChange}
-            />
-          )}
-        />
-      </Field>
-
-      <Controller
-        control={control}
-        name="onboardingComplete"
-        render={({ field }) => (
-          <CheckboxField
-            label="Onboarding Complete"
-            checked={field.value}
-            onCheckedChange={field.onChange}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="sopReceived"
-        render={({ field }) => (
-          <CheckboxField
-            label="SOP Received"
-            checked={field.value}
-            onCheckedChange={field.onChange}
-          />
-        )}
-      />
-
-      <Field label="EMR System" error={errors.emrSystem?.message}>
-        <Input
-          {...register('emrSystem')}
-          placeholder="e.g. Epic, Athena"
-          className="rounded-md border-input"
-        />
-      </Field>
-
-      <Field label="Primary Contact" error={errors.primaryContact?.message}>
-        <Input
-          {...register('primaryContact')}
-          placeholder="Name or email"
-          className="rounded-md border-input"
-        />
-      </Field>
-
-      <Field label="Secondary Contact" error={errors.secondaryContact?.message}>
-        <Input
-          {...register('secondaryContact')}
-          placeholder="Name or email"
-          className="rounded-md border-input"
-        />
-      </Field>
-
-      <Field
-        label="Last Client Check-in"
-        error={errors.lastClientCheckin?.message}
-      >
-        <Controller
-          name="lastClientCheckin"
-          control={control}
-          render={({ field }) => (
-            <DatePickerField
-              value={field.value ?? ''}
-              onChange={field.onChange}
-            />
-          )}
-        />
-      </Field>
-
-      <Field label="Open Issues Count" error={errors.openIssuesCount?.message}>
-        <Input
-          type="number"
-          min="0"
-          {...register('openIssuesCount', { valueAsNumber: true })}
-          className="rounded-md border-input"
-        />
-      </Field>
-
-      <Field label="Notes" error={errors.notes?.message}>
-        <Textarea
-          {...register('notes')}
-          placeholder="Internal notes…"
-          className="rounded-md border-input"
-        />
-      </Field>
-
-      <Button type="submit" disabled={isSubmitting} className="mt-2">
-        {isSubmitting ? 'Saving…' : 'Save Changes'}
-      </Button>
-    </form>
-  );
-}
-
-// ─── VA Profile Edit Form ─────────────────────────────────────────────────────
-
-function EditVaProfileForm({
-  profile,
-  onSuccess,
-}: {
-  profile: IVaProfile;
-  onSuccess: () => void;
-}) {
-  const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<VaProfileFormData>({ resolver: zodResolver(vaProfileSchema) });
-
-  const [serverError, setServerError] = useState('');
-
-  useEffect(() => {
-    reset({
-      workloadLevel: profile.workloadLevel,
-      satisfactionScore: profile.satisfactionScore?.toString() ?? '',
-      burnoutRiskFlag: profile.burnoutRiskFlag,
-      replacementRiskFlag: profile.replacementRiskFlag,
-      lastVaCheckin: profile.lastVaCheckin?.slice(0, 10) ?? '',
-      notes: profile.notes ?? '',
-    });
-  }, [profile, reset]);
-
-  async function onSubmit(data: VaProfileFormData) {
-    setServerError('');
-    try {
-      await updateVaProfile(profile.vaId, {
-        ...data,
-        satisfactionScore: data.satisfactionScore
-          ? parseInt(data.satisfactionScore, 10)
-          : undefined,
-      });
-      onSuccess();
-    } catch {
-      setServerError('Failed to save changes. Please try again.');
-    }
-  }
-
-  return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mt-6 flex flex-col gap-7 pb-6"
-    >
-      {serverError && (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {serverError}
-        </p>
-      )}
-
-      <Field label="Workload Level" error={errors.workloadLevel?.message}>
-        <Controller
-          control={control}
-          name="workloadLevel"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-md border-input">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="overloaded">Overloaded</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Field>
-
-      <Field
-        label="Satisfaction Score (1–5)"
-        error={errors.satisfactionScore?.message}
-      >
-        <Controller
-          control={control}
-          name="satisfactionScore"
-          render={({ field }) => (
-            <Select value={field.value ?? ''} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-md border-input">
-                <SelectValue placeholder="Select score" />
-              </SelectTrigger>
-              <SelectContent>
-                {['1', '2', '3', '4', '5'].map(v => (
-                  <SelectItem key={v} value={v}>
-                    {v}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </Field>
-
-      <Controller
-        control={control}
-        name="burnoutRiskFlag"
-        render={({ field }) => (
-          <CheckboxField
-            label="Burnout Risk"
-            checked={field.value}
-            onCheckedChange={field.onChange}
-          />
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="replacementRiskFlag"
-        render={({ field }) => (
-          <CheckboxField
-            label="Replacement Risk"
-            checked={field.value}
-            onCheckedChange={field.onChange}
-          />
-        )}
-      />
-
-      <Field label="Last VA Check-in" error={errors.lastVaCheckin?.message}>
-        <Controller
-          name="lastVaCheckin"
-          control={control}
-          render={({ field }) => (
-            <DatePickerField
-              value={field.value ?? ''}
-              onChange={field.onChange}
-            />
-          )}
-        />
-      </Field>
-
-      <Field label="Notes" error={errors.notes?.message}>
-        <Textarea
-          {...register('notes')}
-          placeholder="Internal notes…"
-          className="rounded-md border-input"
-        />
-      </Field>
-
-      <Button type="submit" disabled={isSubmitting} className="mt-2">
-        {isSubmitting ? 'Saving…' : 'Save Changes'}
-      </Button>
-    </form>
+    <div className="flex items-start gap-3">
+      <span className="mt-0.5 text-muted-foreground">{icon}</span>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          {label}
+        </span>
+        <span className="text-sm">{value}</span>
+      </div>
+    </div>
   );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AccountManagementPage() {
-  const queryClient = useQueryClient();
-  const { data: accounts = [], isLoading: loadingAccounts } =
-    useClientAccountsQuery();
-  const { data: profiles = [], isLoading: loadingProfiles } =
-    useVaProfilesQuery();
-  const { data: atsClients = [] } = useAtsClientsQuery();
-  const { data: atsVas = [] } = useAtsVAsQuery();
-  const { data: crmVaUsers = [] } = useCrmVaUsersQuery();
-  const { data: crmClientUsers = [] } = useCrmClientUsersQuery();
-  const isLoading = loadingAccounts || loadingProfiles;
+  const [detailUser, setDetailUser] = useState<UserRow | null>(null);
 
-  const [editAccount, setEditAccount] = useState<IClientAccount | null>(null);
-  const [editProfile, setEditProfile] = useState<IVaProfile | null>(null);
-  const [viewAccount, setViewAccount] = useState<IClientAccount | null>(null);
-  const [viewProfile, setViewProfile] = useState<IVaProfile | null>(null);
+  const { data: vaUsers = [], isLoading: loadingVa } = useQuery({
+    queryKey: ['shared-users', 'va'],
+    queryFn: () => getCrmUsersByRole('va'),
+  });
+  const { data: clientUsers = [], isLoading: loadingClient } = useQuery({
+    queryKey: ['shared-users', 'client'],
+    queryFn: () => getCrmUsersByRole('client'),
+  });
+  const { data: amUsers = [], isLoading: loadingAm } = useQuery({
+    queryKey: ['shared-users', 'am'],
+    queryFn: () => getAccountManagers(),
+  });
+  const { data: adminUsers = [], isLoading: loadingAdmin } = useQuery({
+    queryKey: ['shared-users', 'admin'],
+    queryFn: () => getCrmUsersByRole('admin'),
+  });
 
-  // Provision login sheet state
-  type ProvisionTarget = {
-    role: 'va' | 'client';
-    atsId: string;
-    firstName?: string;
-    lastName?: string;
-    label: string;
-  };
-  const [provisionTarget, setProvisionTarget] =
-    useState<ProvisionTarget | null>(null);
-
-  // Confirm dialog state for CRM user actions
-  type CrmConfirmAction = { type: 'resetPw' | 'deactivate'; user: ICrmUser };
-  const [crmConfirm, setCrmConfirm] = useState<CrmConfirmAction | null>(null);
-
-  // Invite access sheet state
-  type InviteTarget = {
-    role: 'va' | 'client';
-    atsId: string;
-    defaultEmail?: string;
-    defaultFirstName?: string;
-    defaultLastName?: string;
-    label: string;
-  };
-  const [inviteTarget, setInviteTarget] = useState<InviteTarget | null>(null);
-
-  async function executeCrmConfirm() {
-    if (!crmConfirm) return;
-    const { type, user } = crmConfirm;
-    setCrmConfirm(null);
-    if (type === 'resetPw') {
-      try {
-        await resetCrmUserPassword(user.id);
-        toast.success('Password reset — new credentials emailed.');
-      } catch {
-        toast.error('Failed to reset password.');
-      }
-    } else {
-      try {
-        await deactivateCrmUser(user.id);
-        toast.success('Login deactivated.');
-        invalidateCrmUsers();
-      } catch {
-        toast.error('Failed to deactivate login.');
-      }
-    }
+  function toRow(u: ICrmUser | IAccountManager): UserRow {
+    return {
+      name: `${u.firstName} ${u.lastName}`,
+      email: u.email,
+      role: u.role,
+      isActive: u.isActive,
+    };
   }
 
-  const clientMap: Record<string, IAtsClient> = {};
-  for (const c of atsClients) clientMap[c.id] = c;
+  const vaRows: UserRow[] = vaUsers.map(toRow);
+  const clientRows: UserRow[] = clientUsers.map(toRow);
+  const amRows: UserRow[] = amUsers.map(toRow);
+  const adminRows: UserRow[] = adminUsers.map(toRow);
 
-  const vaMap: Record<string, IAtsCandidate> = {};
-  for (const v of atsVas) vaMap[v.id] = v;
-
-  // Build atsId → CRM user maps for login status
-  const crmClientMap: Record<string, ICrmUser> = {};
-  for (const u of crmClientUsers) if (u.atsId) crmClientMap[u.atsId] = u;
-
-  const crmVaMap: Record<string, ICrmUser> = {};
-  for (const u of crmVaUsers) if (u.atsId) crmVaMap[u.atsId] = u;
-
-  // Clients that have at least one hired VA
-  const clientIdsWithHirings = new Set(
-    atsVas.flatMap(v => v.clientIds ?? [])
-  );
-  const clientsWithHirings = atsClients.filter(c =>
-    clientIdsWithHirings.has(c.id)
-  );
-
-  function invalidateCrmUsers() {
-    queryClient.invalidateQueries({ queryKey: QK.crmClientUsers });
-    queryClient.invalidateQueries({ queryKey: QK.crmVaUsers });
-  }
-
-  function ActionButtons({
-    crmUser,
-    onProvision,
-    onResetPassword,
-    onDeactivate,
-  }: {
-    crmUser: ICrmUser | undefined;
-    onProvision: () => void;
-    onResetPassword: (u: ICrmUser) => void;
-    onDeactivate: (u: ICrmUser) => void;
-  }) {
-    async function handleResetPassword() {
-      if (!crmUser) return;
-      onResetPassword(crmUser);
-    }
-    async function handleDeactivate() {
-      if (!crmUser) return;
-      onDeactivate(crmUser);
-    }
-
-    return (
-      <TooltipProvider delayDuration={300}>
-        <div className="flex items-center gap-1">
-          {!crmUser ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                  onClick={onProvision}
-                >
-                  <UserPlusIcon className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Provision Login</TooltipContent>
-            </Tooltip>
-          ) : (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                    onClick={handleResetPassword}
-                    disabled={!crmUser.isActive}
-                  >
-                    <KeyRoundIcon className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Reset Password</TooltipContent>
-              </Tooltip>
-              {crmUser.isActive && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 bg-white/[0.02] text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                      onClick={handleDeactivate}
-                    >
-                      <XCircleIcon className="size-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Deactivate Login</TooltipContent>
-                </Tooltip>
-              )}
-            </>
-          )}
-        </div>
-      </TooltipProvider>
-    );
-  }
-
-  // ── Client Accounts columns ──────────────────────────────────────────────
-  const accountColumns: ColumnDef<IClientAccount>[] = [
-    {
-      accessorKey: 'clientId',
-      header: 'Company',
-      cell: ({ getValue }) =>
-        clientMap[getValue<string>()]?.companyName ?? getValue<string>(),
-    },
-    {
-      accessorKey: 'healthStatus',
-      header: 'Health',
-      size: 90,
-      cell: ({ getValue }) => <HealthBadge status={getValue<string>()} />,
-    },
-    {
-      accessorKey: 'baaSigned',
-      header: 'BAA',
-      size: 60,
-      cell: ({ getValue }) => (getValue<boolean>() ? '✓' : '—'),
-      enableSorting: false,
-    },
-    {
-      id: 'crmLogin',
-      header: 'CRM Login',
-      enableSorting: false,
-      size: 120,
-      cell: ({ row }) => (
-        <LoginStatusBadge user={crmClientMap[row.original.clientId]} />
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      meta: { headerClassName: 'text-center' },
-      enableSorting: false,
-      size: 110,
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center gap-1">
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                  onClick={() => setViewAccount(row.original)}
-                >
-                  <EyeIcon className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">View Details</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                  onClick={() => setEditAccount(row.original)}
-                >
-                  <PenLineIcon className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Edit</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <ActionButtons
-            crmUser={crmClientMap[row.original.clientId]}
-            onProvision={() =>
-              setProvisionTarget({
-                role: 'client',
-                atsId: row.original.clientId,
-                label:
-                  clientMap[row.original.clientId]?.companyName ??
-                  row.original.clientId,
-              })
-            }
-            onResetPassword={u => setCrmConfirm({ type: 'resetPw', user: u })}
-            onDeactivate={u => setCrmConfirm({ type: 'deactivate', user: u })}
-          />
-        </div>
-      ),
-    },
-  ];
-
-  // ── VA Profile columns ───────────────────────────────────────────────────
-  const profileColumns: ColumnDef<IVaProfile>[] = [
-    {
-      accessorKey: 'vaId',
-      header: 'VA',
-      cell: ({ getValue }) => {
-        const v = vaMap[getValue<string>()];
-        return v ? `${v.firstName} ${v.lastName}` : getValue<string>();
-      },
-    },
-    {
-      accessorKey: 'workloadLevel',
-      header: 'Workload',
-      size: 110,
-      cell: ({ getValue }) => <WorkloadBadge level={getValue<string>()} />,
-    },
-    {
-      accessorKey: 'burnoutRiskFlag',
-      header: 'Burnout',
-      size: 80,
-      cell: ({ getValue }) => (getValue<boolean>() ? '🔴' : '—'),
-      enableSorting: false,
-    },
-    {
-      id: 'crmLogin',
-      header: 'CRM Login',
-      enableSorting: false,
-      size: 120,
-      cell: ({ row }) => (
-        <LoginStatusBadge user={crmVaMap[row.original.vaId]} />
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      meta: { headerClassName: 'text-center' },
-      enableSorting: false,
-      size: 110,
-      cell: ({ row }) => {
-        const va = vaMap[row.original.vaId];
-        return (
-          <div className="flex items-center justify-center gap-1">
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                    onClick={() => setViewProfile(row.original)}
-                  >
-                    <EyeIcon className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">View Details</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                    onClick={() => setEditProfile(row.original)}
-                  >
-                    <PenLineIcon className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">Edit</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <ActionButtons
-              crmUser={crmVaMap[row.original.vaId]}
-              onProvision={() =>
-                setProvisionTarget({
-                  role: 'va',
-                  atsId: row.original.vaId,
-                  firstName: va?.firstName,
-                  lastName: va?.lastName,
-                  label: va
-                    ? `${va.firstName} ${va.lastName}`
-                    : row.original.vaId,
-                })
-              }
-              onResetPassword={u => setCrmConfirm({ type: 'resetPw', user: u })}
-              onDeactivate={u => setCrmConfirm({ type: 'deactivate', user: u })}
-            />
-          </div>
-        );
-      },
-    },
-  ];
-
-  // ── VA Access columns ────────────────────────────────────────────────────
-  const vaAccessColumns: ColumnDef<IAtsCandidate>[] = [
-    {
-      id: 'name',
-      header: 'VA',
-      cell: ({ row }) =>
-        `${row.original.firstName} ${row.original.lastName}`,
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-      cell: ({ getValue }) => (getValue<string>() ?? '—'),
-    },
-    {
-      id: 'accessStatus',
-      header: 'Access Status',
-      size: 140,
-      enableSorting: false,
-      cell: ({ row }) => (
-        <LoginStatusBadge user={crmVaMap[row.original.id]} />
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      meta: { headerClassName: 'text-center' },
-      enableSorting: false,
-      size: 80,
-      cell: ({ row }) => {
-        const va = row.original;
-        const crmUser = crmVaMap[va.id];
-        return (
-          <div className="flex items-center justify-center gap-1">
-            <TooltipProvider delayDuration={300}>
-              {!crmUser ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                      onClick={() =>
-                        setInviteTarget({
-                          role: 'va',
-                          atsId: va.id,
-                          defaultEmail: va.email,
-                          defaultFirstName: va.firstName,
-                          defaultLastName: va.lastName,
-                          label: `${va.firstName} ${va.lastName}`,
-                        })
-                      }
-                    >
-                      <MailIcon className="size-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Grant Access</TooltipContent>
-                </Tooltip>
-              ) : crmUser.isActive ? (
-                <>
-                  {crmUser.emailVerified && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                          onClick={() =>
-                            setCrmConfirm({ type: 'resetPw', user: crmUser })
-                          }
-                        >
-                          <KeyRoundIcon className="size-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">Reset Password</TooltipContent>
-                    </Tooltip>
-                  )}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 bg-white/[0.02] text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                        onClick={() =>
-                          setCrmConfirm({ type: 'deactivate', user: crmUser })
-                        }
-                      >
-                        <XCircleIcon className="size-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">Revoke Access</TooltipContent>
-                  </Tooltip>
-                </>
-              ) : null}
-            </TooltipProvider>
-          </div>
-        );
-      },
-    },
-  ];
-
-  // ── Client Access columns ────────────────────────────────────────────────
-  const clientAccessColumns: ColumnDef<IAtsClient>[] = [
-    {
-      accessorKey: 'companyName',
-      header: 'Company',
-      cell: ({ getValue }) => {
-        const name = getValue<string>();
-        const initials = name
-          .split(' ')
-          .filter(Boolean)
-          .slice(0, 2)
-          .map(w => w[0].toUpperCase())
-          .join('');
-        return (
-          <div className="flex items-center gap-2.5">
-            <div
-              className="shrink-0 size-7 flex items-center justify-center text-[10px] font-bold text-white select-none"
-              style={{ borderRadius: '30%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}
-            >
-              {initials}
-            </div>
-            <span>{name}</span>
-          </div>
-        );
-      },
-    },
-    {
-      id: 'accessStatus',
-      header: 'Access Status',
-      size: 140,
-      enableSorting: false,
-      cell: ({ row }) => (
-        <LoginStatusBadge user={crmClientMap[row.original.id]} />
-      ),
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-      cell: ({ row }) => {
-        const primary = row.original.contacts?.find(c => c.isPrimary) ?? row.original.contacts?.[0];
-        const email = primary?.email ?? row.original.email;
-        return <span className="text-muted-foreground text-xs">{email ?? '—'}</span>;
-      },
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      meta: { headerClassName: 'text-center' },
-      enableSorting: false,
-      size: 80,
-      cell: ({ row }) => {
-        const client = row.original;
-        const crmUser = crmClientMap[client.id];
-        const primaryContact =
-          client.contacts?.find(c => c.isPrimary) ?? client.contacts?.[0];
-        const [defaultFirstName, ...rest] = (
-          primaryContact?.name ?? ''
-        ).split(' ');
-        const defaultLastName = rest.join(' ');
-        return (
-          <div className="flex items-center justify-center gap-1">
-            <TooltipProvider delayDuration={300}>
-              {!crmUser ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                      onClick={() =>
-                        setInviteTarget({
-                          role: 'client',
-                          atsId: client.id,
-                          defaultEmail: primaryContact?.email ?? client.email,
-                          defaultFirstName: defaultFirstName || undefined,
-                          defaultLastName: defaultLastName || undefined,
-                          label: client.companyName,
-                        })
-                      }
-                    >
-                      <MailIcon className="size-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Grant Access</TooltipContent>
-                </Tooltip>
-              ) : crmUser.isActive ? (
-                <>
-                  {crmUser.emailVerified && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                          onClick={() =>
-                            setCrmConfirm({ type: 'resetPw', user: crmUser })
-                          }
-                        >
-                          <KeyRoundIcon className="size-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">Reset Password</TooltipContent>
-                    </Tooltip>
-                  )}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 bg-white/[0.02] text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                        onClick={() =>
-                          setCrmConfirm({ type: 'deactivate', user: crmUser })
-                        }
-                      >
-                        <XCircleIcon className="size-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">Revoke Access</TooltipContent>
-                  </Tooltip>
-                </>
-              ) : null}
-            </TooltipProvider>
-          </div>
-        );
-      },
-    },
-  ];
+  const isLoading = loadingVa || loadingClient || loadingAm || loadingAdmin;
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Account Management
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Client accounts and VA profiles — manage health metrics and CRM
-            login access
+          <h1 className="text-2xl font-semibold text-foreground">Accounts</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            View who has CRM access. Manage roles and access from the ATS.
           </p>
         </div>
 
         <div className="px-4 lg:px-6">
-          <Tabs defaultValue="client-accounts">
+          <Tabs defaultValue="clients">
             <TabsList>
-              <TabsTrigger value="client-accounts">Client Accounts</TabsTrigger>
-              <TabsTrigger value="va-profiles">VA Profiles</TabsTrigger>
-              <TabsTrigger value="va-access">VA Access</TabsTrigger>
-              <TabsTrigger value="client-access">Client Access</TabsTrigger>
+              <TabsTrigger value="clients">
+                Clients ({clientRows.length})
+              </TabsTrigger>
+              <TabsTrigger value="vas">
+                Virtual Assistants ({vaRows.length})
+              </TabsTrigger>
+              <TabsTrigger value="ams">
+                Account Managers ({amRows.length})
+              </TabsTrigger>
+              <TabsTrigger value="admins">
+                Admins ({adminRows.length})
+              </TabsTrigger>
             </TabsList>
-
-            <TabsContent value="client-accounts" className="mt-4">
+            <TabsContent value="clients" className="mt-4">
               <DataTable
-                columns={accountColumns}
-                data={accounts}
+                columns={buildUserColumns(setDetailUser)}
+                data={clientRows}
                 isLoading={isLoading}
               />
             </TabsContent>
-
-            <TabsContent value="va-profiles" className="mt-4">
+            <TabsContent value="vas" className="mt-4">
               <DataTable
-                columns={profileColumns}
-                data={profiles}
+                columns={buildUserColumns(setDetailUser)}
+                data={vaRows}
                 isLoading={isLoading}
               />
             </TabsContent>
-
-            <TabsContent value="va-access" className="mt-4">
+            <TabsContent value="ams" className="mt-4">
               <DataTable
-                columns={vaAccessColumns}
-                data={atsVas}
+                columns={buildUserColumns(setDetailUser)}
+                data={amRows}
                 isLoading={isLoading}
               />
             </TabsContent>
-
-            <TabsContent value="client-access" className="mt-4">
+            <TabsContent value="admins" className="mt-4">
               <DataTable
-                columns={clientAccessColumns}
-                data={clientsWithHirings}
+                columns={buildUserColumns(setDetailUser)}
+                data={adminRows}
                 isLoading={isLoading}
               />
             </TabsContent>
@@ -1439,283 +302,11 @@ export default function AccountManagementPage() {
         </div>
       </div>
 
-      {/* Client Account View Sheet */}
-      <Sheet
-        open={viewAccount !== null}
-        onOpenChange={o => !o && setViewAccount(null)}
-      >
-        <SheetContent className="sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
-              {viewAccount
-                ? (clientMap[viewAccount.clientId]?.companyName ??
-                  viewAccount.clientId)
-                : ''}
-            </SheetTitle>
-            <SheetDescription>Client account details</SheetDescription>
-          </SheetHeader>
-          {viewAccount && (
-            <div className="mt-6 flex flex-col gap-3 text-sm">
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Health Status</span>
-                <HealthBadge status={viewAccount.healthStatus} />
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">BAA Signed</span>
-                <span>{viewAccount.baaSigned ? 'Yes' : 'No'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">BAA Date</span>
-                <span>{viewAccount.baaSignedDate?.slice(0, 10) ?? '—'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Onboarding</span>
-                <span>
-                  {viewAccount.onboardingComplete ? 'Complete' : 'Pending'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">SOP Received</span>
-                <span>{viewAccount.sopReceived ? 'Yes' : 'No'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">EMR System</span>
-                <span>{viewAccount.emrSystem ?? '—'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">
-                  Satisfaction Score
-                </span>
-                <span>{viewAccount.satisfactionScore ?? '—'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Open Issues</span>
-                <span>{viewAccount.openIssuesCount}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Primary Contact</span>
-                <span>{viewAccount.primaryContact ?? '—'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Secondary Contact</span>
-                <span>{viewAccount.secondaryContact ?? '—'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Last Check-in</span>
-                <span>
-                  {viewAccount.lastClientCheckin?.slice(0, 10) ?? '—'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">CRM Login</span>
-                <LoginStatusBadge user={crmClientMap[viewAccount.clientId]} />
-              </div>
-              {viewAccount.notes && (
-                <div className="pt-2">
-                  <p className="text-muted-foreground text-xs mb-1">Notes</p>
-                  <p className="text-sm whitespace-pre-wrap">
-                    {viewAccount.notes}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* VA Profile View Sheet */}
-      <Sheet
-        open={viewProfile !== null}
-        onOpenChange={o => !o && setViewProfile(null)}
-      >
-        <SheetContent className="sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
-              {viewProfile
-                ? (() => {
-                    const v = vaMap[viewProfile.vaId];
-                    return v
-                      ? `${v.firstName} ${v.lastName}`
-                      : viewProfile.vaId;
-                  })()
-                : ''}
-            </SheetTitle>
-            <SheetDescription>VA profile details</SheetDescription>
-          </SheetHeader>
-          {viewProfile && (
-            <div className="mt-6 flex flex-col gap-3 text-sm">
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Workload Level</span>
-                <WorkloadBadge level={viewProfile.workloadLevel} />
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">
-                  Satisfaction Score
-                </span>
-                <span>{viewProfile.satisfactionScore ?? '—'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Last Check-in</span>
-                <span>{viewProfile.lastVaCheckin?.slice(0, 10) ?? '—'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Burnout Risk</span>
-                <span>{viewProfile.burnoutRiskFlag ? '🔴 Yes' : 'No'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">Replacement Risk</span>
-                <span>{viewProfile.replacementRiskFlag ? '🔴 Yes' : 'No'}</span>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-muted-foreground">CRM Login</span>
-                <LoginStatusBadge user={crmVaMap[viewProfile.vaId]} />
-              </div>
-              {viewProfile.notes && (
-                <div className="pt-2">
-                  <p className="text-muted-foreground text-xs mb-1">Notes</p>
-                  <p className="text-sm whitespace-pre-wrap">
-                    {viewProfile.notes}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Client Account Edit Sheet */}
-      <Sheet
-        open={editAccount !== null}
-        onOpenChange={o => !o && setEditAccount(null)}
-      >
-        <SheetContent className="sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Edit Client Account</SheetTitle>
-            <SheetDescription>
-              {editAccount
-                ? (clientMap[editAccount.clientId]?.companyName ??
-                  editAccount.clientId)
-                : ''}
-            </SheetDescription>
-          </SheetHeader>
-          {editAccount && (
-            <EditClientAccountForm
-              account={editAccount}
-              onSuccess={() => {
-                setEditAccount(null);
-                queryClient.invalidateQueries({ queryKey: QK.clientAccounts });
-              }}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* VA Profile Edit Sheet */}
-      <Sheet
-        open={editProfile !== null}
-        onOpenChange={o => !o && setEditProfile(null)}
-      >
-        <SheetContent className="sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Edit VA Profile</SheetTitle>
-            <SheetDescription>
-              {editProfile
-                ? (() => {
-                    const v = vaMap[editProfile.vaId];
-                    return v
-                      ? `${v.firstName} ${v.lastName}`
-                      : editProfile.vaId;
-                  })()
-                : ''}
-            </SheetDescription>
-          </SheetHeader>
-          {editProfile && (
-            <EditVaProfileForm
-              profile={editProfile}
-              onSuccess={() => {
-                setEditProfile(null);
-                queryClient.invalidateQueries({ queryKey: QK.vaProfiles });
-              }}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Provision Login Sheet */}
-      <Sheet
-        open={provisionTarget !== null}
-        onOpenChange={o => !o && setProvisionTarget(null)}
-      >
-        <SheetContent className="sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Provision CRM Login</SheetTitle>
-            <SheetDescription>{provisionTarget?.label ?? ''}</SheetDescription>
-          </SheetHeader>
-          {provisionTarget && (
-            <ProvisionLoginForm
-              role={provisionTarget.role}
-              atsId={provisionTarget.atsId}
-              defaultFirstName={provisionTarget.firstName}
-              defaultLastName={provisionTarget.lastName}
-              onSuccess={() => {
-                setProvisionTarget(null);
-                invalidateCrmUsers();
-              }}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* CRM user action confirmation */}
-      <ConfirmDialog
-        open={crmConfirm !== null}
-        title={
-          crmConfirm?.type === 'resetPw' ? 'Reset Password' : 'Deactivate Login'
-        }
-        description={
-          crmConfirm
-            ? crmConfirm.type === 'resetPw'
-              ? `Reset password for ${crmConfirm.user.firstName} ${crmConfirm.user.lastName}? A new temporary password will be emailed to them.`
-              : `Deactivate CRM login for ${crmConfirm.user.firstName} ${crmConfirm.user.lastName}?`
-            : ''
-        }
-        confirmLabel={
-          crmConfirm?.type === 'resetPw' ? 'Reset Password' : 'Deactivate'
-        }
-        variant={crmConfirm?.type === 'deactivate' ? 'destructive' : 'default'}
-        onConfirm={executeCrmConfirm}
-        onCancel={() => setCrmConfirm(null)}
+      <UserDetailSheet
+        user={detailUser}
+        open={detailUser !== null}
+        onClose={() => setDetailUser(null)}
       />
-
-      {/* Invite Access Sheet */}
-      <Sheet
-        open={inviteTarget !== null}
-        onOpenChange={o => !o && setInviteTarget(null)}
-      >
-        <SheetContent className="sm:max-w-md overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
-              {inviteTarget?.role === 'va'
-                ? 'Grant VA Portal Access'
-                : 'Grant Client Portal Access'}
-            </SheetTitle>
-            <SheetDescription>{inviteTarget?.label ?? ''}</SheetDescription>
-          </SheetHeader>
-          {inviteTarget && (
-            <InviteAccessForm
-              role={inviteTarget.role}
-              atsId={inviteTarget.atsId}
-              defaultEmail={inviteTarget.defaultEmail}
-              defaultFirstName={inviteTarget.defaultFirstName}
-              defaultLastName={inviteTarget.defaultLastName}
-              onSuccess={() => {
-                setInviteTarget(null);
-                invalidateCrmUsers();
-              }}
-            />
-          )}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

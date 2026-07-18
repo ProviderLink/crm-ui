@@ -1,117 +1,109 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import type { ColumnDef } from '@tanstack/react-table'
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { ColumnDef } from '@tanstack/react-table';
 import {
   AlertTriangleIcon,
   ClipboardXIcon,
   DownloadIcon,
   UserCheckIcon,
   UsersIcon,
-} from 'lucide-react'
-import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-import { z } from 'zod'
+} from 'lucide-react';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { z } from 'zod';
 
-import { DataTable } from '@/components/shared/DataTable'
-import { StatCard } from '@/components/shared/StatCard'
-import { Button } from '@/components/ui/button'
+import { DataTable } from '@/components/shared/DataTable';
+import { StatCard } from '@/components/shared/StatCard';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@/components/ui/card';
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from '@/components/ui/chart'
-import { DatePickerField } from '@/components/ui/date-picker-field'
-import { Label } from '@/components/ui/label'
+} from '@/components/ui/chart';
+import { DatePickerField } from '@/components/ui/date-picker-field';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   useAtsClientsQuery,
   useAtsVAsQuery,
   useDashboardStatsQuery,
-} from '@/hooks/queries'
-import { useAppSelector } from '@/hooks/store'
-import { exportReport } from '@/services/reports.service'
+} from '@/hooks/queries';
+import { useAppSelector } from '@/hooks/store';
+import { exportReport } from '@/services/reports.service';
 
 // ─── Export form ─────────────────────────────────────────────────────────────
 
 const exportSchema = z
   .object({
-    type: z.enum(['work_entries', 'eod']),
+    type: z.enum(['work_entries', 'eod', 'performance']),
     dateFrom: z.string().min(1, 'Required'),
     dateTo: z.string().min(1, 'Required'),
-    format: z.enum(['csv', 'excel']),
   })
   .refine(d => d.dateFrom <= d.dateTo, {
     message: '"From" date must be before or equal to "To" date',
     path: ['dateTo'],
-  })
-type ExportFormData = z.infer<typeof exportSchema>
+  });
+type ExportFormData = z.infer<typeof exportSchema>;
 
 // ─── Chart config ─────────────────────────────────────────────────────────────
 
 const activityChartConfig = {
   count: { label: 'Entries', color: 'hsl(var(--primary))' },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-type VABreakdownRow = { vaName: string; count: number }
-type ClientBreakdownRow = { clientName: string; count: number }
+type VABreakdownRow = { vaName: string; count: number };
+type ClientBreakdownRow = { clientName: string; count: number };
 
 const breakdownColumns: ColumnDef<VABreakdownRow>[] = [
   { accessorKey: 'vaName', header: 'VA' },
   { accessorKey: 'count', header: 'Entries Today' },
-]
+];
 
 const clientBreakdownColumns: ColumnDef<ClientBreakdownRow>[] = [
   { accessorKey: 'clientName', header: 'Client' },
   { accessorKey: 'count', header: 'Entries Today' },
-]
+];
 
 export default function AdminDashboardPage() {
-  const user = useAppSelector(s => s.auth.user)
-  const isAccountManager = user?.role === 'account_manager'
+  const user = useAppSelector(s => s.auth.user);
+  const isAccountManager = user?.role === 'account_manager';
 
-  const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery()
-  const { data: atsVAs = [], isLoading: loadingVAs } = useAtsVAsQuery()
+  const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery();
+  const { data: atsVAs = [], isLoading: loadingVAs } = useAtsVAsQuery();
   const { data: atsClients = [], isLoading: loadingClients } =
-    useAtsClientsQuery()
-  const loading = loadingVAs || loadingClients
+    useAtsClientsQuery();
+  const loading = loadingVAs || loadingClients;
 
-  const vaMap: Record<string, string> = {}
-  for (const va of atsVAs) vaMap[va.id] = `${va.firstName} ${va.lastName}`
+  const vaMap: Record<string, string> = {};
+  for (const va of atsVAs) vaMap[va.id] = `${va.firstName} ${va.lastName}`;
 
-  const breakdown: VABreakdownRow[] = stats
-    ? Object.entries(stats.perVABreakdown).map(([vaId, count]) => ({
-        vaName: vaMap[vaId] ?? vaId,
-        count,
-      }))
-    : []
+  // New backend shape has overview.* instead of top-level fields.
+  // perVABreakdown / perClientBreakdown are not yet available — show empty.
+  const overview = stats?.overview;
 
-  const clientMap: Record<string, string> = {}
-  for (const c of atsClients) clientMap[c.id] = c.companyName
+  const clientMap: Record<string, string> = {};
+  for (const c of atsClients) clientMap[c.id] = c.companyName;
 
-  const clientBreakdown: ClientBreakdownRow[] = stats
-    ? Object.entries(stats.perClientBreakdown).map(([clientId, count]) => ({
-        clientName: clientMap[clientId] ?? clientId,
-        count,
-      }))
-    : []
+  const breakdown: VABreakdownRow[] = [];
+  const clientBreakdown: ClientBreakdownRow[] = [];
 
-  const [exporting, setExporting] = useState(false)
-  const [exportError, setExportError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const {
     control,
@@ -121,21 +113,20 @@ export default function AdminDashboardPage() {
     resolver: zodResolver(exportSchema),
     defaultValues: {
       type: 'work_entries',
-      format: 'csv',
       dateFrom: '',
       dateTo: '',
     },
-  })
+  });
 
   async function onExport(values: ExportFormData) {
-    setExporting(true)
-    setExportError(null)
+    setExporting(true);
+    setExportError(null);
     try {
-      await exportReport(values)
+      await exportReport(values.type, values.dateFrom, values.dateTo);
     } catch {
-      setExportError('Export failed. Please try again.')
+      setExportError('Export failed. Please try again.');
     } finally {
-      setExporting(false)
+      setExporting(false);
     }
   }
 
@@ -146,33 +137,33 @@ export default function AdminDashboardPage() {
         <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card lg:px-6">
           <StatCard
             label="Active Assignments"
-            value={stats?.activeAssignmentsCount ?? 0}
+            value={overview?.activeAssignments ?? 0}
             isLoading={loadingStats}
             icon={UsersIcon}
             footer="VA–client assignments currently active"
           />
           <StatCard
             label="Entries Today"
-            value={stats?.totalEntriesToday ?? 0}
+            value={overview?.totalWorkEntriesToday ?? 0}
             isLoading={loadingStats}
             icon={UserCheckIcon}
             footer="Work entries logged across all VAs today"
           />
           <StatCard
             label="EODs Submitted Today"
-            value={stats?.eodSubmissionsToday ?? 0}
+            value={overview?.totalEodSubmissionsToday ?? 0}
             isLoading={loadingStats}
             icon={ClipboardXIcon}
             footer="End-of-day reports submitted today"
           />
           <StatCard
             label="Missing EODs Today"
-            value={stats?.missingEodsToday ?? 0}
+            value={overview?.missingEodsToday ?? 0}
             isLoading={loadingStats}
             icon={AlertTriangleIcon}
             footer="Active assignments with no EOD yet"
             valueClassName={
-              !loadingStats && (stats?.missingEodsToday ?? 0) > 0
+              !loadingStats && (overview?.missingEodsToday ?? 0) > 0
                 ? 'text-destructive'
                 : ''
             }
@@ -353,34 +344,6 @@ export default function AdminDashboardPage() {
                   )}
                 </div>
 
-                {/* Format */}
-                <div className="grid gap-1.5">
-                  <Label>Format</Label>
-                  <Controller
-                    name="format"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select format" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="csv">CSV</SelectItem>
-                          <SelectItem value="excel">Excel (.xlsx)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {errors.format && (
-                    <p className="text-xs text-destructive">
-                      {errors.format.message}
-                    </p>
-                  )}
-                </div>
-
                 {/* Submit — spans full row */}
                 <div className="sm:col-span-2 lg:col-span-4 flex items-center gap-3">
                   <Button type="submit" disabled={exporting}>
@@ -397,5 +360,5 @@ export default function AdminDashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

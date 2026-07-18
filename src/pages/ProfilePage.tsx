@@ -1,23 +1,23 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import { KeyRoundIcon } from 'lucide-react'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
-import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod';
+import { KeyRoundIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { useAppSelector } from '@/hooks/store'
-import { changePassword } from '@/services/auth.service'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAppSelector } from '@/hooks/store';
+import { changePassword } from '@/services/auth.service';
 
 const roleLabel: Record<string, string> = {
   admin: 'Admin',
   account_manager: 'Account Manager',
   va: 'Virtual Assistant',
   client: 'Client',
-}
+};
 
 const pwSchema = z
   .object({
@@ -28,44 +28,49 @@ const pwSchema = z
   .refine(d => d.newPassword === d.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
-  })
+  });
 
-type PwForm = z.infer<typeof pwSchema>
+type PwForm = z.infer<typeof pwSchema>;
 
 export default function ProfilePage() {
-  const user = useAppSelector(s => s.auth.user)
-  const [serverError, setServerError] = useState('')
+  const user = useAppSelector(s => s.auth.user);
+  const [serverError, setServerError] = useState('');
 
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<PwForm>({ resolver: zodResolver(pwSchema) })
+  } = useForm<PwForm>({ resolver: zodResolver(pwSchema) });
 
   async function onSubmit(data: PwForm) {
-    setServerError('')
+    setServerError('');
     try {
-      await changePassword(data.currentPassword, data.newPassword)
-      toast.success('Password changed successfully.')
-      reset()
+      await changePassword(data.currentPassword, data.newPassword);
+      toast.success('Password changed successfully.');
+      reset();
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : 'Failed to change password.'
-      setServerError(msg)
+        err instanceof Error ? err.message : 'Failed to change password.';
+      setServerError(msg);
     }
   }
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 max-w-xl">
       {/* Profile info */}
-      <Card className="bg-gradient-to-br from-primary/5 to-card border shadow-sm">
+      <Card className="border bg-linear-to-br from-primary/5 to-card shadow-sm">
         <CardContent className="pt-6 pb-6">
           <div className="flex items-center gap-4">
             {/* Avatar */}
             <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-xl select-none">
               {user?.name
-                ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                ? user.name
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)
                 : '?'}
             </div>
             {/* Name + role badge */}
@@ -88,14 +93,16 @@ export default function ProfilePage() {
               <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Email
               </span>
-              <span className="text-sm font-medium break-all">{user?.email ?? '—'}</span>
+              <span className="text-sm font-medium break-all">
+                {user?.email ?? '—'}
+              </span>
             </div>
             <div className="flex flex-col gap-0.5">
               <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Account ID
+                User ID
               </span>
               <span className="text-sm font-medium font-mono text-muted-foreground">
-                {user?.atsId ?? user?.id?.slice(0, 8) ?? '—'}
+                {user?.id?.slice(0, 12) ?? '—'}
               </span>
             </div>
           </div>
@@ -175,5 +182,5 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
