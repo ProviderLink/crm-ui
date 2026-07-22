@@ -321,7 +321,6 @@ function CreateAssignmentForm({
   });
 
   const selectedClientId = watch('clientId');
-  const selectedJobId = watch('jobId');
 
   // Filter jobs by selected client, only open/on_hold jobs
   const filteredJobs = selectedClientId

@@ -110,9 +110,9 @@ export default function AdminDashboardPage() {
   const breakdown: VABreakdownRow[] = perVABreakdown.map(r => ({
     vaId: r.vaId,
     vaName: r.vaName,
+    count: r.entriesCount,
     hours: r.totalHours,
     tasks: r.tasksCompleted,
-    entries: r.entriesCount,
   }));
   const clientBreakdown: ClientBreakdownRow[] = [];
 

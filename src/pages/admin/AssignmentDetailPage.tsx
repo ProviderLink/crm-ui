@@ -554,11 +554,7 @@ export default function AssignmentDetailPage() {
               {loadingEntries ? (
                 <Skeleton className="h-48 w-full" />
               ) : (
-                <DataTable
-                  columns={workColumns}
-                  data={filteredEntries}
-                  emptyMessage="No work entries found for this assignment"
-                />
+                <DataTable columns={workColumns} data={filteredEntries} />
               )}
             </TabsContent>
 
@@ -566,11 +562,7 @@ export default function AssignmentDetailPage() {
               {loadingEods ? (
                 <Skeleton className="h-48 w-full" />
               ) : (
-                <DataTable
-                  columns={eodColumns}
-                  data={filteredEods}
-                  emptyMessage="No EOD reports found for this assignment"
-                />
+                <DataTable columns={eodColumns} data={filteredEods} />
               )}
             </TabsContent>
           </Tabs>
