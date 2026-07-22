@@ -2,10 +2,11 @@ import api from '@/lib/api';
 
 export interface IAccountManager {
   id: string;
+  _id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: 'account_manager';
+  roles: string[];
   isActive: boolean;
   phone?: string;
   atsId?: string;
@@ -15,16 +16,18 @@ export interface IAccountManager {
 
 export interface ICrmUser {
   id: string;
+  _id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: 'va' | 'client' | 'account_manager' | 'admin';
+  roles: string[];
   isActive: boolean;
   emailVerified: boolean;
   phone?: string;
   atsId?: string;
   clientRef?: string | null;
   candidateRef?: string | null;
+  isInviteAccepted?: boolean;
   lastLogin?: string;
   createdAt?: string;
 }

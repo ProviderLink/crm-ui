@@ -49,6 +49,7 @@ import {
   useActiveAccountManagersQuery,
   useAllAssignmentsQuery,
   useAtsClientsQuery,
+  useAtsJobsQuery,
   useAtsVAsQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
@@ -65,6 +66,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 const createSchema = z.object({
   clientId: z.string().min(1, 'Required'),
+  jobId: z.string().min(1, 'Required'),
   candidateId: z.string().min(1, 'Required'),
   accountManagerId: z.string().min(1, 'Required'),
   startDate: z.string().min(1, 'Required'),
@@ -285,6 +287,7 @@ function Field({
 
 function CreateAssignmentForm({
   clients,
+  jobs,
   vas,
   assignments,
   team,
@@ -292,6 +295,13 @@ function CreateAssignmentForm({
   onClose,
 }: {
   clients: IAtsClient[];
+  jobs: {
+    id: string;
+    _id: string;
+    title: string;
+    clientId: string;
+    status: string;
+  }[];
   vas: IAtsCandidate[];
   assignments: IAssignment[];
   team: IAccountManager[];
@@ -311,6 +321,16 @@ function CreateAssignmentForm({
   });
 
   const selectedClientId = watch('clientId');
+  const selectedJobId = watch('jobId');
+
+  // Filter jobs by selected client, only open/on_hold jobs
+  const filteredJobs = selectedClientId
+    ? jobs.filter(
+        j =>
+          j.clientId === selectedClientId &&
+          (j.status === 'open' || j.status === 'on_hold')
+      )
+    : [];
 
   // Filter VAs to only those hired by the selected client
   const filteredVas = selectedClientId
@@ -364,6 +384,7 @@ function CreateAssignmentForm({
                 value={field.value ?? ''}
                 onValueChange={v => {
                   field.onChange(v);
+                  setValue('jobId', '');
                   setValue('candidateId', '');
                 }}
               >
@@ -374,6 +395,48 @@ function CreateAssignmentForm({
                   {clients.map(c => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.companyName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </Field>
+
+        <Field
+          label="Job"
+          error={errors.jobId?.message}
+          hint={
+            !selectedClientId
+              ? 'Select a client first'
+              : filteredJobs.length === 0
+                ? 'No open jobs found for this client'
+                : undefined
+          }
+        >
+          <Controller
+            control={control}
+            name="jobId"
+            render={({ field }) => (
+              <Select
+                value={field.value ?? ''}
+                onValueChange={v => {
+                  field.onChange(v);
+                  setValue('candidateId', '');
+                }}
+                disabled={!selectedClientId || filteredJobs.length === 0}
+              >
+                <SelectTrigger className="rounded-xl border-input h-10">
+                  <SelectValue
+                    placeholder={
+                      selectedClientId ? 'Select job' : 'Select client first'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredJobs.map(j => (
+                    <SelectItem key={j._id} value={j._id}>
+                      {j.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -777,6 +840,7 @@ export default function AssignmentManagementPage() {
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: atsVas = [] } = useAtsVAsQuery();
   const { data: accountManagers = [] } = useActiveAccountManagersQuery();
+  const { data: atsJobs = [] } = useAtsJobsQuery();
 
   const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null);
   const [editTarget, setEditTarget] = useState<IAssignment | null>(null);
@@ -875,6 +939,7 @@ export default function AssignmentManagementPage() {
           {sheetMode === 'create' && (
             <CreateAssignmentForm
               clients={atsClients}
+              jobs={atsJobs}
               vas={atsVas}
               assignments={assignments}
               team={accountManagers}

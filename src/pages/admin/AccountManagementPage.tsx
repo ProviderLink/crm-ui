@@ -890,15 +890,15 @@ export default function AccountManagementPage() {
   });
 
   function toRow(u: ICrmUser | IAccountManager): UserRow {
-    const crmUser = u as ICrmUser;
+    const roles = u.roles ?? [];
     return {
-      id: u.id,
+      id: u.id ?? u._id,
       name: `${u.firstName} ${u.lastName}`,
       email: u.email,
-      role: u.role,
+      role: roles[0] ?? 'unknown',
       isActive: u.isActive,
-      clientRef: crmUser.clientRef,
-      candidateRef: crmUser.candidateRef,
+      clientRef: (u as ICrmUser).clientRef,
+      candidateRef: (u as ICrmUser).candidateRef,
     };
   }
 

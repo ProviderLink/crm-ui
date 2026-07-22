@@ -2,12 +2,7 @@ import {
   getAccountManagers,
   getCrmUsersByRole,
 } from '@/services/account-managers.service';
-import { getDashboardStats } from '@/services/admin.service'
-import {
-  getReview,
-  getReviews,
-  type IReviewFilters,
-} from '@/services/performance-reviews.service';
+import { getDashboardStats } from '@/services/admin.service';
 import {
   getAllAssignments,
   getMyAssignments,
@@ -15,6 +10,12 @@ import {
 import { getAtsClients, getAtsTeam, getAtsVAs } from '@/services/ats.service';
 import { getClientAccounts } from '@/services/client-accounts.service';
 import { getEodSubmissions } from '@/services/eod-submissions.service';
+import { getAtsJobs } from '@/services/jobs.service';
+import {
+  getReview,
+  getReviews,
+  type IReviewFilters,
+} from '@/services/performance-reviews.service';
 import { getScorecards } from '@/services/scorecards.service';
 import { getSurveyReminders } from '@/services/survey-reminders.service';
 import { getVaProfiles } from '@/services/va-profiles.service';
@@ -29,6 +30,7 @@ export const QK = {
   atsVAs: ['ats', 'vas'] as const,
   atsClients: ['ats', 'clients'] as const,
   atsTeam: ['ats', 'team'] as const,
+  atsJobs: ['ats', 'jobs'] as const,
   accountManagers: ['account-managers'] as const,
   activeAccountManagers: ['account-managers', 'active'] as const,
   crmVaUsers: ['crm-users', 'va'] as const,
@@ -82,6 +84,10 @@ export function useAtsClientsQuery() {
 
 export function useAtsTeamQuery() {
   return useQuery({ queryKey: QK.atsTeam, queryFn: getAtsTeam });
+}
+
+export function useAtsJobsQuery() {
+  return useQuery({ queryKey: QK.atsJobs, queryFn: getAtsJobs });
 }
 
 export function useAccountManagersQuery() {
@@ -142,7 +148,7 @@ export function usePerformanceReviewsQuery(filters?: IReviewFilters) {
   return useQuery({
     queryKey: QK.performanceReviews(filters),
     queryFn: () => getReviews(filters),
-  })
+  });
 }
 
 export function usePerformanceReviewQuery(id: string) {
@@ -150,5 +156,5 @@ export function usePerformanceReviewQuery(id: string) {
     queryKey: QK.performanceReview(id),
     queryFn: () => getReview(id),
     enabled: !!id,
-  })
+  });
 }
