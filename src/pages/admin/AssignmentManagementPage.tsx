@@ -5,6 +5,7 @@ import {
   Briefcase,
   CalendarDays,
   CheckCircle2,
+  EyeIcon,
   PenLineIcon,
   PlusIcon,
   StickyNote,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
@@ -99,7 +101,8 @@ function buildColumns(
   amMap: Record<string, string>,
   onEdit: (a: IAssignment) => void,
   onDeactivate: (a: IAssignment) => void,
-  canManage: boolean
+  canManage: boolean,
+  rolePrefix: string
 ): ColumnDef<IAssignment>[] {
   const columns: ColumnDef<IAssignment>[] = [
     {
@@ -162,10 +165,26 @@ function buildColumns(
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
-      size: 90,
+      size: 130,
       cell: ({ row }) => (
         <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-1 whitespace-nowrap">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                  asChild
+                >
+                  <Link to={`${rolePrefix}/assignments/${row.original._id}`}>
+                    <EyeIcon className="size-3.5" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">View Details</TooltipContent>
+            </Tooltip>
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -751,6 +770,7 @@ function EditAssignmentForm({
 export default function AssignmentManagementPage() {
   const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
+  const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
   const canManageAssignments =
     user?.role === 'admin' || user?.role === 'account_manager';
   const { data: assignments = [], isLoading } = useAllAssignmentsQuery();
@@ -800,7 +820,8 @@ export default function AssignmentManagementPage() {
       setSheetMode('edit');
     },
     a => setDeactivateTarget(a),
-    canManageAssignments
+    canManageAssignments,
+    rolePrefix
   );
 
   return (

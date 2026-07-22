@@ -3,6 +3,7 @@ import type {
   IGenerateReviewPayload,
   IPerformanceReview,
   IUpdateReviewPayload,
+  ReviewType,
 } from '@/types/performance-review';
 
 export interface IReviewFilters {
@@ -12,15 +13,47 @@ export interface IReviewFilters {
   status?: string;
 }
 
+/**
+ * Maps frontend display review types to backend enum values.
+ * Backend schema uses snake_case; frontend uses human-readable labels.
+ */
+const REVIEW_TYPE_TO_BACKEND: Record<ReviewType, string> = {
+  '90-Day': '90_day',
+  Annual: 'annual',
+  'Client Satisfaction': 'client_satisfaction',
+  'Corrective Coaching': 'corrective_coaching',
+};
+
+const REVIEW_TYPE_FROM_BACKEND: Record<string, ReviewType> = {
+  '90_day': '90-Day',
+  annual: 'Annual',
+  client_satisfaction: 'Client Satisfaction',
+  corrective_coaching: 'Corrective Coaching',
+};
+
+/** Map a review from backend snake_case to frontend display format */
+function mapReview(r: any): IPerformanceReview {
+  if (r.reviewType && REVIEW_TYPE_FROM_BACKEND[r.reviewType]) {
+    r.reviewType = REVIEW_TYPE_FROM_BACKEND[r.reviewType];
+  }
+  return r;
+}
+
 /** POST /crm/performance-reviews — AI-generate a new review */
 export async function generateReview(
   payload: IGenerateReviewPayload
 ): Promise<IPerformanceReview> {
+  const backendPayload = {
+    ...payload,
+    candidateId: payload.vaId,
+    reviewType:
+      REVIEW_TYPE_TO_BACKEND[payload.reviewType] ?? payload.reviewType,
+  };
   const { data } = await api.post<{ data: IPerformanceReview }>(
     '/crm/performance-reviews',
-    payload
+    backendPayload
   );
-  return data.data;
+  return mapReview(data.data);
 }
 
 export async function getReviews(
@@ -36,14 +69,14 @@ export async function getReviews(
   const { data } = await api.get<{ data: IPerformanceReview[] }>(
     `/crm/performance-reviews${params ? `?${params}` : ''}`
   );
-  return data.data;
+  return (data.data || []).map(mapReview);
 }
 
 export async function getReview(id: string): Promise<IPerformanceReview> {
   const { data } = await api.get<{ data: IPerformanceReview }>(
     `/crm/performance-reviews/${id}`
   );
-  return data.data;
+  return mapReview(data.data);
 }
 
 export async function updateReview(
@@ -54,7 +87,7 @@ export async function updateReview(
     `/crm/performance-reviews/${id}`,
     payload
   );
-  return data.data;
+  return mapReview(data.data);
 }
 
 /**
@@ -85,7 +118,7 @@ async function _regenerateSection(
     `/crm/performance-reviews/${id}/regenerate`,
     { section }
   );
-  return data.data;
+  return mapReview(data.data);
 }
 
 export const regenerateCategories = (id: string) =>
@@ -98,7 +131,7 @@ export async function completeReview(id: string): Promise<IPerformanceReview> {
   const { data } = await api.patch<{ data: IPerformanceReview }>(
     `/crm/performance-reviews/${id}/complete`
   );
-  return data.data;
+  return mapReview(data.data);
 }
 
 /** DELETE /crm/performance-reviews/:id */

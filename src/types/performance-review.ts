@@ -1,10 +1,8 @@
 export type ReviewType =
-  | '30-Day'
-  | '60-Day'
   | '90-Day'
   | 'Annual'
-  | 'Client Satisfaction Review'
-  | 'Corrective Coaching Review';
+  | 'Client Satisfaction'
+  | 'Corrective Coaching';
 
 export type ReviewStatus =
   | 'Draft'
@@ -39,12 +37,10 @@ export type RoleType =
   | 'Custom Role';
 
 export const REVIEW_TYPES: ReviewType[] = [
-  '30-Day',
-  '60-Day',
   '90-Day',
   'Annual',
-  'Client Satisfaction Review',
-  'Corrective Coaching Review',
+  'Client Satisfaction',
+  'Corrective Coaching',
 ];
 
 export const ROLE_TYPES: RoleType[] = [
@@ -154,7 +150,7 @@ export interface IGenerateReviewPayload {
   roleType: RoleType;
   jobDescription: string;
   clientExpectations: string;
-  managerNotes?: string
+  managerNotes?: string;
 }
 
 export interface IUpdateReviewPayload {
