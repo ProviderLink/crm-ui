@@ -101,15 +101,23 @@ export async function completeReview(id: string): Promise<IPerformanceReview> {
   return data.data;
 }
 
-/** Not available in new backend — no-op stub. */
-export async function deleteReview(_id: string): Promise<void> {
-  // DELETE not supported by ats-crm-backend performance-reviews
+/** DELETE /crm/performance-reviews/:id */
+export async function deleteReview(id: string): Promise<void> {
+  await api.delete(`/crm/performance-reviews/${id}`);
 }
 
-/** Not available in new backend — no-op stub. */
+/** GET /crm/performance-reviews/:id/export-pdf — download PDF */
 export async function exportReviewPdf(
-  _id: string,
-  _filename = 'performance-review.pdf'
+  id: string,
+  filename = 'performance-review.pdf'
 ): Promise<void> {
-  // PDF export not supported by ats-crm-backend
+  const response = await api.get(`/crm/performance-reviews/${id}/export-pdf`, {
+    responseType: 'blob',
+  });
+  const url = URL.createObjectURL(response.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }

@@ -66,12 +66,20 @@ const activityChartConfig = {
   count: { label: 'Entries', color: 'hsl(var(--primary))' },
 } satisfies ChartConfig;
 
-type VABreakdownRow = { vaName: string; count: number };
+type VABreakdownRow = {
+  vaId: string;
+  vaName: string;
+  count: number;
+  hours: number;
+  tasks: number;
+};
 type ClientBreakdownRow = { clientName: string; count: number };
 
 const breakdownColumns: ColumnDef<VABreakdownRow>[] = [
   { accessorKey: 'vaName', header: 'VA' },
-  { accessorKey: 'count', header: 'Entries Today' },
+  { accessorKey: 'hours', header: 'Hours' },
+  { accessorKey: 'tasks', header: 'Tasks Done' },
+  { accessorKey: 'count', header: 'Entries' },
 ];
 
 const clientBreakdownColumns: ColumnDef<ClientBreakdownRow>[] = [
@@ -92,14 +100,20 @@ export default function AdminDashboardPage() {
   const vaMap: Record<string, string> = {};
   for (const va of atsVAs) vaMap[va.id] = `${va.firstName} ${va.lastName}`;
 
-  // New backend shape has overview.* instead of top-level fields.
-  // perVABreakdown / perClientBreakdown are not yet available — show empty.
   const overview = stats?.overview;
 
   const clientMap: Record<string, string> = {};
   for (const c of atsClients) clientMap[c.id] = c.companyName;
 
-  const breakdown: VABreakdownRow[] = [];
+  // Use backend per-VA breakdown if available
+  const perVABreakdown = stats?.perVABreakdown ?? [];
+  const breakdown: VABreakdownRow[] = perVABreakdown.map(r => ({
+    vaId: r.vaId,
+    vaName: r.vaName,
+    hours: r.totalHours,
+    tasks: r.tasksCompleted,
+    entries: r.entriesCount,
+  }));
   const clientBreakdown: ClientBreakdownRow[] = [];
 
   const [exporting, setExporting] = useState(false);
@@ -173,16 +187,18 @@ export default function AdminDashboardPage() {
         {/* Quick actions */}
         <div className="flex gap-3 px-4 lg:px-6">
           <Button asChild>
-            <Link to="/admin/assignments">
+            <Link
+              to={isAccountManager ? '/am/assignments' : '/admin/assignments'}
+            >
               <UsersIcon className="size-4" />
               Manage Assignments
             </Link>
           </Button>
-          {!isAccountManager && (
-            <Button asChild variant="outline">
-              <Link to="/admin/accounts">View Accounts</Link>
-            </Button>
-          )}
+          <Button asChild variant="outline">
+            <Link to={isAccountManager ? '/am/accounts' : '/admin/accounts'}>
+              View Accounts
+            </Link>
+          </Button>
         </div>
 
         {/* Per-VA breakdown — chart + table */}
@@ -191,10 +207,10 @@ export default function AdminDashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base font-medium">
-                  VA Activity Today
+                  VA Activity This Week
                 </CardTitle>
                 <CardDescription>
-                  Work entries logged per VA today
+                  Work entries logged per VA in the last 7 days
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

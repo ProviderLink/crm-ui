@@ -23,6 +23,8 @@ export interface ICrmUser {
   emailVerified: boolean;
   phone?: string;
   atsId?: string;
+  clientRef?: string | null;
+  candidateRef?: string | null;
   lastLogin?: string;
   createdAt?: string;
 }

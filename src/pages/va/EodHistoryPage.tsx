@@ -1,20 +1,26 @@
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
+import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import {
   useAtsClientsQuery,
   useEodSubmissionsQuery,
   useMyAssignmentsQuery,
 } from '@/hooks/queries';
+import { deleteEodSubmission } from '@/services/eod-submissions.service';
 import type { IAssignment } from '@/types/assignment';
 import type { IAtsClient } from '@/types/ats';
 import type { IEodSubmission } from '@/types/eod-submission';
+import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
+import { Trash2Icon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 function buildColumns(
   clientMap: Map<string, string>,
-  assignmentMap: Map<string, string>
+  assignmentMap: Map<string, string>,
+  onDelete: (eod: IEodSubmission) => void
 ): ColumnDef<IEodSubmission>[] {
   return [
     {
@@ -76,13 +82,32 @@ function buildColumns(
         <span className="text-sm">{getValue<string>()}</span>
       ),
     },
+    {
+      id: 'actions',
+      header: '',
+      size: 50,
+      cell: ({ row }) => (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8 text-muted-foreground hover:text-destructive"
+          onClick={() => onDelete(row.original)}
+        >
+          <Trash2Icon className="size-3.5" />
+        </Button>
+      ),
+    },
   ];
 }
 
 export default function EodHistoryPage() {
+  const queryClient = useQueryClient();
   const { data: eods = [], isLoading } = useEodSubmissionsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: myAssignments = [] } = useMyAssignmentsQuery();
+
+  const [deleteTarget, setDeleteTarget] = useState<IEodSubmission | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const clientMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -98,8 +123,21 @@ export default function EodHistoryPage() {
     return m;
   }, [myAssignments]);
 
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleteError(null);
+    try {
+      await deleteEodSubmission(deleteTarget._id);
+      queryClient.invalidateQueries({ queryKey: ['eod-submissions'] });
+    } catch {
+      setDeleteError('Failed to delete EOD submission. Please try again.');
+    } finally {
+      setDeleteTarget(null);
+    }
+  }
+
   const columns = useMemo(
-    () => buildColumns(clientMap, assignmentMap),
+    () => buildColumns(clientMap, assignmentMap, setDeleteTarget),
     [clientMap, assignmentMap]
   );
   const [dateFrom, setDateFrom] = useState(() => {
@@ -176,6 +214,22 @@ export default function EodHistoryPage() {
           <DataTable columns={columns} data={filtered} isLoading={isLoading} />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete EOD Submission"
+        description={
+          deleteTarget
+            ? `Delete the EOD submission for ${deleteTarget.date?.slice(0, 10)}? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      {deleteError && (
+        <p className="text-sm text-destructive px-4">{deleteError}</p>
+      )}
     </div>
   );
 }

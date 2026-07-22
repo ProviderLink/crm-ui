@@ -29,3 +29,7 @@ export async function createEodSubmission(
   );
   return data.data;
 }
+
+export async function deleteEodSubmission(id: string): Promise<void> {
+  await api.delete(`/crm/eod-submissions/${id}`);
+}

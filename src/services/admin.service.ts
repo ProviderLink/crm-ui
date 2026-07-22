@@ -27,6 +27,14 @@ export interface IDashboardStats {
     totalHours: number;
     entriesCount: number;
   };
+  perVABreakdown: Array<{
+    vaId: string;
+    vaName: string;
+    totalMinutes: number;
+    totalHours: number;
+    entriesCount: number;
+    tasksCompleted: number;
+  }>;
 }
 
 export async function getDashboardStats(): Promise<IDashboardStats> {
