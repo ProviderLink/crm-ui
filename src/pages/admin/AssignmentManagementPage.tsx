@@ -751,7 +751,8 @@ function EditAssignmentForm({
 export default function AssignmentManagementPage() {
   const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
-  const canManageAssignments = user?.role === 'admin';
+  const canManageAssignments =
+    user?.role === 'admin' || user?.role === 'account_manager';
   const { data: assignments = [], isLoading } = useAllAssignmentsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: atsVas = [] } = useAtsVAsQuery();

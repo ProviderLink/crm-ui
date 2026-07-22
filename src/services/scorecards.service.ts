@@ -1,15 +1,18 @@
+import api from '@/lib/api';
 import type { IScorecard } from '@/types/scorecard';
 
-/**
- * TODO: ats-crm-backend does not have a /scorecards resource.
- * Scorecard generation was handled by the old crm-backend.
- * Re-implement once the feature is ported to ats-crm-backend.
- */
-
-export async function getScorecards(_vaId?: string): Promise<IScorecard[]> {
-  return [];
+export async function getScorecards(vaId?: string): Promise<IScorecard[]> {
+  const params = new URLSearchParams();
+  if (vaId) params.set('vaId', vaId);
+  const { data } = await api.get<{ data: IScorecard[] }>(
+    `/crm/scorecards?${params.toString()}`
+  );
+  return data.data;
 }
 
-export async function generateScorecards(): Promise<void> {
-  // no-op — not yet implemented in ats-crm-backend
+export async function generateScorecards(): Promise<{ generated: number }> {
+  const { data } = await api.post<{ data: { generated: number } }>(
+    '/crm/scorecards/generate'
+  );
+  return data.data;
 }

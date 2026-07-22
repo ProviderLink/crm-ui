@@ -1,6 +1,6 @@
 # CRM — Business Logic & Architecture Decisions
 
-> **Last updated**: 2026-07-09
+> **Last updated**: 2026-07-18
 > **Context**: `crm-ui` + `ats-crm-backend`
 
 ---
@@ -18,11 +18,11 @@
 
 **The ATS is the single source of truth** for:
 
-- Who is a Client, VA, or Account Manager
+- Who is a Client, VA, Account Manager, or Admin
 - Who has access to the CRM (active / suspended / hold)
-- User provisioning and de-provisioning
+- User provisioning, de-provisioning, and management
 
-**CRM does NOT provision users.** It reads user data from the ATS. An Admin gives, revokes, or suspends access to these roles **from the ATS**, not from the CRM.
+**CRM does NOT create, edit, or deactivate users.** All user management happens in the ATS (`ats-ui-new`). The CRM only reads user data from the shared backend (`/shared/users`). Users appear in the read-only **Accounts** page (tabs: Clients, VAs, AMs, Admins).
 
 CRM responsibilities:
 
@@ -36,7 +36,7 @@ CRM responsibilities:
 
 ### Ownership
 
-Assignments are **created, edited, and deleted by Admin** in the CRM.
+Assignments are **created, edited, and ended by Admin and Account Managers** in the CRM.
 
 ### Assignment Model
 
@@ -59,14 +59,14 @@ Client ─── Job ─── VA ─── Account Manager
 
 ### Access on Assignments
 
-| Role            | Create | Read | Update | Delete |
-| --------------- | :----: | :--: | :----: | :----: |
-| Admin           |   ✅   |  ✅  |   ✅   |   ✅   |
-| Account Manager |   —    |  ✅  |   —    |   —    |
-| Client          |   —    |  ✅  |   —    |   —    |
-| VA              |   —    |  ✅  |   —    |   —    |
+| Role            | Create | Read | Update | Delete (End) |
+| --------------- | :----: | :--: | :----: | :----------: |
+| Admin           |   ✅   |  ✅  |   ✅   |      ✅      |
+| Account Manager |   ✅   |  ✅  |   ✅   |      ✅      |
+| Client          |   —    |  ✅  |   —    |      —       |
+| VA              |   —    |  ✅  |   —    |      —       |
 
-Assignments are **read-only** for Client, AM, and VA.
+_Note: backend currently allows any AM to manage any assignment. Future scoping to assigned-only is TBD._
 
 ---
 
@@ -74,26 +74,32 @@ Assignments are **read-only** for Client, AM, and VA.
 
 ### Access Matrix
 
-| Role            |  Create  |     Read      |  Update  |  Delete  |
-| --------------- | :------: | :-----------: | :------: | :------: |
-| VA              | ✅ (own) |   ✅ (own)    | ✅ (own) | ✅ (own) |
-| Admin           |    —     |   ✅ (all)    |    —     |    —     |
-| Account Manager |    —     | ✅ (assigned) |    —     |    —     |
-| Client          |    —     | ✅ (own VAs)  |    —     |    —     |
+| Role            | Create | Read | Update | Delete |
+| --------------- | :----: | :--: | :----: | :----: |
+| VA              |   ✅   |  ✅  |   ✅   |   ✅   |
+| Admin           |   —    |  ✅  |   —    |   —    |
+| Account Manager |   —    |  ✅  |   —    |   —    |
+| Client          |   —    |  ✅  |   —    |   —    |
 
-- **VAs** log their own daily work entries and submit EOD reports per assignment
-- **Clients** see work entries and EODs for their assigned VAs
-- **Admin and AM** have read-only oversight across all or assigned work
+- **Only VAs** create, update, and delete work entries and EOD submissions.
+- **Admin, AM, and Client** have read-only access (scoped to their assignments/VAs).
+- Backend routes currently allow `admin, account_manager` on POST/PATCH/DELETE for work entries and POST/PATCH for EOD — needs tightening to VA-only.
 
 ---
 
-## 4. Reminders, Scorecards & Performance Reviews
+## 4. Accounts
+
+All users (VA, Client, Account Manager, Admin) are displayed in the **Accounts** page as a read-only 4-tab view. No user creation, editing, or deactivation happens in the CRM — this is managed in `ats-ui-new`.
+
+---
+
+## 5. Reminders, Scorecards & Performance Reviews
 
 | Feature                 | Description                                                                                                                         | Owner         |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | **Survey Reminders**    | Automated 3-day, 1-week, 30-day, and monthly check-in reminders. Triggered on assignment creation and dispatched via cron.          | Admin, AM     |
 | **EOD Reminders**       | Daily 5 PM cron — checks missing EODs, emails VAs, logs compliance                                                                  | System (cron) |
-| **Scorecards**          | Weekly productivity metrics per VA (hours, tasks, compliance rate, consistency score)                                               | Admin, AM     |
+| **Scorecards**          | Weekly productivity metrics per VA (hours, tasks, compliance rate, consistency score) — backend feature TBD                         | Admin, AM     |
 | **Performance Reviews** | AI-generated (Claude) review templates — generated by Admin/AM, editable, completable. Categories, ratings, goals, recommendations. | Admin, AM     |
 
 ---
