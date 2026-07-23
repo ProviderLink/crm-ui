@@ -11,6 +11,7 @@ import {
   MailIcon,
   ShieldCheckIcon,
   StarIcon,
+  StickyNoteIcon,
   UserIcon,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -517,6 +518,14 @@ export default function AssignmentDetailPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Notes */}
+          {assignment.notes && (
+            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3 mb-4">
+              <StickyNoteIcon className="size-3.5 mt-[3px] shrink-0 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground leading-relaxed">{assignment.notes}</p>
+            </div>
+          )}
 
           {/* Date filters for work entries / EODs */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">

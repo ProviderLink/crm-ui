@@ -12,7 +12,11 @@ export interface IClientAccount {
   onboardingComplete: boolean;
   sopReceived: boolean;
   primaryContact?: string;
+  primaryContactEmail?: string;
+  primaryContactPhone?: string;
   secondaryContact?: string;
+  secondaryContactEmail?: string;
+  secondaryContactPhone?: string;
   lastClientCheckin?: string;
   satisfactionScore?: number;
   healthStatus: HealthStatus;
@@ -24,15 +28,14 @@ export interface IClientAccount {
 
 export interface UpdateClientAccountPayload {
   healthStatus?: HealthStatus;
-  satisfactionScore?: number;
+  satisfactionScore?: number | null;
   baaSigned?: boolean;
-  baaSignedDate?: string;
+  baaSignedDate?: string | null;
   onboardingComplete?: boolean;
   sopReceived?: boolean;
-  primaryContact?: string;
-  secondaryContact?: string;
-  lastClientCheckin?: string;
+  lastClientCheckin?: string | null;
   emrSystem?: string;
+  serviceStartDate?: string | null;
   openIssuesCount?: number;
   notes?: string;
 }
