@@ -12,6 +12,14 @@ export interface IAtsClient {
   email?: string;
   status: 'active' | 'inactive' | 'pending' | 'on_hold';
   contacts?: IAtsClientContact[];
+  crmProfile?: {
+    healthStatus?: string;
+    baaSign?: boolean;
+    onboardingComplete?: boolean;
+    accountOwnerId?: string | null;
+    primaryContact?: string;
+    secondaryContact?: string;
+  } | null;
 }
 
 export interface IAtsCandidate {

@@ -39,17 +39,15 @@ export async function getAccountManagers(
 ): Promise<IAccountManager[]> {
   const params = new URLSearchParams({ role: 'account_manager' });
   if (activeOnly) params.set('active', 'true');
-  const { data } = await api.get<{ data: IAccountManager[] }>(
+  const { data } = await api.get<{ data: any[] }>(
     `/shared/users?${params.toString()}`
   );
-  return data.data;
+  return data.data.map((u: any) => ({ ...u, id: u._id ?? u.id }));
 }
 
 export async function getCrmUsersByRole(
   role: 'va' | 'client' | 'account_manager' | 'admin'
 ): Promise<ICrmUser[]> {
-  const { data } = await api.get<{ data: ICrmUser[] }>(
-    `/shared/users?role=${role}`
-  );
-  return data.data;
+  const { data } = await api.get<{ data: any[] }>(`/shared/users?role=${role}`);
+  return data.data.map((u: any) => ({ ...u, id: u._id ?? u.id }));
 }

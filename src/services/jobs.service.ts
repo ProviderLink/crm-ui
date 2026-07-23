@@ -10,6 +10,6 @@ export interface IAtsJob {
 
 /** Fetch all jobs (read-only from ATS). */
 export async function getAtsJobs(): Promise<IAtsJob[]> {
-  const { data } = await api.get<{ data: IAtsJob[] }>('/ats/jobs');
-  return data.data;
+  const { data } = await api.get<{ data: any[] }>('/ats/jobs');
+  return data.data.map((j: any) => ({ ...j, id: j._id ?? j.id }));
 }

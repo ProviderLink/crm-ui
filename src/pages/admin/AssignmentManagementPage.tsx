@@ -45,13 +45,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  QK,
   useActiveAccountManagersQuery,
   useAllAssignmentsQuery,
-  useAtsClientsQuery,
-  useAtsJobsQuery,
   useAtsVAsQuery,
-  useClientAccountsQuery,
+  useHiredVasForClientQuery,
+  useProvisionedClientsQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import type { IAccountManager } from '@/services/account-managers.service';
@@ -60,20 +58,21 @@ import {
   updateAssignment,
 } from '@/services/assignments.service';
 import type { IAssignment } from '@/types/assignment';
-import type { IAtsCandidate, IAtsClient } from '@/types/ats';
 import { useQueryClient } from '@tanstack/react-query';
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
 const createSchema = z.object({
-  clientId: z.string().min(1, 'Required'),
-  jobId: z.string().min(1, 'Required'),
-  candidateId: z.string().min(1, 'Required'),
-  accountManagerId: z.string().min(1, 'Required'),
-  startDate: z.string().min(1, 'Required'),
+  clientId: z.string().min(1, 'Client is required'),
+  candidateId: z.string().min(1, 'Virtual assistant is required'),
+  accountManagerId: z.string().min(1, 'Account manager is required'),
+  serviceType: z
+    .string()
+    .min(1, 'Service type is required')
+    .max(100, 'Max 100 characters'),
+  startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().optional(),
   status: z.enum(['active', 'on_hold', 'ended']),
-  serviceType: z.string().min(1, 'Required'),
   notes: z.string().optional(),
 });
 type CreateFormData = z.infer<typeof createSchema>;
@@ -290,22 +289,12 @@ function Field({
 
 function CreateAssignmentForm({
   clients,
-  jobs,
-  vas,
   assignments,
   team,
   onSuccess,
   onClose,
 }: {
-  clients: IAtsClient[];
-  jobs: {
-    id: string;
-    _id: string;
-    title: string;
-    clientId: string;
-    status: string;
-  }[];
-  vas: IAtsCandidate[];
+  clients: { clientId: string; companyName: string }[];
   assignments: IAssignment[];
   team: IAccountManager[];
   onSuccess: () => void;
@@ -317,29 +306,18 @@ function CreateAssignmentForm({
     control,
     watch,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<CreateFormData>({
     resolver: zodResolver(createSchema),
+    mode: 'onChange',
     defaultValues: { status: 'active' },
   });
 
   const selectedClientId = watch('clientId');
+  const { data: clientVas = [], isLoading: vasLoading } =
+    useHiredVasForClientQuery(selectedClientId || undefined);
 
-  // Filter jobs by selected client, only open/on_hold jobs
-  const filteredJobs = selectedClientId
-    ? jobs.filter(
-        j =>
-          j.clientId === selectedClientId &&
-          (j.status === 'open' || j.status === 'on_hold')
-      )
-    : [];
-
-  // Filter VAs to only those hired by the selected client
-  const filteredVas = selectedClientId
-    ? vas.filter(v => v.clientIds?.includes(selectedClientId))
-    : [];
-
-  // Build a set of candidateIds that have an active/on_hold assignment
+  // VAs already on an active/on_hold assignment
   const activeCandidateIds = new Set(
     assignments
       .filter(a => a.status === 'active' || a.status === 'on_hold')
@@ -351,7 +329,12 @@ function CreateAssignmentForm({
   async function onSubmit(data: CreateFormData) {
     setServerError('');
     try {
-      await createAssignment(data);
+      const { startDate, endDate, ...rest } = data;
+      await createAssignment({
+        ...rest,
+        startDate: new Date(startDate).toISOString(),
+        endDate: endDate ? new Date(endDate).toISOString() : undefined,
+      });
       onSuccess();
     } catch (err: unknown) {
       const apiMsg = (err as { response?: { data?: { message?: string } } })
@@ -360,6 +343,32 @@ function CreateAssignmentForm({
         apiMsg ?? 'Failed to create assignment. Please try again.'
       );
     }
+  }
+
+  // No eligible clients: CRM access is determined by crmProfile presence
+  if (clients.length === 0) {
+    return (
+      <div className="mt-6 flex flex-col gap-4">
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/20 py-10 text-center">
+          <Users2 size={28} className="text-muted-foreground/40" />
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              No eligible clients
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground/60">
+              Only clients who have hired a VA via the ATS appear here.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="h-10 rounded-xl border border-border px-4 text-sm text-muted-foreground transition-colors hover:border-input hover:text-foreground"
+        >
+          Cancel
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -386,8 +395,7 @@ function CreateAssignmentForm({
                 value={field.value || undefined}
                 onValueChange={v => {
                   field.onChange(v);
-                  setValue('jobId', '');
-                  setValue('candidateId', '');
+                  setValue('candidateId', '', { shouldValidate: false });
                 }}
               >
                 <SelectTrigger className="rounded-xl border-input h-10">
@@ -395,50 +403,8 @@ function CreateAssignmentForm({
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>
+                    <SelectItem key={c.clientId} value={c.clientId}>
                       {c.companyName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </Field>
-
-        <Field
-          label="Job"
-          error={errors.jobId?.message}
-          hint={
-            !selectedClientId
-              ? 'Select a client first'
-              : filteredJobs.length === 0
-                ? 'No open jobs found for this client'
-                : undefined
-          }
-        >
-          <Controller
-            control={control}
-            name="jobId"
-            render={({ field }) => (
-              <Select
-                value={field.value || undefined}
-                onValueChange={v => {
-                  field.onChange(v);
-                  setValue('candidateId', '');
-                }}
-                disabled={!selectedClientId || filteredJobs.length === 0}
-              >
-                <SelectTrigger className="rounded-xl border-input h-10">
-                  <SelectValue
-                    placeholder={
-                      selectedClientId ? 'Select job' : 'Select client first'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredJobs.map(j => (
-                    <SelectItem key={j._id} value={j._id}>
-                      {j.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -452,10 +418,12 @@ function CreateAssignmentForm({
           error={errors.candidateId?.message}
           hint={
             !selectedClientId
-              ? 'Select a client first to see their hired VAs'
-              : filteredVas.length === 0
-                ? 'No hired VAs found for this client'
-                : undefined
+              ? 'Select a client first'
+              : vasLoading
+                ? 'Loading VAs…'
+                : clientVas.length === 0
+                  ? 'No hired VAs for this client'
+                  : undefined
           }
         >
           <Controller
@@ -465,7 +433,7 @@ function CreateAssignmentForm({
               <Select
                 value={field.value || undefined}
                 onValueChange={field.onChange}
-                disabled={!selectedClientId || filteredVas.length === 0}
+                disabled={!selectedClientId || vasLoading || clientVas.length === 0}
               >
                 <SelectTrigger className="rounded-xl border-input h-10">
                   <SelectValue
@@ -475,7 +443,7 @@ function CreateAssignmentForm({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredVas.map(v => {
+                  {clientVas.map(v => {
                     const hasAssignment = activeCandidateIds.has(v.id);
                     return (
                       <SelectItem key={v.id} value={v.id}>
@@ -537,6 +505,7 @@ function CreateAssignmentForm({
               {...register('serviceType')}
               placeholder="Service type"
               className="rounded-xl border-input h-10"
+              maxLength={100}
             />
           </Field>
 
@@ -611,7 +580,7 @@ function CreateAssignmentForm({
       <div className="flex items-center gap-3 pt-1">
         <Button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isValid}
           className="flex-1 rounded-xl h-10 font-medium gap-2"
         >
           {isSubmitting ? (
@@ -675,9 +644,10 @@ function EditAssignmentForm({
       const { endDate, ...rest } = data;
       await updateAssignment(assignment._id, {
         ...rest,
+        // Convert date to ISO for backend validation
         // Empty string = user cleared the field → send null so backend deletes it from Firestore
-        // Value present → send as-is
-        endDate: endDate || null,
+        // Value present → convert to ISO
+        endDate: endDate ? new Date(endDate).toISOString() : null,
       });
       onSuccess();
     } catch (err: unknown) {
@@ -848,16 +818,10 @@ export default function AssignmentManagementPage() {
   const { data: assignments = [], isLoading } = useAllAssignmentsQuery(
     isAccountManager ? user?.id : undefined
   );
-  const { data: atsClients = [] } = useAtsClientsQuery();
-  const { data: clientAccounts = [] } = useClientAccountsQuery();
-  const crmClientIds = new Set(
-    clientAccounts.map(a => a.clientId).filter(Boolean)
-  );
-  // Only show ATS clients that have a CRM client account
-  const crmClients = atsClients.filter(c => crmClientIds.has(c.id));
+  // Clients provisioned with CRM access — from the dedicated CRM endpoint
+  const { data: crmClients = [] } = useProvisionedClientsQuery();
   const { data: atsVas = [] } = useAtsVAsQuery();
   const { data: accountManagers = [] } = useActiveAccountManagersQuery();
-  const { data: atsJobs = [] } = useAtsJobsQuery();
 
   const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null);
   const [editTarget, setEditTarget] = useState<IAssignment | null>(null);
@@ -871,7 +835,7 @@ export default function AssignmentManagementPage() {
     setDeactivateError(null);
     try {
       await updateAssignment(deactivateTarget._id, { status: 'ended' });
-      queryClient.invalidateQueries({ queryKey: QK.allAssignments });
+      queryClient.invalidateQueries({ queryKey: ['assignments', 'all'] });
     } catch {
       setDeactivateError('Failed to deactivate assignment. Please try again.');
     } finally {
@@ -884,7 +848,7 @@ export default function AssignmentManagementPage() {
   }
 
   const clientMap: Record<string, string> = {};
-  for (const c of crmClients) clientMap[c.id] = c.companyName;
+  for (const c of crmClients) clientMap[c.clientId] = c.companyName;
 
   const vaMap: Record<string, string> = {};
   for (const v of atsVas) vaMap[v.id] = `${v.firstName} ${v.lastName}`;
@@ -956,13 +920,13 @@ export default function AssignmentManagementPage() {
           {sheetMode === 'create' && (
             <CreateAssignmentForm
               clients={crmClients}
-              jobs={atsJobs}
-              vas={atsVas}
               assignments={assignments}
               team={accountManagers}
               onSuccess={() => {
                 setSheetMode(null);
-                queryClient.invalidateQueries({ queryKey: QK.allAssignments });
+                queryClient.invalidateQueries({
+                  queryKey: ['assignments', 'all'],
+                });
               }}
               onClose={() => setSheetMode(null)}
             />
@@ -975,7 +939,9 @@ export default function AssignmentManagementPage() {
               team={accountManagers}
               onSuccess={() => {
                 setSheetMode(null);
-                queryClient.invalidateQueries({ queryKey: QK.allAssignments });
+                queryClient.invalidateQueries({
+                  queryKey: ['assignments', 'all'],
+                });
               }}
               onClose={() => setSheetMode(null)}
             />

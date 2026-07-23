@@ -9,7 +9,11 @@ import {
   getMyAssignments,
 } from '@/services/assignments.service';
 import { getAtsClients, getAtsTeam, getAtsVAs } from '@/services/ats.service';
-import { getClientAccounts } from '@/services/client-accounts.service';
+import {
+  getClientAccounts,
+  getHiredVasForClient,
+  getProvisionedClients,
+} from '@/services/client-accounts.service';
 import { getEodSubmissions } from '@/services/eod-submissions.service';
 import { getAtsJobs } from '@/services/jobs.service';
 import {
@@ -47,8 +51,11 @@ export const QK = {
   dashboardStats: ['dashboard-stats'] as const,
   surveyReminders: ['survey-reminders'] as const,
   clientAccounts: ['client-accounts'] as const,
+  provisionedClients: ['client-accounts', 'provisioned'] as const,
   vaProfiles: ['va-profiles'] as const,
   scorecards: (vaId?: string) => ['scorecards', vaId ?? 'all'] as const,
+  hiredVasForClient: (clientId?: string) =>
+    ['hired-vas', clientId ?? 'none'] as const,
   performanceReviews: (filters?: IReviewFilters) =>
     ['performance-reviews', filters ?? {}] as const,
   performanceReview: (id: string) => ['performance-reviews', id] as const,
@@ -165,6 +172,21 @@ export function useSurveyRemindersQuery() {
 
 export function useClientAccountsQuery() {
   return useQuery({ queryKey: QK.clientAccounts, queryFn: getClientAccounts });
+}
+
+export function useProvisionedClientsQuery() {
+  return useQuery({
+    queryKey: QK.provisionedClients,
+    queryFn: getProvisionedClients,
+  });
+}
+
+export function useHiredVasForClientQuery(clientId?: string) {
+  return useQuery({
+    queryKey: QK.hiredVasForClient(clientId),
+    queryFn: () => getHiredVasForClient(clientId!),
+    enabled: !!clientId,
+  });
 }
 
 export function useVaProfilesQuery() {

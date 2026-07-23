@@ -29,10 +29,11 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  useAtsClientsQuery,
+  useActiveAccountManagersQuery,
   useAtsVAsQuery,
   useEodSubmissionsQuery,
   usePerformanceReviewsQuery,
+  useProvisionedClientsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
@@ -113,7 +114,7 @@ function buildWorkColumns(): ColumnDef<IWorkEntry>[] {
     },
     {
       accessorKey: 'timeSpent',
-      header: 'Time Spent',
+      header: () => <span className="whitespace-nowrap">Time Spent</span>,
       size: 95,
       cell: ({ getValue }) => (
         <span className="text-xs text-muted-foreground">
@@ -216,7 +217,8 @@ export default function AssignmentDetailPage() {
   const assignment = assignments.find(a => a._id === id) ?? null;
 
   const { data: atsVAs = [] } = useAtsVAsQuery();
-  const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: crmClients = [] } = useProvisionedClientsQuery();
+  const { data: accountManagers = [] } = useActiveAccountManagersQuery();
   const { data: allEntries = [], isLoading: loadingEntries } =
     useWorkEntriesQuery();
   const { data: allEods = [], isLoading: loadingEods } =
@@ -245,9 +247,15 @@ export default function AssignmentDetailPage() {
 
   const clientMap = useMemo(() => {
     const m: Record<string, string> = {};
-    for (const c of atsClients) m[c.id] = c.companyName;
+    for (const c of crmClients) m[c.clientId] = c.companyName;
     return m;
-  }, [atsClients]);
+  }, [crmClients]);
+
+  const amMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const u of accountManagers) m[u.id] = `${u.firstName} ${u.lastName}`;
+    return m;
+  }, [accountManagers]);
 
   const vaEmail = useMemo(() => {
     const va = atsVAs.find(v => v.id === assignment?.candidateId);
@@ -328,54 +336,36 @@ export default function AssignmentDetailPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         {/* Header */}
         <div className="px-4 lg:px-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Button variant="ghost" size="icon" asChild className="size-8">
+          <div className="flex items-start gap-3 mb-5">
+            <Button variant="ghost" size="icon" asChild className="size-8 mt-0.5 shrink-0">
               <Link to={`${rolePrefix}/assignments`}>
                 <ArrowLeftIcon className="size-4" />
               </Link>
             </Button>
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-semibold text-foreground">
                 {vaMap[assignment.candidateId] ?? 'VA'} —{' '}
                 {clientMap[assignment.clientId] ?? 'Client'}
               </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Assignment detail · {assignment.serviceType ?? 'VA Service'}
-              </p>
+              <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                <span className="inline-flex items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] px-2 py-0.5 bg-white/[0.04] text-[#A0A0A0] ring-1 ring-white/[0.08]">
+                  {assignment.status.replace('_', ' ')}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {assignment.serviceType ?? 'VA Service'}
+                </span>
+                <span className="text-muted-foreground/40 text-xs">·</span>
+                <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                  <CalendarIcon className="size-3.5" />
+                  Started {fmtDate(assignment.startDate)}
+                  {assignment.endDate ? ` · Ends ${fmtDate(assignment.endDate)}` : ''}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Overview cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {/* Assignment Status */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-1.5">
-                  <BriefcaseIcon className="size-3.5" />
-                  Status
-                </CardDescription>
-                <CardTitle className="text-lg">
-                  <span
-                    className={`inline-flex items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] px-2.5 py-0.5 bg-white/[0.04] text-[#A0A0A0]`}
-                  >
-                    {assignment.status.replace('_', ' ')}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-1">
-                <div className="flex gap-2">
-                  <CalendarIcon className="size-3.5 mt-0.5 shrink-0" />
-                  <span>
-                    Started {fmtDate(assignment.startDate)}
-                    {assignment.endDate
-                      ? ` · Ends ${fmtDate(assignment.endDate)}`
-                      : ''}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* VA Info */}
             <Card>
               <CardHeader className="pb-3">
                 <CardDescription className="flex items-center gap-1.5">
@@ -388,14 +378,14 @@ export default function AssignmentDetailPage() {
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground space-y-1">
                 {vaEmail && (
-                  <div className="flex gap-2">
-                    <MailIcon className="size-3.5 mt-0.5 shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <MailIcon className="size-3.5 shrink-0" />
                     <span>{vaEmail}</span>
                   </div>
                 )}
                 {vaProfile && (
-                  <div className="flex gap-2">
-                    <GaugeIcon className="size-3.5 mt-0.5 shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <GaugeIcon className="size-3.5 shrink-0" />
                     <span>
                       Workload:{' '}
                       <span className="font-medium text-foreground">
@@ -412,11 +402,37 @@ export default function AssignmentDetailPage() {
                   </div>
                 )}
                 {vaProfile?.burnoutRiskFlag && (
-                  <div className="flex gap-2 text-amber-600 dark:text-amber-400">
-                    <ShieldCheckIcon className="size-3.5 mt-0.5 shrink-0" />
+                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                    <ShieldCheckIcon className="size-3.5 shrink-0" />
                     <span>Burnout risk flagged</span>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Account Manager */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardDescription className="flex items-center gap-1.5">
+                  <BriefcaseIcon className="size-3.5" />
+                  Account Manager
+                </CardDescription>
+                <CardTitle className="text-lg">
+                  {assignment.accountManagerId
+                    ? (amMap[assignment.accountManagerId] ?? 'Unknown')
+                    : '—'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                {assignment.accountManagerId && (() => {
+                  const am = accountManagers.find(u => u.id === assignment.accountManagerId);
+                  return am?.email ? (
+                    <div className="flex items-center gap-2">
+                      <MailIcon className="size-3.5 shrink-0" />
+                      <span>{am.email}</span>
+                    </div>
+                  ) : null;
+                })()}
               </CardContent>
             </Card>
 

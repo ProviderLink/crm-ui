@@ -49,6 +49,7 @@ import {
 } from '@/services/account-managers.service';
 import { updateClientAccount } from '@/services/client-accounts.service';
 import { updateVaProfile } from '@/services/va-profiles.service';
+import { useQuery } from '@tanstack/react-query';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
