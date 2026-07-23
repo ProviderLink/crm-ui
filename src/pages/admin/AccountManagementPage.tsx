@@ -35,28 +35,30 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  useAccountManagersQuery,
+  useCrmAdminUsersQuery,
+  useCrmClientUsersQuery,
+  useCrmVaUsersQuery,
+} from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import api from '@/lib/api';
 import {
-  getAccountManagers,
-  getCrmUsersByRole,
   type IAccountManager,
   type ICrmUser,
 } from '@/services/account-managers.service';
 import { updateClientAccount } from '@/services/client-accounts.service';
 import { updateVaProfile } from '@/services/va-profiles.service';
-import { useQuery } from '@tanstack/react-query';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function RoleBadge({ role }: { role: string }) {
   const styles: Record<string, string> = {
-    admin: 'bg-red-500/10 text-red-700 dark:text-red-400 ring-red-500/20',
+    admin: 'bg-white/[0.04] text-[#A0A0A0] ring-[rgba(255,255,255,0.08)]',
     account_manager:
-      'bg-blue-500/10 text-blue-700 dark:text-blue-400 ring-blue-500/20',
-    va: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 ring-purple-500/20',
-    client:
-      'bg-green-500/10 text-green-700 dark:text-green-400 ring-green-500/20',
+      'bg-white/[0.04] text-[#A0A0A0] ring-[rgba(255,255,255,0.08)]',
+    va: 'bg-white/[0.04] text-[#A0A0A0] ring-[rgba(255,255,255,0.08)]',
+    client: 'bg-white/[0.04] text-[#A0A0A0] ring-[rgba(255,255,255,0.08)]',
   };
   const labels: Record<string, string> = {
     admin: 'Admin',
@@ -66,7 +68,7 @@ function RoleBadge({ role }: { role: string }) {
   };
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${styles[role] ?? 'bg-muted text-muted-foreground ring-border'}`}
+      className={`inline-flex items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] px-2 py-0.5 ring-1 ring-inset ${styles[role] ?? 'bg-white/[0.04] text-[#6E6E6E] ring-[rgba(255,255,255,0.08)]'}`}
     >
       {labels[role] ?? role}
     </span>
@@ -75,13 +77,13 @@ function RoleBadge({ role }: { role: string }) {
 
 function ActiveBadge({ active }: { active: boolean }) {
   return active ? (
-    <span className="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-500/20">
-      <span className="size-1.5 rounded-full bg-green-500" />
+    <span className="inline-flex items-center gap-1 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] px-2 py-0.5 text-[#A0A0A0] ring-1 ring-inset ring-[rgba(255,255,255,0.08)]">
+      <span className="size-1.5 rounded-full bg-[#A0A0A0]" />
       Active
     </span>
   ) : (
-    <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
-      <span className="size-1.5 rounded-full bg-muted-foreground/40" />
+    <span className="inline-flex items-center gap-1 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] px-2 py-0.5 text-[#6E6E6E] ring-1 ring-inset ring-[rgba(255,255,255,0.08)]">
+      <span className="size-1.5 rounded-full bg-[#6E6E6E]/40" />
       Inactive
     </span>
   );
@@ -130,7 +132,7 @@ function buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
       header: 'Name',
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-xs">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs">
             {row.original.name
               .split(' ')
               .map(n => n[0])
@@ -305,7 +307,11 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
           </Field>
           <Field label="Satisfaction (1-5)">
             <Select
-              value={String(getFormVal('satisfactionScore', ''))}
+              value={
+                getFormVal('satisfactionScore')
+                  ? String(getFormVal('satisfactionScore'))
+                  : '0'
+              }
               onValueChange={v =>
                 setForm(p => ({ ...p, satisfactionScore: Number(v) || null }))
               }
@@ -314,7 +320,7 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
                 <SelectValue placeholder="—" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">—</SelectItem>
+                <SelectItem value="0">—</SelectItem>
                 {[1, 2, 3, 4, 5].map(n => (
                   <SelectItem key={n} value={String(n)}>
                     {n}
@@ -651,11 +657,15 @@ function VaProfileSection({ vaId }: { vaId: string }) {
           </Field>
           <Field label="Satisfaction (1-5)">
             <Select
-              value={String(getFormVal('satisfactionScore', ''))}
+              value={
+                getFormVal('satisfactionScore')
+                  ? String(getFormVal('satisfactionScore'))
+                  : '0'
+              }
               onValueChange={v =>
                 setForm(p => ({
                   ...p,
-                  satisfactionScore: v ? Number(v) : null,
+                  satisfactionScore: Number(v) || null,
                 }))
               }
             >
@@ -663,7 +673,7 @@ function VaProfileSection({ vaId }: { vaId: string }) {
                 <SelectValue placeholder="—" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">—</SelectItem>
+                <SelectItem value="0">—</SelectItem>
                 {[1, 2, 3, 4, 5].map(n => (
                   <SelectItem key={n} value={String(n)}>
                     {n}
@@ -838,7 +848,7 @@ function UserDetailSheet({
         <div className="mt-6 space-y-5">
           {/* Identity header */}
           <div className="flex items-center gap-4">
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-xl">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-[#A0A0A0] font-mono text-lg">
               {user.name
                 .split(' ')
                 .map(n => n[0])
@@ -889,22 +899,13 @@ function UserDetailSheet({
 export default function AccountManagementPage() {
   const [detailUser, setDetailUser] = useState<UserRow | null>(null);
 
-  const { data: vaUsers = [], isLoading: loadingVa } = useQuery({
-    queryKey: ['shared-users', 'va'],
-    queryFn: () => getCrmUsersByRole('va'),
-  });
-  const { data: clientUsers = [], isLoading: loadingClient } = useQuery({
-    queryKey: ['shared-users', 'client'],
-    queryFn: () => getCrmUsersByRole('client'),
-  });
-  const { data: amUsers = [], isLoading: loadingAm } = useQuery({
-    queryKey: ['shared-users', 'am'],
-    queryFn: () => getAccountManagers(),
-  });
-  const { data: adminUsers = [], isLoading: loadingAdmin } = useQuery({
-    queryKey: ['shared-users', 'admin'],
-    queryFn: () => getCrmUsersByRole('admin'),
-  });
+  const { data: vaUsers = [], isLoading: loadingVa } = useCrmVaUsersQuery();
+  const { data: clientUsers = [], isLoading: loadingClient } =
+    useCrmClientUsersQuery();
+  const { data: amUsers = [], isLoading: loadingAm } =
+    useAccountManagersQuery();
+  const { data: adminUsers = [], isLoading: loadingAdmin } =
+    useCrmAdminUsersQuery();
 
   function toRow(u: ICrmUser | IAccountManager): UserRow {
     const roles = u.roles ?? [];

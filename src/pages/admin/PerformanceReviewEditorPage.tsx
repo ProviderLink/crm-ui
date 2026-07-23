@@ -61,11 +61,11 @@ const RATING_OPTIONS = [
 ];
 
 const RATING_COLORS: Record<number, string> = {
-  1: 'bg-red-500/10 text-red-700 border-red-500/30 dark:text-red-400',
-  2: 'bg-orange-500/10 text-orange-700 border-orange-500/30 dark:text-orange-400',
-  3: 'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400',
-  4: 'bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-400',
-  5: 'bg-green-500/10 text-green-700 border-green-500/30 dark:text-green-400',
+  1: 'bg-white/[0.04] text-[#F87171] border-[rgba(255,255,255,0.08)]',
+  2: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  3: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  4: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  5: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
 };
 
 function ratingToValue(r: number | null): string {
@@ -322,7 +322,7 @@ export default function PerformanceReviewEditorPage() {
   return (
     <div className="@container/main flex flex-1 flex-col">
       {/* ── Sticky toolbar ───────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border/60 px-4 lg:px-6 py-3">
+      <div className="sticky top-0 z-10 bg-background/95 border-b border-border px-4 lg:px-6 py-3">
         <div className="flex items-center gap-3">
           <Button
             size="icon"
@@ -344,7 +344,7 @@ export default function PerformanceReviewEditorPage() {
                 </span>
               )}
               {isCompleted && (
-                <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20">
+                <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] px-2 py-0.5 rounded bg-white/[0.04] text-[#A0A0A0] border border-[rgba(255,255,255,0.08)]">
                   <LockIcon className="size-2.5" />
                   Completed
                 </span>
@@ -657,7 +657,7 @@ export default function PerformanceReviewEditorPage() {
           {/* ── Strengths + Areas (side by side) ─────────────────────────── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <SectionCard
-              icon={<span className="text-green-600">↑</span>}
+              icon={<span className="text-[#A0A0A0]">↑</span>}
               title="Strengths"
             >
               <Textarea

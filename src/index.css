@@ -1,30 +1,81 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:is(.dark *));
+/* ─── Design Tokens (CRM Restyle — monochrome, dark-only) ─ */
+:root {
+  /* Background scale — near-black, depth via layering */
+  --bg-canvas: #0a0a0a;
+  --bg-surface: #0d0d0d;
+  --bg-surface-raised: #121212;
+  --bg-surface-hover: #171717;
+  --bg-surface-active: #1c1c1c;
 
-/* ─── Design Tokens ─────────────────────────────────────── */
-@theme {
-  /* Font */
-  --font-sans: 'Inter', system-ui, sans-serif;
+  /* Borders — hairline, no shadows */
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.2);
 
-  /* Brand — lime/black accent system */
-  --color-lime: #c7f33c; /* lime green accent */
-  --color-lime-pale: #e1f2ae; /* pale lime highlight */
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #6e6e6e;
+  --text-inverse: #0d0d0d;
 
-  /* Neutral */
-  --color-app-bg: #f5f7fb;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #64748b;
-  --color-text-muted: #94a3b8;
+  /* Primary CTA — off-white inverted */
+  --accent-inverse-bg: #e8e6e1;
+  --accent-inverse-hover: #ffffff;
 
-  /* Status */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #3b82f6;
+  /* Grid decoration */
+  --grid-line: rgba(255, 255, 255, 0.06);
+
+  /* Desaturated status indicators (small dots/text only, never fills) */
+  --status-success: #4ade80;
+  --status-warning: #fbbf24;
+  --status-error: #f87171;
+  --status-info: #60a5fa;
+
+  /* Radius */
+  --radius: 0.5rem;
+
+  /* ─── shadcn/ui semantic variable mapping ─────────────── */
+  --background: var(--bg-canvas);
+  --foreground: var(--text-primary);
+  --card: var(--bg-surface-raised);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-surface-raised);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-inverse-bg);
+  --primary-foreground: var(--text-inverse);
+  --secondary: var(--bg-surface-hover);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--bg-surface);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--bg-surface-hover);
+  --accent-foreground: var(--text-primary);
+  --destructive: var(--status-error);
+  --destructive-foreground: var(--text-primary);
+  --border: var(--border-hairline);
+  --input: var(--border-subtle);
+  --ring: rgba(255, 255, 255, 0.4);
+
+  /* ─── Sidebar ────────────────────────────────────────── */
+  --sidebar: var(--bg-surface);
+  --sidebar-foreground: var(--text-secondary);
+  --sidebar-primary: var(--text-primary);
+  --sidebar-primary-foreground: var(--bg-surface);
+  --sidebar-accent: var(--bg-surface-active);
+  --sidebar-accent-hover: var(--bg-surface-hover);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: var(--border-hairline);
+  --sidebar-ring: rgba(255, 255, 255, 0.4);
 }
 
-/* ─── shadcn/ui CSS Variable Bridge ─────────────────────── */
+/* ─── Tailwind v4 Theme ──────────────────────────────────── */
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+}
+
+/* ─── shadcn/ui CSS Variable Bridge ──────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -41,6 +92,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -61,29 +113,6 @@
 
 /* ─── Base Layer ─────────────────────────────────────────── */
 @layer base {
-  :root {
-    /* shadcn semantic variables — tuned to our design system */
-    --background: #ffffff;
-    --foreground: #0f172a;
-    --card: rgba(255, 255, 255, 0.7);
-    --card-foreground: #0f172a;
-    --popover: rgba(255, 255, 255, 0.9);
-    --popover-foreground: #0f172a;
-    --primary: #000000; /* black — primary buttons/actions */
-    --primary-foreground: #ffffff;
-    --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
-    --muted: #f1f5f9;
-    --muted-foreground: #64748b;
-    --accent: #e1f2ae; /* pale lime — hover/accent surfaces */
-    --accent-foreground: #000000;
-    --destructive: #ef4444;
-    --border: rgba(255, 255, 255, 0.4);
-    --input: rgba(255, 255, 255, 0.6);
-    --ring: #60a5fa; /* blue-400 — keyboard focus ring */
-    --radius: 0.75rem; /* 12px — maps to rounded-xl for controls */
-  }
-
   *,
   *::before,
   *::after {
@@ -101,15 +130,18 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
   }
 
   body {
     min-height: 100vh;
     margin: 0;
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
     font-size: 0.875rem;
-    line-height: 1.5;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
   }
 
   #root {
@@ -117,63 +149,27 @@
   }
 }
 
-/* ─── Reusable Surface Utility ───────────────────────────── */
+/* ─── Utility Classes ────────────────────────────────────── */
 @layer components {
-  .surface {
-    @apply rounded-2xl bg-white/70 backdrop-blur-md border border-white/40 shadow-sm;
+  /* Dashed background grid — "blueprint" motif */
+  .grid-blueprint {
+    background-image: linear-gradient(
+      to right,
+      var(--grid-line) 1px,
+      transparent 1px
+    );
+    background-size: calc(100% / 6) 100%;
   }
-  .surface-hover {
-    @apply hover:shadow-md hover:scale-[1.01] transition-all duration-200 ease-out;
+
+  /* Mono meta label — tags, IDs, timestamps, system labels */
+  .meta-label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
   }
-  .gradient-brand {
-    @apply bg-gradient-to-r from-[#C7F33C] to-[#E1F2AE];
-  }
-}
-
-/* ─── Sidebar CSS Variables (design system tuned) ───────── */
-:root {
-  --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #000000;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1f5f9; /* slate-100 — active nav bg */
-  --sidebar-accent-hover: #f8fafc; /* slate-50  — hover nav bg */
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #e2e8f0; /* slate-200 — visible separator */
-  --sidebar-ring: #60a5fa; /* blue-400 focus ring */
-}
-
-/* ─── Dark Mode ──────────────────────────────────────────── */
-.dark {
-  --background: #0f172a;
-  --foreground: #f8fafc;
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
-  --popover: #1e293b;
-  --popover-foreground: #f8fafc;
-  --primary: #c7f33c;
-  --primary-foreground: #0f172a;
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: rgba(199, 243, 60, 0.12);
-  --accent-foreground: #c7f33c;
-  --destructive: #f87171;
-  --border: rgba(255, 255, 255, 0.08);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: #c7f33c;
-
-  /* Sidebar dark */
-  --sidebar: #1e293b;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #c7f33c;
-  --sidebar-primary-foreground: #0f172a;
-  --sidebar-accent: rgba(199, 243, 60, 0.12);
-  --sidebar-accent-hover: rgba(199, 243, 60, 0.03); /* lighter for hover */
-  --sidebar-accent-foreground: #c7f33c;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #c7f33c;
 }
 
 /* Make native date picker calendar icons white */

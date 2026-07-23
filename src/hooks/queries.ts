@@ -43,6 +43,7 @@ export const QK = {
   activeAccountManagers: ['account-managers', 'active'] as const,
   crmVaUsers: ['crm-users', 'va'] as const,
   crmClientUsers: ['crm-users', 'client'] as const,
+  crmAdminUsers: ['crm-users', 'admin'] as const,
   dashboardStats: ['dashboard-stats'] as const,
   surveyReminders: ['survey-reminders'] as const,
   clientAccounts: ['client-accounts'] as const,
@@ -63,6 +64,7 @@ export function useWorkEntriesQuery(filters?: {
   return useQuery({
     queryKey: [...QK.workEntries(uid), filters ?? {}],
     queryFn: () => getWorkEntries(filters),
+    enabled: !!uid,
   });
 }
 
@@ -76,6 +78,7 @@ export function useEodSubmissionsQuery(filters?: {
   return useQuery({
     queryKey: [...QK.eodSubmissions(uid), filters ?? {}],
     queryFn: () => getEodSubmissions(filters),
+    enabled: !!uid,
   });
 }
 
@@ -83,8 +86,8 @@ export function useMyAssignmentsQuery() {
   const uid = useUserId();
   return useQuery({
     queryKey: QK.myAssignments(uid),
-    queryFn: () =>
-      getMyAssignments().then(data => data.filter(a => a.status === 'active')),
+    queryFn: () => getMyAssignments(),
+    enabled: !!uid,
   });
 }
 
@@ -94,6 +97,7 @@ export function useAllAssignmentsQuery(accountManagerId?: string) {
     queryKey: [...QK.allAssignments(uid), accountManagerId ?? 'all'],
     queryFn: () =>
       getAllAssignments(accountManagerId ? { accountManagerId } : {}),
+    enabled: !!uid,
   });
 }
 
@@ -138,6 +142,13 @@ export function useCrmClientUsersQuery() {
   return useQuery({
     queryKey: QK.crmClientUsers,
     queryFn: () => getCrmUsersByRole('client'),
+  });
+}
+
+export function useCrmAdminUsersQuery() {
+  return useQuery({
+    queryKey: QK.crmAdminUsers,
+    queryFn: () => getCrmUsersByRole('admin'),
   });
 }
 

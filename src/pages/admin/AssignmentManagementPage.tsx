@@ -51,6 +51,7 @@ import {
   useAtsClientsQuery,
   useAtsJobsQuery,
   useAtsVAsQuery,
+  useClientAccountsQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import type { IAccountManager } from '@/services/account-managers.service';
@@ -141,14 +142,16 @@ function buildColumns(
         const styles =
           {
             active:
-              'bg-green-500/10 text-green-700 dark:text-green-400 ring-1 ring-green-500/20',
+              'bg-white/[0.04] text-[#A0A0A0] ring-1 ring-[rgba(255,255,255,0.08)]',
             on_hold:
-              'bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20',
-            ended: 'bg-muted text-muted-foreground ring-1 ring-border',
-          }[v] ?? 'bg-muted text-muted-foreground ring-1 ring-border';
+              'bg-white/[0.04] text-[#A0A0A0] ring-1 ring-[rgba(255,255,255,0.08)]',
+            ended:
+              'bg-white/[0.04] text-[#6E6E6E] ring-1 ring-[rgba(255,255,255,0.08)]',
+          }[v] ??
+          'bg-white/[0.04] text-[#6E6E6E] ring-1 ring-[rgba(255,255,255,0.08)]';
         return (
           <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize whitespace-nowrap ${styles}`}
+            className={`inline-flex items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] px-2 py-0.5 whitespace-nowrap ${styles}`}
           >
             {v}
           </span>
@@ -241,7 +244,7 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-card rounded-lg border border-border overflow-hidden">
       <div className="flex items-center gap-2 px-5 py-3 border-b border-border/60 bg-muted/30">
         <span className="text-muted-foreground">{icon}</span>
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -380,7 +383,7 @@ function CreateAssignmentForm({
             name="clientId"
             render={({ field }) => (
               <Select
-                value={field.value ?? ''}
+                value={field.value || undefined}
                 onValueChange={v => {
                   field.onChange(v);
                   setValue('jobId', '');
@@ -418,7 +421,7 @@ function CreateAssignmentForm({
             name="jobId"
             render={({ field }) => (
               <Select
-                value={field.value ?? ''}
+                value={field.value || undefined}
                 onValueChange={v => {
                   field.onChange(v);
                   setValue('candidateId', '');
@@ -460,7 +463,7 @@ function CreateAssignmentForm({
             name="candidateId"
             render={({ field }) => (
               <Select
-                value={field.value ?? ''}
+                value={field.value || undefined}
                 onValueChange={field.onChange}
                 disabled={!selectedClientId || filteredVas.length === 0}
               >
@@ -479,11 +482,11 @@ function CreateAssignmentForm({
                         <span className="flex items-center gap-2">
                           {v.firstName} {v.lastName}
                           {hasAssignment ? (
-                            <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/20">
+                            <span className="ml-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] rounded px-1.5 py-0.5 bg-white/[0.04] text-[#A0A0A0] ring-1 ring-[rgba(255,255,255,0.08)]">
                               Assigned
                             </span>
                           ) : (
-                            <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide rounded-full px-1.5 py-0.5 bg-green-500/15 text-green-700 ring-1 ring-green-500/20">
+                            <span className="ml-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] rounded px-1.5 py-0.5 bg-white/[0.04] text-[#6E6E6E] ring-1 ring-[rgba(255,255,255,0.08)]">
                               Free
                             </span>
                           )}
@@ -502,7 +505,10 @@ function CreateAssignmentForm({
             control={control}
             name="accountManagerId"
             render={({ field }) => (
-              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+              <Select
+                value={field.value || undefined}
+                onValueChange={field.onChange}
+              >
                 <SelectTrigger className="rounded-xl border-input h-10">
                   <SelectValue placeholder="Select account manager" />
                 </SelectTrigger>
@@ -563,7 +569,7 @@ function CreateAssignmentForm({
               control={control}
               render={({ field }) => (
                 <DatePickerField
-                  value={field.value ?? ''}
+                  value={field.value || undefined}
                   onChange={field.onChange}
                 />
               )}
@@ -580,7 +586,7 @@ function CreateAssignmentForm({
               control={control}
               render={({ field }) => (
                 <DatePickerField
-                  value={field.value ?? ''}
+                  value={field.value || undefined}
                   onChange={field.onChange}
                 />
               )}
@@ -701,7 +707,10 @@ function EditAssignmentForm({
             control={control}
             name="accountManagerId"
             render={({ field }) => (
-              <Select value={field.value ?? ''} onValueChange={field.onChange}>
+              <Select
+                value={field.value || undefined}
+                onValueChange={field.onChange}
+              >
                 <SelectTrigger className="rounded-xl border-input h-10">
                   <SelectValue placeholder="Select account manager" />
                 </SelectTrigger>
@@ -764,7 +773,7 @@ function EditAssignmentForm({
             render={({ field }) => (
               <div className="flex items-center gap-2">
                 <DatePickerField
-                  value={field.value ?? ''}
+                  value={field.value || undefined}
                   onChange={field.onChange}
                   className="flex-1"
                 />
@@ -840,6 +849,12 @@ export default function AssignmentManagementPage() {
     isAccountManager ? user?.id : undefined
   );
   const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: clientAccounts = [] } = useClientAccountsQuery();
+  const crmClientIds = new Set(
+    clientAccounts.map(a => a.clientId).filter(Boolean)
+  );
+  // Only show ATS clients that have a CRM client account
+  const crmClients = atsClients.filter(c => crmClientIds.has(c.id));
   const { data: atsVas = [] } = useAtsVAsQuery();
   const { data: accountManagers = [] } = useActiveAccountManagersQuery();
   const { data: atsJobs = [] } = useAtsJobsQuery();
@@ -869,7 +884,7 @@ export default function AssignmentManagementPage() {
   }
 
   const clientMap: Record<string, string> = {};
-  for (const c of atsClients) clientMap[c.id] = c.companyName;
+  for (const c of crmClients) clientMap[c.id] = c.companyName;
 
   const vaMap: Record<string, string> = {};
   for (const v of atsVas) vaMap[v.id] = `${v.firstName} ${v.lastName}`;
@@ -940,7 +955,7 @@ export default function AssignmentManagementPage() {
 
           {sheetMode === 'create' && (
             <CreateAssignmentForm
-              clients={atsClients}
+              clients={crmClients}
               jobs={atsJobs}
               vas={atsVas}
               assignments={assignments}

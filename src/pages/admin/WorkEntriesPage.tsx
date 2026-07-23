@@ -20,11 +20,9 @@ import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
-  completed:
-    'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-  in_progress:
-    'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
-  pending: 'bg-muted text-muted-foreground border-border',
+  completed: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  in_progress: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  pending: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
 };
 
 export default function WorkEntriesPage() {
@@ -40,7 +38,12 @@ export default function WorkEntriesPage() {
   const [vaFilter, setVaFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
 
-  const { data: allEntries = [], isLoading } = useWorkEntriesQuery({
+  const {
+    data: allEntries = [],
+    isLoading,
+    isError,
+    error,
+  } = useWorkEntriesQuery({
     candidateId: vaFilter !== 'all' ? vaFilter : undefined,
     clientId: clientFilter !== 'all' ? clientFilter : undefined,
     dateFrom: dateFrom || undefined,
@@ -110,7 +113,7 @@ export default function WorkEntriesPage() {
         header: 'Category',
         meta: { shrink: true, cellClassName: 'whitespace-nowrap' },
         cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
+          <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-[#A0A0A0] whitespace-nowrap">
             {getValue<string>()}
           </span>
         ),
@@ -241,6 +244,8 @@ export default function WorkEntriesPage() {
             columns={columns}
             data={allEntries}
             isLoading={isLoading}
+            isError={isError}
+            error={error}
           />
         </div>
       </div>

@@ -59,7 +59,7 @@ export default function VaDashboardPage() {
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         {/* Stat cards */}
-        <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card lg:px-6">
+        <div className="*:data-[slot=card]:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 lg:px-6">
           <Card className="@container/card">
             <CardHeader className="relative">
               <CardDescription>Entries Today</CardDescription>
@@ -95,7 +95,7 @@ export default function VaDashboardPage() {
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ClipboardCheckIcon
-                  className={`size-4 ${!loadingEods && eodSubmitted ? 'text-green-500' : 'text-muted-foreground'}`}
+                  className={`size-4 ${!loadingEods && eodSubmitted ? 'text-[#A0A0A0]' : 'text-muted-foreground'}`}
                 />
               </div>
             </CardHeader>

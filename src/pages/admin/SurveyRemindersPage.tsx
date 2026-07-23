@@ -1,27 +1,27 @@
-import { useQueryClient } from '@tanstack/react-query'
-import type { ColumnDef } from '@tanstack/react-table'
-import { BellIcon, CheckIcon, XIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
+import { BellIcon, CheckIcon, XIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-import { DataTable } from '@/components/shared/DataTable'
-import { Button } from '@/components/ui/button'
+import { DataTable } from '@/components/shared/DataTable';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/ui/select';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { QK, useSurveyRemindersQuery } from '@/hooks/queries'
-import { todayString } from '@/lib/time'
-import { updateSurveyReminder } from '@/services/survey-reminders.service'
-import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder'
+} from '@/components/ui/tooltip';
+import { QK, useSurveyRemindersQuery } from '@/hooks/queries';
+import { todayString } from '@/lib/time';
+import { updateSurveyReminder } from '@/services/survey-reminders.service';
+import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -30,27 +30,25 @@ const SURVEY_TYPE_LABELS: Record<ISurveyReminder['surveyType'], string> = {
   '1_week': '1-Week',
   '30_day': '30-Day',
   monthly: 'Monthly',
-}
+};
 
 const STATUS_STYLES: Record<SurveyStatus, string> = {
-  pending:
-    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-  sent: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-  completed:
-    'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-  skipped: 'bg-muted text-muted-foreground border-border',
-}
+  pending: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  sent: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  completed: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  skipped: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
+};
 
-const todayStr = () => todayString()
+const todayStr = () => todayString();
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SurveyRemindersPage() {
-  const queryClient = useQueryClient()
-  const { data: reminders = [], isLoading } = useSurveyRemindersQuery()
-  const [statusFilter, setStatusFilter] = useState<SurveyStatus | 'all'>('all')
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [updateError, setUpdateError] = useState<string | null>(null)
+  const queryClient = useQueryClient();
+  const { data: reminders = [], isLoading } = useSurveyRemindersQuery();
+  const [statusFilter, setStatusFilter] = useState<SurveyStatus | 'all'>('all');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -58,21 +56,21 @@ export default function SurveyRemindersPage() {
         ? reminders
         : reminders.filter(r => r.status === statusFilter),
     [reminders, statusFilter]
-  )
+  );
 
   async function handleUpdateStatus(id: string, status: SurveyStatus) {
-    setUpdatingId(id)
-    setUpdateError(null)
+    setUpdatingId(id);
+    setUpdateError(null);
     try {
       await updateSurveyReminder(id, {
         status,
         ...(status === 'completed' ? { completedDate: todayStr() } : {}),
-      })
-      queryClient.invalidateQueries({ queryKey: QK.surveyReminders })
+      });
+      queryClient.invalidateQueries({ queryKey: QK.surveyReminders });
     } catch {
-      setUpdateError('Failed to update status. Please try again.')
+      setUpdateError('Failed to update status. Please try again.');
     } finally {
-      setUpdatingId(null)
+      setUpdatingId(null);
     }
   }
 
@@ -83,7 +81,7 @@ export default function SurveyRemindersPage() {
         header: 'Survey',
         size: 100,
         cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
+          <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-[#A0A0A0] whitespace-nowrap">
             {SURVEY_TYPE_LABELS[getValue<ISurveyReminder['surveyType']>()]}
           </span>
         ),
@@ -107,8 +105,8 @@ export default function SurveyRemindersPage() {
         header: 'Due Date',
         size: 155,
         cell: ({ getValue }) => {
-          const v = getValue<string>()?.slice(0, 10) ?? ''
-          const overdue = v < todayStr()
+          const v = getValue<string>()?.slice(0, 10) ?? '';
+          const overdue = v < todayStr();
           return (
             <span
               className={`text-xs whitespace-nowrap ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
@@ -116,7 +114,7 @@ export default function SurveyRemindersPage() {
               {v}
               {overdue ? ' (overdue)' : ''}
             </span>
-          )
+          );
         },
       },
       {
@@ -124,14 +122,14 @@ export default function SurveyRemindersPage() {
         header: 'Status',
         size: 105,
         cell: ({ getValue }) => {
-          const s = getValue<SurveyStatus>()
+          const s = getValue<SurveyStatus>();
           return (
             <span
               className={`text-xs px-2 py-0.5 rounded-full border capitalize whitespace-nowrap ${STATUS_STYLES[s]}`}
             >
               {s}
             </span>
-          )
+          );
         },
       },
       {
@@ -140,9 +138,9 @@ export default function SurveyRemindersPage() {
         enableSorting: false,
         size: 80,
         cell: ({ row }) => {
-          const { id, status } = row.original
-          if (status === 'completed' || status === 'skipped') return null
-          const busy = updatingId === id
+          const { id, status } = row.original;
+          if (status === 'completed' || status === 'skipped') return null;
+          const busy = updatingId === id;
           return (
             <TooltipProvider delayDuration={300}>
               <div className="flex items-center gap-1 whitespace-nowrap">
@@ -151,7 +149,7 @@ export default function SurveyRemindersPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-7 bg-green-500/[0.04] text-green-500/60 hover:text-green-500 hover:bg-green-500/[0.08]"
+                      className="size-7 bg-white/[0.04] text-[#6E6E6E] hover:text-[#A0A0A0] hover:bg-white/[0.08]"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(id, 'completed')}
                     >
@@ -177,12 +175,12 @@ export default function SurveyRemindersPage() {
                 </Tooltip>
               </div>
             </TooltipProvider>
-          )
+          );
         },
       },
     ],
     [updatingId] // eslint-disable-line react-hooks/exhaustive-deps
-  )
+  );
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -240,5 +238,5 @@ export default function SurveyRemindersPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

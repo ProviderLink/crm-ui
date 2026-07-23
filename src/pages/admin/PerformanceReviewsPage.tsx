@@ -43,16 +43,14 @@ import {
 } from '@/types/performance-review';
 
 const STATUS_STYLES: Record<ReviewStatus, string> = {
-  Draft: 'bg-muted text-muted-foreground border-border',
+  Draft: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
   'AI Generated':
-    'bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-400',
-  'In Review':
-    'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400',
-  Completed:
-    'bg-green-500/10 text-green-700 border-green-500/30 dark:text-green-400',
+    'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  'In Review': 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  Completed: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
   'Sent to Client':
-    'bg-purple-500/10 text-purple-700 border-purple-500/30 dark:text-purple-400',
-  Archived: 'bg-muted/50 text-muted-foreground/70 border-border/50',
+    'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  Archived: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
 };
 
 function StatusBadge({ status }: { status: ReviewStatus }) {

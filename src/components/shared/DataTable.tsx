@@ -14,6 +14,7 @@ import {
   ChevronsRight,
   ChevronsUpDown,
   ChevronUp,
+  TriangleAlert,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -32,6 +33,8 @@ interface DataTableProps<T> {
   columns: ColumnDef<T>[];
   data: T[];
   isLoading?: boolean;
+  isError?: boolean;
+  error?: Error | null;
   pageSize?: number;
 }
 
@@ -39,6 +42,8 @@ export function DataTable<T>({
   columns,
   data,
   isLoading = false,
+  isError = false,
+  error = null,
   pageSize = 10,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -81,6 +86,15 @@ export function DataTable<T>({
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="h-12 rounded-xl bg-muted animate-pulse" />
         ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#121212] px-4 py-3 text-sm text-[#F87171]">
+        <TriangleAlert className="size-4 shrink-0" />
+        {error?.message || 'Failed to load data. Please try again.'}
       </div>
     );
   }
@@ -203,7 +217,9 @@ export function DataTable<T>({
               {data.length} total records
             </span>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground">Rows per page</span>
+              <span className="text-xs text-muted-foreground">
+                Rows per page
+              </span>
               <Select
                 value={String(currentPageSize)}
                 onValueChange={val => {
@@ -216,7 +232,11 @@ export function DataTable<T>({
                 </SelectTrigger>
                 <SelectContent>
                   {PAGE_SIZE_OPTIONS.map(size => (
-                    <SelectItem key={size} value={String(size)} className="text-xs">
+                    <SelectItem
+                      key={size}
+                      value={String(size)}
+                      className="text-xs"
+                    >
                       {size}
                     </SelectItem>
                   ))}
@@ -251,7 +271,10 @@ export function DataTable<T>({
 
               {getPageNumbers().map((page, i) =>
                 page === '...' ? (
-                  <span key={`ellipsis-${i}`} className="px-1 text-xs text-muted-foreground">
+                  <span
+                    key={`ellipsis-${i}`}
+                    className="px-1 text-xs text-muted-foreground"
+                  >
                     …
                   </span>
                 ) : (

@@ -74,18 +74,12 @@ type VABreakdownRow = {
   hours: number;
   tasks: number;
 };
-type ClientBreakdownRow = { clientName: string; count: number };
 
 const breakdownColumns: ColumnDef<VABreakdownRow>[] = [
   { accessorKey: 'vaName', header: 'VA' },
   { accessorKey: 'hours', header: 'Hours' },
   { accessorKey: 'tasks', header: 'Tasks Done' },
   { accessorKey: 'count', header: 'Entries' },
-];
-
-const clientBreakdownColumns: ColumnDef<ClientBreakdownRow>[] = [
-  { accessorKey: 'clientName', header: 'Client' },
-  { accessorKey: 'count', header: 'Entries Today' },
 ];
 
 export default function AdminDashboardPage() {
@@ -115,7 +109,6 @@ export default function AdminDashboardPage() {
     hours: r.totalHours,
     tasks: r.tasksCompleted,
   }));
-  const clientBreakdown: ClientBreakdownRow[] = [];
 
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -155,7 +148,7 @@ export default function AdminDashboardPage() {
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         {/* Stat cards */}
-        <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card lg:px-6">
+        <div className="*:data-[slot=card]:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 lg:px-6">
           <StatCard
             label="Active Assignments"
             value={overview?.activeAssignments ?? 0}
@@ -257,27 +250,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* Per-client breakdown */}
-        {!loading && clientBreakdown.length > 0 && (
-          <div className="px-4 lg:px-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base font-medium">
-                  Client Activity Today
-                </CardTitle>
-                <CardDescription>
-                  Work entries logged per client today
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DataTable
-                  columns={clientBreakdownColumns}
-                  data={clientBreakdown}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        {/* Per-client breakdown — pending backend support */}
 
         {/* Export data */}
         <div className="px-4 lg:px-6">

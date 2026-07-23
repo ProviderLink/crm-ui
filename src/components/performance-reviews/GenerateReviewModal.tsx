@@ -234,7 +234,7 @@ export function GenerateReviewModal({
                 name="reviewPeriodStart"
                 render={({ field }) => (
                   <DatePickerField
-                    value={field.value ?? ''}
+                    value={field.value || undefined}
                     onChange={field.onChange}
                     placeholder="Pick start date"
                   />
@@ -254,7 +254,7 @@ export function GenerateReviewModal({
                 name="reviewPeriodEnd"
                 render={({ field }) => (
                   <DatePickerField
-                    value={field.value ?? ''}
+                    value={field.value || undefined}
                     onChange={field.onChange}
                     placeholder="Pick end date"
                   />

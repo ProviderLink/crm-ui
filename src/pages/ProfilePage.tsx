@@ -59,11 +59,11 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 max-w-xl">
       {/* Profile info */}
-      <Card className="border bg-linear-to-br from-primary/5 to-card shadow-sm">
+      <Card className="border">
         <CardContent className="pt-6 pb-6">
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-xl select-none">
+            <div className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-[#A0A0A0] font-mono text-lg select-none">
               {user?.name
                 ? user.name
                     .split(' ')
@@ -78,7 +78,7 @@ export default function ProfilePage() {
               <p className="text-lg font-semibold leading-tight truncate">
                 {user?.name ?? '—'}
               </p>
-              <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              <span className="inline-flex w-fit items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] px-2.5 py-0.5 text-[#A0A0A0]">
                 {user?.role ? (roleLabel[user.role] ?? user.role) : '—'}
               </span>
             </div>

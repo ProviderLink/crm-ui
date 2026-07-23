@@ -71,11 +71,9 @@ type EditFormData = z.infer<typeof editSchema>;
 // ── Status styles ───────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
-  completed:
-    'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20',
-  in_progress:
-    'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
-  pending: 'bg-muted text-muted-foreground border-border',
+  completed: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  in_progress: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  pending: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
 };
 
 // ── Edit sheet form ──────────────────────────────────────────────────────────
@@ -277,7 +275,12 @@ function EditWorkEntryForm({
 
 export default function WorkHistoryPage() {
   const queryClient = useQueryClient();
-  const { data: entries = [], isLoading } = useWorkEntriesQuery();
+  const {
+    data: entries = [],
+    isLoading,
+    isError,
+    error,
+  } = useWorkEntriesQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: myAssignments = [] } = useMyAssignmentsQuery();
 
@@ -360,7 +363,7 @@ export default function WorkHistoryPage() {
         header: 'Category',
         size: 160,
         cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary whitespace-nowrap">
+          <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-[#A0A0A0] whitespace-nowrap">
             {getValue<string>()}
           </span>
         ),
@@ -438,7 +441,7 @@ export default function WorkHistoryPage() {
             </div>
             <Link
               to="/va/work/new"
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-opacity"
+              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-[#E8E6E1] text-[#0D0D0D] hover:bg-white transition-colors duration-150"
             >
               + Add Entry
             </Link>
@@ -469,7 +472,13 @@ export default function WorkHistoryPage() {
             </span>
           </div>
 
-          <DataTable columns={columns} data={filtered} isLoading={isLoading} />
+          <DataTable
+            columns={columns}
+            data={filtered}
+            isLoading={isLoading}
+            isError={isError}
+            error={error}
+          />
         </div>
       </div>
 

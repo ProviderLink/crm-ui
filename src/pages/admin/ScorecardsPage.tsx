@@ -17,9 +17,9 @@ import { BarChart3Icon, RefreshCwIcon } from 'lucide-react';
 import { useState } from 'react';
 
 const scoreColor = (score: number) => {
-  if (score >= 80) return 'text-green-600 dark:text-green-400';
-  if (score >= 60) return 'text-amber-600 dark:text-amber-400';
-  return 'text-destructive';
+  if (score >= 80) return 'text-[#A0A0A0]';
+  if (score >= 60) return 'text-[#A0A0A0]';
+  return 'text-[#F87171]';
 };
 
 export default function ScorecardsPage() {
@@ -110,13 +110,13 @@ export default function ScorecardsPage() {
         const s = getValue<number>();
         const colorClass =
           s >= 80
-            ? 'bg-green-500/10 text-green-700 border-green-500/30 dark:text-green-400'
+            ? 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]'
             : s >= 60
-              ? 'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400'
-              : 'bg-red-500/10 text-destructive border-destructive/30';
+              ? 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]'
+              : 'bg-white/[0.04] text-[#F87171] border-[rgba(255,255,255,0.08)]';
         return (
           <span
-            className={`text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}
+            className={`font-mono text-[10px] font-medium tabular-nums px-2 py-0.5 rounded border whitespace-nowrap ${colorClass}`}
           >
             {s.toFixed(0)}
           </span>

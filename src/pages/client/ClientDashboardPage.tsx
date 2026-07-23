@@ -89,7 +89,7 @@ export default function ClientDashboardPage() {
           </h1>
         </div>
         {/* Stat cards */}
-        <div className="*:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card lg:px-6">
+        <div className="*:data-[slot=card]:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 lg:px-6">
           <Card className="@container/card">
             <CardHeader className="relative">
               <CardDescription>Active Assignments</CardDescription>
@@ -113,7 +113,7 @@ export default function ClientDashboardPage() {
             <CardHeader className="relative">
               <CardDescription>This Week's Hours</CardDescription>
               <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loadingWork || weekHours === null ? (
+                {loadingWork ? (
                   <Skeleton className="h-8 w-20" />
                 ) : (
                   `${weekHours.toFixed(1)}h`
@@ -201,10 +201,7 @@ export default function ClientDashboardPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {assignments.map(a => (
-                <Card
-                  key={a._id}
-                  className="bg-gradient-to-t from-primary/5 to-card shadow-xs"
-                >
+                <Card key={a._id} className="">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

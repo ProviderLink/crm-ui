@@ -31,7 +31,12 @@ export default function EodReportsPage() {
   const [vaFilter, setVaFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
 
-  const { data: allEods = [], isLoading } = useEodSubmissionsQuery({
+  const {
+    data: allEods = [],
+    isLoading,
+    isError,
+    error,
+  } = useEodSubmissionsQuery({
     candidateId: vaFilter !== 'all' ? vaFilter : undefined,
     clientId: clientFilter !== 'all' ? clientFilter : undefined,
     dateFrom: dateFrom || undefined,
@@ -219,7 +224,13 @@ export default function EodReportsPage() {
             </span>
           </div>
 
-          <DataTable columns={columns} data={allEods} isLoading={isLoading} />
+          <DataTable
+            columns={columns}
+            data={allEods}
+            isLoading={isLoading}
+            isError={isError}
+            error={error}
+          />
         </div>
       </div>
     </div>

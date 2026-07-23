@@ -56,9 +56,9 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  completed: { label: 'Completed', color: 'text-emerald-400' },
-  in_progress: { label: 'In Progress', color: 'text-amber-400' },
-  pending: { label: 'Pending', color: 'text-slate-400' },
+  completed: { label: 'Completed', color: 'text-[#A0A0A0]' },
+  in_progress: { label: 'In Progress', color: 'text-[#A0A0A0]' },
+  pending: { label: 'Pending', color: 'text-[#6E6E6E]' },
 };
 
 export default function AddWorkEntryPage() {
@@ -372,7 +372,7 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-card rounded-lg border border-border overflow-hidden">
       <div className="flex items-center gap-2 px-5 py-3 border-b border-border/60 bg-muted/30">
         <span className="text-muted-foreground">{icon}</span>
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -418,7 +418,7 @@ function Field({
 
 function EmptyCard({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-sm p-8 text-center">
+    <div className="bg-card rounded-lg border border-border p-8 text-center">
       {children}
     </div>
   );

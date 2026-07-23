@@ -3,6 +3,7 @@ import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import {
+  QK,
   useAtsClientsQuery,
   useEodSubmissionsQuery,
   useMyAssignmentsQuery,
@@ -102,7 +103,12 @@ function buildColumns(
 
 export default function EodHistoryPage() {
   const queryClient = useQueryClient();
-  const { data: eods = [], isLoading } = useEodSubmissionsQuery();
+  const {
+    data: eods = [],
+    isLoading,
+    isError,
+    error,
+  } = useEodSubmissionsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: myAssignments = [] } = useMyAssignmentsQuery();
 
@@ -128,7 +134,7 @@ export default function EodHistoryPage() {
     setDeleteError(null);
     try {
       await deleteEodSubmission(deleteTarget._id);
-      queryClient.invalidateQueries({ queryKey: ['eod-submissions'] });
+      queryClient.invalidateQueries({ queryKey: QK.eodSubmissions() });
     } catch {
       setDeleteError('Failed to delete EOD submission. Please try again.');
     } finally {
@@ -179,7 +185,7 @@ export default function EodHistoryPage() {
             </div>
             <Link
               to="/va/eod/new"
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-opacity"
+              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-[#E8E6E1] text-[#0D0D0D] hover:bg-white transition-colors duration-150"
             >
               + Submit EOD
             </Link>
@@ -211,7 +217,13 @@ export default function EodHistoryPage() {
             </span>
           </div>
 
-          <DataTable columns={columns} data={filtered} isLoading={isLoading} />
+          <DataTable
+            columns={columns}
+            data={filtered}
+            isLoading={isLoading}
+            isError={isError}
+            error={error}
+          />
         </div>
       </div>
 

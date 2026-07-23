@@ -41,7 +41,7 @@ export function NavMain({
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip={quickAction.label}
-              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+              className="min-w-8 bg-[#E8E6E1] text-[#0D0D0D] duration-150 ease-out hover:bg-white hover:text-[#0D0D0D] active:bg-white active:text-[#0D0D0D]"
               asChild
             >
               <Link to={quickAction.to}>
@@ -77,7 +77,9 @@ export function NavMain({
                 >
                   <Link to={item.url}>
                     {item.icon && <item.icon className="shrink-0" />}
-                    <span className={cn(isActive ? 'font-medium' : 'font-normal')}>
+                    <span
+                      className={cn(isActive ? 'font-medium' : 'font-normal')}
+                    >
                       {item.title}
                     </span>
                   </Link>
