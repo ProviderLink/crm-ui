@@ -16,3 +16,32 @@ export async function updateVaProfile(
   );
   return data.data;
 }
+
+export interface IVaAssignment {
+  _id: string;
+  clientId: string;
+  companyName: string;
+  status: 'active' | 'on_hold' | 'ended';
+  serviceType: string;
+  startDate: string;
+  endDate: string | null;
+  notes: string | null;
+}
+
+export async function getVaAssignments(
+  candidateId: string
+): Promise<IVaAssignment[]> {
+  const { data } = await api.get<{ data: any[] }>(
+    `/crm/assignments?candidateId=${candidateId}&limit=100`
+  );
+  return (data.data ?? []).map((a: any) => ({
+    _id: a._id,
+    clientId: a.clientId,
+    companyName: a.companyName ?? '',
+    status: a.status,
+    serviceType: a.serviceType,
+    startDate: a.startDate,
+    endDate: a.endDate ?? null,
+    notes: a.notes ?? null,
+  }));
+}
