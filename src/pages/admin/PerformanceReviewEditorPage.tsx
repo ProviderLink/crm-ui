@@ -37,6 +37,7 @@ import { QK, usePerformanceReviewQuery } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import {
   completeReview,
+  exportReviewPdf,
   improveManagerSummary,
   regenerateCategories,
   regenerateGoals,
@@ -161,7 +162,7 @@ export default function PerformanceReviewEditorPage() {
   const [regenGoalsLoading, setRegenGoalsLoading] = useState(false);
   const [improveLoading, setImproveLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [exporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [completing, setCompleting] = useState(false);
 
@@ -259,7 +260,19 @@ export default function PerformanceReviewEditorPage() {
   }
 
   async function handleExportPdf() {
-    toast.info('PDF export is not yet available.');
+    if (!id) return;
+    setExporting(true);
+    try {
+      const name = review?.candidateName ?? 'review';
+      await exportReviewPdf(
+        id,
+        `performance-review-${name.replace(/\s+/g, '-').toLowerCase()}.pdf`
+      );
+    } catch {
+      toast.error('Failed to export PDF. Please try again.');
+    } finally {
+      setExporting(false);
+    }
   }
 
   async function handleMarkCompleted() {

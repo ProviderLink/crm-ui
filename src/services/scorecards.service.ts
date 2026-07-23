@@ -10,9 +10,14 @@ export async function getScorecards(vaId?: string): Promise<IScorecard[]> {
   return data.data;
 }
 
-export async function generateScorecards(): Promise<{ generated: number }> {
+export async function generateScorecards(
+  vaId?: string
+): Promise<{ generated: number }> {
+  const payload: Record<string, unknown> = {};
+  if (vaId) payload.vaId = vaId;
   const { data } = await api.post<{ data: { generated: number } }>(
-    '/crm/scorecards/generate'
+    '/crm/scorecards/generate',
+    payload
   );
   return data.data;
 }

@@ -19,8 +19,8 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  useAllAssignmentsQuery,
   useEodSubmissionsQuery,
+  useMyAssignmentsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
@@ -60,7 +60,7 @@ export default function ClientDashboardPage() {
   const weekStart = weekStartStr();
 
   const { data: assignmentList = [], isLoading: loadingAssignments } =
-    useAllAssignmentsQuery();
+    useMyAssignmentsQuery();
   const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery();
   const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery();
 

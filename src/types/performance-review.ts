@@ -1,4 +1,6 @@
 export type ReviewType =
+  | '30-Day'
+  | '60-Day'
   | '90-Day'
   | 'Annual'
   | 'Client Satisfaction'
@@ -37,6 +39,8 @@ export type RoleType =
   | 'Custom Role';
 
 export const REVIEW_TYPES: ReviewType[] = [
+  '30-Day',
+  '60-Day',
   '90-Day',
   'Annual',
   'Client Satisfaction',

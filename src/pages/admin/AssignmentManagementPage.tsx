@@ -835,7 +835,10 @@ export default function AssignmentManagementPage() {
   const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
   const canManageAssignments =
     user?.role === 'admin' || user?.role === 'account_manager';
-  const { data: assignments = [], isLoading } = useAllAssignmentsQuery();
+  const isAccountManager = user?.role === 'account_manager';
+  const { data: assignments = [], isLoading } = useAllAssignmentsQuery(
+    isAccountManager ? user?.id : undefined
+  );
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: atsVas = [] } = useAtsVAsQuery();
   const { data: accountManagers = [] } = useActiveAccountManagersQuery();

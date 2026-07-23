@@ -1,50 +1,51 @@
-import { useQueryClient } from '@tanstack/react-query'
-import type { ColumnDef } from '@tanstack/react-table'
-import { BarChart3Icon, RefreshCwIcon } from 'lucide-react'
-import { useState } from 'react'
-
-import { DataTable } from '@/components/shared/DataTable'
-import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { DataTable } from '@/components/shared/DataTable';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { useAtsVAsQuery, useScorecardsQuery } from '@/hooks/queries'
-import { generateScorecards } from '@/services/scorecards.service'
-import type { IScorecard } from '@/types/scorecard'
+} from '@/components/ui/select';
+import { useAtsVAsQuery, useScorecardsQuery } from '@/hooks/queries';
+import { generateScorecards } from '@/services/scorecards.service';
+import type { IScorecard } from '@/types/scorecard';
+import { useQueryClient } from '@tanstack/react-query';
+import type { ColumnDef } from '@tanstack/react-table';
+import { BarChart3Icon, RefreshCwIcon } from 'lucide-react';
+import { useState } from 'react';
 
 const scoreColor = (score: number) => {
-  if (score >= 80) return 'text-green-600 dark:text-green-400'
-  if (score >= 60) return 'text-amber-600 dark:text-amber-400'
-  return 'text-destructive'
-}
+  if (score >= 80) return 'text-green-600 dark:text-green-400';
+  if (score >= 60) return 'text-amber-600 dark:text-amber-400';
+  return 'text-destructive';
+};
 
 export default function ScorecardsPage() {
-  const queryClient = useQueryClient()
-  const [vaFilter, setVaFilter] = useState<string>('all')
-  const [generating, setGenerating] = useState(false)
-  const [generateError, setGenerateError] = useState<string | null>(null)
+  const queryClient = useQueryClient();
+  const [vaFilter, setVaFilter] = useState<string>('all');
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const vaId = vaFilter === 'all' ? undefined : vaFilter;
+  const { data: scorecards = [], isLoading } = useScorecardsQuery(vaId);
+  const { data: vaList = [] } = useAtsVAsQuery();
 
-  const vaId = vaFilter === 'all' ? undefined : vaFilter
-  const { data: scorecards = [], isLoading } = useScorecardsQuery(vaId)
-  const { data: vaList = [] } = useAtsVAsQuery()
-
-  const vaMap: Record<string, string> = {}
-  for (const v of vaList) vaMap[v.id] = `${v.firstName} ${v.lastName}`
+  const vaMap: Record<string, string> = {};
+  for (const v of vaList) vaMap[v.id] = `${v.firstName} ${v.lastName}`;
 
   async function handleGenerate() {
-    setGenerating(true)
-    setGenerateError(null)
+    setGenerateError(null);
+    setConfirmOpen(false);
+    setGenerating(true);
     try {
-      await generateScorecards()
-      queryClient.invalidateQueries({ queryKey: ['scorecards'] })
+      await generateScorecards(vaId);
+      queryClient.invalidateQueries({ queryKey: ['scorecards'] });
     } catch {
-      setGenerateError('Failed to generate scorecards. Please try again.')
+      setGenerateError('Failed to generate scorecards. Please try again.');
     } finally {
-      setGenerating(false)
+      setGenerating(false);
     }
   }
 
@@ -55,7 +56,7 @@ export default function ScorecardsPage() {
       size: 155,
       cell: ({ getValue }) => (
         <span className="text-sm font-medium">
-          {vaMap[getValue<string>()] ?? getValue<string>().slice(-8)}
+          {vaMap[getValue<string>()] ?? 'Unknown VA'}
         </span>
       ),
     },
@@ -93,12 +94,12 @@ export default function ScorecardsPage() {
       header: 'EOD Rate',
       size: 95,
       cell: ({ getValue }) => {
-        const v = getValue<number>()
+        const v = getValue<number>();
         return (
           <span className={`text-sm tabular-nums font-medium ${scoreColor(v)}`}>
             {v.toFixed(0)}%
           </span>
-        )
+        );
       },
     },
     {
@@ -106,23 +107,23 @@ export default function ScorecardsPage() {
       header: 'Score',
       size: 80,
       cell: ({ getValue }) => {
-        const s = getValue<number>()
+        const s = getValue<number>();
         const colorClass =
           s >= 80
             ? 'bg-green-500/10 text-green-700 border-green-500/30 dark:text-green-400'
             : s >= 60
               ? 'bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-400'
-              : 'bg-red-500/10 text-destructive border-destructive/30'
+              : 'bg-red-500/10 text-destructive border-destructive/30';
         return (
           <span
             className={`text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full border whitespace-nowrap ${colorClass}`}
           >
             {s.toFixed(0)}
           </span>
-        )
+        );
       },
     },
-  ]
+  ];
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -177,7 +178,7 @@ export default function ScorecardsPage() {
                 size="sm"
                 variant="ghost"
                 className="border border-white/10 hover:border-white/20 hover:bg-white/5 text-muted-foreground hover:text-foreground"
-                onClick={handleGenerate}
+                onClick={() => setConfirmOpen(true)}
                 disabled={generating}
               >
                 <RefreshCwIcon
@@ -193,8 +194,21 @@ export default function ScorecardsPage() {
             data={scorecards}
             isLoading={isLoading}
           />
+
+          <ConfirmDialog
+            open={confirmOpen}
+            onOpenChange={setConfirmOpen}
+            title="Generate Scorecards"
+            description={
+              vaId
+                ? 'Generate a new scorecard for this VA for the current week.'
+                : 'Generate scorecards for ALL VAs for the current week. This may take a moment.'
+            }
+            onConfirm={handleGenerate}
+            loading={generating}
+          />
         </div>
       </div>
     </div>
-  )
+  );
 }

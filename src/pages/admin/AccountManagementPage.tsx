@@ -16,6 +16,7 @@ import { useState } from 'react';
 
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
+import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -400,6 +401,15 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
               className="rounded-xl h-9 text-sm"
             />
           </Field>
+          <Field label="Last Check-in">
+            <DatePickerField
+              value={String(getFormVal('lastClientCheckin', ''))}
+              onChange={v =>
+                setForm(p => ({ ...p, lastClientCheckin: v || null }))
+              }
+              placeholder="Pick date"
+            />
+          </Field>
           <Field label="Open Issues">
             <Input
               type="number"
@@ -693,6 +703,13 @@ function VaProfileSection({ vaId }: { vaId: string }) {
                 <SelectItem value="true">Yes — at risk</SelectItem>
               </SelectContent>
             </Select>
+          </Field>
+          <Field label="Last Check-in">
+            <DatePickerField
+              value={String(getFormVal('lastVaCheckin', ''))}
+              onChange={v => setForm(p => ({ ...p, lastVaCheckin: v || null }))}
+              placeholder="Pick date"
+            />
           </Field>
           <Field label="Notes">
             <Textarea

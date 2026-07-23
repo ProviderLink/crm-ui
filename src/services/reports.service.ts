@@ -1,15 +1,18 @@
 import api from '@/lib/api';
 
 export type ReportType = 'work_entries' | 'eod' | 'performance';
+export type ExportFormat = 'csv' | 'xlsx';
 
 /**
- * Export CSV from ats-crm-backend.
+ * Export from ats-crm-backend.
  * Endpoints: /crm/reports/work-entries/export, /crm/reports/eod-submissions/export, /crm/reports/performance/export
+ * Supports ?format=csv (default) and ?format=xlsx for Excel.
  */
 export async function exportReport(
   type: ReportType,
   dateFrom: string,
-  dateTo: string
+  dateTo: string,
+  format: ExportFormat = 'csv'
 ): Promise<void> {
   const endpointMap: Record<ReportType, string> = {
     work_entries: '/crm/reports/work-entries/export',
@@ -18,11 +21,12 @@ export async function exportReport(
   };
 
   const response = await api.get(endpointMap[type], {
-    params: { startDate: dateFrom, endDate: dateTo },
+    params: { startDate: dateFrom, endDate: dateTo, format },
     responseType: 'blob',
   });
 
-  const fileName = `${type}_${dateFrom}_${dateTo}.csv`;
+  const ext = format === 'xlsx' ? 'xlsx' : 'csv';
+  const fileName = `${type}_${dateFrom}_${dateTo}.${ext}`;
   const url = URL.createObjectURL(response.data as Blob);
   const link = document.createElement('a');
   link.href = url;

@@ -3,6 +3,8 @@ import type { CreateEodPayload, IEodSubmission } from '@/types/eod-submission';
 
 interface EodQuery {
   assignmentId?: string;
+  candidateId?: string;
+  clientId?: string;
   dateFrom?: string;
   dateTo?: string;
 }
@@ -12,6 +14,8 @@ export async function getEodSubmissions(
 ): Promise<IEodSubmission[]> {
   const params = new URLSearchParams();
   if (query.assignmentId) params.set('assignmentId', query.assignmentId);
+  if (query.candidateId) params.set('candidateId', query.candidateId);
+  if (query.clientId) params.set('clientId', query.clientId);
   if (query.dateFrom) params.set('dateFrom', query.dateFrom);
   if (query.dateTo) params.set('dateTo', query.dateTo);
   const { data } = await api.get<{ data: IEodSubmission[] }>(

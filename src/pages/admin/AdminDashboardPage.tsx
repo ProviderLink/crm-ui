@@ -44,13 +44,14 @@ import {
   useDashboardStatsQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { exportReport } from '@/services/reports.service';
+import { exportReport, type ExportFormat } from '@/services/reports.service';
 
 // ─── Export form ─────────────────────────────────────────────────────────────
 
 const exportSchema = z
   .object({
     type: z.enum(['work_entries', 'eod', 'performance']),
+    format: z.enum(['csv', 'xlsx']),
     dateFrom: z.string().min(1, 'Required'),
     dateTo: z.string().min(1, 'Required'),
   })
@@ -127,6 +128,7 @@ export default function AdminDashboardPage() {
     resolver: zodResolver(exportSchema),
     defaultValues: {
       type: 'work_entries',
+      format: 'csv',
       dateFrom: '',
       dateTo: '',
     },
@@ -136,7 +138,12 @@ export default function AdminDashboardPage() {
     setExporting(true);
     setExportError(null);
     try {
-      await exportReport(values.type, values.dateFrom, values.dateTo);
+      await exportReport(
+        values.type,
+        values.dateFrom,
+        values.dateTo,
+        values.format as ExportFormat
+      );
     } catch {
       setExportError('Export failed. Please try again.');
     } finally {
@@ -316,6 +323,29 @@ export default function AdminDashboardPage() {
                       {errors.type.message}
                     </p>
                   )}
+                </div>
+
+                {/* Format */}
+                <div className="grid gap-1.5">
+                  <Label>Format</Label>
+                  <Controller
+                    name="format"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select format" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="csv">CSV</SelectItem>
+                          <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 {/* Date from */}

@@ -18,6 +18,8 @@ export interface IReviewFilters {
  * Backend schema uses snake_case; frontend uses human-readable labels.
  */
 const REVIEW_TYPE_TO_BACKEND: Record<ReviewType, string> = {
+  '30-Day': '30_day',
+  '60-Day': '60_day',
   '90-Day': '90_day',
   Annual: 'annual',
   'Client Satisfaction': 'client_satisfaction',
@@ -25,6 +27,8 @@ const REVIEW_TYPE_TO_BACKEND: Record<ReviewType, string> = {
 };
 
 const REVIEW_TYPE_FROM_BACKEND: Record<string, ReviewType> = {
+  '30_day': '30-Day',
+  '60_day': '60-Day',
   '90_day': '90-Day',
   annual: 'Annual',
   client_satisfaction: 'Client Satisfaction',

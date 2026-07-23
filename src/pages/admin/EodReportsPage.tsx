@@ -19,11 +19,6 @@ import {
 import type { IEodSubmission } from '@/types/eod-submission';
 
 export default function EodReportsPage() {
-  const { data: allEods = [], isLoading } = useEodSubmissionsQuery();
-  const { data: atsVAs = [] } = useAtsVAsQuery();
-  const { data: atsClients = [] } = useAtsClientsQuery();
-  const { data: assignments = [] } = useAllAssignmentsQuery();
-
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -35,6 +30,16 @@ export default function EodReportsPage() {
   );
   const [vaFilter, setVaFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
+
+  const { data: allEods = [], isLoading } = useEodSubmissionsQuery({
+    candidateId: vaFilter !== 'all' ? vaFilter : undefined,
+    clientId: clientFilter !== 'all' ? clientFilter : undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  });
+  const { data: atsVAs = [] } = useAtsVAsQuery();
+  const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: assignments = [] } = useAllAssignmentsQuery();
 
   const vaMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -53,18 +58,6 @@ export default function EodReportsPage() {
     for (const a of assignments) m[a._id] = a.serviceType ?? 'VA Service';
     return m;
   }, [assignments]);
-
-  const filtered = useMemo(
-    () =>
-      allEods.filter(e => {
-        if (vaFilter !== 'all' && e.candidateId !== vaFilter) return false;
-        if (clientFilter !== 'all' && e.clientId !== clientFilter) return false;
-        if (dateFrom && e.date < dateFrom) return false;
-        if (dateTo && e.date > dateTo) return false;
-        return true;
-      }),
-    [allEods, vaFilter, clientFilter, dateFrom, dateTo]
-  );
 
   const columns = useMemo<ColumnDef<IEodSubmission>[]>(
     () => [
@@ -222,11 +215,11 @@ export default function EodReportsPage() {
               </button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              {filtered.length} records
+              {allEods.length} records
             </span>
           </div>
 
-          <DataTable columns={columns} data={filtered} isLoading={isLoading} />
+          <DataTable columns={columns} data={allEods} isLoading={isLoading} />
         </div>
       </div>
     </div>

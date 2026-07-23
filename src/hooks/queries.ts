@@ -1,3 +1,4 @@
+import { useAppSelector } from '@/hooks/store';
 import {
   getAccountManagers,
   getCrmUsersByRole,
@@ -22,11 +23,18 @@ import { getVaProfiles } from '@/services/va-profiles.service';
 import { getWorkEntries } from '@/services/work-entries.service';
 import { useQuery } from '@tanstack/react-query';
 
+/** Return the current user's ID, scoped per login session to prevent cache pollution. */
+function useUserId(): string | undefined {
+  return useAppSelector(s => s.auth.user?.id);
+}
+
 export const QK = {
-  workEntries: ['work-entries'] as const,
-  eodSubmissions: ['eod-submissions'] as const,
-  myAssignments: ['assignments', 'my'] as const,
-  allAssignments: ['assignments', 'all'] as const,
+  workEntries: (uid?: string) => ['work-entries', uid ?? 'anon'] as const,
+  eodSubmissions: (uid?: string) => ['eod-submissions', uid ?? 'anon'] as const,
+  myAssignments: (uid?: string) =>
+    ['assignments', 'my', uid ?? 'anon'] as const,
+  allAssignments: (uid?: string) =>
+    ['assignments', 'all', uid ?? 'anon'] as const,
   atsVAs: ['ats', 'vas'] as const,
   atsClients: ['ats', 'clients'] as const,
   atsTeam: ['ats', 'team'] as const,
@@ -45,32 +53,47 @@ export const QK = {
   performanceReview: (id: string) => ['performance-reviews', id] as const,
 };
 
-export function useWorkEntriesQuery() {
+export function useWorkEntriesQuery(filters?: {
+  candidateId?: string;
+  clientId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const uid = useUserId();
   return useQuery({
-    queryKey: QK.workEntries,
-    queryFn: () => getWorkEntries(),
+    queryKey: [...QK.workEntries(uid), filters ?? {}],
+    queryFn: () => getWorkEntries(filters),
   });
 }
 
-export function useEodSubmissionsQuery() {
+export function useEodSubmissionsQuery(filters?: {
+  candidateId?: string;
+  clientId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const uid = useUserId();
   return useQuery({
-    queryKey: QK.eodSubmissions,
-    queryFn: () => getEodSubmissions(),
+    queryKey: [...QK.eodSubmissions(uid), filters ?? {}],
+    queryFn: () => getEodSubmissions(filters),
   });
 }
 
 export function useMyAssignmentsQuery() {
+  const uid = useUserId();
   return useQuery({
-    queryKey: QK.myAssignments,
+    queryKey: QK.myAssignments(uid),
     queryFn: () =>
       getMyAssignments().then(data => data.filter(a => a.status === 'active')),
   });
 }
 
-export function useAllAssignmentsQuery() {
+export function useAllAssignmentsQuery(accountManagerId?: string) {
+  const uid = useUserId();
   return useQuery({
-    queryKey: QK.allAssignments,
-    queryFn: () => getAllAssignments(),
+    queryKey: [...QK.allAssignments(uid), accountManagerId ?? 'all'],
+    queryFn: () =>
+      getAllAssignments(accountManagerId ? { accountManagerId } : {}),
   });
 }
 

@@ -28,11 +28,6 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
 };
 
 export default function WorkEntriesPage() {
-  const { data: allEntries = [], isLoading } = useWorkEntriesQuery();
-  const { data: atsVAs = [] } = useAtsVAsQuery();
-  const { data: atsClients = [] } = useAtsClientsQuery();
-  const { data: assignments = [] } = useAllAssignmentsQuery();
-
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -44,6 +39,16 @@ export default function WorkEntriesPage() {
   );
   const [vaFilter, setVaFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
+
+  const { data: allEntries = [], isLoading } = useWorkEntriesQuery({
+    candidateId: vaFilter !== 'all' ? vaFilter : undefined,
+    clientId: clientFilter !== 'all' ? clientFilter : undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  });
+  const { data: atsVAs = [] } = useAtsVAsQuery();
+  const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: assignments = [] } = useAllAssignmentsQuery();
 
   const vaMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -62,18 +67,6 @@ export default function WorkEntriesPage() {
     for (const a of assignments) m[a._id] = a.serviceType ?? 'VA Service';
     return m;
   }, [assignments]);
-
-  const filtered = useMemo(
-    () =>
-      allEntries.filter(e => {
-        if (vaFilter !== 'all' && e.candidateId !== vaFilter) return false;
-        if (clientFilter !== 'all' && e.clientId !== clientFilter) return false;
-        if (dateFrom && e.entryDate < dateFrom) return false;
-        if (dateTo && e.entryDate > dateTo) return false;
-        return true;
-      }),
-    [allEntries, vaFilter, clientFilter, dateFrom, dateTo]
-  );
 
   const columns = useMemo<ColumnDef<IWorkEntry>[]>(
     () => [
@@ -240,11 +233,15 @@ export default function WorkEntriesPage() {
               </button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              {filtered.length} records
+              {allEntries.length} records
             </span>
           </div>
 
-          <DataTable columns={columns} data={filtered} isLoading={isLoading} />
+          <DataTable
+            columns={columns}
+            data={allEntries}
+            isLoading={isLoading}
+          />
         </div>
       </div>
     </div>
