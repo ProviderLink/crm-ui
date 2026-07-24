@@ -6,6 +6,7 @@ import {
 import { getDashboardStats } from '@/services/admin.service';
 import {
   getAllAssignments,
+  getMyAllAssignments,
   getMyAssignments,
 } from '@/services/assignments.service';
 import { getAtsClients, getAtsTeam, getAtsVAs } from '@/services/ats.service';
@@ -37,6 +38,8 @@ export const QK = {
   eodSubmissions: (uid?: string) => ['eod-submissions', uid ?? 'anon'] as const,
   myAssignments: (uid?: string) =>
     ['assignments', 'my', uid ?? 'anon'] as const,
+  myAllAssignments: (uid?: string) =>
+    ['assignments', 'my-all', uid ?? 'anon'] as const,
   allAssignments: (uid?: string) =>
     ['assignments', 'all', uid ?? 'anon'] as const,
   atsVAs: ['ats', 'vas'] as const,
@@ -78,6 +81,7 @@ export function useWorkEntriesQuery(filters?: {
 export function useEodSubmissionsQuery(filters?: {
   candidateId?: string;
   clientId?: string;
+  date?: string;
   dateFrom?: string;
   dateTo?: string;
 }) {
@@ -94,6 +98,15 @@ export function useMyAssignmentsQuery() {
   return useQuery({
     queryKey: QK.myAssignments(uid),
     queryFn: () => getMyAssignments(),
+    enabled: !!uid,
+  });
+}
+
+export function useMyAllAssignmentsQuery() {
+  const uid = useUserId();
+  return useQuery({
+    queryKey: QK.myAllAssignments(uid),
+    queryFn: () => getMyAllAssignments(),
     enabled: !!uid,
   });
 }

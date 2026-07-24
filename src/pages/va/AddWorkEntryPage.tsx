@@ -96,7 +96,7 @@ export default function AddWorkEntryPage() {
     setSubmitError(null);
     try {
       await createWorkEntry(data);
-      queryClient.invalidateQueries({ queryKey: QK.workEntries });
+      queryClient.invalidateQueries({ queryKey: ['work-entries'] });
       toast.success('Work entry saved.');
       navigate('/va/work/history');
     } catch {

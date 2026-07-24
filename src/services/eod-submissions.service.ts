@@ -5,6 +5,7 @@ interface EodQuery {
   assignmentId?: string;
   candidateId?: string;
   clientId?: string;
+  date?: string;
   dateFrom?: string;
   dateTo?: string;
 }
@@ -16,6 +17,7 @@ export async function getEodSubmissions(
   if (query.assignmentId) params.set('assignmentId', query.assignmentId);
   if (query.candidateId) params.set('candidateId', query.candidateId);
   if (query.clientId) params.set('clientId', query.clientId);
+  if (query.date) params.set('date', query.date);
   if (query.dateFrom) params.set('dateFrom', query.dateFrom);
   if (query.dateTo) params.set('dateTo', query.dateTo);
   const { data } = await api.get<{ data: IEodSubmission[] }>(

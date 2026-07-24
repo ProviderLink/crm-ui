@@ -1,15 +1,21 @@
 import {
+  BriefcaseIcon,
+  CalendarIcon,
   ClipboardCheckIcon,
   ClockIcon,
+  MailIcon,
   PlusIcon,
   TrophyIcon,
+  UserIcon,
   ZapIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
+  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -18,32 +24,35 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useEodSubmissionsQuery,
+  useMyAllAssignmentsQuery,
   useScorecardsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
-
-function todayStr() {
-  return new Date().toISOString().split('T')[0];
-}
+import { todayString } from '@/lib/time';
 
 function weekStartStr() {
   const d = new Date();
   const dow = d.getDay();
   d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
-  return d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 export default function VaDashboardPage() {
-  const today = todayStr();
+  const today = todayString();
   const weekStart = weekStartStr();
 
   const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery();
-  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery();
+  const { data: todayEods = [], isLoading: loadingEods } = useEodSubmissionsQuery({ date: today });
   const { data: scorecards = [], isLoading: loadingScores } =
     useScorecardsQuery();
+  const { data: allAssignments = [], isLoading: loadingAssignments } =
+    useMyAllAssignmentsQuery();
 
   const todayEntries = workAll.filter(e => e.entryDate.slice(0, 10) === today);
-  const eodToday = eods.find(e => e.date.slice(0, 10) === today) ?? null;
+  const eodSubmitted = todayEods.length > 0;
   const weekHours =
     workAll
       .filter(e => e.entryDate.slice(0, 10) >= weekStart)
@@ -52,8 +61,6 @@ export default function VaDashboardPage() {
     (a, b) => new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
   );
   const latestScore = sorted[0]?.productivityScore ?? null;
-
-  const eodSubmitted = Boolean(eodToday);
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -165,6 +172,93 @@ export default function VaDashboardPage() {
               {eodSubmitted ? 'EOD Submitted ✓' : 'Submit EOD'}
             </Link>
           </Button>
+        </div>
+
+        {/* My Assignments */}
+        <div className="px-4 lg:px-6 flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-foreground">
+            My Assignments
+          </h2>
+          {loadingAssignments ? (
+            <div className="flex flex-col gap-3">
+              {[1, 2].map(i => (
+                <Skeleton key={i} className="h-28 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : allAssignments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No assignments found.
+            </p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {allAssignments.map(a => (
+                <Card key={a._id} className="flex flex-col gap-0">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Role</p>
+                        <CardTitle className="text-base leading-snug">{a.serviceType ?? 'VA Service'}</CardTitle>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={
+                          a.status === 'active'
+                            ? 'border-green-500/40 text-green-400 bg-green-500/10 shrink-0'
+                            : a.status === 'on_hold'
+                              ? 'border-yellow-500/40 text-yellow-400 bg-yellow-500/10 shrink-0'
+                              : 'border-muted text-muted-foreground shrink-0'
+                        }
+                      >
+                        {a.status === 'active' ? 'Active' : a.status === 'on_hold' ? 'On Hold' : 'Ended'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-3 pb-4 pt-0">
+                    {a.companyName && (
+                      <div>
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Client</p>
+                        <span className="flex items-center gap-1.5 text-sm text-foreground">
+                          <BriefcaseIcon className="size-3 shrink-0 text-muted-foreground" />
+                          {a.companyName}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Duration</p>
+                      <span className="flex items-center gap-1.5 text-sm text-foreground">
+                        <CalendarIcon className="size-3 shrink-0 text-muted-foreground" />
+                        {new Date(a.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        <span className="text-muted-foreground">→</span>
+                        {a.endDate
+                          ? new Date(a.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                          : <span className="text-green-400">Present</span>}
+                      </span>
+                    </div>
+                    {(a.accountManagerName || a.accountManagerEmail) && (
+                      <div>
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Account Manager</p>
+                        {a.accountManagerName && (
+                          <span className="flex items-center gap-1.5 text-sm text-foreground">
+                            <UserIcon className="size-3 shrink-0 text-muted-foreground" />
+                            {a.accountManagerName}
+                          </span>
+                        )}
+                        {a.accountManagerEmail && (
+                          <a
+                            href={`mailto:${a.accountManagerEmail}`}
+                            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mt-0.5 transition-colors"
+                          >
+                            <MailIcon className="size-3 shrink-0" />
+                            {a.accountManagerEmail}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

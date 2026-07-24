@@ -13,6 +13,12 @@ export async function getMyAssignments(): Promise<IAssignment[]> {
   return data.data;
 }
 
+// VA — all assignments regardless of status (for dashboard overview)
+export async function getMyAllAssignments(): Promise<IAssignment[]> {
+  const { data } = await api.get<{ data: IAssignment[] }>('/crm/assignments');
+  return data.data;
+}
+
 // Admin/AM — all assignments with optional filters
 export async function getAllAssignments(
   query: { status?: string; accountManagerId?: string } = {}

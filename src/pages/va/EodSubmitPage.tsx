@@ -15,6 +15,7 @@ import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { calcHours, todayString } from '@/lib/time';
 import { createEodSubmission } from '@/services/eod-submissions.service';
 import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
@@ -55,8 +56,8 @@ export default function EodSubmitPage() {
     isError: assignmentsError,
   } = useMyAssignments();
   const queryClient = useQueryClient();
-  const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery();
-  const submittedDates = new Set(eods.map(e => e.date.slice(0, 10)));
+  const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery({ date: today });
+  const submittedKeys = new Set(eods.map(e => `${e.assignmentId}::${e.date}`));
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -72,10 +73,13 @@ export default function EodSubmitPage() {
   });
 
   const selectedDate = watch('date') ?? today;
+  const selectedAssignmentId = watch('assignmentId') ?? '';
   const shiftStart = watch('shiftStart') ?? '';
   const shiftEnd = watch('shiftEnd') ?? '';
   const hoursWorked = calcHours(shiftStart, shiftEnd);
-  const alreadySubmitted = submittedDates.has(selectedDate);
+  const alreadySubmitted = selectedAssignmentId
+    ? submittedKeys.has(`${selectedAssignmentId}::${selectedDate}`)
+    : false;
 
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
@@ -87,10 +91,13 @@ export default function EodSubmitPage() {
     setError(null);
     try {
       await createEodSubmission({ ...data, hoursWorked });
-      queryClient.invalidateQueries({ queryKey: QK.eodSubmissions });
+      queryClient.invalidateQueries({ queryKey: ['eod-submissions'] });
       navigate('/va/eod/history');
-    } catch {
-      setError('Failed to submit EOD. Please try again.');
+    } catch (err) {
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data?.error?.message ?? 'Failed to submit EOD. Please try again.')
+        : 'Failed to submit EOD. Please try again.';
+      setError(msg);
     }
   }
 
