@@ -3,20 +3,16 @@ import type {
   IGenerateReviewPayload,
   IPerformanceReview,
   IUpdateReviewPayload,
+  ReviewStatus,
   ReviewType,
 } from '@/types/performance-review';
 
 export interface IReviewFilters {
-  vaId?: string;
+  candidateId?: string;
   clientId?: string;
-  jobId?: string;
   status?: string;
 }
 
-/**
- * Maps frontend display review types to backend enum values.
- * Backend schema uses snake_case; frontend uses human-readable labels.
- */
 const REVIEW_TYPE_TO_BACKEND: Record<ReviewType, string> = {
   '30-Day': '30_day',
   '60-Day': '60_day',
@@ -35,12 +31,59 @@ const REVIEW_TYPE_FROM_BACKEND: Record<string, ReviewType> = {
   corrective_coaching: 'Corrective Coaching',
 };
 
-/** Map a review from backend snake_case to frontend display format */
+const STATUS_FROM_BACKEND: Record<string, ReviewStatus> = {
+  draft: 'Draft',
+  ai_generated: 'AI Generated',
+  in_review: 'In Review',
+  completed: 'Completed',
+  sent_to_client: 'Sent to Client',
+  archived: 'Archived',
+};
+
+const STATUS_TO_BACKEND: Record<ReviewStatus, string> = {
+  Draft: 'draft',
+  'AI Generated': 'ai_generated',
+  'In Review': 'in_review',
+  Completed: 'completed',
+  'Sent to Client': 'sent_to_client',
+  Archived: 'archived',
+};
+
+/** Normalize a backend review document to frontend IPerformanceReview shape */
 function mapReview(r: any): IPerformanceReview {
-  if (r.reviewType && REVIEW_TYPE_FROM_BACKEND[r.reviewType]) {
-    r.reviewType = REVIEW_TYPE_FROM_BACKEND[r.reviewType];
-  }
-  return r;
+  const aiGen = r.aiGenerated ?? {};
+  return {
+    ...r,
+    id: r._id ?? r.id,
+    vaId: r.candidateId,
+    reviewType: (REVIEW_TYPE_FROM_BACKEND[r.reviewType] ??
+      r.reviewType) as ReviewType,
+    reviewStatus: (STATUS_FROM_BACKEND[r.status] ??
+      r.reviewStatus ??
+      r.status) as ReviewStatus,
+    // Flatten aiGenerated fields to top level
+    roleSummary: aiGen.roleSummary ?? '',
+    coreResponsibilities: Array.isArray(aiGen.coreResponsibilities)
+      ? aiGen.coreResponsibilities
+      : aiGen.coreResponsibilities
+        ? [aiGen.coreResponsibilities]
+        : [],
+    strengths: aiGen.strengths ?? '',
+    areasForImprovement: aiGen.areasForImprovement ?? '',
+    goalsNextPeriod: aiGen.goals ?? [],
+    finalManagerSummary: r.finalManagerSummary ?? '',
+    // Normalize category IDs so cat.id works in the editor
+    categories: (r.categories ?? []).map((c: any) => ({
+      ...c,
+      id: c._id ?? c.id,
+    })),
+    reviewPeriodStart: r.reviewPeriodStart
+      ? String(r.reviewPeriodStart).slice(0, 10)
+      : '',
+    reviewPeriodEnd: r.reviewPeriodEnd
+      ? String(r.reviewPeriodEnd).slice(0, 10)
+      : '',
+  };
 }
 
 /** POST /crm/performance-reviews — AI-generate a new review */
@@ -87,30 +130,65 @@ export async function updateReview(
   id: string,
   payload: IUpdateReviewPayload
 ): Promise<IPerformanceReview> {
+  const backendPayload: Record<string, unknown> = {};
+
+  // Wrap text content fields into aiGenerated
+  const aiGenFields: Record<string, unknown> = {};
+  if (payload.roleSummary !== undefined)
+    aiGenFields.roleSummary = payload.roleSummary;
+  if (payload.coreResponsibilities !== undefined)
+    aiGenFields.coreResponsibilities = payload.coreResponsibilities;
+  if (payload.strengths !== undefined)
+    aiGenFields.strengths = payload.strengths;
+  if (payload.areasForImprovement !== undefined)
+    aiGenFields.areasForImprovement = payload.areasForImprovement;
+  if (payload.goalsNextPeriod !== undefined)
+    aiGenFields.goals = payload.goalsNextPeriod;
+  if (Object.keys(aiGenFields).length > 0)
+    backendPayload.aiGenerated = aiGenFields;
+
+  if (payload.overallRating !== undefined)
+    backendPayload.overallRating = payload.overallRating;
+  if (payload.finalRecommendation !== undefined)
+    backendPayload.finalRecommendation = payload.finalRecommendation;
+  if (payload.finalManagerSummary !== undefined)
+    backendPayload.finalManagerSummary = payload.finalManagerSummary;
+  if (payload.managerRatingInputs !== undefined)
+    backendPayload.managerRatingInputs = payload.managerRatingInputs;
+
+  // Map frontend ReviewStatus to backend status — skip 'Completed' (use /complete endpoint)
+  if (
+    payload.reviewStatus !== undefined &&
+    payload.reviewStatus !== 'Completed'
+  ) {
+    backendPayload.status = STATUS_TO_BACKEND[payload.reviewStatus];
+  }
+
+  // Include categories if provided (each must have _id)
+  if (payload.categories !== undefined) {
+    backendPayload.categories = payload.categories.map((c: any) => ({
+      ...c,
+      _id: c._id ?? c.id,
+    }));
+  }
+
   const { data } = await api.patch<{ data: IPerformanceReview }>(
     `/crm/performance-reviews/${id}`,
-    payload
+    backendPayload
   );
   return mapReview(data.data);
 }
 
-/**
- * Update a single category — fetches the full review, patches the category,
- * then sends the full categories array back (new backend updates whole array).
- */
-export async function updateCategory(
-  id: string,
-  catId: string,
-  payload: { rating?: number | null; managerComments?: string }
-): Promise<void> {
-  // Fetch current review to get full categories array
-  const { data: review } = await api.get<{ data: IPerformanceReview }>(
-    `/crm/performance-reviews/${id}`
+export async function completeReview(id: string): Promise<IPerformanceReview> {
+  const { data } = await api.patch<{ data: IPerformanceReview }>(
+    `/crm/performance-reviews/${id}/complete`
   );
-  const categories = (review.data.categories || []).map((c: any) =>
-    c._id === catId ? { ...c, ...payload } : c
-  );
-  await api.patch(`/crm/performance-reviews/${id}`, { categories });
+  return mapReview(data.data);
+}
+
+/** DELETE /crm/performance-reviews/:id */
+export async function deleteReview(id: string): Promise<void> {
+  await api.delete(`/crm/performance-reviews/${id}`);
 }
 
 /** Regenerate a section via POST /:id/regenerate */
@@ -130,18 +208,6 @@ export const regenerateCategories = (id: string) =>
 export const regenerateGoals = (id: string) => _regenerateSection(id, 'goals');
 export const improveManagerSummary = (id: string) =>
   _regenerateSection(id, 'summary');
-
-export async function completeReview(id: string): Promise<IPerformanceReview> {
-  const { data } = await api.patch<{ data: IPerformanceReview }>(
-    `/crm/performance-reviews/${id}/complete`
-  );
-  return mapReview(data.data);
-}
-
-/** DELETE /crm/performance-reviews/:id */
-export async function deleteReview(id: string): Promise<void> {
-  await api.delete(`/crm/performance-reviews/${id}`);
-}
 
 /** GET /crm/performance-reviews/:id/export-pdf — download PDF */
 export async function exportReviewPdf(

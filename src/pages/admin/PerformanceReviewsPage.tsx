@@ -2,7 +2,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   DownloadIcon,
+  EyeIcon,
   Loader2Icon,
+  LockIcon,
   PenLineIcon,
   PlusIcon,
   StarIcon,
@@ -26,7 +28,8 @@ import {
 import {
   QK,
   useAtsClientsQuery,
-  useAtsVAsQuery,
+  useCrmClientUsersQuery,
+  useCrmVaUsersQuery,
   usePerformanceReviewsQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
@@ -43,33 +46,41 @@ import {
 } from '@/types/performance-review';
 
 const STATUS_STYLES: Record<ReviewStatus, string> = {
-  Draft: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
+  Draft:
+    'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
   'AI Generated':
-    'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  'In Review': 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  Completed: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+    'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  'In Review':
+    'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  Completed:
+    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   'Sent to Client':
-    'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  Archived: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
+    'bg-sky-500/10 text-sky-400 border-sky-500/20',
+  Archived:
+    'bg-zinc-500/8 text-zinc-500 border-zinc-500/15',
 };
 
 function StatusBadge({ status }: { status: ReviewStatus }) {
   return (
     <span
-      className={`text-xs font-medium px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[status] ?? STATUS_STYLES['Draft']}`}
+      className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[status] ?? STATUS_STYLES['Draft']}`}
     >
+      {status === 'Completed' && <LockIcon className="size-2.5 mr-1 opacity-70" />}
       {status}
     </span>
   );
 }
 
 function RatingDisplay({ rating }: { rating: number | null }) {
-  if (!rating) return <span className="text-xs text-muted-foreground">—</span>;
+  if (rating == null)
+    return <span className="text-xs text-muted-foreground/50">—</span>;
   return (
-    <span className="flex items-center gap-1 text-sm tabular-nums">
-      <StarIcon className="size-3 text-amber-500 fill-amber-500" />
-      {rating}{' '}
-      <span className="text-xs text-muted-foreground">
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <span className="inline-flex items-center gap-0.5 font-semibold text-sm tabular-nums">
+        <StarIcon className="size-3 text-amber-400 fill-amber-400" />
+        {rating}
+      </span>
+      <span className="text-[11px] text-muted-foreground leading-none">
         {RATING_LABELS[rating]}
       </span>
     </span>
@@ -91,21 +102,39 @@ export default function PerformanceReviewsPage() {
     null
   );
 
+  const STATUS_TO_BACKEND: Record<string, string> = {
+    Draft: 'draft',
+    'AI Generated': 'ai_generated',
+    'In Review': 'in_review',
+    Completed: 'completed',
+    'Sent to Client': 'sent_to_client',
+    Archived: 'archived',
+  };
+
   const filters: IReviewFilters = {
-    vaId: vaFilter !== 'all' ? vaFilter : undefined,
+    candidateId: vaFilter !== 'all' ? vaFilter : undefined,
     clientId: clientFilter !== 'all' ? clientFilter : undefined,
-    status: statusFilter !== 'all' ? statusFilter : undefined,
+    status:
+      statusFilter !== 'all' ? STATUS_TO_BACKEND[statusFilter] : undefined,
   };
 
   const { data: reviews = [], isLoading } = usePerformanceReviewsQuery(filters);
-  const { data: vaList = [] } = useAtsVAsQuery();
+  const { data: crmVAs = [] } = useCrmVaUsersQuery();
   const { data: clientList = [] } = useAtsClientsQuery();
+  const { data: crmClients = [] } = useCrmClientUsersQuery();
 
   const vaMap: Record<string, string> = {};
-  for (const v of vaList) vaMap[v.id] = `${v.firstName} ${v.lastName}`;
+  for (const v of crmVAs) {
+    if (v.candidateRef) vaMap[v.candidateRef] = `${v.firstName} ${v.lastName}`;
+  }
 
   const clientMap: Record<string, string> = {};
   for (const c of clientList) clientMap[c.id] = c.companyName;
+
+  const crmClientRefs = new Set(
+    crmClients.map(c => c.clientRef).filter(Boolean)
+  );
+  const filteredClients = clientList.filter(c => crmClientRefs.has(c.id));
 
   async function handleExportPdf(review: IPerformanceReview) {
     setExportingId(review.id);
@@ -138,7 +167,7 @@ export default function PerformanceReviewsPage() {
     {
       accessorKey: 'createdAt',
       header: 'Date',
-      size: 95,
+      size: 90,
       cell: ({ getValue }) => (
         <span className="text-xs text-muted-foreground whitespace-nowrap">
           {new Date(getValue<string>()).toLocaleDateString()}
@@ -147,10 +176,10 @@ export default function PerformanceReviewsPage() {
     },
     {
       id: 'vaName',
-      header: 'VA Name',
+      header: 'VA',
       meta: { fill: true },
       cell: ({ row }) => (
-        <span className="text-sm font-medium block truncate max-w-[180px]">
+        <span className="text-sm font-medium truncate block min-w-0">
           {row.original.candidateName ?? vaMap[row.original.vaId] ?? '—'}
         </span>
       ),
@@ -158,9 +187,9 @@ export default function PerformanceReviewsPage() {
     {
       id: 'client',
       header: 'Client',
-      size: 130,
+      meta: { fill: true },
       cell: ({ row }) => (
-        <span className="text-sm block truncate max-w-[120px]">
+        <span className="text-sm text-muted-foreground truncate block min-w-0">
           {row.original.clientName ?? clientMap[row.original.clientId] ?? '—'}
         </span>
       ),
@@ -168,15 +197,17 @@ export default function PerformanceReviewsPage() {
     {
       accessorKey: 'reviewType',
       header: 'Type',
-      size: 105,
+      size: 110,
       cell: ({ getValue }) => (
-        <span className="text-xs whitespace-nowrap">{getValue<string>()}</span>
+        <span className="text-xs whitespace-nowrap text-muted-foreground">
+          {getValue<string>()}
+        </span>
       ),
     },
     {
       accessorKey: 'overallRating',
       header: 'Rating',
-      size: 80,
+      size: 160,
       cell: ({ getValue }) => (
         <RatingDisplay rating={getValue<number | null>()} />
       ),
@@ -184,38 +215,48 @@ export default function PerformanceReviewsPage() {
     {
       accessorKey: 'reviewStatus',
       header: 'Status',
-      size: 120,
+      size: 125,
       cell: ({ getValue }) => <StatusBadge status={getValue<ReviewStatus>()} />,
     },
     {
       accessorKey: 'finalRecommendation',
       header: 'Recommendation',
-      size: 175,
-      cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground block truncate max-w-[165px]">
-          {getValue<string>() ?? '—'}
-        </span>
-      ),
+      size: 190,
+      cell: ({ getValue }) => {
+        const val = getValue<string>();
+        return val ? (
+          <span className="text-xs text-muted-foreground block truncate">
+            {val}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground/40">—</span>
+        );
+      },
     },
     {
       id: 'actions',
       header: 'Actions',
-      meta: { shrink: true, headerClassName: 'text-center' },
+      meta: { shrink: true },
       cell: ({ row }) => {
         const r = row.original;
         const isExporting = exportingId === r.id;
+        const isCompleted = r.reviewStatus === 'Completed';
         return (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 justify-end">
             <Button
               size="icon"
               variant="ghost"
-              className="size-7"
-              title="View / Edit"
+              className={`size-7 ${isCompleted ? 'text-muted-foreground' : ''}`}
+              title={isCompleted ? 'View (read-only)' : 'Edit'}
               onClick={() =>
                 navigate(`${rolePrefix}/performance-reviews/${r.id}`)
               }
             >
-              <PenLineIcon className="size-3.5" />
+              {isCompleted ? (
+                <EyeIcon className="size-3.5" />
+              ) : (
+                <PenLineIcon className="size-3.5" />
+              )}
             </Button>
             <Button
               size="icon"
@@ -234,7 +275,7 @@ export default function PerformanceReviewsPage() {
             <Button
               size="icon"
               variant="ghost"
-              className="size-7 text-destructive hover:text-destructive"
+              className="size-7 text-destructive/60 hover:text-destructive"
               title="Delete"
               onClick={() => setDeleteTarget(r)}
             >
@@ -276,11 +317,13 @@ export default function PerformanceReviewsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All VAs</SelectItem>
-                  {vaList.map(v => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.firstName} {v.lastName}
-                    </SelectItem>
-                  ))}
+                  {crmVAs
+                    .filter(v => v.candidateRef)
+                    .map(v => (
+                      <SelectItem key={v.candidateRef!} value={v.candidateRef!}>
+                        {v.firstName} {v.lastName}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -293,7 +336,7 @@ export default function PerformanceReviewsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Clients</SelectItem>
-                  {clientList.map(c => (
+                  {filteredClients.map(c => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.companyName}
                     </SelectItem>
@@ -349,7 +392,7 @@ export default function PerformanceReviewsPage() {
         open={!!deleteTarget}
         onCancel={() => setDeleteTarget(null)}
         title="Delete Review"
-        description={`Are you sure you want to delete this performance review? This action cannot be undone.`}
+        description="Are you sure you want to delete this performance review? This action cannot be undone."
         confirmLabel="Delete"
         onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
         variant="destructive"

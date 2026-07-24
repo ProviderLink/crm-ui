@@ -167,6 +167,7 @@ export interface IUpdateReviewPayload {
   overallRating?: number | null;
   finalManagerSummary?: string;
   reviewStatus?: ReviewStatus;
+  categories?: IPerformanceCategory[];
   /** Phase 2 — kept for silent storage */
   managerRatingInputs?: Record<
     string,

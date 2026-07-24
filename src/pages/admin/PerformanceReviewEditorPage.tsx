@@ -41,7 +41,6 @@ import {
   improveManagerSummary,
   regenerateCategories,
   regenerateGoals,
-  updateCategory,
   updateReview,
 } from '@/services/performance-reviews.service';
 import {
@@ -196,17 +195,15 @@ export default function PerformanceReviewEditorPage() {
         finalRecommendation: finalRecommendation || null,
         overallRating: overallRating ? parseInt(overallRating, 10) : null,
         finalManagerSummary,
+        categories,
         reviewStatus:
-          review?.reviewStatus === 'Draft' ? 'In Review' : review?.reviewStatus,
+          review?.reviewStatus === 'Draft' ||
+          review?.reviewStatus === 'AI Generated'
+            ? 'In Review'
+            : review?.reviewStatus,
       });
-      for (const cat of categories) {
-        await updateCategory(id, cat.id, {
-          rating: cat.rating,
-          managerComments: cat.managerComments,
-        });
-      }
       invalidate();
-      toast.success('Draft saved');
+      toast.success('Saved');
     } catch {
       toast.error('Failed to save. Please try again.');
     } finally {
@@ -279,6 +276,18 @@ export default function PerformanceReviewEditorPage() {
     if (!id) return;
     setCompleting(true);
     try {
+      // Save all current form state before completing so no selections are lost
+      await updateReview(id, {
+        roleSummary,
+        coreResponsibilities,
+        strengths,
+        areasForImprovement,
+        goalsNextPeriod,
+        finalRecommendation: finalRecommendation || null,
+        overallRating: overallRating ? parseInt(overallRating, 10) : null,
+        finalManagerSummary,
+        categories,
+      });
       await completeReview(id);
       invalidate();
       toast.success('Review marked as Completed');

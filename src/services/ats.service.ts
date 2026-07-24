@@ -2,7 +2,9 @@ import api from '@/lib/api';
 import type { IAtsCandidate, IAtsClient, IAtsUser } from '@/types/ats';
 
 export async function getAtsClients(): Promise<IAtsClient[]> {
-  const { data } = await api.get<{ data: any[] }>('/ats/clients');
+  const { data } = await api.get<{ data: any[] }>('/ats/clients', {
+    params: { limit: 1000 },
+  });
   return data.data.map((c: any) => ({ ...c, id: c._id ?? c.id }));
 }
 

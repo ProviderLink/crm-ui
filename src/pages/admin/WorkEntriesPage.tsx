@@ -13,7 +13,8 @@ import {
 import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
-  useAtsVAsQuery,
+  useCrmClientUsersQuery,
+  useCrmVaUsersQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { formatMinutes } from '@/lib/time';
@@ -49,21 +50,33 @@ export default function WorkEntriesPage() {
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
   });
-  const { data: atsVAs = [] } = useAtsVAsQuery();
+  const { data: crmVAs = [] } = useCrmVaUsersQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
+  const { data: crmClients = [] } = useCrmClientUsersQuery();
   const { data: assignments = [] } = useAllAssignmentsQuery();
 
   const vaMap = useMemo(() => {
     const m: Record<string, string> = {};
-    for (const v of atsVAs) m[v.id] = `${v.firstName} ${v.lastName}`;
+    for (const v of crmVAs) {
+      if (v.candidateRef) m[v.candidateRef] = `${v.firstName} ${v.lastName}`;
+    }
     return m;
-  }, [atsVAs]);
+  }, [crmVAs]);
 
   const clientMap = useMemo(() => {
     const m: Record<string, string> = {};
     for (const c of atsClients) m[c.id] = c.companyName;
     return m;
   }, [atsClients]);
+
+  const crmClientRefs = useMemo(
+    () => new Set(crmClients.map(c => c.clientRef).filter(Boolean)),
+    [crmClients]
+  );
+  const filteredClients = useMemo(
+    () => atsClients.filter(c => crmClientRefs.has(c.id)),
+    [atsClients, crmClientRefs]
+  );
 
   const assignmentMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -193,11 +206,13 @@ export default function WorkEntriesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All VAs</SelectItem>
-                {atsVAs.map(v => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.firstName} {v.lastName}
-                  </SelectItem>
-                ))}
+                {crmVAs
+                  .filter(v => v.candidateRef)
+                  .map(v => (
+                    <SelectItem key={v.candidateRef!} value={v.candidateRef!}>
+                      {v.firstName} {v.lastName}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
 
@@ -207,7 +222,7 @@ export default function WorkEntriesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Clients</SelectItem>
-                {atsClients.map(c => (
+                {filteredClients.map(c => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.companyName}
                   </SelectItem>

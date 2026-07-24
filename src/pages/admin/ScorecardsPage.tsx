@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useAtsVAsQuery, useScorecardsQuery } from '@/hooks/queries';
+import { useCrmVaUsersQuery, useScorecardsQuery } from '@/hooks/queries';
 import { generateScorecards } from '@/services/scorecards.service';
 import type { IScorecard } from '@/types/scorecard';
 import { useQueryClient } from '@tanstack/react-query';
@@ -30,10 +30,12 @@ export default function ScorecardsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const vaId = vaFilter === 'all' ? undefined : vaFilter;
   const { data: scorecards = [], isLoading } = useScorecardsQuery(vaId);
-  const { data: vaList = [] } = useAtsVAsQuery();
+  const { data: crmVAs = [] } = useCrmVaUsersQuery();
 
   const vaMap: Record<string, string> = {};
-  for (const v of vaList) vaMap[v.id] = `${v.firstName} ${v.lastName}`;
+  for (const v of crmVAs) {
+    if (v.candidateRef) vaMap[v.candidateRef] = `${v.firstName} ${v.lastName}`;
+  }
 
   async function handleGenerate() {
     setGenerateError(null);
@@ -154,11 +156,13 @@ export default function ScorecardsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All VAs</SelectItem>
-                  {vaList.map(v => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.firstName} {v.lastName}
-                    </SelectItem>
-                  ))}
+                  {crmVAs
+                    .filter(v => v.candidateRef)
+                    .map(v => (
+                      <SelectItem key={v.candidateRef!} value={v.candidateRef!}>
+                        {v.firstName} {v.lastName}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

@@ -27,6 +27,7 @@ export async function getAllAssignments(
   if (query.status) params.set('status', query.status);
   if (query.accountManagerId)
     params.set('accountManagerId', query.accountManagerId);
+  params.set('limit', '1000');
   const { data } = await api.get<{ data: IAssignment[] }>(
     `/crm/assignments?${params.toString()}`
   );
