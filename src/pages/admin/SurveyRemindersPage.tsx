@@ -64,7 +64,9 @@ export default function SurveyRemindersPage() {
     try {
       await updateSurveyReminder(id, {
         status,
-        ...(status === 'completed' ? { completedDate: todayStr() } : {}),
+        ...(status === 'completed'
+          ? { completedDate: new Date().toISOString() }
+          : {}),
       });
       queryClient.invalidateQueries({ queryKey: QK.surveyReminders });
     } catch {
@@ -138,9 +140,9 @@ export default function SurveyRemindersPage() {
         enableSorting: false,
         size: 80,
         cell: ({ row }) => {
-          const { id, status } = row.original;
+          const { _id, status } = row.original;
           if (status === 'completed' || status === 'skipped') return null;
-          const busy = updatingId === id;
+          const busy = updatingId === _id;
           return (
             <TooltipProvider delayDuration={300}>
               <div className="flex items-center gap-1 whitespace-nowrap">
@@ -151,7 +153,7 @@ export default function SurveyRemindersPage() {
                       size="icon"
                       className="size-7 bg-white/[0.04] text-[#6E6E6E] hover:text-[#A0A0A0] hover:bg-white/[0.08]"
                       disabled={busy}
-                      onClick={() => handleUpdateStatus(id, 'completed')}
+                      onClick={() => handleUpdateStatus(_id, 'completed')}
                     >
                       <CheckIcon className="size-3.5" />
                     </Button>
@@ -166,7 +168,7 @@ export default function SurveyRemindersPage() {
                       size="icon"
                       className="size-7 bg-white/[0.02] text-muted-foreground/60 hover:text-muted-foreground hover:bg-white/[0.05]"
                       disabled={busy}
-                      onClick={() => handleUpdateStatus(id, 'skipped')}
+                      onClick={() => handleUpdateStatus(_id, 'skipped')}
                     >
                       <XIcon className="size-3.5" />
                     </Button>
