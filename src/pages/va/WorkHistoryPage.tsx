@@ -34,7 +34,6 @@ import {
 } from '@/components/ui/tooltip';
 import {
   QK,
-  useAtsClientsQuery,
   useMyAssignmentsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
@@ -281,14 +280,15 @@ export default function WorkHistoryPage() {
     isError,
     error,
   } = useWorkEntriesQuery();
-  const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: myAssignments = [] } = useMyAssignmentsQuery();
 
   const clientMap = useMemo(() => {
     const m = new Map<string, string>();
-    atsClients.forEach(c => m.set(c.id, c.companyName));
+    myAssignments.forEach(a => {
+      if (a.companyName) m.set(a.clientId, a.companyName);
+    });
     return m;
-  }, [atsClients]);
+  }, [myAssignments]);
 
   const assignmentMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -309,8 +309,9 @@ export default function WorkHistoryPage() {
   const filtered = useMemo(
     () =>
       entries.filter(e => {
-        if (dateFrom && e.entryDate < dateFrom) return false;
-        if (dateTo && e.entryDate > dateTo) return false;
+        const d = e.entryDate.slice(0, 10);
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo && d > dateTo) return false;
         return true;
       }),
     [entries, dateFrom, dateTo]

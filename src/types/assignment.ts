@@ -2,6 +2,7 @@ export interface IAssignment {
   _id: string;
   candidateId: string;
   clientId: string;
+  companyName?: string;
   status: 'active' | 'on_hold' | 'ended';
   serviceType?: string;
   accountManagerId?: string;

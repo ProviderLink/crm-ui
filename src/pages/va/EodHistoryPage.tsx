@@ -4,13 +4,11 @@ import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import {
   QK,
-  useAtsClientsQuery,
   useEodSubmissionsQuery,
   useMyAssignmentsQuery,
 } from '@/hooks/queries';
 import { deleteEodSubmission } from '@/services/eod-submissions.service';
 import type { IAssignment } from '@/types/assignment';
-import type { IAtsClient } from '@/types/ats';
 import type { IEodSubmission } from '@/types/eod-submission';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -109,7 +107,6 @@ export default function EodHistoryPage() {
     isError,
     error,
   } = useEodSubmissionsQuery();
-  const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: myAssignments = [] } = useMyAssignmentsQuery();
 
   const [deleteTarget, setDeleteTarget] = useState<IEodSubmission | null>(null);
@@ -117,9 +114,11 @@ export default function EodHistoryPage() {
 
   const clientMap = useMemo(() => {
     const m = new Map<string, string>();
-    atsClients.forEach((c: IAtsClient) => m.set(c.id, c.companyName));
+    myAssignments.forEach((a: IAssignment) => {
+      if (a.companyName) m.set(a.clientId, a.companyName);
+    });
     return m;
-  }, [atsClients]);
+  }, [myAssignments]);
 
   const assignmentMap = useMemo(() => {
     const m = new Map<string, string>();

@@ -162,7 +162,14 @@ export default function AddWorkEntryPage() {
                   <SelectContent>
                     {assignments.map(a => (
                       <SelectItem key={a._id} value={a._id}>
-                        {a.serviceType ?? a._id}
+                        <span className="flex flex-col">
+                          <span>{a.serviceType ?? a._id}</span>
+                          {a.companyName && (
+                            <span className="text-xs text-muted-foreground">
+                              {a.companyName}
+                            </span>
+                          )}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
