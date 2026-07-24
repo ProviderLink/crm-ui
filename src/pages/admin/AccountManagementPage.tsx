@@ -127,30 +127,6 @@ function ActiveBadge({ active }: { active: boolean }) {
   );
 }
 
-function _DetailRow({
-  icon,
-  label,
-  value,
-  children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="mt-0.5 text-muted-foreground">{icon}</span>
-      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-          {label}
-        </span>
-        {children ?? <span className="text-sm">{value}</span>}
-      </div>
-    </div>
-  );
-}
-
 // ─── User tables ──────────────────────────────────────────────────────────────
 
 type UserRow = {
@@ -188,62 +164,6 @@ const healthLabel: Record<string, string> = {
   yellow: 'At Risk',
   red: 'Critical',
 };
-
-function _buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
-  return [
-    {
-      accessorKey: 'name',
-      header: 'Name',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs">
-            {row.original.name
-              .split(' ')
-              .map(n => n[0])
-              .join('')
-              .toUpperCase()
-              .slice(0, 2)}
-          </div>
-          <span className="text-sm font-medium">{row.original.name}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-      cell: ({ getValue }) => (
-        <span className="text-sm text-muted-foreground">
-          {getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'role',
-      header: 'Role',
-      cell: ({ getValue }) => <RoleBadge role={getValue<string>()} />,
-    },
-    {
-      accessorKey: 'isActive',
-      header: 'Status',
-      cell: ({ getValue }) => <ActiveBadge active={getValue<boolean>()} />,
-    },
-    {
-      id: 'actions',
-      header: '',
-      size: 50,
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8"
-          onClick={() => onView(row.original)}
-        >
-          <EyeIcon className="size-3.5" />
-        </Button>
-      ),
-    },
-  ];
-}
 
 function buildClientColumns(
   onView: (u: UserRow) => void
