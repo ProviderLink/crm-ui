@@ -3,6 +3,8 @@ export interface IEodSubmission {
   assignmentId: string;
   candidateId: string;
   clientId: string;
+  candidateName?: string;
+  companyName?: string;
   date: string; // 'YYYY-MM-DD'
   shiftStart: string; // 'HH:MM'
   shiftEnd: string; // 'HH:MM'

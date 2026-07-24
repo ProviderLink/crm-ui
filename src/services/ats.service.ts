@@ -10,7 +10,11 @@ export async function getAtsClients(): Promise<IAtsClient[]> {
 
 /** Candidates = VAs in CRM context. */
 export async function getAtsVAs(): Promise<IAtsCandidate[]> {
-  const { data } = await api.get<{ data: any[] }>('/ats/candidates');
+  // Backend defaults to limit=20 when omitted, which truncates the VA name map
+  // and causes assigned VAs to render as raw ids. Fetch a large page.
+  const { data } = await api.get<{ data: any[] }>('/ats/candidates', {
+    params: { limit: 1000 },
+  });
   return data.data.map((v: any) => ({ ...v, id: v._id ?? v.id }));
 }
 

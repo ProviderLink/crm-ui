@@ -3,6 +3,7 @@ export interface IAssignment {
   candidateId: string;
   clientId: string;
   companyName?: string;
+  candidateName?: string;
   accountManagerName?: string;
   accountManagerEmail?: string;
   status: 'active' | 'on_hold' | 'ended';

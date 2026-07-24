@@ -106,15 +106,17 @@ export async function generateReview(
 export async function getReviews(
   filters?: IReviewFilters
 ): Promise<IPerformanceReview[]> {
-  const params = filters
-    ? new URLSearchParams(
-        Object.fromEntries(
-          Object.entries(filters).filter(([, v]) => v !== undefined)
-        ) as Record<string, string>
-      ).toString()
-    : '';
+  const params = new URLSearchParams();
+  if (filters) {
+    for (const [k, v] of Object.entries(filters)) {
+      if (v !== undefined) params.set(k, v);
+    }
+  }
+  // Backend defaults to limit=20; fetch a large page so all reviews are returned
+  // with backend-side candidateName/clientName populated.
+  params.set('limit', '1000');
   const { data } = await api.get<{ data: IPerformanceReview[] }>(
-    `/crm/performance-reviews${params ? `?${params}` : ''}`
+    `/crm/performance-reviews?${params.toString()}`
   );
   return (data.data || []).map(mapReview);
 }

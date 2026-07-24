@@ -138,8 +138,10 @@ export default function PerformanceReviewEditorPage() {
   const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
   const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
+  const isAccountManager = user?.role === 'account_manager';
 
   const { data: review, isLoading } = usePerformanceReviewQuery(id ?? '');
+  const isReadOnly = isAccountManager || review?.reviewStatus === 'Completed';
 
   // Form state
   const [roleSummary, setRoleSummary] = useState('');
@@ -325,8 +327,10 @@ export default function PerformanceReviewEditorPage() {
     );
   }
 
-  const isCompleted = review.reviewStatus === 'Completed';
   const ratingNum = overallRating ? parseInt(overallRating, 10) : null;
+
+  // Conditionally show admin-only editing UI
+  // (now uses isReadOnly which includes isAccountManager check)
 
   return (
     <div className="@container/main flex flex-1 flex-col">
@@ -352,7 +356,7 @@ export default function PerformanceReviewEditorPage() {
                   — {review.candidateName}
                 </span>
               )}
-              {isCompleted && (
+              {review?.reviewStatus === 'Completed' && (
                 <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] px-2 py-0.5 rounded bg-white/[0.04] text-[#A0A0A0] border border-[rgba(255,255,255,0.08)]">
                   <LockIcon className="size-2.5" />
                   Completed
@@ -377,7 +381,7 @@ export default function PerformanceReviewEditorPage() {
               <span className="hidden sm:inline ml-1.5">Export PDF</span>
             </Button>
 
-            {!isCompleted && (
+            {!isReadOnly && (
               <>
                 <Button
                   size="sm"
@@ -414,7 +418,7 @@ export default function PerformanceReviewEditorPage() {
       <div className="flex-1 px-4 lg:px-6 py-6">
         <div className="space-y-5">
           {/* AI disclaimer */}
-          {!isCompleted && (
+          {!isReadOnly && (
             <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-amber-500/8 border border-amber-500/25 text-amber-700 dark:text-amber-400">
               <AlertTriangleIcon className="size-4 shrink-0" />
               <p className="text-sm font-medium">
@@ -468,7 +472,7 @@ export default function PerformanceReviewEditorPage() {
               onChange={e => setRoleSummary(e.target.value)}
               rows={4}
               placeholder="Describe the VA's role and responsibilities..."
-              disabled={isCompleted}
+              disabled={isReadOnly}
               className="resize-none"
             />
           </SectionCard>
@@ -478,7 +482,7 @@ export default function PerformanceReviewEditorPage() {
             icon={<ClipboardListIcon className="size-3.5" />}
             title="Manager Summary"
             action={
-              !isCompleted ? (
+              !isReadOnly ? (
                 <AiButton
                   label="Improve with AI"
                   loading={improveLoading}
@@ -492,7 +496,7 @@ export default function PerformanceReviewEditorPage() {
               onChange={e => setFinalManagerSummary(e.target.value)}
               rows={4}
               placeholder="Overall manager assessment..."
-              disabled={isCompleted}
+              disabled={isReadOnly}
               className="resize-none"
             />
           </SectionCard>
@@ -502,7 +506,7 @@ export default function PerformanceReviewEditorPage() {
             icon={<GripVerticalIcon className="size-3.5" />}
             title="Core Responsibilities"
             action={
-              !isCompleted ? (
+              !isReadOnly ? (
                 <Button
                   size="sm"
                   variant="ghost"
@@ -534,10 +538,10 @@ export default function PerformanceReviewEditorPage() {
                         setCoreResponsibilities(updated);
                       }}
                       placeholder={`Responsibility ${i + 1}`}
-                      disabled={isCompleted}
+                      disabled={isReadOnly}
                       className="h-8 text-sm"
                     />
-                    {!isCompleted && (
+                    {!isReadOnly && (
                       <Button
                         size="icon"
                         variant="ghost"
@@ -562,7 +566,7 @@ export default function PerformanceReviewEditorPage() {
             icon={<StarIcon className="size-3.5" />}
             title="Performance Categories"
             action={
-              !isCompleted ? (
+              !isReadOnly ? (
                 <AiButton
                   label="Regenerate"
                   loading={regenCatLoading}
@@ -574,7 +578,7 @@ export default function PerformanceReviewEditorPage() {
             {categories.length === 0 ? (
               <p className="text-sm text-muted-foreground italic py-1">
                 No categories yet.{' '}
-                {!isCompleted && 'Use "Regenerate" to generate them with AI.'}
+                {!isReadOnly && 'Use "Regenerate" to generate them with AI.'}
               </p>
             ) : (
               <div className="space-y-3">
@@ -622,7 +626,7 @@ export default function PerformanceReviewEditorPage() {
                                 valueToRating(v)
                               )
                             }
-                            disabled={isCompleted}
+                            disabled={isReadOnly}
                           >
                             <SelectTrigger className="h-7 w-[130px] text-xs">
                               <SelectValue placeholder="Set rating" />
@@ -655,7 +659,7 @@ export default function PerformanceReviewEditorPage() {
                         rows={2}
                         placeholder="Manager comments for this category..."
                         className="text-sm resize-none bg-muted/30"
-                        disabled={isCompleted}
+                        disabled={isReadOnly}
                       />
                     </div>
                   ))}
@@ -674,7 +678,7 @@ export default function PerformanceReviewEditorPage() {
                 onChange={e => setStrengths(e.target.value)}
                 rows={5}
                 placeholder="What did this VA do well?"
-                disabled={isCompleted}
+                disabled={isReadOnly}
                 className="resize-none"
               />
             </SectionCard>
@@ -688,7 +692,7 @@ export default function PerformanceReviewEditorPage() {
                 onChange={e => setAreasForImprovement(e.target.value)}
                 rows={5}
                 placeholder="What areas need improvement?"
-                disabled={isCompleted}
+                disabled={isReadOnly}
                 className="resize-none"
               />
             </SectionCard>
@@ -699,7 +703,7 @@ export default function PerformanceReviewEditorPage() {
             icon={<TargetIcon className="size-3.5" />}
             title="Goals — Next Period"
             action={
-              !isCompleted ? (
+              !isReadOnly ? (
                 <div className="flex items-center gap-2">
                   <AiButton
                     label="Regenerate"
@@ -722,7 +726,7 @@ export default function PerformanceReviewEditorPage() {
             {goalsNextPeriod.length === 0 ? (
               <p className="text-sm text-muted-foreground italic py-1">
                 No goals listed.{' '}
-                {!isCompleted && 'Use "Regenerate" to generate them with AI.'}
+                {!isReadOnly && 'Use "Regenerate" to generate them with AI.'}
               </p>
             ) : (
               <div className="space-y-2">
@@ -739,10 +743,10 @@ export default function PerformanceReviewEditorPage() {
                         setGoalsNextPeriod(updated);
                       }}
                       placeholder={`Goal ${i + 1}`}
-                      disabled={isCompleted}
+                      disabled={isReadOnly}
                       className="h-8 text-sm"
                     />
-                    {!isCompleted && (
+                    {!isReadOnly && (
                       <Button
                         size="icon"
                         variant="ghost"
@@ -783,7 +787,7 @@ export default function PerformanceReviewEditorPage() {
                     onValueChange={v =>
                       setFinalRecommendation(v as FinalRecommendation)
                     }
-                    disabled={isCompleted}
+                    disabled={isReadOnly}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select recommendation" />
@@ -805,7 +809,7 @@ export default function PerformanceReviewEditorPage() {
                   <Select
                     value={overallRating}
                     onValueChange={setOverallRating}
-                    disabled={isCompleted}
+                    disabled={isReadOnly}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select rating" />
@@ -831,7 +835,7 @@ export default function PerformanceReviewEditorPage() {
           </Card>
 
           {/* ── Bottom save bar ───────────────────────────────────────────── */}
-          {!isCompleted && (
+          {!isReadOnly && (
             <div className="flex justify-end gap-2 py-2 pb-8">
               <Button
                 size="sm"

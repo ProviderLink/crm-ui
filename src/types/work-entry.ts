@@ -22,6 +22,8 @@ export interface IWorkEntry {
   assignmentId: string;
   candidateId: string;
   clientId: string;
+  candidateName?: string;
+  companyName?: string;
   entryDate: string; // 'YYYY-MM-DD'
   entryTime: string; // 'HH:MM'
   taskCategory: WorkEntryCategory;

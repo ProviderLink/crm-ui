@@ -18,7 +18,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { QK, useSurveyRemindersQuery } from '@/hooks/queries';
+import {
+  QK,
+  useAllAssignmentsQuery,
+  useSurveyRemindersQuery,
+} from '@/hooks/queries';
+import { useAppSelector } from '@/hooks/store';
 import { todayString } from '@/lib/time';
 import { updateSurveyReminder } from '@/services/survey-reminders.service';
 import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder';
@@ -45,18 +50,40 @@ const todayStr = () => todayString();
 
 export default function SurveyRemindersPage() {
   const queryClient = useQueryClient();
-  const { data: reminders = [], isLoading } = useSurveyRemindersQuery();
+  const user = useAppSelector(s => s.auth.user);
+  const isAccountManager = user?.role === 'account_manager';
+
+  // AM scoping: only see reminders for their own assignments' clients/VAs/assignments
+  const { data: amAssignments = [] } = useAllAssignmentsQuery(
+    isAccountManager ? user?.id : undefined
+  );
+  const amScopedIds = useMemo(() => {
+    if (!isAccountManager) return null;
+    const ids = new Set<string>();
+    for (const a of amAssignments) {
+      ids.add(a._id); // assignment IDs
+      if (a.candidateId) ids.add(a.candidateId); // VA IDs
+      if (a.clientId) ids.add(a.clientId); // client IDs
+    }
+    return ids;
+  }, [isAccountManager, amAssignments]);
+
+  const { data: allReminders = [], isLoading } = useSurveyRemindersQuery();
   const [statusFilter, setStatusFilter] = useState<SurveyStatus | 'all'>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      statusFilter === 'all'
-        ? reminders
-        : reminders.filter(r => r.status === statusFilter),
-    [reminders, statusFilter]
-  );
+  // For AM, client-side filter by related IDs
+  const reminders = useMemo(() => {
+    let list = allReminders;
+    if (isAccountManager && amScopedIds) {
+      list = list.filter(r => amScopedIds.has(r.relatedId));
+    }
+    if (statusFilter !== 'all') {
+      list = list.filter(r => r.status === statusFilter);
+    }
+    return list;
+  }, [allReminders, isAccountManager, amScopedIds, statusFilter]);
 
   async function handleUpdateStatus(id: string, status: SurveyStatus) {
     setUpdatingId(id);
@@ -141,7 +168,12 @@ export default function SurveyRemindersPage() {
         size: 80,
         cell: ({ row }) => {
           const { _id, status } = row.original;
-          if (status === 'completed' || status === 'skipped') return null;
+          if (
+            status === 'completed' ||
+            status === 'skipped' ||
+            isAccountManager
+          )
+            return null;
           const busy = updatingId === _id;
           return (
             <TooltipProvider delayDuration={300}>
@@ -199,7 +231,7 @@ export default function SurveyRemindersPage() {
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <BellIcon className="size-4" />
-              <span className="text-sm">{filtered.length} reminders</span>
+              <span className="text-sm">{reminders.length} reminders</span>
             </div>
           </div>
 
@@ -236,7 +268,7 @@ export default function SurveyRemindersPage() {
           {updateError && (
             <p className="mb-2 text-sm text-destructive">{updateError}</p>
           )}
-          <DataTable columns={columns} data={filtered} isLoading={isLoading} />
+          <DataTable columns={columns} data={reminders} isLoading={isLoading} />
         </div>
       </div>
     </div>

@@ -20,6 +20,9 @@ export async function getEodSubmissions(
   if (query.date) params.set('date', query.date);
   if (query.dateFrom) params.set('dateFrom', query.dateFrom);
   if (query.dateTo) params.set('dateTo', query.dateTo);
+  // Backend defaults to limit=20; fetch a large page so EOD rows are returned
+  // and VA/client names can be joined backend-side for the full range.
+  params.set('limit', '1000');
   const { data } = await api.get<{ data: IEodSubmission[] }>(
     `/crm/eod-submissions?${params.toString()}`
   );

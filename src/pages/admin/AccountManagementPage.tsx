@@ -15,16 +15,15 @@ import {
   MailIcon,
   MonitorIcon,
   PhoneIcon,
-  ShieldCheckIcon,
   StarIcon,
   TrendingUpIcon,
   UsersIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,7 +38,6 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -47,8 +45,6 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   useAccountManagersQuery,
   useCrmAdminUsersQuery,
-  useCrmClientUsersQuery,
-  useCrmVaUsersQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import api from '@/lib/api';
@@ -78,13 +74,18 @@ function fmtDate(val: unknown): string {
 import {
   type IAccountManager,
   type ICrmUser,
+  getCrmAccountsList,
 } from '@/services/account-managers.service';
 import {
   getClientAccounts,
   getHiredVasForClient,
   updateClientAccount,
 } from '@/services/client-accounts.service';
-import { getVaProfiles, getVaAssignments, updateVaProfile } from '@/services/va-profiles.service';
+import {
+  getVaAssignments,
+  getVaProfiles,
+  updateVaProfile,
+} from '@/services/va-profiles.service';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -178,12 +179,14 @@ type UserRow = {
 };
 
 const healthStyle: Record<string, string> = {
-  green:  'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+  green: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
   yellow: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
-  red:    'bg-red-500/10 text-red-400 ring-red-500/20',
+  red: 'bg-red-500/10 text-red-400 ring-red-500/20',
 };
 const healthLabel: Record<string, string> = {
-  green: 'Healthy', yellow: 'At Risk', red: 'Critical',
+  green: 'Healthy',
+  yellow: 'At Risk',
+  red: 'Critical',
 };
 
 function buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
@@ -194,7 +197,12 @@ function buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs">
-            {row.original.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+            {row.original.name
+              .split(' ')
+              .map(n => n[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2)}
           </div>
           <span className="text-sm font-medium">{row.original.name}</span>
         </div>
@@ -204,7 +212,9 @@ function buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
       accessorKey: 'email',
       header: 'Email',
       cell: ({ getValue }) => (
-        <span className="text-sm text-muted-foreground">{getValue<string>()}</span>
+        <span className="text-sm text-muted-foreground">
+          {getValue<string>()}
+        </span>
       ),
     },
     {
@@ -222,7 +232,12 @@ function buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
       header: '',
       size: 50,
       cell: ({ row }) => (
-        <Button variant="ghost" size="icon" className="size-8" onClick={() => onView(row.original)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          onClick={() => onView(row.original)}
+        >
           <EyeIcon className="size-3.5" />
         </Button>
       ),
@@ -230,20 +245,29 @@ function buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
   ];
 }
 
-function buildClientColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
+function buildClientColumns(
+  onView: (u: UserRow) => void
+): ColumnDef<UserRow>[] {
   return [
     {
       accessorKey: 'companyName',
       header: 'Client',
       cell: ({ row }) => {
         const { companyName } = row.original;
-        const initials = (companyName ?? '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+        const initials = (companyName ?? '?')
+          .split(' ')
+          .map((n: string) => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
         return (
           <div className="flex items-center gap-3">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs">
               {initials}
             </div>
-            <p className="text-sm font-semibold truncate">{companyName ?? '—'}</p>
+            <p className="text-sm font-semibold truncate">
+              {companyName ?? '—'}
+            </p>
           </div>
         );
       },
@@ -257,8 +281,16 @@ function buildClientColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] 
           return <span className="text-xs text-muted-foreground">—</span>;
         return (
           <div className="min-w-0">
-            {primaryContactName && <p className="text-sm font-medium truncate">{primaryContactName}</p>}
-            {primaryContactEmail && <p className="text-xs text-muted-foreground truncate">{primaryContactEmail}</p>}
+            {primaryContactName && (
+              <p className="text-sm font-medium truncate">
+                {primaryContactName}
+              </p>
+            )}
+            {primaryContactEmail && (
+              <p className="text-xs text-muted-foreground truncate">
+                {primaryContactEmail}
+              </p>
+            )}
           </div>
         );
       },
@@ -268,9 +300,12 @@ function buildClientColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] 
       header: 'Health',
       cell: ({ getValue }) => {
         const val = getValue<string | null>();
-        if (!val) return <span className="text-xs text-muted-foreground">—</span>;
+        if (!val)
+          return <span className="text-xs text-muted-foreground">—</span>;
         return (
-          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${healthStyle[val] ?? healthStyle.green}`}>
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${healthStyle[val] ?? healthStyle.green}`}
+          >
             {healthLabel[val] ?? val}
           </span>
         );
@@ -281,7 +316,8 @@ function buildClientColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] 
       header: 'Satisfaction',
       cell: ({ getValue }) => {
         const score = getValue<number | null>();
-        if (score == null) return <span className="text-xs text-muted-foreground">—</span>;
+        if (score == null)
+          return <span className="text-xs text-muted-foreground">—</span>;
         return (
           <div className="flex items-center gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -319,9 +355,9 @@ function buildClientColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] 
 }
 
 const workloadStyle: Record<string, string> = {
-  low:        'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
-  normal:     'bg-blue-500/10 text-blue-400 ring-blue-500/20',
-  high:       'bg-amber-500/10 text-amber-400 ring-amber-500/20',
+  low: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+  normal: 'bg-blue-500/10 text-blue-400 ring-blue-500/20',
+  high: 'bg-amber-500/10 text-amber-400 ring-amber-500/20',
   overloaded: 'bg-red-500/10 text-red-400 ring-red-500/20',
 };
 
@@ -335,11 +371,20 @@ function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
         return (
           <div className="flex items-center gap-3">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs font-medium">
-              {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+              {u.name
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium leading-tight truncate">{u.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+              <p className="text-sm font-medium leading-tight truncate">
+                {u.name}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {u.email}
+              </p>
             </div>
           </div>
         );
@@ -352,7 +397,9 @@ function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
         const w = row.original.vaWorkload;
         if (!w) return <span className="text-xs text-muted-foreground">—</span>;
         return (
-          <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${workloadStyle[w] ?? 'bg-white/[0.04] text-muted-foreground ring-white/[0.08]'}`}>
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${workloadStyle[w] ?? 'bg-white/[0.04] text-muted-foreground ring-white/[0.08]'}`}
+          >
             {w.charAt(0).toUpperCase() + w.slice(1)}
           </span>
         );
@@ -366,8 +413,12 @@ function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
         const clients = row.original.vaActiveClients ?? 0;
         return (
           <div className="flex flex-col leading-tight">
-            <span className="text-base font-semibold tabular-nums">{total}</span>
-            <span className="text-[11px] text-muted-foreground">{clients} {clients === 1 ? 'client' : 'clients'}</span>
+            <span className="text-base font-semibold tabular-nums">
+              {total}
+            </span>
+            <span className="text-[11px] text-muted-foreground">
+              {clients} {clients === 1 ? 'client' : 'clients'}
+            </span>
           </div>
         );
       },
@@ -377,11 +428,15 @@ function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
       header: 'Satisfaction',
       cell: ({ row }) => {
         const score = row.original.vaSatisfactionScore;
-        if (score == null) return <span className="text-xs text-muted-foreground">—</span>;
+        if (score == null)
+          return <span className="text-xs text-muted-foreground">—</span>;
         return (
           <div className="flex items-center gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
-              <StarIcon key={i} className={`size-3 ${i < score ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/20'}`} />
+              <StarIcon
+                key={i}
+                className={`size-3 ${i < score ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/20'}`}
+              />
             ))}
           </div>
         );
@@ -394,18 +449,25 @@ function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
         const burnout = row.original.vaBurnoutRisk;
         const replacement = row.original.vaReplacementRisk;
         if (!burnout && !replacement) {
-          return <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400"><CheckCircle2Icon className="size-3" />Clear</span>;
+          return (
+            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400">
+              <CheckCircle2Icon className="size-3" />
+              Clear
+            </span>
+          );
         }
         return (
           <div className="flex flex-wrap gap-1">
             {burnout && (
               <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-red-500/10 text-red-400 ring-1 ring-inset ring-red-500/20">
-                <FlameIcon className="size-2.5" />Burnout
+                <FlameIcon className="size-2.5" />
+                Burnout
               </span>
             )}
             {replacement && (
               <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-amber-500/10 text-amber-400 ring-1 ring-inset ring-amber-500/20">
-                <AlertTriangleIcon className="size-2.5" />Replace
+                <AlertTriangleIcon className="size-2.5" />
+                Replace
               </span>
             )}
           </div>
@@ -446,9 +508,16 @@ function buildAmColumns(): ColumnDef<UserRow>[] {
         return (
           <div className="flex items-center gap-3">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs font-medium">
-              {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+              {u.name
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)}
             </div>
-            <p className="text-sm font-medium leading-tight truncate">{u.name}</p>
+            <p className="text-sm font-medium leading-tight truncate">
+              {u.name}
+            </p>
           </div>
         );
       },
@@ -457,7 +526,9 @@ function buildAmColumns(): ColumnDef<UserRow>[] {
       accessorKey: 'email',
       header: 'Email',
       cell: ({ getValue }) => (
-        <span className="text-sm text-muted-foreground">{getValue<string>()}</span>
+        <span className="text-sm text-muted-foreground">
+          {getValue<string>()}
+        </span>
       ),
     },
     {
@@ -492,9 +563,16 @@ function buildAdminColumns(): ColumnDef<UserRow>[] {
         return (
           <div className="flex items-center gap-3">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs font-medium">
-              {u.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+              {u.name
+                .split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)}
             </div>
-            <p className="text-sm font-medium leading-tight truncate">{u.name}</p>
+            <p className="text-sm font-medium leading-tight truncate">
+              {u.name}
+            </p>
           </div>
         );
       },
@@ -503,7 +581,9 @@ function buildAdminColumns(): ColumnDef<UserRow>[] {
       accessorKey: 'email',
       header: 'Email',
       cell: ({ getValue }) => (
-        <span className="text-sm text-muted-foreground">{getValue<string>()}</span>
+        <span className="text-sm text-muted-foreground">
+          {getValue<string>()}
+        </span>
       ),
     },
     {
@@ -518,7 +598,7 @@ function buildAdminColumns(): ColumnDef<UserRow>[] {
 
 function ClientProfileSection({ clientId }: { clientId: string }) {
   const user = useAppSelector(s => s.auth.user);
-  const canEdit = user?.role === 'admin' || user?.role === 'account_manager';
+  const canEdit = user?.role === 'admin';
   const queryClient = useQueryClient();
 
   const { data: account, isLoading } = useQuery({
@@ -541,16 +621,18 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
   const { data: assignmentsData } = useQuery({
     queryKey: ['client-assignments', clientId],
     queryFn: async () => {
-      const { data } = await api.get<{ data: { status: string }[]; meta: { total: number } }>(
-        `/crm/assignments?clientId=${clientId}&limit=200`
-      );
+      const { data } = await api.get<{
+        data: { status: string }[];
+        meta: { total: number };
+      }>(`/crm/assignments?clientId=${clientId}&limit=200`);
       return data.data;
     },
     enabled: !!clientId,
   });
 
   const totalAssignments = assignmentsData?.length ?? 0;
-  const activeAssignments = assignmentsData?.filter(a => a.status === 'active').length ?? 0;
+  const activeAssignments =
+    assignmentsData?.filter(a => a.status === 'active').length ?? 0;
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -604,7 +686,9 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
     setSuccess(false);
     try {
       await updateClientAccount(clientId, form as any);
-      await queryClient.invalidateQueries({ queryKey: ['client-account', clientId] });
+      await queryClient.invalidateQueries({
+        queryKey: ['client-account', clientId],
+      });
       setSuccess(true);
       setTimeout(() => {
         setEditing(false);
@@ -624,9 +708,18 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
   }
 
   const healthConfig: Record<string, { label: string; className: string }> = {
-    green:  { label: 'Healthy',  className: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20' },
-    yellow: { label: 'At Risk',  className: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20' },
-    red:    { label: 'Critical', className: 'bg-red-500/10 text-red-400 ring-red-500/20' },
+    green: {
+      label: 'Healthy',
+      className: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+    },
+    yellow: {
+      label: 'At Risk',
+      className: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
+    },
+    red: {
+      label: 'Critical',
+      className: 'bg-red-500/10 text-red-400 ring-red-500/20',
+    },
   };
   const health = healthConfig[account.healthStatus] ?? healthConfig.green;
 
@@ -634,9 +727,16 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
     <div className="pt-4 space-y-4">
       {/* CRM section label + edit */}
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">CRM Profile</span>
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          CRM Profile
+        </span>
         {canEdit && !editing && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs rounded-lg gap-1" onClick={startEdit}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs rounded-lg gap-1"
+            onClick={startEdit}
+          >
             <Edit3Icon className="size-3" />
             Edit
           </Button>
@@ -663,7 +763,11 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
 
           <Field label="Satisfaction (1-5)">
             <Select
-              value={getFormVal('satisfactionScore') ? String(getFormVal('satisfactionScore')) : '0'}
+              value={
+                getFormVal('satisfactionScore')
+                  ? String(getFormVal('satisfactionScore'))
+                  : '0'
+              }
               onValueChange={v =>
                 setForm(p => ({ ...p, satisfactionScore: Number(v) || null }))
               }
@@ -674,7 +778,9 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
               <SelectContent>
                 <SelectItem value="0">—</SelectItem>
                 {[1, 2, 3, 4, 5].map(n => (
-                  <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -683,7 +789,9 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
           <Field label="EMR System">
             <Input
               value={String(getFormVal('emrSystem', ''))}
-              onChange={e => setForm(p => ({ ...p, emrSystem: e.target.value }))}
+              onChange={e =>
+                setForm(p => ({ ...p, emrSystem: e.target.value }))
+              }
               placeholder="e.g. Epic, Cerner"
               className="rounded-xl h-9 text-sm"
             />
@@ -692,13 +800,17 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
           <Field label="Service Start Date">
             <DatePickerField
               value={toYMD(getFormVal('serviceStartDate', ''))}
-              onChange={v => setForm(p => ({ ...p, serviceStartDate: toISO(v) }))}
+              onChange={v =>
+                setForm(p => ({ ...p, serviceStartDate: toISO(v) }))
+              }
               placeholder="Pick date"
             />
           </Field>
 
           <div className="rounded-xl border border-border px-3 py-2.5 space-y-2.5">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Status Flags</span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Status Flags
+            </span>
             {(
               [
                 { key: 'baaSigned', label: 'BAA Signed' },
@@ -706,10 +818,15 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
                 { key: 'sopReceived', label: 'SOP Received' },
               ] as const
             ).map(({ key, label }) => (
-              <label key={key} className="flex items-center gap-2.5 cursor-pointer">
+              <label
+                key={key}
+                className="flex items-center gap-2.5 cursor-pointer"
+              >
                 <Checkbox
                   checked={Boolean(getFormVal(key, false))}
-                  onCheckedChange={v => setForm(p => ({ ...p, [key]: Boolean(v) }))}
+                  onCheckedChange={v =>
+                    setForm(p => ({ ...p, [key]: Boolean(v) }))
+                  }
                 />
                 <span className="text-sm">{label}</span>
               </label>
@@ -720,7 +837,9 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
             <Field label="BAA Signed Date">
               <DatePickerField
                 value={toYMD(getFormVal('baaSignedDate', ''))}
-                onChange={v => setForm(p => ({ ...p, baaSignedDate: toISO(v) }))}
+                onChange={v =>
+                  setForm(p => ({ ...p, baaSignedDate: toISO(v) }))
+                }
                 placeholder="Pick date"
               />
             </Field>
@@ -729,7 +848,9 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
           <Field label="Last Check-in">
             <DatePickerField
               value={toYMD(getFormVal('lastClientCheckin', ''))}
-              onChange={v => setForm(p => ({ ...p, lastClientCheckin: toISO(v) }))}
+              onChange={v =>
+                setForm(p => ({ ...p, lastClientCheckin: toISO(v) }))
+              }
               placeholder="Pick date"
             />
           </Field>
@@ -740,7 +861,10 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
               min={0}
               value={String(getFormVal('openIssuesCount', 0))}
               onChange={e =>
-                setForm(p => ({ ...p, openIssuesCount: Math.max(0, Number(e.target.value)) }))
+                setForm(p => ({
+                  ...p,
+                  openIssuesCount: Math.max(0, Number(e.target.value)),
+                }))
               }
               className="rounded-xl h-9 text-sm"
             />
@@ -758,36 +882,72 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
 
           <div className="space-y-2 pt-1">
             <div className="flex items-center gap-2">
-              <Button size="sm" className="rounded-xl" onClick={handleSave} disabled={saving || success}>
+              <Button
+                size="sm"
+                className="rounded-xl"
+                onClick={handleSave}
+                disabled={saving || success}
+              >
                 {saving ? 'Saving…' : success ? 'Saved!' : 'Save'}
               </Button>
-              <Button variant="ghost" size="sm" className="rounded-xl" onClick={() => { setEditing(false); setError(''); setSuccess(false); }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-xl"
+                onClick={() => {
+                  setEditing(false);
+                  setError('');
+                  setSuccess(false);
+                }}
+              >
                 Cancel
               </Button>
             </div>
             {error && (
-              <p className="text-xs text-destructive bg-destructive/5 rounded-lg px-3 py-2">{error}</p>
+              <p className="text-xs text-destructive bg-destructive/5 rounded-lg px-3 py-2">
+                {error}
+              </p>
             )}
             {success && (
-              <p className="text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2">Changes saved successfully.</p>
+              <p className="text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2">
+                Changes saved successfully.
+              </p>
             )}
           </div>
         </div>
       ) : (
         <div className="space-y-3">
-
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { icon: <UsersIcon className="size-4" />, value: hiredVas.length, label: 'VAs Hired' },
-              { icon: <ActivityIcon className="size-4" />, value: activeAssignments, label: 'Active Assignments' },
-              { icon: <BriefcaseIcon className="size-4" />, value: totalAssignments, label: 'Total Assignments' },
+              {
+                icon: <UsersIcon className="size-4" />,
+                value: hiredVas.length,
+                label: 'VAs Hired',
+              },
+              {
+                icon: <ActivityIcon className="size-4" />,
+                value: activeAssignments,
+                label: 'Active Assignments',
+              },
+              {
+                icon: <BriefcaseIcon className="size-4" />,
+                value: totalAssignments,
+                label: 'Total Assignments',
+              },
             ].map(({ icon, value, label }) => (
-              <div key={label} className="flex flex-col justify-between gap-3 rounded-xl bg-white/[0.03] border border-white/[0.07] p-3 min-h-[88px]">
+              <div
+                key={label}
+                className="flex flex-col justify-between gap-3 rounded-xl bg-white/[0.03] border border-white/[0.07] p-3 min-h-[88px]"
+              >
                 <span className="text-muted-foreground">{icon}</span>
                 <div>
-                  <p className="text-2xl font-semibold tabular-nums leading-none">{value}</p>
-                  <p className="text-[11px] text-muted-foreground mt-1 leading-tight">{label}</p>
+                  <p className="text-2xl font-semibold tabular-nums leading-none">
+                    {value}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
+                    {label}
+                  </p>
                 </div>
               </div>
             ))}
@@ -798,12 +958,16 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
             <div className="flex items-center gap-2">
               <GaugeIcon className="size-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Health</span>
-              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${health.className}`}>
+              <span
+                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${health.className}`}
+              >
                 {health.label}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground mr-0.5">Satisfaction</span>
+              <span className="text-xs text-muted-foreground mr-0.5">
+                Satisfaction
+              </span>
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <StarIcon
@@ -818,10 +982,14 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
           {/* Primary Contact */}
           {(account.primaryContact || account.primaryContactEmail) && (
             <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Primary Contact</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+                Primary Contact
+              </p>
               <div className="space-y-1">
                 {account.primaryContact && (
-                  <p className="text-sm font-medium">{account.primaryContact}</p>
+                  <p className="text-sm font-medium">
+                    {account.primaryContact}
+                  </p>
                 )}
                 {account.primaryContactEmail && (
                   <a
@@ -844,7 +1012,9 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
 
           {/* Status flags */}
           <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Compliance</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+              Compliance
+            </p>
             <div className="flex flex-wrap gap-1.5">
               {[
                 { label: 'BAA Signed', done: account.baaSigned },
@@ -859,10 +1029,11 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
                       : 'bg-white/[0.03] text-muted-foreground/60 ring-white/[0.06]'
                   }`}
                 >
-                  {done
-                    ? <CheckCircle2Icon className="size-3" />
-                    : <CircleDashedIcon className="size-3" />
-                  }
+                  {done ? (
+                    <CheckCircle2Icon className="size-3" />
+                  ) : (
+                    <CircleDashedIcon className="size-3" />
+                  )}
                   {label}
                 </span>
               ))}
@@ -871,7 +1042,9 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
 
           {/* Details */}
           <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Details</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Details
+            </p>
             {account.emrSystem && (
               <div className="flex items-center gap-2">
                 <MonitorIcon className="size-3.5 text-muted-foreground shrink-0" />
@@ -882,37 +1055,57 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
             {account.serviceStartDate && (
               <div className="flex items-center gap-2">
                 <CalendarIcon className="size-3.5 text-muted-foreground shrink-0" />
-                <span className="text-xs text-muted-foreground">Service Start</span>
-                <span className="text-xs ml-auto">{fmtDate(account.serviceStartDate)}</span>
+                <span className="text-xs text-muted-foreground">
+                  Service Start
+                </span>
+                <span className="text-xs ml-auto">
+                  {fmtDate(account.serviceStartDate)}
+                </span>
               </div>
             )}
             {account.lastClientCheckin && (
               <div className="flex items-center gap-2">
                 <ClockIcon className="size-3.5 text-muted-foreground shrink-0" />
-                <span className="text-xs text-muted-foreground">Last Check-in</span>
-                <span className="text-xs ml-auto">{fmtDate(account.lastClientCheckin)}</span>
+                <span className="text-xs text-muted-foreground">
+                  Last Check-in
+                </span>
+                <span className="text-xs ml-auto">
+                  {fmtDate(account.lastClientCheckin)}
+                </span>
               </div>
             )}
             {account.openIssuesCount > 0 && (
               <div className="flex items-center gap-2">
                 <AlertTriangleIcon className="size-3.5 text-yellow-500 shrink-0" />
-                <span className="text-xs text-muted-foreground">Open Issues</span>
-                <span className="text-xs ml-auto text-yellow-500 font-medium">{account.openIssuesCount}</span>
+                <span className="text-xs text-muted-foreground">
+                  Open Issues
+                </span>
+                <span className="text-xs ml-auto text-yellow-500 font-medium">
+                  {account.openIssuesCount}
+                </span>
               </div>
             )}
-            {!account.emrSystem && !account.serviceStartDate && !account.lastClientCheckin && account.openIssuesCount === 0 && (
-              <p className="text-xs text-muted-foreground italic">No details yet.</p>
-            )}
+            {!account.emrSystem &&
+              !account.serviceStartDate &&
+              !account.lastClientCheckin &&
+              account.openIssuesCount === 0 && (
+                <p className="text-xs text-muted-foreground italic">
+                  No details yet.
+                </p>
+              )}
           </div>
 
           {/* Notes */}
           {account.notes && (
             <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Notes</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">{account.notes}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+                Notes
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {account.notes}
+              </p>
             </div>
           )}
-
         </div>
       )}
     </div>
@@ -924,7 +1117,9 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
 function durationLabel(start: string, end: string | null): string {
   const from = new Date(start);
   const to = end ? new Date(end) : new Date();
-  const months = Math.round((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24 * 30));
+  const months = Math.round(
+    (to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24 * 30)
+  );
   if (months < 1) return '< 1 mo';
   if (months < 12) return `${months} mo`;
   const yrs = Math.floor(months / 12);
@@ -936,7 +1131,7 @@ function durationLabel(start: string, end: string | null): string {
 
 function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
   const authUser = useAppSelector(s => s.auth.user);
-  const canEdit = authUser?.role === 'admin' || authUser?.role === 'account_manager';
+  const canEdit = authUser?.role === 'admin';
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -976,7 +1171,10 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
     return (
       <div className="border-t border-border pt-6 space-y-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-12 rounded-xl bg-white/[0.03] animate-pulse" />
+          <div
+            key={i}
+            className="h-12 rounded-xl bg-white/[0.03] animate-pulse"
+          />
         ))}
       </div>
     );
@@ -1035,15 +1233,37 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
       {/* Stats — same style as client profile */}
       <div className="grid grid-cols-3 gap-2">
         {[
-          { icon: <UsersIcon className="size-4" />, value: activeCount, label: 'Active Clients' },
-          { icon: <BriefcaseIcon className="size-4" />, value: totalCount, label: 'Total Assignments' },
-          { icon: <StarIcon className="size-4" />, value: profile?.satisfactionScore != null ? `${profile.satisfactionScore}/5` : '—', label: 'Satisfaction' },
+          {
+            icon: <UsersIcon className="size-4" />,
+            value: activeCount,
+            label: 'Active Clients',
+          },
+          {
+            icon: <BriefcaseIcon className="size-4" />,
+            value: totalCount,
+            label: 'Total Assignments',
+          },
+          {
+            icon: <StarIcon className="size-4" />,
+            value:
+              profile?.satisfactionScore != null
+                ? `${profile.satisfactionScore}/5`
+                : '—',
+            label: 'Satisfaction',
+          },
         ].map(({ icon, value, label }) => (
-          <div key={label} className="flex flex-col justify-between gap-3 rounded-xl bg-white/[0.03] border border-white/[0.07] p-3 min-h-[88px]">
+          <div
+            key={label}
+            className="flex flex-col justify-between gap-3 rounded-xl bg-white/[0.03] border border-white/[0.07] p-3 min-h-[88px]"
+          >
             <span className="text-muted-foreground">{icon}</span>
             <div>
-              <p className="text-2xl font-semibold tabular-nums leading-none">{value}</p>
-              <p className="text-[11px] text-muted-foreground mt-1 leading-tight">{label}</p>
+              <p className="text-2xl font-semibold tabular-nums leading-none">
+                {value}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1 leading-tight">
+                {label}
+              </p>
             </div>
           </div>
         ))}
@@ -1051,10 +1271,21 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
 
       {/* CRM Profile header + edit toggle */}
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">CRM Profile</span>
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          CRM Profile
+        </span>
         {canEdit && !editing && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs rounded-lg" onClick={() => { setForm({}); setEditing(true); }}>
-            <Edit3Icon className="size-3 mr-1" />Edit
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs rounded-lg"
+            onClick={() => {
+              setForm({});
+              setEditing(true);
+            }}
+          >
+            <Edit3Icon className="size-3 mr-1" />
+            Edit
           </Button>
         )}
       </div>
@@ -1062,8 +1293,13 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
       {editing ? (
         <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-3 space-y-3">
           <Field label="Workload">
-            <Select value={String(getFormVal('workloadLevel', 'normal'))} onValueChange={v => setForm(p => ({ ...p, workloadLevel: v }))}>
-              <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+            <Select
+              value={String(getFormVal('workloadLevel', 'normal'))}
+              onValueChange={v => setForm(p => ({ ...p, workloadLevel: v }))}
+            >
+              <SelectTrigger className="rounded-xl h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="low">Low</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>
@@ -1074,20 +1310,39 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
           </Field>
           <Field label="Satisfaction (1-5)">
             <Select
-              value={getFormVal('satisfactionScore') ? String(getFormVal('satisfactionScore')) : '0'}
-              onValueChange={v => setForm(p => ({ ...p, satisfactionScore: Number(v) || null }))}
+              value={
+                getFormVal('satisfactionScore')
+                  ? String(getFormVal('satisfactionScore'))
+                  : '0'
+              }
+              onValueChange={v =>
+                setForm(p => ({ ...p, satisfactionScore: Number(v) || null }))
+              }
             >
-              <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue placeholder="—" /></SelectTrigger>
+              <SelectTrigger className="rounded-xl h-9 text-sm">
+                <SelectValue placeholder="—" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="0">—</SelectItem>
-                {[1, 2, 3, 4, 5].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+                {[1, 2, 3, 4, 5].map(n => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Burnout Risk">
-              <Select value={String(getFormVal('burnoutRiskFlag', false))} onValueChange={v => setForm(p => ({ ...p, burnoutRiskFlag: v === 'true' }))}>
-                <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+              <Select
+                value={String(getFormVal('burnoutRiskFlag', false))}
+                onValueChange={v =>
+                  setForm(p => ({ ...p, burnoutRiskFlag: v === 'true' }))
+                }
+              >
+                <SelectTrigger className="rounded-xl h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="false">No</SelectItem>
                   <SelectItem value="true">At risk</SelectItem>
@@ -1095,8 +1350,15 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
               </Select>
             </Field>
             <Field label="Replacement Risk">
-              <Select value={String(getFormVal('replacementRiskFlag', false))} onValueChange={v => setForm(p => ({ ...p, replacementRiskFlag: v === 'true' }))}>
-                <SelectTrigger className="rounded-xl h-9 text-sm"><SelectValue /></SelectTrigger>
+              <Select
+                value={String(getFormVal('replacementRiskFlag', false))}
+                onValueChange={v =>
+                  setForm(p => ({ ...p, replacementRiskFlag: v === 'true' }))
+                }
+              >
+                <SelectTrigger className="rounded-xl h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="false">No</SelectItem>
                   <SelectItem value="true">At risk</SelectItem>
@@ -1123,15 +1385,37 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
           </Field>
           <div className="space-y-2 pt-1">
             <div className="flex items-center gap-2">
-              <Button size="sm" className="rounded-xl" onClick={handleSave} disabled={saving || success}>
+              <Button
+                size="sm"
+                className="rounded-xl"
+                onClick={handleSave}
+                disabled={saving || success}
+              >
                 {saving ? 'Saving…' : success ? 'Saved!' : 'Save'}
               </Button>
-              <Button variant="ghost" size="sm" className="rounded-xl" onClick={() => { setEditing(false); setError(''); setSuccess(false); }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-xl"
+                onClick={() => {
+                  setEditing(false);
+                  setError('');
+                  setSuccess(false);
+                }}
+              >
                 Cancel
               </Button>
             </div>
-            {error && <p className="text-xs text-destructive bg-destructive/5 rounded-lg px-3 py-2">{error}</p>}
-            {success && <p className="text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2">Changes saved successfully.</p>}
+            {error && (
+              <p className="text-xs text-destructive bg-destructive/5 rounded-lg px-3 py-2">
+                {error}
+              </p>
+            )}
+            {success && (
+              <p className="text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2">
+                Changes saved successfully.
+              </p>
+            )}
           </div>
         </div>
       ) : profile ? (
@@ -1141,15 +1425,23 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
             <div className="flex items-center gap-2">
               <GaugeIcon className="size-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Workload</span>
-              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${workloadColors[profile.workloadLevel] ?? 'text-muted-foreground bg-white/[0.04] ring-white/[0.08]'}`}>
-                {profile.workloadLevel.charAt(0).toUpperCase() + profile.workloadLevel.slice(1)}
+              <span
+                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${workloadColors[profile.workloadLevel] ?? 'text-muted-foreground bg-white/[0.04] ring-white/[0.08]'}`}
+              >
+                {profile.workloadLevel.charAt(0).toUpperCase() +
+                  profile.workloadLevel.slice(1)}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground mr-0.5">Satisfaction</span>
+              <span className="text-xs text-muted-foreground mr-0.5">
+                Satisfaction
+              </span>
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <StarIcon key={i} className={`size-3 ${i < (profile.satisfactionScore ?? 0) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/20'}`} />
+                  <StarIcon
+                    key={i}
+                    className={`size-3 ${i < (profile.satisfactionScore ?? 0) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/20'}`}
+                  />
                 ))}
               </div>
             </div>
@@ -1157,14 +1449,26 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
 
           {/* Risk flags */}
           <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Risk Flags</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+              Risk Flags
+            </p>
             <div className="flex flex-wrap gap-1.5">
               {[
                 { label: 'Burnout Risk', flagged: profile.burnoutRiskFlag },
-                { label: 'Replacement Risk', flagged: profile.replacementRiskFlag },
+                {
+                  label: 'Replacement Risk',
+                  flagged: profile.replacementRiskFlag,
+                },
               ].map(({ label, flagged }) => (
-                <span key={label} className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${flagged ? 'bg-red-500/10 text-red-400 ring-red-500/20' : 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'}`}>
-                  {flagged ? <AlertTriangleIcon className="size-3" /> : <CheckCircle2Icon className="size-3" />}
+                <span
+                  key={label}
+                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${flagged ? 'bg-red-500/10 text-red-400 ring-red-500/20' : 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'}`}
+                >
+                  {flagged ? (
+                    <AlertTriangleIcon className="size-3" />
+                  ) : (
+                    <CheckCircle2Icon className="size-3" />
+                  )}
                   {label}
                 </span>
               ))}
@@ -1173,19 +1477,29 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
 
           {/* Details */}
           <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Details</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Details
+            </p>
             <div className="flex items-center gap-2">
               <ClockIcon className="size-3.5 text-muted-foreground shrink-0" />
-              <span className="text-xs text-muted-foreground">Last Check-in</span>
-              <span className="text-xs ml-auto">{fmtDate(profile.lastVaCheckin)}</span>
+              <span className="text-xs text-muted-foreground">
+                Last Check-in
+              </span>
+              <span className="text-xs ml-auto">
+                {fmtDate(profile.lastVaCheckin)}
+              </span>
             </div>
           </div>
 
           {/* Notes */}
           {profile.notes && (
             <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Notes</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">{profile.notes}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+                Notes
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {profile.notes}
+              </p>
             </div>
           )}
         </>
@@ -1193,25 +1507,40 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
 
       {/* Client Assignments */}
       <div className="flex items-center justify-between pt-1">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Client Assignments</span>
-        <span className="text-[11px] text-muted-foreground">{totalCount} total</span>
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Client Assignments
+        </span>
+        <span className="text-[11px] text-muted-foreground">
+          {totalCount} total
+        </span>
       </div>
 
       {assignments.length === 0 ? (
-        <p className="text-xs text-muted-foreground italic">No assignments found.</p>
+        <p className="text-xs text-muted-foreground italic">
+          No assignments found.
+        </p>
       ) : (
         <div className="space-y-2">
           {assignments.map(a => (
-            <div key={a._id} className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 space-y-2">
+            <div
+              key={a._id}
+              className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 space-y-2"
+            >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <BuildingIcon className="size-3 shrink-0 text-muted-foreground" />
-                    <p className="text-sm font-medium leading-tight truncate">{a.companyName || 'Unknown Client'}</p>
+                    <p className="text-sm font-medium leading-tight truncate">
+                      {a.companyName || 'Unknown Client'}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{a.serviceType}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {a.serviceType}
+                  </p>
                 </div>
-                <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium ${statusColors[a.status] ?? 'text-muted-foreground bg-white/[0.04]'}`}>
+                <span
+                  className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium ${statusColors[a.status] ?? 'text-muted-foreground bg-white/[0.04]'}`}
+                >
                   {statusLabels[a.status] ?? a.status}
                 </span>
               </div>
@@ -1219,7 +1548,9 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
                 <span className="flex items-center gap-1">
                   <CalendarIcon className="size-3" />
                   {new Date(a.startDate).toLocaleDateString()}
-                  {a.endDate ? ` → ${new Date(a.endDate).toLocaleDateString()}` : ' → Present'}
+                  {a.endDate
+                    ? ` → ${new Date(a.endDate).toLocaleDateString()}`
+                    : ' → Present'}
                 </span>
                 <span className="flex items-center gap-1">
                   <TrendingUpIcon className="size-3" />
@@ -1227,7 +1558,9 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
                 </span>
               </div>
               {a.notes && (
-                <p className="text-[11px] text-muted-foreground leading-relaxed border-t border-white/[0.06] pt-2">{a.notes}</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed border-t border-white/[0.06] pt-2">
+                  {a.notes}
+                </p>
               )}
             </div>
           ))}
@@ -1285,14 +1618,25 @@ function UserDetailSheet({
           <div className="flex items-start gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-[#A0A0A0] font-mono text-base font-medium border border-white/[0.08]">
               {isClient
-                ? (user.companyName ?? user.name).split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-                : user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-              }
+                ? (user.companyName ?? user.name)
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)
+                : user.name
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)}
             </div>
             <div className="flex-1 min-w-0">
               {isClient ? (
                 <>
-                  <p className="text-base font-semibold leading-tight truncate">{user.companyName ?? '—'}</p>
+                  <p className="text-base font-semibold leading-tight truncate">
+                    {user.companyName ?? '—'}
+                  </p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <RoleBadge role={user.role} />
                     <ActiveBadge active={user.isActive} />
@@ -1301,7 +1645,9 @@ function UserDetailSheet({
               ) : (
                 <>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-base font-semibold leading-tight">{user.name}</p>
+                    <p className="text-base font-semibold leading-tight">
+                      {user.name}
+                    </p>
                     <RoleBadge role={user.role} />
                   </div>
                   <a
@@ -1330,7 +1676,8 @@ function UserDetailSheet({
                 Account Info
               </p>
               <p className="text-xs text-muted-foreground">
-                Internal staff accounts do not have a separate CRM profile. Manage access and roles in the ATS system.
+                Internal staff accounts do not have a separate CRM profile.
+                Manage access and roles in the ATS system.
               </p>
             </div>
           )}
@@ -1343,11 +1690,22 @@ function UserDetailSheet({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AccountManagementPage() {
+  const authUser = useAppSelector(s => s.auth.user);
+  const isAccountManager = authUser?.role === 'account_manager';
   const [detailUser, setDetailUser] = useState<UserRow | null>(null);
 
-  const { data: vaUsers = [], isLoading: loadingVa } = useCrmVaUsersQuery();
-  const { data: clientUsers = [], isLoading: loadingClient } =
-    useCrmClientUsersQuery();
+  // Fetch CRM client & VA users via the self-scoped /shared/users/crm-accounts
+  // endpoint. The backend scopes results to the caller's assignments for AMs
+  // (so AMs don't need the team.read permission just to see their accounts).
+  // AM users and admin users are still fetched from /shared/users (admins only,
+  // gated by team.read server-side, but AM-tabs aren't shown to AMs anyway).
+  const { data: crmAccounts, isLoading: loadingCrmAccounts } = useQuery({
+    queryKey: ['crm-accounts-list'],
+    queryFn: getCrmAccountsList,
+  });
+  const vaUsers = crmAccounts?.vas ?? [];
+  const clientUsers = crmAccounts?.clients ?? [];
+
   const { data: amUsers = [], isLoading: loadingAm } =
     useAccountManagersQuery();
   const { data: adminUsers = [], isLoading: loadingAdmin } =
@@ -1377,25 +1735,37 @@ export default function AccountManagementPage() {
   // Fetch all assignments (high limit) so we can count per VA without N+1 requests
   const { data: allAssignmentsData } = useQuery({
     queryKey: ['all-assignments-list'],
-    queryFn: () => import('@/lib/api').then(({ default: api }) =>
-      api.get<{ data: any[] }>('/crm/assignments?limit=1000').then(r => r.data.data ?? [])
-    ),
+    queryFn: () =>
+      import('@/lib/api').then(({ default: api }) =>
+        api
+          .get<{ data: any[] }>('/crm/assignments?limit=1000')
+          .then(r => r.data.data ?? [])
+      ),
   });
 
   const vaProfileByVaId = Object.fromEntries(vaProfiles.map(p => [p.vaId, p]));
 
-  const assignmentsByCandidate: Record<string, { activeClients: Set<string>; total: number }> = {};
-  for (const a of (allAssignmentsData ?? [])) {
+  const assignmentsByCandidate: Record<
+    string,
+    { activeClients: Set<string>; total: number }
+  > = {};
+  for (const a of allAssignmentsData ?? []) {
     const cid = a.candidateId;
-    if (!assignmentsByCandidate[cid]) assignmentsByCandidate[cid] = { activeClients: new Set(), total: 0 };
+    if (!assignmentsByCandidate[cid])
+      assignmentsByCandidate[cid] = { activeClients: new Set(), total: 0 };
     assignmentsByCandidate[cid].total++;
-    if (a.status === 'active') assignmentsByCandidate[cid].activeClients.add(a.clientId);
+    if (a.status === 'active')
+      assignmentsByCandidate[cid].activeClients.add(a.clientId);
   }
 
   const enrichedVaRows: UserRow[] = vaUsers.map(u => {
     const row = toRow(u);
-    const profile = row.candidateRef ? vaProfileByVaId[row.candidateRef] : undefined;
-    const counts = row.candidateRef ? assignmentsByCandidate[row.candidateRef] : undefined;
+    const profile = row.candidateRef
+      ? vaProfileByVaId[row.candidateRef]
+      : undefined;
+    const counts = row.candidateRef
+      ? assignmentsByCandidate[row.candidateRef]
+      : undefined;
     return {
       ...row,
       vaWorkload: profile?.workloadLevel ?? null,
@@ -1409,9 +1779,10 @@ export default function AccountManagementPage() {
 
   // Count active assignments per account manager
   const activeByAm: Record<string, number> = {};
-  for (const a of (allAssignmentsData ?? [])) {
+  for (const a of allAssignmentsData ?? []) {
     if (a.status === 'active' && a.accountManagerId) {
-      activeByAm[a.accountManagerId] = (activeByAm[a.accountManagerId] ?? 0) + 1;
+      activeByAm[a.accountManagerId] =
+        (activeByAm[a.accountManagerId] ?? 0) + 1;
     }
   }
 
@@ -1442,7 +1813,12 @@ export default function AccountManagementPage() {
     };
   });
 
-  const isLoading = loadingVa || loadingClient || loadingAm || loadingAdmin;
+  // The /shared/users/crm-accounts endpoint already scopes clients and VAs
+  // for AMs server-side, so no additional client-side AM filtering is needed.
+  const scopedClientRows = clientRows;
+  const scopedVaRows = enrichedVaRows;
+
+  const isLoading = loadingCrmAccounts || loadingAm || loadingAdmin;
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -1450,7 +1826,9 @@ export default function AccountManagementPage() {
         <div className="px-4 lg:px-6">
           <h1 className="text-2xl font-semibold text-foreground">Accounts</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            View who has CRM access. Manage roles and access from the ATS.
+            {isAccountManager
+              ? 'View your assigned clients and virtual assistants'
+              : 'View who has CRM access. Manage roles and access from the ATS.'}
           </p>
         </div>
 
@@ -1458,46 +1836,54 @@ export default function AccountManagementPage() {
           <Tabs defaultValue="clients">
             <TabsList>
               <TabsTrigger value="clients">
-                Clients ({clientRows.length})
+                Clients ({scopedClientRows.length})
               </TabsTrigger>
               <TabsTrigger value="vas">
-                Virtual Assistants ({vaRows.length})
+                Virtual Assistants ({scopedVaRows.length})
               </TabsTrigger>
-              <TabsTrigger value="ams">
-                Account Managers ({amRows.length})
-              </TabsTrigger>
-              <TabsTrigger value="admins">
-                Admins ({adminRows.length})
-              </TabsTrigger>
+              {!isAccountManager && (
+                <>
+                  <TabsTrigger value="ams">
+                    Account Managers ({amRows.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="admins">
+                    Admins ({adminRows.length})
+                  </TabsTrigger>
+                </>
+              )}
             </TabsList>
             <TabsContent value="clients" className="mt-4">
               <DataTable
                 columns={buildClientColumns(setDetailUser)}
-                data={clientRows}
+                data={scopedClientRows}
                 isLoading={isLoading}
               />
             </TabsContent>
             <TabsContent value="vas" className="mt-4">
               <DataTable
                 columns={buildVaColumns(setDetailUser)}
-                data={enrichedVaRows}
+                data={scopedVaRows}
                 isLoading={isLoading}
               />
             </TabsContent>
-            <TabsContent value="ams" className="mt-4">
-              <DataTable
-                columns={buildAmColumns()}
-                data={amRows}
-                isLoading={isLoading}
-              />
-            </TabsContent>
-            <TabsContent value="admins" className="mt-4">
-              <DataTable
-                columns={buildAdminColumns()}
-                data={adminRows}
-                isLoading={isLoading}
-              />
-            </TabsContent>
+            {!isAccountManager && (
+              <>
+                <TabsContent value="ams" className="mt-4">
+                  <DataTable
+                    columns={buildAmColumns()}
+                    data={amRows}
+                    isLoading={isLoading}
+                  />
+                </TabsContent>
+                <TabsContent value="admins" className="mt-4">
+                  <DataTable
+                    columns={buildAdminColumns()}
+                    data={adminRows}
+                    isLoading={isLoading}
+                  />
+                </TabsContent>
+              </>
+            )}
           </Tabs>
         </div>
       </div>

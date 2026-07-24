@@ -13,10 +13,12 @@ import {
 import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
+  useAtsVAsQuery,
   useCrmClientUsersQuery,
   useCrmVaUsersQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
+import { useAppSelector } from '@/hooks/store';
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
@@ -27,6 +29,9 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
 };
 
 export default function WorkEntriesPage() {
+  const user = useAppSelector(s => s.auth.user);
+  const isAccountManager = user?.role === 'account_manager';
+
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -39,29 +44,71 @@ export default function WorkEntriesPage() {
   const [vaFilter, setVaFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
 
+  // AM scoping: only see work entries for their own assignments
+  const { data: amAssignments = [] } = useAllAssignmentsQuery(
+    isAccountManager ? user?.id : undefined
+  );
+  const amCandidateIds = useMemo(
+    () => new Set(amAssignments.map(a => a.candidateId).filter(Boolean)),
+    [amAssignments]
+  );
+  const amClientIds = useMemo(
+    () => new Set(amAssignments.map(a => a.clientId).filter(Boolean)),
+    [amAssignments]
+  );
+
+  const effectiveCandidateId =
+    vaFilter !== 'all' ? vaFilter : isAccountManager ? undefined : undefined;
+
+  const effectiveClientId =
+    clientFilter !== 'all'
+      ? clientFilter
+      : isAccountManager
+        ? undefined
+        : undefined;
+
   const {
     data: allEntries = [],
     isLoading,
     isError,
     error,
   } = useWorkEntriesQuery({
-    candidateId: vaFilter !== 'all' ? vaFilter : undefined,
-    clientId: clientFilter !== 'all' ? clientFilter : undefined,
+    candidateId: effectiveCandidateId,
+    clientId: effectiveClientId,
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
   });
+
+  // For AM, client-side filter by their assignments' candidateIds/clientIds
+  const entries = useMemo(() => {
+    if (!isAccountManager) return allEntries;
+    return allEntries.filter(
+      e => amCandidateIds.has(e.candidateId) || amClientIds.has(e.clientId)
+    );
+  }, [allEntries, isAccountManager, amCandidateIds, amClientIds]);
+
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
+  const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: crmClients = [] } = useCrmClientUsersQuery();
-  const { data: assignments = [] } = useAllAssignmentsQuery();
+  const { data: assignments = [] } = useAllAssignmentsQuery(
+    isAccountManager ? user?.id : undefined
+  );
 
+  // Build VA name map: primary source = ATS candidates (candidateId matches ATS _id),
+  // fallback = CRM VA users by candidateRef or _id
   const vaMap = useMemo(() => {
     const m: Record<string, string> = {};
+    for (const v of atsVAs) {
+      m[v.id] = `${v.firstName} ${v.lastName}`;
+    }
     for (const v of crmVAs) {
-      if (v.candidateRef) m[v.candidateRef] = `${v.firstName} ${v.lastName}`;
+      const name = `${v.firstName} ${v.lastName}`;
+      if (v.candidateRef && !m[v.candidateRef]) m[v.candidateRef] = name;
+      if (v._id && !m[v._id]) m[v._id] = name;
     }
     return m;
-  }, [crmVAs]);
+  }, [atsVAs, crmVAs]);
 
   const clientMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -77,6 +124,19 @@ export default function WorkEntriesPage() {
     () => atsClients.filter(c => crmClientRefs.has(c.id)),
     [atsClients, crmClientRefs]
   );
+
+  // AM: restrict VA/client dropdowns to their assignments only
+  const displayVAs = useMemo(() => {
+    if (!isAccountManager) return atsVAs;
+    const amVaIds = new Set(amAssignments.map(a => a.candidateId));
+    return atsVAs.filter(v => amVaIds.has(v.id));
+  }, [atsVAs, isAccountManager, amAssignments]);
+
+  const displayClients = useMemo(() => {
+    if (!isAccountManager) return filteredClients;
+    const amClientIdsSet = new Set(amAssignments.map(a => a.clientId));
+    return filteredClients.filter(c => amClientIdsSet.has(c.id));
+  }, [filteredClients, isAccountManager, amAssignments]);
 
   const assignmentMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -100,9 +160,11 @@ export default function WorkEntriesPage() {
         accessorKey: 'candidateId',
         header: 'VA',
         size: 140,
-        cell: ({ getValue }) => (
+        cell: ({ row, getValue }) => (
           <span className="text-sm">
-            {vaMap[getValue<string>()] ?? getValue<string>()}
+            {row.original.candidateName ||
+              vaMap[getValue<string>()] ||
+              getValue<string>()}
           </span>
         ),
       },
@@ -113,7 +175,9 @@ export default function WorkEntriesPage() {
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
             <span className="text-sm">
-              {clientMap[row.original.clientId] ?? row.original.clientId}
+              {row.original.companyName ||
+                clientMap[row.original.clientId] ||
+                row.original.clientId}
             </span>
             <span className="text-xs text-muted-foreground">
               {assignmentMap[row.original.assignmentId] ?? '—'}
@@ -195,7 +259,9 @@ export default function WorkEntriesPage() {
               Work Entries
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              All VA work entries across clients
+              {isAccountManager
+                ? 'Work entries for your assigned VAs and clients'
+                : 'All VA work entries across clients'}
             </p>
           </div>
 
@@ -206,13 +272,11 @@ export default function WorkEntriesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All VAs</SelectItem>
-                {crmVAs
-                  .filter(v => v.candidateRef)
-                  .map(v => (
-                    <SelectItem key={v.candidateRef!} value={v.candidateRef!}>
-                      {v.firstName} {v.lastName}
-                    </SelectItem>
-                  ))}
+                {displayVAs.map(v => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.firstName} {v.lastName}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -222,7 +286,7 @@ export default function WorkEntriesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Clients</SelectItem>
-                {filteredClients.map(c => (
+                {displayClients.map(c => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.companyName}
                   </SelectItem>
@@ -251,13 +315,13 @@ export default function WorkEntriesPage() {
               </button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              {allEntries.length} records
+              {entries.length} records
             </span>
           </div>
 
           <DataTable
             columns={columns}
-            data={allEntries}
+            data={entries}
             isLoading={isLoading}
             isError={isError}
             error={error}

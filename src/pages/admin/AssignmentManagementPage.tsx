@@ -133,13 +133,19 @@ function buildColumns(
       accessorKey: 'candidateId',
       header: 'VA',
       size: 130,
-      cell: ({ getValue }) => vaMap[getValue<string>()] ?? getValue<string>(),
+      cell: ({ row, getValue }) =>
+        row.original.candidateName ||
+        vaMap[getValue<string>()] ||
+        getValue<string>(),
     },
     {
       accessorKey: 'accountManagerId',
       header: 'Account Manager',
       size: 165,
-      cell: ({ getValue }) => amMap[getValue<string>() ?? ''] ?? '—',
+      cell: ({ row, getValue }) =>
+        row.original.accountManagerName ||
+        amMap[getValue<string>() ?? ''] ||
+        '—',
     },
     {
       accessorKey: 'startDate',
@@ -443,7 +449,9 @@ function CreateAssignmentForm({
               <Select
                 value={field.value || undefined}
                 onValueChange={field.onChange}
-                disabled={!selectedClientId || vasLoading || clientVas.length === 0}
+                disabled={
+                  !selectedClientId || vasLoading || clientVas.length === 0
+                }
               >
                 <SelectTrigger className="rounded-xl border-input h-10">
                   <SelectValue
@@ -822,9 +830,9 @@ export default function AssignmentManagementPage() {
   const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
   const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
-  const canManageAssignments =
-    user?.role === 'admin' || user?.role === 'account_manager';
   const isAccountManager = user?.role === 'account_manager';
+  // AMs can only view their own assignments; only admins can create/edit/delete
+  const canManageAssignments = user?.role === 'admin';
   const { data: assignments = [], isLoading } = useAllAssignmentsQuery(
     isAccountManager ? user?.id : undefined
   );

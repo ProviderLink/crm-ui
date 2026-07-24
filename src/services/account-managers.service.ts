@@ -51,3 +51,24 @@ export async function getCrmUsersByRole(
   const { data } = await api.get<{ data: any[] }>(`/shared/users?role=${role}`);
   return data.data.map((u: any) => ({ ...u, id: u._id ?? u.id }));
 }
+
+/**
+ * Self-scoped CRM accounts endpoint. Returns CRM client users and VA users
+ * scoped to the caller — admins get everyone, account managers get only
+ * clients/VAs linked to their own assignments. Requires only authentication
+ * (no team.read permission), so account managers can populate the Accounts
+ * page even when they aren't granted team.read.
+ */
+export async function getCrmAccountsList(): Promise<{
+  clients: ICrmUser[];
+  vas: ICrmUser[];
+}> {
+  const { data } = await api.get<{
+    data: { clients: any[]; vas: any[] };
+  }>(`/shared/users/crm-accounts`);
+  const map = (u: any) => ({ ...u, id: u._id ?? u.id }) as ICrmUser;
+  return {
+    clients: data.data.clients.map(map),
+    vas: data.data.vas.map(map),
+  };
+}

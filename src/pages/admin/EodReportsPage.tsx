@@ -13,13 +13,18 @@ import {
 import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
+  useAtsVAsQuery,
   useCrmClientUsersQuery,
   useCrmVaUsersQuery,
   useEodSubmissionsQuery,
 } from '@/hooks/queries';
+import { useAppSelector } from '@/hooks/store';
 import type { IEodSubmission } from '@/types/eod-submission';
 
 export default function EodReportsPage() {
+  const user = useAppSelector(s => s.auth.user);
+  const isAccountManager = user?.role === 'account_manager';
+
   const [dateFrom, setDateFrom] = useState(
     () =>
       new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -32,6 +37,19 @@ export default function EodReportsPage() {
   const [vaFilter, setVaFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
 
+  // AM scoping: only see EODs for their own assignments
+  const { data: amAssignments = [] } = useAllAssignmentsQuery(
+    isAccountManager ? user?.id : undefined
+  );
+  const amCandidateIds = useMemo(
+    () => new Set(amAssignments.map(a => a.candidateId).filter(Boolean)),
+    [amAssignments]
+  );
+  const amClientIds = useMemo(
+    () => new Set(amAssignments.map(a => a.clientId).filter(Boolean)),
+    [amAssignments]
+  );
+
   const {
     data: allEods = [],
     isLoading,
@@ -43,18 +61,37 @@ export default function EodReportsPage() {
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
   });
+
+  // For AM, client-side filter by their assignments' candidateIds/clientIds
+  const eods = useMemo(() => {
+    if (!isAccountManager) return allEods;
+    return allEods.filter(
+      e => amCandidateIds.has(e.candidateId) || amClientIds.has(e.clientId)
+    );
+  }, [allEods, isAccountManager, amCandidateIds, amClientIds]);
+
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
+  const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: crmClients = [] } = useCrmClientUsersQuery();
-  const { data: assignments = [] } = useAllAssignmentsQuery();
+  const { data: assignments = [] } = useAllAssignmentsQuery(
+    isAccountManager ? user?.id : undefined
+  );
 
+  // Build VA name map: primary source = ATS candidates (candidateId matches ATS _id),
+  // fallback = CRM VA users by candidateRef or _id
   const vaMap = useMemo(() => {
     const m: Record<string, string> = {};
+    for (const v of atsVAs) {
+      m[v.id] = `${v.firstName} ${v.lastName}`;
+    }
     for (const v of crmVAs) {
-      if (v.candidateRef) m[v.candidateRef] = `${v.firstName} ${v.lastName}`;
+      const name = `${v.firstName} ${v.lastName}`;
+      if (v.candidateRef && !m[v.candidateRef]) m[v.candidateRef] = name;
+      if (v._id && !m[v._id]) m[v._id] = name;
     }
     return m;
-  }, [crmVAs]);
+  }, [atsVAs, crmVAs]);
 
   const clientMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -70,6 +107,19 @@ export default function EodReportsPage() {
     () => atsClients.filter(c => crmClientRefs.has(c.id)),
     [atsClients, crmClientRefs]
   );
+
+  // AM: restrict VA/client dropdowns to their assignments only
+  const displayVAs = useMemo(() => {
+    if (!isAccountManager) return atsVAs;
+    const amVaIds = new Set(amAssignments.map(a => a.candidateId));
+    return atsVAs.filter(v => amVaIds.has(v.id));
+  }, [atsVAs, isAccountManager, amAssignments]);
+
+  const displayClients = useMemo(() => {
+    if (!isAccountManager) return filteredClients;
+    const amClientIdsSet = new Set(amAssignments.map(a => a.clientId));
+    return filteredClients.filter(c => amClientIdsSet.has(c.id));
+  }, [filteredClients, isAccountManager, amAssignments]);
 
   const assignmentMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -93,9 +143,11 @@ export default function EodReportsPage() {
         accessorKey: 'candidateId',
         header: 'VA',
         size: 140,
-        cell: ({ getValue }) => (
+        cell: ({ row, getValue }) => (
           <span className="text-sm">
-            {vaMap[getValue<string>()] ?? getValue<string>()}
+            {row.original.candidateName ||
+              vaMap[getValue<string>()] ||
+              getValue<string>()}
           </span>
         ),
       },
@@ -106,7 +158,9 @@ export default function EodReportsPage() {
         cell: ({ row }) => (
           <div className="flex flex-col gap-0.5">
             <span className="text-sm">
-              {clientMap[row.original.clientId] ?? row.original.clientId}
+              {row.original.companyName ||
+                clientMap[row.original.clientId] ||
+                row.original.clientId}
             </span>
             <span className="text-xs text-muted-foreground">
               {assignmentMap[row.original.assignmentId] ?? '—'}
@@ -114,22 +168,26 @@ export default function EodReportsPage() {
           </div>
         ),
       },
-      {
-        accessorKey: 'shiftStart',
-        header: 'Start',
-        size: 45,
-        cell: ({ getValue }) => (
-          <span className="text-sm">{getValue<string>()}</span>
-        ),
-      },
-      {
-        accessorKey: 'shiftEnd',
-        header: 'End',
-        size: 45,
-        cell: ({ getValue }) => (
-          <span className="text-sm">{getValue<string>()}</span>
-        ),
-      },
+      ...(isAccountManager
+        ? []
+        : [
+            {
+              accessorKey: 'shiftStart',
+              header: 'Start',
+              size: 45,
+              cell: ({ getValue }: any) => (
+                <span className="text-sm">{getValue<string>()}</span>
+              ),
+            },
+            {
+              accessorKey: 'shiftEnd',
+              header: 'End',
+              size: 45,
+              cell: ({ getValue }: any) => (
+                <span className="text-sm">{getValue<string>()}</span>
+              ),
+            },
+          ]),
       {
         accessorKey: 'hoursWorked',
         header: 'Hours',
@@ -176,7 +234,7 @@ export default function EodReportsPage() {
         ),
       },
     ],
-    [vaMap, clientMap, assignmentMap]
+    [vaMap, clientMap, assignmentMap, isAccountManager]
   );
 
   function clearFilters() {
@@ -201,7 +259,9 @@ export default function EodReportsPage() {
               EOD Reports
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              All end-of-day submissions across VAs and clients
+              {isAccountManager
+                ? 'EOD submissions for your assigned VAs'
+                : 'All VA EOD submissions across clients'}
             </p>
           </div>
 
@@ -212,13 +272,11 @@ export default function EodReportsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All VAs</SelectItem>
-                {crmVAs
-                  .filter(v => v.candidateRef)
-                  .map(v => (
-                    <SelectItem key={v.candidateRef!} value={v.candidateRef!}>
-                      {v.firstName} {v.lastName}
-                    </SelectItem>
-                  ))}
+                {displayVAs.map(v => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.firstName} {v.lastName}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -228,7 +286,7 @@ export default function EodReportsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Clients</SelectItem>
-                {filteredClients.map(c => (
+                {displayClients.map(c => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.companyName}
                   </SelectItem>
@@ -257,13 +315,13 @@ export default function EodReportsPage() {
               </button>
             )}
             <span className="text-xs text-muted-foreground ml-auto">
-              {allEods.length} records
+              {eods.length} records
             </span>
           </div>
 
           <DataTable
             columns={columns}
-            data={allEods}
+            data={eods}
             isLoading={isLoading}
             isError={isError}
             error={error}

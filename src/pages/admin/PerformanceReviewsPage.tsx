@@ -5,12 +5,11 @@ import {
   EyeIcon,
   Loader2Icon,
   LockIcon,
-  PenLineIcon,
   PlusIcon,
   StarIcon,
   Trash2Icon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -27,7 +26,9 @@ import {
 } from '@/components/ui/select';
 import {
   QK,
+  useAllAssignmentsQuery,
   useAtsClientsQuery,
+  useAtsVAsQuery,
   useCrmClientUsersQuery,
   useCrmVaUsersQuery,
   usePerformanceReviewsQuery,
@@ -46,18 +47,12 @@ import {
 } from '@/types/performance-review';
 
 const STATUS_STYLES: Record<ReviewStatus, string> = {
-  Draft:
-    'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
-  'AI Generated':
-    'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  'In Review':
-    'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  Completed:
-    'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  'Sent to Client':
-    'bg-sky-500/10 text-sky-400 border-sky-500/20',
-  Archived:
-    'bg-zinc-500/8 text-zinc-500 border-zinc-500/15',
+  Draft: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
+  'AI Generated': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  'In Review': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  Completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  'Sent to Client': 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+  Archived: 'bg-zinc-500/8 text-zinc-500 border-zinc-500/15',
 };
 
 function StatusBadge({ status }: { status: ReviewStatus }) {
@@ -65,7 +60,9 @@ function StatusBadge({ status }: { status: ReviewStatus }) {
     <span
       className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[status] ?? STATUS_STYLES['Draft']}`}
     >
-      {status === 'Completed' && <LockIcon className="size-2.5 mr-1 opacity-70" />}
+      {status === 'Completed' && (
+        <LockIcon className="size-2.5 mr-1 opacity-70" />
+      )}
       {status}
     </span>
   );
@@ -92,6 +89,20 @@ export default function PerformanceReviewsPage() {
   const navigate = useNavigate();
   const user = useAppSelector(s => s.auth.user);
   const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
+  const isAccountManager = user?.role === 'account_manager';
+
+  // AM scoping: only see reviews for their own assignments
+  const { data: amAssignments = [] } = useAllAssignmentsQuery(
+    isAccountManager ? user?.id : undefined
+  );
+  const amCandidateIds = useMemo(
+    () => new Set(amAssignments.map(a => a.candidateId).filter(Boolean)),
+    [amAssignments]
+  );
+  const amClientIds = useMemo(
+    () => new Set(amAssignments.map(a => a.clientId).filter(Boolean)),
+    [amAssignments]
+  );
 
   const [generateOpen, setGenerateOpen] = useState(false);
   const [vaFilter, setVaFilter] = useState('all');
@@ -118,14 +129,31 @@ export default function PerformanceReviewsPage() {
       statusFilter !== 'all' ? STATUS_TO_BACKEND[statusFilter] : undefined,
   };
 
-  const { data: reviews = [], isLoading } = usePerformanceReviewsQuery(filters);
+  const { data: allReviews = [], isLoading } =
+    usePerformanceReviewsQuery(filters);
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
+  const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: clientList = [] } = useAtsClientsQuery();
   const { data: crmClients = [] } = useCrmClientUsersQuery();
 
+  // For AM, client-side filter by their assignments' candidateIds/clientIds
+  const reviews = useMemo(() => {
+    if (!isAccountManager) return allReviews;
+    return allReviews.filter(
+      r => amCandidateIds.has(r.vaId) || amClientIds.has(r.clientId)
+    );
+  }, [allReviews, isAccountManager, amCandidateIds, amClientIds]);
+
+  // Build VA name map: primary source = ATS candidates (vaId matches ATS _id),
+  // fallback = CRM VA users by candidateRef or _id
   const vaMap: Record<string, string> = {};
+  for (const v of atsVAs) {
+    vaMap[v.id] = `${v.firstName} ${v.lastName}`;
+  }
   for (const v of crmVAs) {
-    if (v.candidateRef) vaMap[v.candidateRef] = `${v.firstName} ${v.lastName}`;
+    const name = `${v.firstName} ${v.lastName}`;
+    if (v.candidateRef && !vaMap[v.candidateRef]) vaMap[v.candidateRef] = name;
+    if (v._id && !vaMap[v._id]) vaMap[v._id] = name;
   }
 
   const clientMap: Record<string, string> = {};
@@ -135,6 +163,19 @@ export default function PerformanceReviewsPage() {
     crmClients.map(c => c.clientRef).filter(Boolean)
   );
   const filteredClients = clientList.filter(c => crmClientRefs.has(c.id));
+
+  // AM: restrict VA/client dropdowns to their assignments only
+  const displayVAs = useMemo(() => {
+    if (!isAccountManager) return atsVAs;
+    const amVaIds = new Set(amAssignments.map(a => a.candidateId));
+    return atsVAs.filter(v => amVaIds.has(v.id));
+  }, [atsVAs, isAccountManager, amAssignments]);
+
+  const displayClients = useMemo(() => {
+    if (!isAccountManager) return filteredClients;
+    const amClientIdsSet = new Set(amAssignments.map(a => a.clientId));
+    return filteredClients.filter(c => amClientIdsSet.has(c.id));
+  }, [filteredClients, isAccountManager, amAssignments]);
 
   async function handleExportPdf(review: IPerformanceReview) {
     setExportingId(review.id);
@@ -246,17 +287,15 @@ export default function PerformanceReviewsPage() {
             <Button
               size="icon"
               variant="ghost"
-              className={`size-7 ${isCompleted ? 'text-muted-foreground' : ''}`}
-              title={isCompleted ? 'View (read-only)' : 'Edit'}
+              className={`size-7 ${isCompleted || isAccountManager ? 'text-muted-foreground' : ''}`}
+              title={
+                isCompleted || isAccountManager ? 'View (read-only)' : 'Edit'
+              }
               onClick={() =>
                 navigate(`${rolePrefix}/performance-reviews/${r.id}`)
               }
             >
-              {isCompleted ? (
-                <EyeIcon className="size-3.5" />
-              ) : (
-                <PenLineIcon className="size-3.5" />
-              )}
+              <EyeIcon className="size-3.5" />
             </Button>
             <Button
               size="icon"
@@ -272,15 +311,17 @@ export default function PerformanceReviewsPage() {
                 <DownloadIcon className="size-3.5" />
               )}
             </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="size-7 text-destructive/60 hover:text-destructive"
-              title="Delete"
-              onClick={() => setDeleteTarget(r)}
-            >
-              <Trash2Icon className="size-3.5" />
-            </Button>
+            {!isAccountManager && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-7 text-destructive/60 hover:text-destructive"
+                title="Delete"
+                onClick={() => setDeleteTarget(r)}
+              >
+                <Trash2Icon className="size-3.5" />
+              </Button>
+            )}
           </div>
         );
       },
@@ -298,13 +339,17 @@ export default function PerformanceReviewsPage() {
                 Performance Reviews
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
-                AI-generated performance reviews for VAs
+                {isAccountManager
+                  ? 'View performance reviews for your assigned VAs'
+                  : 'AI-generated performance reviews for VAs'}
               </p>
             </div>
-            <Button size="sm" onClick={() => setGenerateOpen(true)}>
-              <PlusIcon className="size-4" />
-              Generate Review
-            </Button>
+            {!isAccountManager && (
+              <Button size="sm" onClick={() => setGenerateOpen(true)}>
+                <PlusIcon className="size-4" />
+                Generate Review
+              </Button>
+            )}
           </div>
 
           {/* Filters */}
@@ -317,13 +362,11 @@ export default function PerformanceReviewsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All VAs</SelectItem>
-                  {crmVAs
-                    .filter(v => v.candidateRef)
-                    .map(v => (
-                      <SelectItem key={v.candidateRef!} value={v.candidateRef!}>
-                        {v.firstName} {v.lastName}
-                      </SelectItem>
-                    ))}
+                  {displayVAs.map(v => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.firstName} {v.lastName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -336,7 +379,7 @@ export default function PerformanceReviewsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Clients</SelectItem>
-                  {filteredClients.map(c => (
+                  {displayClients.map(c => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.companyName}
                     </SelectItem>
@@ -380,6 +423,11 @@ export default function PerformanceReviewsPage() {
             <span className="ml-auto text-xs text-muted-foreground">
               {reviews.length} record{reviews.length !== 1 ? 's' : ''}
             </span>
+            {isAccountManager && (
+              <span className="text-[11px] text-muted-foreground/60 ml-1">
+                (your assignments)
+              </span>
+            )}
           </div>
 
           <DataTable columns={columns} data={reviews} isLoading={isLoading} />
