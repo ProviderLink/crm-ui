@@ -108,6 +108,21 @@ function buildColumns(
 ): ColumnDef<IAssignment>[] {
   const columns: ColumnDef<IAssignment>[] = [
     {
+      id: 'assignmentId',
+      accessorKey: '_id',
+      header: 'ID',
+      size: 130,
+      cell: ({ getValue }) => {
+        const full = getValue<string>() ?? '';
+        const suffix = full.slice(-8);
+        return (
+          <span className="font-mono text-sm text-muted-foreground whitespace-nowrap">
+            {suffix}
+          </span>
+        );
+      },
+    },
+    {
       accessorKey: 'clientId',
       header: 'Client',
       size: 210,
@@ -156,11 +171,6 @@ function buildColumns(
           </span>
         );
       },
-    },
-    {
-      accessorKey: 'serviceType',
-      header: 'Service Type',
-      cell: ({ getValue }) => getValue<string>() ?? '—',
     },
   ];
 

@@ -1,6 +1,7 @@
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
+  AlertTriangleIcon,
   ArrowLeftIcon,
   BriefcaseIcon,
   BuildingIcon,
@@ -9,7 +10,6 @@ import {
   GaugeIcon,
   HeartIcon,
   MailIcon,
-  ShieldCheckIcon,
   StarIcon,
   StickyNoteIcon,
   UserIcon,
@@ -20,13 +20,6 @@ import { Link, useParams } from 'react-router-dom';
 import { DataTable } from '@/components/shared/DataTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -57,9 +50,22 @@ const STATUS_STYLES: Record<WorkEntryStatus, string> = {
 };
 
 const HEALTH_COLORS: Record<string, string> = {
-  green: 'bg-[#A0A0A0]',
-  yellow: 'bg-[#A0A0A0]',
-  red: 'bg-[#F87171]',
+  green: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+  yellow: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
+  red: 'bg-red-500/10 text-red-400 ring-red-500/20',
+};
+
+const WORKLOAD_COLORS: Record<string, string> = {
+  low: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+  normal: 'bg-blue-500/10 text-blue-400 ring-blue-500/20',
+  high: 'bg-amber-500/10 text-amber-400 ring-amber-500/20',
+  overloaded: 'bg-red-500/10 text-red-400 ring-red-500/20',
+};
+
+const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
+  active: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+  on_hold: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
+  ended: 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]',
 };
 
 function fmtDate(iso: string | undefined | null) {
@@ -337,7 +343,7 @@ export default function AssignmentDetailPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         {/* Header */}
         <div className="px-4 lg:px-6">
-          <div className="flex items-start gap-3 mb-5">
+          <div className="flex items-start gap-3 mb-6">
             <Button variant="ghost" size="icon" asChild className="size-8 mt-0.5 shrink-0">
               <Link to={`${rolePrefix}/assignments`}>
                 <ArrowLeftIcon className="size-4" />
@@ -348,193 +354,198 @@ export default function AssignmentDetailPage() {
                 {vaMap[assignment.candidateId] ?? 'VA'} —{' '}
                 {clientMap[assignment.clientId] ?? 'Client'}
               </h1>
-              <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                <span className="inline-flex items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] px-2 py-0.5 bg-white/[0.04] text-[#A0A0A0] ring-1 ring-white/[0.08]">
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {/* Assignment ID */}
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">ID</span>
+                  <span className="font-mono text-sm text-muted-foreground">
+                    {id?.slice(-8)}
+                  </span>
+                </span>
+
+                <span className="text-muted-foreground/30 text-xs">·</span>
+
+                {/* Status badge */}
+                <span
+                  className={`inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.08em] ring-1 ring-inset ${ASSIGNMENT_STATUS_COLORS[assignment.status] ?? 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]'}`}
+                >
                   {assignment.status.replace('_', ' ')}
                 </span>
-                <span className="text-sm text-muted-foreground">
-                  {assignment.serviceType ?? 'VA Service'}
-                </span>
-                <span className="text-muted-foreground/40 text-xs">·</span>
+
+                {assignment.serviceType && (
+                  <>
+                    <span className="text-muted-foreground/30 text-xs">·</span>
+                    <span className="text-sm text-muted-foreground">{assignment.serviceType}</span>
+                  </>
+                )}
+
+                <span className="text-muted-foreground/30 text-xs">·</span>
                 <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                   <CalendarIcon className="size-3.5" />
-                  Started {fmtDate(assignment.startDate)}
-                  {assignment.endDate ? ` · Ends ${fmtDate(assignment.endDate)}` : ''}
+                  {fmtDate(assignment.startDate)}
+                  {assignment.endDate ? ` → ${fmtDate(assignment.endDate)}` : ' · Ongoing'}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Overview cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-1.5">
-                  <UserIcon className="size-3.5" />
-                  VA
-                </CardDescription>
-                <CardTitle className="text-lg">
-                  {vaMap[assignment.candidateId] ?? 'Unknown'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-1">
+          {/* Overview cards — accounts-page detail sheet style */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+
+            {/* VA Card */}
+            <div className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-4 space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                <UserIcon className="size-3.5" />
+                Virtual Assistant
+              </p>
+              <p className="text-base font-semibold text-foreground leading-tight">
+                {vaMap[assignment.candidateId] ?? 'Unknown'}
+              </p>
+              <div className="space-y-1.5 text-sm text-muted-foreground">
                 {vaEmail && (
                   <div className="flex items-center gap-2">
                     <MailIcon className="size-3.5 shrink-0" />
-                    <span>{vaEmail}</span>
+                    <span className="truncate text-xs">{vaEmail}</span>
                   </div>
                 )}
                 {vaProfile && (
-                  <div className="flex items-center gap-2">
-                    <GaugeIcon className="size-3.5 shrink-0" />
-                    <span>
-                      Workload:{' '}
-                      <span className="font-medium text-foreground">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <GaugeIcon className="size-3.5 shrink-0" />
+                      <span className="text-xs text-muted-foreground">Workload:</span>
+                      <span
+                        className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ring-1 ring-inset ${WORKLOAD_COLORS[vaProfile.workloadLevel] ?? 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]'}`}
+                      >
                         {vaProfile.workloadLevel}
                       </span>
-                      {vaProfile.satisfactionScore && (
-                        <>
-                          {' · '}
-                          <StarIcon className="size-3 inline text-amber-500 fill-amber-500" />{' '}
-                          {vaProfile.satisfactionScore}/5
-                        </>
-                      )}
-                    </span>
+                    </div>
+                    {vaProfile.satisfactionScore && (
+                      <div className="flex items-center gap-2">
+                        <StarIcon className="size-3.5 shrink-0 text-amber-400 fill-amber-400" />
+                        <span className="text-xs text-muted-foreground">VA Satisfaction:</span>
+                        <span className="text-xs font-medium text-foreground">{vaProfile.satisfactionScore}/5</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 {vaProfile?.burnoutRiskFlag && (
-                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                    <ShieldCheckIcon className="size-3.5 shrink-0" />
-                    <span>Burnout risk flagged</span>
+                  <div className="flex items-center gap-1.5 text-amber-400">
+                    <AlertTriangleIcon className="size-3.5 shrink-0" />
+                    <span className="text-xs">Burnout risk flagged</span>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Account Manager */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-1.5">
-                  <BriefcaseIcon className="size-3.5" />
-                  Account Manager
-                </CardDescription>
-                <CardTitle className="text-lg">
-                  {assignment.accountManagerId
-                    ? (amMap[assignment.accountManagerId] ?? 'Unknown')
-                    : '—'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
+            {/* Account Manager Card */}
+            <div className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-4 space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                <BriefcaseIcon className="size-3.5" />
+                Account Manager
+              </p>
+              <p className="text-base font-semibold text-foreground leading-tight">
+                {assignment.accountManagerId
+                  ? (amMap[assignment.accountManagerId] ?? 'Unknown')
+                  : <span className="text-muted-foreground">—</span>}
+              </p>
+              <div className="space-y-1.5 text-sm text-muted-foreground">
                 {assignment.accountManagerId && (() => {
                   const am = accountManagers.find(u => u.id === assignment.accountManagerId);
                   return am?.email ? (
                     <div className="flex items-center gap-2">
                       <MailIcon className="size-3.5 shrink-0" />
-                      <span>{am.email}</span>
+                      <span className="truncate text-xs">{am.email}</span>
                     </div>
                   ) : null;
                 })()}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Client Info */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-1.5">
-                  <BuildingIcon className="size-3.5" />
-                  Client
-                </CardDescription>
-                <CardTitle className="text-lg">
-                  {clientMap[assignment.clientId] ?? 'Unknown'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-1">
+            {/* Client Card */}
+            <div className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-4 space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                <BuildingIcon className="size-3.5" />
+                Client
+              </p>
+              <p className="text-base font-semibold text-foreground leading-tight">
+                {clientMap[assignment.clientId] ?? 'Unknown'}
+              </p>
+              <div className="space-y-1.5">
                 {clientAccount && (
                   <>
-                    <div className="flex gap-2">
-                      <HeartIcon className="size-3.5 mt-0.5 shrink-0" />
-                      <span className="flex items-center gap-1.5">
-                        Health:
-                        <span
-                          className={`inline-block size-2 rounded-full ${HEALTH_COLORS[clientAccount.healthStatus] ?? 'bg-muted'}`}
-                        />
-                        <span className="font-medium text-foreground">
-                          {clientAccount.healthStatus}
-                        </span>
+                    <div className="flex items-center gap-2">
+                      <HeartIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Client Health:</span>
+                      <span
+                        className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium capitalize ring-1 ring-inset ${HEALTH_COLORS[clientAccount.healthStatus] ?? 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]'}`}
+                      >
+                        {clientAccount.healthStatus}
                       </span>
                     </div>
                     {clientAccount.satisfactionScore && (
-                      <div className="flex gap-2">
-                        <StarIcon className="size-3.5 mt-0.5 shrink-0 text-amber-500 fill-amber-500" />
-                        <span>
-                          Satisfaction:{' '}
-                          <span className="font-medium text-foreground">
-                            {clientAccount.satisfactionScore}/5
-                          </span>
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <StarIcon className="size-3.5 shrink-0 text-amber-400 fill-amber-400" />
+                        <span className="text-xs text-muted-foreground">Client Satisfaction:</span>
+                        <span className="text-xs font-medium text-foreground">{clientAccount.satisfactionScore}/5</span>
                       </div>
                     )}
                   </>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Metrics */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardDescription className="flex items-center gap-1.5">
-                  <ClockIcon className="size-3.5" />
-                  This Week
-                </CardDescription>
-                <CardTitle className="text-lg">
-                  {(() => {
-                    const weekStart = new Date();
-                    weekStart.setDate(
-                      weekStart.getDate() - ((weekStart.getDay() + 6) % 7)
-                    );
-                    weekStart.setHours(0, 0, 0, 0);
-                    const weekEntries = allEntries.filter(
-                      e =>
-                        e.assignmentId === id &&
-                        e.entryDate >= weekStart.toISOString().split('T')[0]
-                    );
-                    const hours =
-                      weekEntries.reduce((s, e) => s + e.timeSpent, 0) / 60;
-                    return (
-                      <span>
-                        {hours.toFixed(1)}h · {weekEntries.length} entries
-                      </span>
-                    );
-                  })()}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground space-y-1">
-                <div className="flex gap-2">
-                  <CalendarIcon className="size-3.5 mt-0.5 shrink-0" />
-                  <span>
-                    {filteredEods.length} EODs · {reviews.length} reviews
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Activity / This Week Card */}
+            <div className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-4 space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                <ClockIcon className="size-3.5" />
+                This Week
+              </p>
+              {(() => {
+                const weekStart = new Date();
+                weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+                weekStart.setHours(0, 0, 0, 0);
+                const weekEntries = allEntries.filter(
+                  e =>
+                    e.assignmentId === id &&
+                    e.entryDate >= weekStart.toISOString().split('T')[0]
+                );
+                const hours = weekEntries.reduce((s, e) => s + e.timeSpent, 0) / 60;
+                return (
+                  <>
+                    <p className="text-2xl font-bold text-foreground leading-none">
+                      {hours.toFixed(1)}<span className="text-base font-medium text-muted-foreground ml-0.5">h</span>
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      {[
+                        { label: 'Entries', value: weekEntries.length },
+                        { label: 'EODs', value: filteredEods.length },
+                        { label: 'Reviews', value: reviews.length },
+                      ].map(stat => (
+                        <div key={stat.label} className="text-center">
+                          <p className="text-sm font-semibold text-foreground">{stat.value}</p>
+                          <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           </div>
 
           {/* Notes */}
           {assignment.notes && (
-            <div className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3 mb-4">
+            <div className="flex items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 mb-5">
               <StickyNoteIcon className="size-3.5 mt-[3px] shrink-0 text-muted-foreground" />
               <p className="text-sm text-muted-foreground leading-relaxed">{assignment.notes}</p>
             </div>
           )}
 
-          {/* Date filters for work entries / EODs */}
+          {/* Date filters */}
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">From</span>
-              <DatePickerField
-                value={dateFrom}
-                onChange={v => setDateFrom(v)}
-              />
+              <DatePickerField value={dateFrom} onChange={v => setDateFrom(v)} />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">To</span>

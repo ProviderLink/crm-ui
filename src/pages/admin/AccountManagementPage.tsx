@@ -359,15 +359,15 @@ function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
       },
     },
     {
-      accessorKey: 'vaActiveClients',
-      header: 'Clients',
+      accessorKey: 'vaTotalAssignments',
+      header: 'Assignments',
       cell: ({ row }) => {
-        const active = row.original.vaActiveClients ?? 0;
         const total = row.original.vaTotalAssignments ?? 0;
+        const clients = row.original.vaActiveClients ?? 0;
         return (
-          <div className="text-sm tabular-nums">
-            <span className="font-medium">{active}</span>
-            <span className="text-muted-foreground"> / {total}</span>
+          <div className="flex flex-col leading-tight">
+            <span className="text-base font-semibold tabular-nums">{total}</span>
+            <span className="text-[11px] text-muted-foreground">{clients} {clients === 1 ? 'client' : 'clients'}</span>
           </div>
         );
       },
@@ -1384,12 +1384,12 @@ export default function AccountManagementPage() {
 
   const vaProfileByVaId = Object.fromEntries(vaProfiles.map(p => [p.vaId, p]));
 
-  const assignmentsByCandidate: Record<string, { active: number; total: number }> = {};
+  const assignmentsByCandidate: Record<string, { activeClients: Set<string>; total: number }> = {};
   for (const a of (allAssignmentsData ?? [])) {
     const cid = a.candidateId;
-    if (!assignmentsByCandidate[cid]) assignmentsByCandidate[cid] = { active: 0, total: 0 };
+    if (!assignmentsByCandidate[cid]) assignmentsByCandidate[cid] = { activeClients: new Set(), total: 0 };
     assignmentsByCandidate[cid].total++;
-    if (a.status === 'active') assignmentsByCandidate[cid].active++;
+    if (a.status === 'active') assignmentsByCandidate[cid].activeClients.add(a.clientId);
   }
 
   const enrichedVaRows: UserRow[] = vaUsers.map(u => {
@@ -1399,7 +1399,7 @@ export default function AccountManagementPage() {
     return {
       ...row,
       vaWorkload: profile?.workloadLevel ?? null,
-      vaActiveClients: counts?.active ?? 0,
+      vaActiveClients: counts?.activeClients.size ?? 0,
       vaTotalAssignments: counts?.total ?? 0,
       vaBurnoutRisk: profile?.burnoutRiskFlag ?? false,
       vaReplacementRisk: profile?.replacementRiskFlag ?? false,
