@@ -242,7 +242,7 @@ export default function AssignmentDetailPage() {
   });
 
   const { data: reviews = [] } = usePerformanceReviewsQuery(
-    assignment ? { vaId: assignment.candidateId } : undefined
+    assignment ? { candidateId: assignment.candidateId } : undefined
   );
 
   // Derive names
@@ -344,7 +344,12 @@ export default function AssignmentDetailPage() {
         {/* Header */}
         <div className="px-4 lg:px-6">
           <div className="flex items-start gap-3 mb-6">
-            <Button variant="ghost" size="icon" asChild className="size-8 mt-0.5 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="size-8 mt-0.5 shrink-0"
+            >
               <Link to={`${rolePrefix}/assignments`}>
                 <ArrowLeftIcon className="size-4" />
               </Link>
@@ -375,7 +380,9 @@ export default function AssignmentDetailPage() {
                 {assignment.serviceType && (
                   <>
                     <span className="text-muted-foreground/30 text-xs">·</span>
-                    <span className="text-sm text-muted-foreground">{assignment.serviceType}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {assignment.serviceType}
+                    </span>
                   </>
                 )}
 
@@ -383,7 +390,9 @@ export default function AssignmentDetailPage() {
                 <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                   <CalendarIcon className="size-3.5" />
                   {fmtDate(assignment.startDate)}
-                  {assignment.endDate ? ` → ${fmtDate(assignment.endDate)}` : ' · Ongoing'}
+                  {assignment.endDate
+                    ? ` → ${fmtDate(assignment.endDate)}`
+                    : ' · Ongoing'}
                 </span>
               </div>
             </div>
@@ -391,7 +400,6 @@ export default function AssignmentDetailPage() {
 
           {/* Overview cards — accounts-page detail sheet style */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-
             {/* VA Card */}
             <div className="rounded-xl bg-white/[0.03] border border-white/[0.07] p-4 space-y-3">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
@@ -412,7 +420,9 @@ export default function AssignmentDetailPage() {
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
                       <GaugeIcon className="size-3.5 shrink-0" />
-                      <span className="text-xs text-muted-foreground">Workload:</span>
+                      <span className="text-xs text-muted-foreground">
+                        Workload:
+                      </span>
                       <span
                         className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ring-1 ring-inset ${WORKLOAD_COLORS[vaProfile.workloadLevel] ?? 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]'}`}
                       >
@@ -422,8 +432,12 @@ export default function AssignmentDetailPage() {
                     {vaProfile.satisfactionScore && (
                       <div className="flex items-center gap-2">
                         <StarIcon className="size-3.5 shrink-0 text-amber-400 fill-amber-400" />
-                        <span className="text-xs text-muted-foreground">VA Satisfaction:</span>
-                        <span className="text-xs font-medium text-foreground">{vaProfile.satisfactionScore}/5</span>
+                        <span className="text-xs text-muted-foreground">
+                          VA Satisfaction:
+                        </span>
+                        <span className="text-xs font-medium text-foreground">
+                          {vaProfile.satisfactionScore}/5
+                        </span>
                       </div>
                     )}
                   </div>
@@ -444,20 +458,25 @@ export default function AssignmentDetailPage() {
                 Account Manager
               </p>
               <p className="text-base font-semibold text-foreground leading-tight">
-                {assignment.accountManagerId
-                  ? (amMap[assignment.accountManagerId] ?? 'Unknown')
-                  : <span className="text-muted-foreground">—</span>}
+                {assignment.accountManagerId ? (
+                  (amMap[assignment.accountManagerId] ?? 'Unknown')
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
               </p>
               <div className="space-y-1.5 text-sm text-muted-foreground">
-                {assignment.accountManagerId && (() => {
-                  const am = accountManagers.find(u => u.id === assignment.accountManagerId);
-                  return am?.email ? (
-                    <div className="flex items-center gap-2">
-                      <MailIcon className="size-3.5 shrink-0" />
-                      <span className="truncate text-xs">{am.email}</span>
-                    </div>
-                  ) : null;
-                })()}
+                {assignment.accountManagerId &&
+                  (() => {
+                    const am = accountManagers.find(
+                      u => u.id === assignment.accountManagerId
+                    );
+                    return am?.email ? (
+                      <div className="flex items-center gap-2">
+                        <MailIcon className="size-3.5 shrink-0" />
+                        <span className="truncate text-xs">{am.email}</span>
+                      </div>
+                    ) : null;
+                  })()}
               </div>
             </div>
 
@@ -475,7 +494,9 @@ export default function AssignmentDetailPage() {
                   <>
                     <div className="flex items-center gap-2">
                       <HeartIcon className="size-3.5 shrink-0 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Client Health:</span>
+                      <span className="text-xs text-muted-foreground">
+                        Client Health:
+                      </span>
                       <span
                         className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium capitalize ring-1 ring-inset ${HEALTH_COLORS[clientAccount.healthStatus] ?? 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]'}`}
                       >
@@ -485,8 +506,12 @@ export default function AssignmentDetailPage() {
                     {clientAccount.satisfactionScore && (
                       <div className="flex items-center gap-2">
                         <StarIcon className="size-3.5 shrink-0 text-amber-400 fill-amber-400" />
-                        <span className="text-xs text-muted-foreground">Client Satisfaction:</span>
-                        <span className="text-xs font-medium text-foreground">{clientAccount.satisfactionScore}/5</span>
+                        <span className="text-xs text-muted-foreground">
+                          Client Satisfaction:
+                        </span>
+                        <span className="text-xs font-medium text-foreground">
+                          {clientAccount.satisfactionScore}/5
+                        </span>
                       </div>
                     )}
                   </>
@@ -502,18 +527,24 @@ export default function AssignmentDetailPage() {
               </p>
               {(() => {
                 const weekStart = new Date();
-                weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
+                weekStart.setDate(
+                  weekStart.getDate() - ((weekStart.getDay() + 6) % 7)
+                );
                 weekStart.setHours(0, 0, 0, 0);
                 const weekEntries = allEntries.filter(
                   e =>
                     e.assignmentId === id &&
                     e.entryDate >= weekStart.toISOString().split('T')[0]
                 );
-                const hours = weekEntries.reduce((s, e) => s + e.timeSpent, 0) / 60;
+                const hours =
+                  weekEntries.reduce((s, e) => s + e.timeSpent, 0) / 60;
                 return (
                   <>
                     <p className="text-2xl font-bold text-foreground leading-none">
-                      {hours.toFixed(1)}<span className="text-base font-medium text-muted-foreground ml-0.5">h</span>
+                      {hours.toFixed(1)}
+                      <span className="text-base font-medium text-muted-foreground ml-0.5">
+                        h
+                      </span>
                     </p>
                     <div className="grid grid-cols-3 gap-2 pt-1">
                       {[
@@ -522,8 +553,12 @@ export default function AssignmentDetailPage() {
                         { label: 'Reviews', value: reviews.length },
                       ].map(stat => (
                         <div key={stat.label} className="text-center">
-                          <p className="text-sm font-semibold text-foreground">{stat.value}</p>
-                          <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                          <p className="text-sm font-semibold text-foreground">
+                            {stat.value}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {stat.label}
+                          </p>
                         </div>
                       ))}
                     </div>
@@ -537,7 +572,9 @@ export default function AssignmentDetailPage() {
           {assignment.notes && (
             <div className="flex items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3 mb-5">
               <StickyNoteIcon className="size-3.5 mt-[3px] shrink-0 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground leading-relaxed">{assignment.notes}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {assignment.notes}
+              </p>
             </div>
           )}
 
@@ -545,7 +582,10 @@ export default function AssignmentDetailPage() {
           <div className="flex items-center gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">From</span>
-              <DatePickerField value={dateFrom} onChange={v => setDateFrom(v)} />
+              <DatePickerField
+                value={dateFrom}
+                onChange={v => setDateFrom(v)}
+              />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">To</span>

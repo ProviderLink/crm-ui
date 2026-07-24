@@ -124,14 +124,21 @@ export function GenerateReviewModal({
         .filter(a => a.clientId === selectedClientId)
         .map(a => a.candidateId)
     );
-    return crmVAs.filter(v => v.candidateRef && candidateIds.has(v.candidateRef));
+    return crmVAs.filter(
+      v => v.candidateRef && candidateIds.has(v.candidateRef)
+    );
   }, [selectedClientId, assignments, crmVAs]);
 
   // Role types available for the selected VA under the selected client
   const availableRoleTypes = useMemo(() => {
     if (!selectedVaId || !selectedClientId) return ROLE_TYPES;
     const matchingTypes = assignments
-      .filter(a => a.clientId === selectedClientId && a.candidateId === selectedVaId && a.serviceType)
+      .filter(
+        a =>
+          a.clientId === selectedClientId &&
+          a.candidateId === selectedVaId &&
+          a.serviceType
+      )
       .map(a => a.serviceType as RoleType)
       .filter(t => ROLE_TYPES.includes(t));
     return matchingTypes.length > 0 ? [...new Set(matchingTypes)] : ROLE_TYPES;
@@ -139,7 +146,10 @@ export function GenerateReviewModal({
 
   // Auto-select role type when VA+client combo has exactly one assignment serviceType
   useEffect(() => {
-    if (availableRoleTypes.length === 1 && availableRoleTypes[0] !== undefined) {
+    if (
+      availableRoleTypes.length === 1 &&
+      availableRoleTypes[0] !== undefined
+    ) {
       setValue('roleType', availableRoleTypes[0]);
     }
   }, [availableRoleTypes, setValue]);
@@ -197,20 +207,30 @@ export function GenerateReviewModal({
             <div className="grid grid-cols-3 gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
               {defaultCandidateName && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">VA / Candidate</p>
-                  <p className="text-sm font-medium truncate">{defaultCandidateName}</p>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    VA / Candidate
+                  </p>
+                  <p className="text-sm font-medium truncate">
+                    {defaultCandidateName}
+                  </p>
                 </div>
               )}
               {defaultClientName && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Client</p>
-                  <p className="text-sm font-medium truncate">{defaultClientName}</p>
+                  <p className="text-sm font-medium truncate">
+                    {defaultClientName}
+                  </p>
                 </div>
               )}
               {defaultJobTitle && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Job Title</p>
-                  <p className="text-sm font-medium truncate">{defaultJobTitle}</p>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Job Title
+                  </p>
+                  <p className="text-sm font-medium truncate">
+                    {defaultJobTitle}
+                  </p>
                 </div>
               )}
             </div>
@@ -227,8 +247,15 @@ export function GenerateReviewModal({
                     control={control}
                     name="clientId"
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className={errors.clientId ? 'border-destructive' : ''}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger
+                          className={
+                            errors.clientId ? 'border-destructive' : ''
+                          }
+                        >
                           <SelectValue placeholder="Select client" />
                         </SelectTrigger>
                         <SelectContent>
@@ -242,7 +269,9 @@ export function GenerateReviewModal({
                     )}
                   />
                   {errors.clientId && (
-                    <p className="text-xs text-destructive">{errors.clientId.message}</p>
+                    <p className="text-xs text-destructive">
+                      {errors.clientId.message}
+                    </p>
                   )}
                 </div>
               )}
@@ -260,8 +289,16 @@ export function GenerateReviewModal({
                         onValueChange={field.onChange}
                         disabled={!selectedClientId}
                       >
-                        <SelectTrigger className={errors.vaId ? 'border-destructive' : ''}>
-                          <SelectValue placeholder={selectedClientId ? 'Select VA' : 'Select client first'} />
+                        <SelectTrigger
+                          className={errors.vaId ? 'border-destructive' : ''}
+                        >
+                          <SelectValue
+                            placeholder={
+                              selectedClientId
+                                ? 'Select VA'
+                                : 'Select client first'
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {clientVas.length === 0 ? (
@@ -270,7 +307,10 @@ export function GenerateReviewModal({
                             </div>
                           ) : (
                             clientVas.map(v => (
-                              <SelectItem key={v.candidateRef!} value={v.candidateRef!}>
+                              <SelectItem
+                                key={v.candidateRef!}
+                                value={v.candidateRef!}
+                              >
                                 {v.firstName} {v.lastName}
                               </SelectItem>
                             ))
@@ -280,7 +320,9 @@ export function GenerateReviewModal({
                     )}
                   />
                   {errors.vaId && (
-                    <p className="text-xs text-destructive">{errors.vaId.message}</p>
+                    <p className="text-xs text-destructive">
+                      {errors.vaId.message}
+                    </p>
                   )}
                 </div>
               )}
@@ -296,19 +338,25 @@ export function GenerateReviewModal({
                 name="reviewType"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className={errors.reviewType ? 'border-destructive' : ''}>
+                    <SelectTrigger
+                      className={errors.reviewType ? 'border-destructive' : ''}
+                    >
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
                       {REVIEW_TYPES.map(t => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 )}
               />
               {errors.reviewType && (
-                <p className="text-xs text-destructive">{errors.reviewType.message}</p>
+                <p className="text-xs text-destructive">
+                  {errors.reviewType.message}
+                </p>
               )}
             </div>
 
@@ -319,19 +367,25 @@ export function GenerateReviewModal({
                 name="roleType"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className={errors.roleType ? 'border-destructive' : ''}>
+                    <SelectTrigger
+                      className={errors.roleType ? 'border-destructive' : ''}
+                    >
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
                       {availableRoleTypes.map(r => (
-                        <SelectItem key={r} value={r}>{r}</SelectItem>
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 )}
               />
               {errors.roleType && (
-                <p className="text-xs text-destructive">{errors.roleType.message}</p>
+                <p className="text-xs text-destructive">
+                  {errors.roleType.message}
+                </p>
               )}
             </div>
           </div>
@@ -345,14 +399,16 @@ export function GenerateReviewModal({
                 name="reviewPeriodStart"
                 render={({ field }) => (
                   <DatePickerField
-                    value={field.value || undefined}
+                    value={field.value ?? ''}
                     onChange={field.onChange}
                     placeholder="Pick start date"
                   />
                 )}
               />
               {errors.reviewPeriodStart && (
-                <p className="text-xs text-destructive">{errors.reviewPeriodStart.message}</p>
+                <p className="text-xs text-destructive">
+                  {errors.reviewPeriodStart.message}
+                </p>
               )}
             </div>
 
@@ -363,14 +419,16 @@ export function GenerateReviewModal({
                 name="reviewPeriodEnd"
                 render={({ field }) => (
                   <DatePickerField
-                    value={field.value || undefined}
+                    value={field.value ?? ''}
                     onChange={field.onChange}
                     placeholder="Pick end date"
                   />
                 )}
               />
               {errors.reviewPeriodEnd && (
-                <p className="text-xs text-destructive">{errors.reviewPeriodEnd.message}</p>
+                <p className="text-xs text-destructive">
+                  {errors.reviewPeriodEnd.message}
+                </p>
               )}
             </div>
           </div>
@@ -385,7 +443,9 @@ export function GenerateReviewModal({
               className={errors.jobDescription ? 'border-destructive' : ''}
             />
             {errors.jobDescription && (
-              <p className="text-xs text-destructive">{errors.jobDescription.message}</p>
+              <p className="text-xs text-destructive">
+                {errors.jobDescription.message}
+              </p>
             )}
           </div>
 
@@ -399,7 +459,9 @@ export function GenerateReviewModal({
               className={errors.clientExpectations ? 'border-destructive' : ''}
             />
             {errors.clientExpectations && (
-              <p className="text-xs text-destructive">{errors.clientExpectations.message}</p>
+              <p className="text-xs text-destructive">
+                {errors.clientExpectations.message}
+              </p>
             )}
           </div>
 

@@ -499,7 +499,7 @@ export default function WorkHistoryPage() {
               key={editEntry._id}
               entry={editEntry}
               onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: QK.workEntries });
+                queryClient.invalidateQueries({ queryKey: QK.workEntries() });
                 setEditEntry(null);
               }}
             />

@@ -556,7 +556,7 @@ function CreateAssignmentForm({
               control={control}
               render={({ field }) => (
                 <DatePickerField
-                  value={field.value || undefined}
+                  value={field.value ?? ''}
                   onChange={field.onChange}
                 />
               )}
@@ -573,7 +573,7 @@ function CreateAssignmentForm({
               control={control}
               render={({ field }) => (
                 <DatePickerField
-                  value={field.value || undefined}
+                  value={field.value ?? ''}
                   onChange={field.onChange}
                 />
               )}
@@ -761,7 +761,7 @@ function EditAssignmentForm({
             render={({ field }) => (
               <div className="flex items-center gap-2">
                 <DatePickerField
-                  value={field.value || undefined}
+                  value={field.value ?? ''}
                   onChange={field.onChange}
                   className="flex-1"
                 />

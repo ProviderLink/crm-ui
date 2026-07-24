@@ -176,7 +176,7 @@ export default function EodReportsPage() {
               header: 'Start',
               size: 45,
               cell: ({ getValue }: any) => (
-                <span className="text-sm">{getValue<string>()}</span>
+                <span className="text-sm">{String(getValue() ?? '—')}</span>
               ),
             },
             {
@@ -184,7 +184,7 @@ export default function EodReportsPage() {
               header: 'End',
               size: 45,
               cell: ({ getValue }: any) => (
-                <span className="text-sm">{getValue<string>()}</span>
+                <span className="text-sm">{String(getValue() ?? '—')}</span>
               ),
             },
           ]),

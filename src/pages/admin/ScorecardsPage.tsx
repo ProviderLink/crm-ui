@@ -235,7 +235,6 @@ export default function ScorecardsPage() {
 
           <ConfirmDialog
             open={confirmOpen}
-            onOpenChange={setConfirmOpen}
             title="Generate Scorecards"
             description={
               vaId
@@ -243,7 +242,7 @@ export default function ScorecardsPage() {
                 : 'Generate scorecards for ALL VAs for the current week. This may take a moment.'
             }
             onConfirm={handleGenerate}
-            loading={generating}
+            onCancel={() => setConfirmOpen(false)}
           />
         </div>
       </div>

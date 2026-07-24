@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { TimePickerField } from '@/components/ui/time-picker-field';
-import { QK } from '@/hooks/queries';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { nowTimeString, todayString } from '@/lib/time';
 import { createWorkEntry } from '@/services/work-entries.service';

@@ -10,13 +10,13 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { TimePickerField } from '@/components/ui/time-picker-field';
-import { QK, useEodSubmissionsQuery } from '@/hooks/queries';
+import { useEodSubmissionsQuery } from '@/hooks/queries';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { calcHours, todayString } from '@/lib/time';
 import { createEodSubmission } from '@/services/eod-submissions.service';
 import { zodResolver } from '@hookform/resolvers/zod';
-import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import {
   AlertCircle,
   Briefcase,
@@ -56,7 +56,9 @@ export default function EodSubmitPage() {
     isError: assignmentsError,
   } = useMyAssignments();
   const queryClient = useQueryClient();
-  const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery({ date: today });
+  const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery({
+    date: today,
+  });
   const submittedKeys = new Set(eods.map(e => `${e.assignmentId}::${e.date}`));
   const [error, setError] = useState<string | null>(null);
 
@@ -95,7 +97,8 @@ export default function EodSubmitPage() {
       navigate('/va/eod/history');
     } catch (err) {
       const msg = axios.isAxiosError(err)
-        ? (err.response?.data?.error?.message ?? 'Failed to submit EOD. Please try again.')
+        ? (err.response?.data?.error?.message ??
+          'Failed to submit EOD. Please try again.')
         : 'Failed to submit EOD. Please try again.';
       setError(msg);
     }

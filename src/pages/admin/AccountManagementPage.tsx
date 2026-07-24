@@ -127,7 +127,7 @@ function ActiveBadge({ active }: { active: boolean }) {
   );
 }
 
-function DetailRow({
+function _DetailRow({
   icon,
   label,
   value,
@@ -189,7 +189,7 @@ const healthLabel: Record<string, string> = {
   red: 'Critical',
 };
 
-function buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
+function _buildUserColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
   return [
     {
       accessorKey: 'name',
@@ -1724,7 +1724,6 @@ export default function AccountManagementPage() {
     };
   }
 
-  const vaRows: UserRow[] = vaUsers.map(toRow);
   const adminRows: UserRow[] = adminUsers.map(toRow);
 
   const { data: vaProfiles = [] } = useQuery({
