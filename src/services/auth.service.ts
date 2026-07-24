@@ -13,6 +13,7 @@ interface BackendUser {
   firstName: string;
   lastName: string;
   roles: UserRole[];
+  clientRef?: string | null;
 }
 
 export interface LoginResponse {
@@ -26,6 +27,7 @@ function mapUser(u: BackendUser): IUser {
     email: u.email,
     name: `${u.firstName} ${u.lastName}`,
     role: u.roles[0] ?? 'va', // CRM users have a single role; fallback safe
+    clientRef: u.clientRef ?? null,
   };
 }
 

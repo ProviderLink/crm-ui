@@ -153,6 +153,28 @@ export default function EodReportsPage() {
           <span className="text-sm">{getValue<string>()}</span>
         ),
       },
+      {
+        accessorKey: 'pendingTasks',
+        header: 'Pending Tasks',
+        size: 200,
+        enableSorting: false,
+        cell: ({ getValue }) => (
+          <span className="text-sm text-muted-foreground">
+            {getValue<string>() || '—'}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'blockers',
+        header: 'Blockers',
+        size: 180,
+        enableSorting: false,
+        cell: ({ getValue }) => (
+          <span className="text-sm text-muted-foreground">
+            {getValue<string>() || '—'}
+          </span>
+        ),
+      },
     ],
     [vaMap, clientMap, assignmentMap]
   );

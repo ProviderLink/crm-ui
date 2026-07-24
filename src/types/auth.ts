@@ -5,6 +5,7 @@ export interface IUser {
   email: string;
   name: string;
   role: UserRole;
+  clientRef?: string | null;
 }
 
 export interface AuthState {

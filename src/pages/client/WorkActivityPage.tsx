@@ -13,13 +13,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useAllAssignmentsQuery,
-  useAtsVAsQuery,
   useEodSubmissionsQuery,
+  useHiredVasForClientQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
+import { useAppSelector } from '@/hooks/store';
 import { formatMinutes } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
-import type { IAtsCandidate } from '@/types/ats';
 import type { IEodSubmission } from '@/types/eod-submission';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
@@ -194,28 +194,40 @@ function buildEodColumns(
         </span>
       ),
     },
+    {
+      accessorKey: 'blockers',
+      header: 'Blockers',
+      size: 180,
+      enableSorting: false,
+      cell: ({ getValue }) => (
+        <span className="text-sm text-muted-foreground">
+          {getValue<string>() || '—'}
+        </span>
+      ),
+    },
   ];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function WorkActivityPage() {
+  const user = useAppSelector(s => s.auth.user);
   const { data: assignments = [], isLoading: loadingAssignments } =
     useAllAssignmentsQuery();
   const { data: allEntries = [], isLoading: loadingEntries } =
     useWorkEntriesQuery();
   const { data: allEods = [], isLoading: loadingEods } =
     useEodSubmissionsQuery();
-  const { data: atsVAs = [] } = useAtsVAsQuery();
+  const { data: hiredVAs = [] } = useHiredVasForClientQuery(
+    user?.clientRef ?? undefined
+  );
   const isLoading = loadingAssignments || loadingEntries || loadingEods;
 
   const vaMap = useMemo(() => {
     const m = new Map<string, string>();
-    atsVAs.forEach((v: IAtsCandidate) =>
-      m.set(v.id, `${v.firstName} ${v.lastName}`)
-    );
+    hiredVAs.forEach(v => m.set(v.id, `${v.firstName} ${v.lastName}`));
     return m;
-  }, [atsVAs]);
+  }, [hiredVAs]);
 
   const assignmentMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -232,15 +244,8 @@ export default function WorkActivityPage() {
     [vaMap, assignmentMap]
   );
 
-  const [dateFrom, setDateFrom] = useState(
-    () =>
-      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0]
-  );
-  const [dateTo, setDateTo] = useState(
-    () => new Date().toISOString().split('T')[0]
-  );
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [assignmentFilter, setAssignmentFilter] = useState('all');
 
   const filteredEntries = useMemo(
