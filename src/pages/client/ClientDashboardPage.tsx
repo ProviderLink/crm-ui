@@ -527,7 +527,14 @@ export default function ClientDashboardPage() {
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground line-clamp-1">
-                            {eod.summaryOfWork}
+                            {eod.workEntries && eod.workEntries.length > 0
+                              ? eod.workEntries
+                                  .map(
+                                    e =>
+                                      `${e.task}${e.quantity ? ` ×${e.quantity}` : ''}`
+                                  )
+                                  .join(' · ')
+                              : eod.summaryOfWork || '—'}
                           </p>
                           {eod.pendingTasks && (
                             <p className="text-xs text-muted-foreground/70 line-clamp-1">

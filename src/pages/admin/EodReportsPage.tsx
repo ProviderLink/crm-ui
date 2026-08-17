@@ -1,8 +1,7 @@
-import { DatePickerField } from '@/components/ui/date-picker-field';
-import type { ColumnDef } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
-
+import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
 import { DataTable } from '@/components/shared/DataTable';
+import { Button } from '@/components/ui/button';
+import { DatePickerField } from '@/components/ui/date-picker-field';
 import {
   Select,
   SelectContent,
@@ -19,7 +18,11 @@ import {
   useEodSubmissionsQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import { exportReport, type ExportFormat } from '@/services/reports.service';
 import type { IEodSubmission } from '@/types/eod-submission';
+import type { ColumnDef } from '@tanstack/react-table';
+import { DownloadIcon, EyeIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 export default function EodReportsPage() {
   const user = useAppSelector(s => s.auth.user);
@@ -36,6 +39,30 @@ export default function EodReportsPage() {
   );
   const [vaFilter, setVaFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
+  const [selectedEodId, setSelectedEodId] = useState<string | null>(null);
+  const [selectedEodFallback, setSelectedEodFallback] =
+    useState<IEodSubmission | null>(null);
+
+  // Export uses the same date range as the table filters above, so the
+  // header only shows one date range.
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('csv');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const exportRangeValid =
+    dateFrom !== '' && dateTo !== '' && dateFrom <= dateTo;
+
+  async function handleExport() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      await exportReport('eod', dateFrom, dateTo, exportFormat);
+    } catch {
+      setExportError('Export failed. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   // AM scoping: only see EODs for their own assignments
   const { data: amAssignments = [] } = useAllAssignmentsQuery(
@@ -175,6 +202,10 @@ export default function EodReportsPage() {
               accessorKey: 'shiftStart',
               header: 'Start',
               size: 45,
+              meta: {
+                thClassName: 'hidden @3xl/main:table-cell',
+                cellClassName: 'hidden @3xl/main:table-cell',
+              },
               cell: ({ getValue }: any) => (
                 <span className="text-sm">{String(getValue() ?? '—')}</span>
               ),
@@ -183,6 +214,10 @@ export default function EodReportsPage() {
               accessorKey: 'shiftEnd',
               header: 'End',
               size: 45,
+              meta: {
+                thClassName: 'hidden @3xl/main:table-cell',
+                cellClassName: 'hidden @3xl/main:table-cell',
+              },
               cell: ({ getValue }: any) => (
                 <span className="text-sm">{String(getValue() ?? '—')}</span>
               ),
@@ -192,7 +227,11 @@ export default function EodReportsPage() {
         accessorKey: 'hoursWorked',
         header: 'Hours',
         size: 30,
-        meta: { headerClassName: 'text-center', cellClassName: 'text-center' },
+        meta: {
+          headerClassName: 'text-center',
+          cellClassName: 'text-center hidden @xl/main:table-cell',
+          thClassName: 'hidden @xl/main:table-cell',
+        },
         cell: ({ getValue }) => (
           <span className="text-sm font-medium text-foreground">
             {getValue<number>()}h
@@ -207,30 +246,40 @@ export default function EodReportsPage() {
           fill: true,
           cellClassName: 'bg-white/[0.04] border-l border-white/[0.06]',
         },
-        cell: ({ getValue }) => (
-          <span className="text-sm">{getValue<string>()}</span>
-        ),
+        cell: ({ row }) => {
+          const entries = row.original.workEntries;
+          if (entries && entries.length > 0) {
+            return (
+              <span className="text-sm">
+                {entries
+                  .map(e => `${e.task}${e.quantity ? ` ×${e.quantity}` : ''}`)
+                  .join(' · ')}
+              </span>
+            );
+          }
+          return (
+            <span className="text-sm">{row.original.summaryOfWork || '—'}</span>
+          );
+        },
       },
       {
-        accessorKey: 'pendingTasks',
-        header: 'Pending Tasks',
-        size: 200,
+        id: 'actions',
+        header: '',
+        size: 50,
         enableSorting: false,
-        cell: ({ getValue }) => (
-          <span className="text-sm text-muted-foreground">
-            {getValue<string>() || '—'}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'blockers',
-        header: 'Blockers',
-        size: 180,
-        enableSorting: false,
-        cell: ({ getValue }) => (
-          <span className="text-sm text-muted-foreground">
-            {getValue<string>() || '—'}
-          </span>
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+            title="View Details"
+            onClick={() => {
+              setSelectedEodId(row.original._id);
+              setSelectedEodFallback(row.original);
+            }}
+          >
+            <EyeIcon className="size-3.5" />
+          </Button>
         ),
       },
     ],
@@ -314,10 +363,41 @@ export default function EodReportsPage() {
                 Clear
               </button>
             )}
+
+            <Select
+              value={exportFormat}
+              onValueChange={v => setExportFormat(v as ExportFormat)}
+            >
+              <SelectTrigger className="rounded-xl border-input h-8 text-sm w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="csv">CSV</SelectItem>
+                <SelectItem value="xlsx">Excel</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={handleExport}
+              disabled={exporting || !exportRangeValid}
+              className="h-8 rounded-xl text-sm gap-2"
+            >
+              <DownloadIcon className="size-3.5" />
+              {exporting ? 'Exporting…' : 'Export EODs'}
+            </Button>
+
             <span className="text-xs text-muted-foreground ml-auto">
               {eods.length} records
             </span>
           </div>
+
+          {exportError && (
+            <p className="text-xs text-destructive mb-4">{exportError}</p>
+          )}
+          {!exportRangeValid && dateFrom !== '' && dateTo !== '' && (
+            <p className="text-xs text-destructive mb-4">
+              From date must be before or equal to To date
+            </p>
+          )}
 
           <DataTable
             columns={columns}
@@ -328,6 +408,17 @@ export default function EodReportsPage() {
           />
         </div>
       </div>
+
+      <EodDetailSheet
+        eodId={selectedEodId}
+        fallback={selectedEodFallback}
+        onOpenChange={open => {
+          if (!open) {
+            setSelectedEodId(null);
+            setSelectedEodFallback(null);
+          }
+        }}
+      />
     </div>
   );
 }

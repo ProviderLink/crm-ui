@@ -42,3 +42,10 @@ export async function createEodSubmission(
 export async function deleteEodSubmission(id: string): Promise<void> {
   await api.delete(`/crm/eod-submissions/${id}`);
 }
+
+export async function getEodSubmission(id: string): Promise<IEodSubmission> {
+  const { data } = await api.get<{ data: IEodSubmission }>(
+    `/crm/eod-submissions/${id}`
+  );
+  return data.data;
+}

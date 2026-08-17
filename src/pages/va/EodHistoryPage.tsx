@@ -77,9 +77,21 @@ function buildColumns(
       accessorKey: 'summaryOfWork',
       header: 'Summary',
       enableSorting: false,
-      cell: ({ getValue }) => (
-        <span className="text-sm">{getValue<string>()}</span>
-      ),
+      cell: ({ row }) => {
+        const entries = row.original.workEntries;
+        if (entries && entries.length > 0) {
+          return (
+            <span className="text-sm">
+              {entries
+                .map(e => `${e.task}${e.quantity ? ` ×${e.quantity}` : ''}`)
+                .join(' · ')}
+            </span>
+          );
+        }
+        return (
+          <span className="text-sm">{row.original.summaryOfWork || '—'}</span>
+        );
+      },
     },
     {
       accessorKey: 'pendingTasks',

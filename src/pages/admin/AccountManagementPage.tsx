@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { NotesThread } from '@/components/notes/NotesThread';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -1028,6 +1029,9 @@ function ClientProfileSection({ clientId }: { clientId: string }) {
           )}
         </div>
       )}
+
+      {/* Admin internal notes thread (Requirement 4) — admin-only */}
+      <NotesThread subjectType="client" subjectId={clientId} />
     </div>
   );
 }
@@ -1424,6 +1428,9 @@ function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
           )}
         </>
       ) : null}
+
+      {/* Admin internal notes thread (Requirement 4) — admin-only */}
+      <NotesThread subjectType="va" subjectId={vaId} />
 
       {/* Client Assignments */}
       <div className="flex items-center justify-between pt-1">

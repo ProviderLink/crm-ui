@@ -15,7 +15,10 @@ import {
   getHiredVasForClient,
   getProvisionedClients,
 } from '@/services/client-accounts.service';
-import { getEodSubmissions } from '@/services/eod-submissions.service';
+import {
+  getEodSubmission,
+  getEodSubmissions,
+} from '@/services/eod-submissions.service';
 import { getAtsJobs } from '@/services/jobs.service';
 import {
   getReview,
@@ -59,6 +62,7 @@ export const QK = {
   scorecards: (vaId?: string) => ['scorecards', vaId ?? 'all'] as const,
   hiredVasForClient: (clientId?: string) =>
     ['hired-vas', clientId ?? 'none'] as const,
+  eodSubmission: (id: string) => ['eod-submission', id] as const,
   performanceReviews: (filters?: IReviewFilters) =>
     ['performance-reviews', filters ?? {}] as const,
   performanceReview: (id: string) => ['performance-reviews', id] as const,
@@ -90,6 +94,14 @@ export function useEodSubmissionsQuery(filters?: {
     queryKey: [...QK.eodSubmissions(uid), filters ?? {}],
     queryFn: () => getEodSubmissions(filters),
     enabled: !!uid,
+  });
+}
+
+export function useEodSubmissionQuery(id?: string) {
+  return useQuery({
+    queryKey: QK.eodSubmission(id ?? 'none'),
+    queryFn: () => getEodSubmission(id!),
+    enabled: !!id,
   });
 }
 

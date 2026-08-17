@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -14,6 +15,12 @@ import { useEodSubmissionsQuery } from '@/hooks/queries';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { calcHours, todayString } from '@/lib/time';
 import { createEodSubmission } from '@/services/eod-submissions.service';
+import {
+  COMMUNICATED_WITH_CLIENT_LABELS,
+  COMMUNICATED_WITH_CLIENT_OPTIONS,
+  EOD_WORK_STATUSES,
+  type EodWorkStatus,
+} from '@/types/eod-submission';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -24,28 +31,59 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock,
+  MessageSquareIcon,
+  PlusIcon,
   StickyNote,
+  Trash2Icon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+
+const workEntrySchema = z.object({
+  task: z.string().min(1, 'Task is required'),
+  description: z.string().min(1, 'Description is required'),
+  quantity: z
+    .number({ message: 'Quantity must be a number' })
+    .min(0, 'Quantity must be 0 or more'),
+  status: z.enum(['completed', 'in_progress', 'pending']),
+  timeSpent: z
+    .number({ message: 'Time must be a number' })
+    .min(0, 'Time must be 0 or more'),
+});
 
 const schema = z.object({
   assignmentId: z.string().min(1, 'Assignment is required'),
   date: z.string().min(1, 'Date is required'),
   shiftStart: z.string().min(1, 'Shift start is required'),
   shiftEnd: z.string().min(1, 'Shift end is required'),
-  summaryOfWork: z
-    .string()
-    .min(10, 'Please provide a summary (min 10 characters)'),
+  workEntries: z.array(workEntrySchema).min(1, 'Add at least one work entry'),
   pendingTasks: z.string().min(1, 'List pending tasks or write "None"'),
   blockers: z.string().min(1, 'Describe blockers or write "None"'),
+  communicatedWithClient: z.enum(['yes', 'no', 'other'], {
+    message: 'Please indicate whether you communicated with the client today',
+  }),
+  clientNote: z.string().optional(),
   notes: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
+
+const STATUS_LABELS: Record<EodWorkStatus, string> = {
+  completed: 'Completed',
+  in_progress: 'In Progress',
+  pending: 'Pending Client Input',
+};
+
+const DEFAULT_WORK_ENTRY = {
+  task: '',
+  description: '',
+  quantity: 0,
+  status: 'completed' as EodWorkStatus,
+  timeSpent: 0,
+};
 
 export default function EodSubmitPage() {
   const navigate = useNavigate();
@@ -71,8 +109,20 @@ export default function EodSubmitPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { date: today, shiftStart: '', shiftEnd: '' },
+    defaultValues: {
+      communicatedWithClient: undefined,
+      date: today,
+      shiftStart: '',
+      shiftEnd: '',
+      workEntries: [DEFAULT_WORK_ENTRY],
+    },
   });
+
+  const {
+    fields: workFields,
+    append: appendWork,
+    remove: removeWork,
+  } = useFieldArray({ control, name: 'workEntries' });
 
   const selectedDate = watch('date') ?? today;
   const selectedAssignmentId = watch('assignmentId') ?? '';
@@ -261,20 +311,134 @@ export default function EodSubmitPage() {
           )}
         </Section>
 
-        {/* ── Section: Work Summary ── */}
-        <Section icon={<ClipboardList size={14} />} title="Work Summary">
-          <Field
-            label="What did you accomplish today?"
-            error={errors.summaryOfWork?.message}
-            hint="Include key tasks, outcomes, and any notable progress made."
+        {/* ── Section: Work Completed ── */}
+        <Section icon={<ClipboardList size={14} />} title="Work Completed">
+          {errors.workEntries?.message && (
+            <p className="text-xs text-destructive">
+              {errors.workEntries.message}
+            </p>
+          )}
+
+          <div className="space-y-3">
+            {workFields.map((field, idx) => (
+              <div
+                key={field.id}
+                className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Work {idx + 1}
+                  </span>
+                  {workFields.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeWork(idx)}
+                      title="Remove this work entry"
+                    >
+                      <Trash2Icon className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+
+                <Field
+                  label="Task / Work"
+                  error={errors.workEntries?.[idx]?.task?.message}
+                >
+                  <Input
+                    placeholder="e.g. Patient calls"
+                    className="rounded-xl border-input h-10"
+                    {...register(`workEntries.${idx}.task`)}
+                  />
+                </Field>
+
+                <Field
+                  label="Description"
+                  error={errors.workEntries?.[idx]?.description?.message}
+                >
+                  <Textarea
+                    placeholder="Brief description of what was done"
+                    className="rounded-xl border-input resize-none"
+                    rows={2}
+                    {...register(`workEntries.${idx}.description`)}
+                  />
+                </Field>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <Field
+                    label="Quantity"
+                    error={errors.workEntries?.[idx]?.quantity?.message}
+                  >
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="0"
+                      className="rounded-xl border-input h-10"
+                      {...register(`workEntries.${idx}.quantity`, {
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+
+                  <Field
+                    label="Status"
+                    error={errors.workEntries?.[idx]?.status?.message}
+                  >
+                    <Controller
+                      control={control}
+                      name={`workEntries.${idx}.status`}
+                      render={({ field: statusField }) => (
+                        <Select
+                          value={statusField.value}
+                          onValueChange={statusField.onChange}
+                        >
+                          <SelectTrigger className="rounded-xl border-input h-10">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {EOD_WORK_STATUSES.map(s => (
+                              <SelectItem key={s} value={s}>
+                                {STATUS_LABELS[s]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </Field>
+
+                  <Field
+                    label="Time Spent (min)"
+                    error={errors.workEntries?.[idx]?.timeSpent?.message}
+                  >
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="0"
+                      className="rounded-xl border-input h-10"
+                      {...register(`workEntries.${idx}.timeSpent`, {
+                        valueAsNumber: true,
+                      })}
+                    />
+                  </Field>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full rounded-xl h-10 gap-2"
+            onClick={() => appendWork({ ...DEFAULT_WORK_ENTRY })}
           >
-            <Textarea
-              placeholder="e.g. Completed appointment scheduling for 15 patients, processed 32 inbox emails, resolved 2 urgent pre-auth requests…"
-              className="rounded-xl border-input resize-none"
-              rows={4}
-              {...register('summaryOfWork')}
-            />
-          </Field>
+            <PlusIcon className="size-4" />
+            Add Work
+          </Button>
 
           <Field
             label="Pending Tasks"
@@ -299,6 +463,52 @@ export default function EodSubmitPage() {
               className="rounded-xl border-input resize-none"
               rows={2}
               {...register('blockers')}
+            />
+          </Field>
+        </Section>
+
+        {/* ── Section: Client Communication ── */}
+        <Section
+          icon={<MessageSquareIcon size={14} />}
+          title="Client Communication"
+        >
+          <Field
+            label="Did you communicate with the client today?"
+            error={errors.communicatedWithClient?.message}
+          >
+            <Controller
+              control={control}
+              name="communicatedWithClient"
+              render={({ field }) => (
+                <Select
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                >
+                  <SelectTrigger className="rounded-xl border-input h-10">
+                    <SelectValue placeholder="Select an answer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COMMUNICATED_WITH_CLIENT_OPTIONS.map(opt => (
+                      <SelectItem key={opt} value={opt}>
+                        {COMMUNICATED_WITH_CLIENT_LABELS[opt]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+
+          <Field
+            label="Additional notes or updates for the client"
+            error={errors.clientNote?.message}
+            hint="Optional — visible to the client in the EOD export."
+          >
+            <Textarea
+              placeholder="Any updates the client should know about today…"
+              className="rounded-xl border-input resize-none"
+              rows={3}
+              {...register('clientNote')}
             />
           </Field>
         </Section>
