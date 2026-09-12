@@ -1,5 +1,9 @@
 import api from '@/lib/api';
-import type { CreateEodPayload, IEodSubmission } from '@/types/eod-submission';
+import type {
+  CreateEodPayload,
+  EodContext,
+  IEodSubmission,
+} from '@/types/eod-submission';
 
 interface EodQuery {
   assignmentId?: string;
@@ -25,6 +29,19 @@ export async function getEodSubmissions(
   params.set('limit', '1000');
   const { data } = await api.get<{ data: IEodSubmission[] }>(
     `/crm/eod-submissions?${params.toString()}`
+  );
+  return data.data;
+}
+
+/**
+ * The company's current business day.
+ *
+ * VAs work from every timezone, so the submit form must not trust the device
+ * clock: the backend owns "today", defined by the company timezone.
+ */
+export async function getEodContext(): Promise<EodContext> {
+  const { data } = await api.get<{ data: EodContext }>(
+    '/crm/eod-submissions/context'
   );
   return data.data;
 }

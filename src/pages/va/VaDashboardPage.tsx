@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  useEodContextQuery,
   useEodSubmissionsQuery,
   useMyAllAssignmentsQuery,
   useScorecardsQuery,
@@ -43,9 +44,15 @@ function weekStartStr() {
 export default function VaDashboardPage() {
   const today = todayString();
   const weekStart = weekStartStr();
+  // EOD compliance is judged on the company's business day, not the device's.
+  const { data: eodContext } = useEodContextQuery();
+  const companyToday = eodContext?.dateKey ?? today;
 
   const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery();
-  const { data: todayEods = [], isLoading: loadingEods } = useEodSubmissionsQuery({ date: today });
+  const { data: todayEods = [], isLoading: loadingEods } =
+    useEodSubmissionsQuery({
+      date: companyToday,
+    });
   const { data: scorecards = [], isLoading: loadingScores } =
     useScorecardsQuery();
   const { data: allAssignments = [], isLoading: loadingAssignments } =
@@ -196,8 +203,12 @@ export default function VaDashboardPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Role</p>
-                        <CardTitle className="text-base leading-snug">{a.serviceType ?? 'VA Service'}</CardTitle>
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
+                          Role
+                        </p>
+                        <CardTitle className="text-base leading-snug">
+                          {a.serviceType ?? 'VA Service'}
+                        </CardTitle>
                       </div>
                       <Badge
                         variant="outline"
@@ -209,14 +220,20 @@ export default function VaDashboardPage() {
                               : 'border-muted text-muted-foreground shrink-0'
                         }
                       >
-                        {a.status === 'active' ? 'Active' : a.status === 'on_hold' ? 'On Hold' : 'Ended'}
+                        {a.status === 'active'
+                          ? 'Active'
+                          : a.status === 'on_hold'
+                            ? 'On Hold'
+                            : 'Ended'}
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-3 pb-4 pt-0">
                     {a.companyName && (
                       <div>
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Client</p>
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
+                          Client
+                        </p>
                         <span className="flex items-center gap-1.5 text-sm text-foreground">
                           <BriefcaseIcon className="size-3 shrink-0 text-muted-foreground" />
                           {a.companyName}
@@ -224,19 +241,33 @@ export default function VaDashboardPage() {
                       </div>
                     )}
                     <div>
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Duration</p>
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
+                        Duration
+                      </p>
                       <span className="flex items-center gap-1.5 text-sm text-foreground">
                         <CalendarIcon className="size-3 shrink-0 text-muted-foreground" />
-                        {new Date(a.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {new Date(a.startDate).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
                         <span className="text-muted-foreground">→</span>
-                        {a.endDate
-                          ? new Date(a.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                          : <span className="text-green-400">Present</span>}
+                        {a.endDate ? (
+                          new Date(a.endDate).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        ) : (
+                          <span className="text-green-400">Present</span>
+                        )}
                       </span>
                     </div>
                     {(a.accountManagerName || a.accountManagerEmail) && (
                       <div>
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Account Manager</p>
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
+                          Account Manager
+                        </p>
                         {a.accountManagerName && (
                           <span className="flex items-center gap-1.5 text-sm text-foreground">
                             <UserIcon className="size-3 shrink-0 text-muted-foreground" />

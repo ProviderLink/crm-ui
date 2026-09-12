@@ -22,37 +22,28 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  useEodContextQuery,
   useEodSubmissionsQuery,
   useHiredVasForClientQuery,
   useMyAllAssignmentsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import {
+  addDaysToDateKey,
+  formatDateKeyLong,
+  formatDateKeyShort,
+  todayString,
+  weekdayOfDateKey,
+} from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  return formatDateKeyLong(iso);
 }
 
-function todayStr() {
-  return new Date().toISOString().split('T')[0];
-}
-
-function weekStartStr() {
-  const d = new Date();
-  const dow = d.getDay();
-  d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
-  return d.toISOString().split('T')[0];
-}
-
-function daysAgoStr(n: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().split('T')[0];
+function daysAgoStr(dateKey: string, n: number) {
+  return addDaysToDateKey(dateKey, -n);
 }
 
 function tenureLabel(startDate: string) {
@@ -100,9 +91,15 @@ const assignmentBadge: Record<
 
 export default function ClientDashboardPage() {
   const user = useAppSelector(s => s.auth.user);
-  const today = todayStr();
-  const weekStart = weekStartStr();
-  const sevenDaysAgo = daysAgoStr(7);
+  // Compliance is measured against the company business day so VAs in any
+  // timezone are judged on the same calendar.
+  const { data: eodContext } = useEodContextQuery();
+  const today = eodContext?.dateKey ?? todayString();
+  const weekStart = (() => {
+    const dow = weekdayOfDateKey(today);
+    return addDaysToDateKey(today, -(dow === 0 ? 6 : dow - 1));
+  })();
+  const sevenDaysAgo = addDaysToDateKey(today, -7);
 
   const { data: allAssignments = [], isLoading: loadingAssignments } =
     useMyAllAssignmentsQuery();
@@ -134,9 +131,9 @@ export default function ClientDashboardPage() {
     recentEods.map(e => `${e.candidateId}::${e.date}`)
   );
   const workingDaysLast7 = Array.from({ length: 7 }, (_, i) =>
-    daysAgoStr(i)
+    daysAgoStr(today, i)
   ).filter(d => {
-    const day = new Date(d).getDay();
+    const day = weekdayOfDateKey(d);
     return day >= 1 && day <= 5 && d <= today;
   });
   const expectedEods = activeCandidateIds.size * workingDaysLast7.length;
@@ -518,10 +515,7 @@ export default function ClientDashboardPage() {
                               {displayName}
                             </span>
                             <span className="text-[11px] text-muted-foreground font-mono shrink-0">
-                              {new Date(eod.date).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                              })}
+                              {formatDateKeyShort(eod.date)}
                               {' · '}
                               {eod.hoursWorked}h
                             </span>

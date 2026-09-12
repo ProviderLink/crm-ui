@@ -16,6 +16,7 @@ import {
   getProvisionedClients,
 } from '@/services/client-accounts.service';
 import {
+  getEodContext,
   getEodSubmission,
   getEodSubmissions,
 } from '@/services/eod-submissions.service';
@@ -63,6 +64,7 @@ export const QK = {
   hiredVasForClient: (clientId?: string) =>
     ['hired-vas', clientId ?? 'none'] as const,
   eodSubmission: (id: string) => ['eod-submission', id] as const,
+  eodContext: ['eod-context'] as const,
   performanceReviews: (filters?: IReviewFilters) =>
     ['performance-reviews', filters ?? {}] as const,
   performanceReview: (id: string) => ['performance-reviews', id] as const,
@@ -102,6 +104,22 @@ export function useEodSubmissionQuery(id?: string) {
     queryKey: QK.eodSubmission(id ?? 'none'),
     queryFn: () => getEodSubmission(id!),
     enabled: !!id,
+  });
+}
+
+/**
+ * The company's current business day, used by the EOD submit form.
+ *
+ * Kept stale for the duration of a session: the key only changes at the
+ * company's midnight, and the submit flow refetches after a successful POST.
+ */
+export function useEodContextQuery() {
+  const uid = useUserId();
+  return useQuery({
+    queryKey: QK.eodContext,
+    queryFn: getEodContext,
+    enabled: !!uid,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

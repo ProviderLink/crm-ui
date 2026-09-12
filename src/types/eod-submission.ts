@@ -38,9 +38,16 @@ export interface IEodSubmission {
   clientId: string;
   candidateName?: string;
   companyName?: string;
-  date: string; // 'YYYY-MM-DD'
-  shiftStart: string; // 'HH:MM'
-  shiftEnd: string; // 'HH:MM'
+  /** Company business day, `YYYY-MM-DD`. */
+  date: string;
+  /** Same value as `date`; explicit company-day key. */
+  dateKey?: string;
+  /** IANA timezone that defined the business day (audit field). */
+  dateTimezone?: string | null;
+  /** Company-local wall clock, `HH:MM`. */
+  shiftStart: string;
+  shiftEnd: string;
+  /** Derived server-side from the shift times. */
   hoursWorked: number;
   summaryOfWork?: string | null; // legacy free-text
   workEntries?: IEodWorkEntry[]; // structured per-work entries
@@ -54,10 +61,17 @@ export interface IEodSubmission {
 
 export interface CreateEodPayload {
   assignmentId: string;
-  date: string;
+  /**
+   * Company business day, `YYYY-MM-DD`.
+   *
+   * Omit this and the server files the EOD against the company's current day,
+   * which is the correct behaviour for VAs working from another timezone.
+   */
+  date?: string;
   shiftStart: string;
   shiftEnd: string;
-  hoursWorked: number;
+  /** Optional — the server recomputes hours from the shift times. */
+  hoursWorked?: number;
   summaryOfWork?: string | null;
   workEntries?: IEodWorkEntry[];
   pendingTasks: string;
@@ -65,4 +79,10 @@ export interface CreateEodPayload {
   notes?: string;
   communicatedWithClient?: CommunicatedWithClient | null;
   clientNote?: string | null;
+}
+
+/** Which company business day the EOD form should file against. */
+export interface EodContext {
+  dateKey: string;
+  timezone: string;
 }

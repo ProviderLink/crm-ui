@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { TimePickerField } from '@/components/ui/time-picker-field';
-import { useEodSubmissionsQuery } from '@/hooks/queries';
+import { useEodContextQuery, useEodSubmissionsQuery } from '@/hooks/queries';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { calcHours, todayString } from '@/lib/time';
 import { createEodSubmission } from '@/services/eod-submissions.service';
@@ -87,7 +87,15 @@ const DEFAULT_WORK_ENTRY = {
 
 export default function EodSubmitPage() {
   const navigate = useNavigate();
-  const today = todayString();
+  /**
+   * VAs work from every timezone but report against the **company's** business
+   * day, so "today" comes from the backend (company timezone) rather than the
+   * device clock. The device value is only a placeholder until it resolves.
+   */
+  const deviceToday = todayString();
+  const { data: eodContext, isLoading: loadingContext } = useEodContextQuery();
+  const today = eodContext?.dateKey ?? deviceToday;
+  const companyTimezone = eodContext?.timezone ?? null;
   const {
     assignments,
     isLoading: loadingAssignments,
@@ -105,6 +113,7 @@ export default function EodSubmitPage() {
     handleSubmit,
     control,
     setValue,
+    getValues,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
@@ -128,10 +137,21 @@ export default function EodSubmitPage() {
   const selectedAssignmentId = watch('assignmentId') ?? '';
   const shiftStart = watch('shiftStart') ?? '';
   const shiftEnd = watch('shiftEnd') ?? '';
+  // Preview only — the server recomputes this from the shift times.
   const hoursWorked = calcHours(shiftStart, shiftEnd);
   const alreadySubmitted = selectedAssignmentId
     ? submittedKeys.has(`${selectedAssignmentId}::${selectedDate}`)
     : false;
+
+  // Correct the placeholder date once the company business day is known, but
+  // only while the VA has not picked a date themselves.
+  useEffect(() => {
+    if (!eodContext) return;
+    const current = getValues('date');
+    if (!current || current === deviceToday) {
+      setValue('date', eodContext.dateKey, { shouldValidate: true });
+    }
+  }, [eodContext, deviceToday, getValues, setValue]);
 
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
@@ -142,8 +162,11 @@ export default function EodSubmitPage() {
   async function onSubmit(data: FormData) {
     setError(null);
     try {
-      await createEodSubmission({ ...data, hoursWorked });
+      // `date` is sent as the company business day; `hoursWorked` is derived
+      // server-side so overnight shifts are not under-counted.
+      await createEodSubmission(data);
       queryClient.invalidateQueries({ queryKey: ['eod-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['eod-context'] });
       navigate('/va/eod/history');
     } catch (err) {
       const msg = axios.isAxiosError(err)
@@ -154,7 +177,8 @@ export default function EodSubmitPage() {
     }
   }
 
-  if (loadingAssignments || checkingEod) return <PageSkeleton />;
+  if (loadingAssignments || checkingEod || loadingContext)
+    return <PageSkeleton />;
 
   if (assignmentsError) {
     return (
@@ -260,7 +284,15 @@ export default function EodSubmitPage() {
         {/* ── Section: Shift ── */}
         <Section icon={<CalendarDays size={14} />} title="Shift">
           <div className="grid grid-cols-3 gap-4">
-            <Field label="Date" error={errors.date?.message}>
+            <Field
+              label="Date"
+              error={errors.date?.message}
+              hint={
+                companyTimezone
+                  ? `Your report is filed against the company's business day (${companyTimezone}), which may differ from your local date. Late submissions for an earlier day are still accepted.`
+                  : undefined
+              }
+            >
               <Controller
                 name="date"
                 control={control}
@@ -268,7 +300,7 @@ export default function EodSubmitPage() {
                   <DatePickerField
                     value={field.value}
                     onChange={field.onChange}
-                    toDate={new Date()}
+                    toDate={new Date(`${today}T23:59:59`)}
                   />
                 )}
               />

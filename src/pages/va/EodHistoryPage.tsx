@@ -4,16 +4,18 @@ import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import {
   QK,
+  useEodContextQuery,
   useEodSubmissionsQuery,
   useMyAssignmentsQuery,
 } from '@/hooks/queries';
+import { addDaysToDateKey } from '@/lib/time';
 import { deleteEodSubmission } from '@/services/eod-submissions.service';
 import type { IAssignment } from '@/types/assignment';
 import type { IEodSubmission } from '@/types/eod-submission';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Trash2Icon } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 function buildColumns(
@@ -179,14 +181,17 @@ export default function EodHistoryPage() {
     () => buildColumns(clientMap, assignmentMap, setDeleteTarget),
     [clientMap, assignmentMap]
   );
-  const [dateFrom, setDateFrom] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 30);
-    return d.toISOString().split('T')[0];
-  });
-  const [dateTo, setDateTo] = useState(
-    () => new Date().toISOString().split('T')[0]
-  );
+  // Defaults are derived from the company business day, not the device clock,
+  // so a VA east of the company never loses a day of records.
+  const { data: eodContext } = useEodContextQuery();
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
+  useEffect(() => {
+    if (!eodContext) return;
+    setDateTo(prev => prev || eodContext.dateKey);
+    setDateFrom(prev => prev || addDaysToDateKey(eodContext.dateKey, -30));
+  }, [eodContext]);
 
   const filtered = useMemo(
     () =>
