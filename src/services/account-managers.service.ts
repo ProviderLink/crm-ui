@@ -38,7 +38,7 @@ export async function getAccountManagers(
   activeOnly = false
 ): Promise<IAccountManager[]> {
   const params = new URLSearchParams({ role: 'account_manager' });
-  if (activeOnly) params.set('active', 'true');
+  if (activeOnly) params.set('isActive', 'true');
   const { data } = await api.get<{ data: any[] }>(
     `/shared/users?${params.toString()}`
   );
