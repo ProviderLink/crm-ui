@@ -1,207 +1,157 @@
-# CRM — Business Logic & Architecture Decisions
+# CRM — Business Logic
 
-> **Last updated**: 2026-07-18
-> **Context**: `crm-ui` + `ats-crm-backend`
-
----
-
-## 1. Roles & Access Model
-
-| Role                       | Definition                                                                                | Provisioned By | Access Revoked By |
-| -------------------------- | ----------------------------------------------------------------------------------------- | -------------- | ----------------- |
-| **Client**                 | A company/individual who hired one or more VAs under one or more of their Jobs            | ATS            | ATS               |
-| **VA** (Virtual Assistant) | A candidate who got hired to a Job under a Client                                         | ATS            | ATS               |
-| **Account Manager** (AM)   | A user assigned by Admin to manage the Client–Job–VA relationship and monitor assignments | ATS            | ATS               |
-| **Admin**                  | Full platform access — manages assignments, users, settings, and all operational data     | ATS            | ATS               |
-
-### Single Source of Truth
-
-**The ATS is the single source of truth** for:
-
-- Who is a Client, VA, Account Manager, or Admin
-- Who has access to the CRM (active / suspended / hold)
-- User provisioning, de-provisioning, and management
-
-**CRM does NOT create, edit, or deactivate users.** All user management happens in the ATS (`ats-ui-new`). The CRM only reads user data from the shared backend (`/shared/users`). Users appear in the read-only **Accounts** page (tabs: Clients, VAs, AMs, Admins).
-
-CRM responsibilities:
-
-- Authenticate users against the shared auth system
-- Enforce role-based access per endpoint/feature
-- Display which users currently have CRM access (read-only Accounts page)
+What `crm-ui` and the backend (`ats-crm-backend`, `/api/v1/crm/*`) actually do. The full system reference is `ats/BUSINESS_LOGIC.md`; when this file and the code disagree, the code wins.
 
 ---
 
-## 2. Assignment Management
+## 1. Roles & Access
 
-### Ownership
+The CRM has four portals. The browser picks one from the user's **first role**.
 
-Assignments are **created, edited, and ended by Admin and Account Managers** in the CRM.
+| Role | Portal | Created by |
+| ---- | ------ | ---------- |
+| **VA** | `/va` | Automatically when a candidate is hired in the ATS (invite email) |
+| **Client** | `/client` | Automatically when the first assignment for that client is created (invite to the primary contact), or manually by an admin |
+| **Account Manager (AM)** | `/am` | Admin, in the ATS Team page |
+| **Admin** | `/admin` | Admin, in the ATS Team page |
 
-### Assignment Model
+- **The ATS is the source of truth for users.** The CRM never creates, edits, deactivates or deletes users. It only reads them and accepts invitations (`/accept-invitation`).
+- Login is `POST /auth/login` with `app: 'crm'`. The access token is kept in memory, the refresh token is an httpOnly cookie (`refreshTokenCrm`). The 401 interceptor refreshes once and replays queued requests; if the refresh fails the user goes to `/login`.
+- CRM users need `appAccess` to include `crm`. An ATS-only user who logs in here is not sent to any portal (the role has no CRM page).
+- Route protection: `ProtectedRoute` (signed in) + `RoleGuard` (role). The server enforces access again on every call (`requireAppAccess('crm')` + `requireRoles(...)`; admin always passes).
 
-An assignment is the core operational link connecting:
+### Server-side scoping
 
-```
-Client ─── Job ─── VA ─── Account Manager
-```
+| Role | Sees |
+| ---- | ---- |
+| VA | Only records where `candidateId` equals their `candidateRef` |
+| Client | Only records where `clientId` equals their `clientRef` |
+| AM | Only assignments where they are the account manager, plus the work entries, EODs, EOD reminders, scorecards and reviews tied to them |
+| Admin | Everything |
 
-- A **VA** works for a **Client** under a specific **Job**
-- An **Account Manager** is attached by Admin to monitor the assignment and handle communication between the Client and VA
-
-### Multiplicity Rules
-
-| Entity          | Can have...                                                                |
-| --------------- | -------------------------------------------------------------------------- |
-| VA              | Multiple assignments (if hired for multiple Jobs across different Clients) |
-| Client          | Multiple Jobs, each with hired VAs → multiple assignments                  |
-| Account Manager | One or many assignments across different Clients and VAs                   |
-
-### Access on Assignments
-
-| Role            | Create | Read | Update | Delete (End) |
-| --------------- | :----: | :--: | :----: | :----------: |
-| Admin           |   ✅   |  ✅  |   ✅   |      ✅      |
-| Account Manager |   ✅   |  ✅  |   ✅   |      ✅      |
-| Client          |   —    |  ✅  |   —    |      —       |
-| VA              |   —    |  ✅  |   —    |      —       |
-
-_Note: backend currently allows any AM to manage any assignment. Future scoping to assigned-only is TBD._
+A VA or client account without its ref gets 403 instead of falling back to a client-supplied id.
 
 ---
 
-## 3. Work Entries & EOD Submissions
+## 2. Assignments
 
-### Access Matrix
+An assignment links **VA ↔ Client**, managed by an **Account Manager**. A VA can have many assignments; an AM can manage many.
 
-| Role            | Create | Read | Update | Delete |
-| --------------- | :----: | :--: | :----: | :----: |
-| VA              |   ✅   |  ✅  |   ✅   |   ✅   |
-| Admin           |   —    |  ✅  |   —    |   —    |
-| Account Manager |   —    |  ✅  |   —    |   —    |
-| Client          |   —    |  ✅  |   —    |   —    |
+| Action | Admin | AM | Client | VA |
+| ------ | :---: | :-: | :----: | :-: |
+| List / view | all | own | own client's | own |
+| Create | ✅ | API only, for themselves | — | — |
+| Update / end | ✅ | own | — | — |
 
-- **Only VAs** create, update, and delete work entries and EOD submissions.
-- **Admin, AM, and Client** have read-only access (scoped to their assignments/VAs).
-- Backend routes currently allow `admin, account_manager` on POST/PATCH/DELETE for work entries and POST/PATCH for EOD — needs tightening to VA-only.
-
----
-
-## 4. Accounts
-
-All users (VA, Client, Account Manager, Admin) are displayed in the **Accounts** page as a read-only 4-tab view. No user creation, editing, or deactivation happens in the CRM — this is managed in `ats-ui-new`.
+- The **CRM UI lets only admins** create, edit or end assignments; AMs get a read-only list of their own. The API is more permissive for AMs (create for themselves, update/end their own).
+- Fields: VA, client, account manager, service type, start date, optional end date, status (`active`, `on_hold`, `ended`), notes.
+- **Create** checks that the VA (candidate) and client exist, provisions the client's CRM user if none exists (invite to the client's primary contact), and creates the survey reminders (§6).
+- An **ended** assignment is read-only; ending sets `endDate` if empty. Work entries and EODs can no longer be added to it.
+- The assignment list is joined with names (`candidateName`, `companyName`, `accountManagerName/Email`).
 
 ---
 
-## 5. Reminders, Scorecards & Performance Reviews
+## 3. Work Entries (VA)
 
-| Feature                 | Description                                                                                                                         | Owner         |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| **Survey Reminders**    | Automated 3-day, 1-week, 30-day, and monthly check-in reminders. Triggered on assignment creation and dispatched via cron.          | Admin, AM     |
-| **EOD Reminders**       | Daily 5 PM cron — checks missing EODs, emails VAs, logs compliance                                                                  | System (cron) |
-| **Scorecards**          | Weekly productivity metrics per VA (hours, tasks, compliance rate, consistency score) — backend feature TBD                         | Admin, AM     |
-| **Performance Reviews** | AI-generated (Claude) review templates — generated by Admin/AM, editable, completable. Categories, ratings, goals, recommendations. | Admin, AM     |
+- Fields: assignment, date, time (HH:MM), task category, description, minutes (1–480), status (`completed`, `in_progress`, `pending`), notes.
+- **Create / update / delete: VA only**, and only on their own assignments. (An admin also passes the role check.) Admin, AM and client read.
+- The server copies `candidateId` and `clientId` from the assignment.
+- **Delete is a soft delete.** Deleted entries disappear from lists, reports, the dashboard and scorecards. The VA UI supports add and edit; it has no delete button.
 
 ---
 
-## 5. AI Provider Configuration
+## 4. EOD (End-of-Day) Submissions (VA)
 
-Which AI provider is active (OpenAI vs. Anthropic Claude) is determined by the **ATS General Settings** — not the CRM.
-
-Check the ATS settings endpoint: `ats-crm-backend` → `/api/v1/shared/settings`
-
-The CRM consumes whatever AI provider is configured at the ATS level. Performance review generation uses Claude by default, as configured in `ats-crm-backend`.
-
----
-
-## 6. Accounts Page (CRM)
-
-The Accounts page in CRM is a **read-only view** showing:
-
-- Which **Clients** currently have CRM access
-- Which **Account Managers** are active
-- Which **VAs** are provisioned
-- Whether there are **multiple Admins**
-
-It does NOT allow creating, editing, or deactivating users. All user management (give access, revoke, hold, suspend) happens in the ATS.
+- **One EOD per assignment per company business day.** A second submit gets 409 `EOD_ALREADY_SUBMITTED` (unique index on assignment + `dateKey`).
+- **The day is the company day**, from the company timezone in ATS Settings — never the VA's device clock. `GET /crm/eod-submissions/context` returns today's `dateKey`; the form sends no date. An optional `date` (`YYYY-MM-DD`) is accepted by the API.
+- Fields: shift start/end (HH:MM, company clock), structured work entries (task, description, quantity, status, minutes), pending tasks, blockers, notes, **"communicated with the client?"** (`yes|no|other`, required) and a note for the client.
+- **Hours are computed by the server** from the shift; an end time before the start counts as an overnight shift.
+- A VA can delete their own EODs (permanent) in the UI; the API also lets them edit one (hours are recomputed). Creating is refused on an ended assignment.
+- Old EODs may have only a free-text `summaryOfWork`. API responses show `date` as the business-day key.
+- Admin, AM and client can read; AMs only for their assignments, clients only for their VAs.
 
 ---
 
-## 7. Authentication & Security
+## 5. Accounts, Profiles & Notes
 
-### Auth Features
+The **Accounts** page lists the CRM users by type (clients, VAs, AMs, admins). Clients and VAs for an AM are limited to those on their assignments.
 
-| Feature                                       | Supported |
-| --------------------------------------------- | :-------: |
-| Login (email + password)                      |    ✅     |
-| Logout                                        |    ✅     |
-| Forgot Password                               |    ✅     |
-| Reset Password                                |    ✅     |
-| Change Password (from within app)             |    ✅     |
-| Accept Invitation (set initial password)      |    ✅     |
-| Session persistence (HttpOnly refresh cookie) |    ✅     |
-| Transparent token refresh (401 interceptor)   |    ✅     |
-
-### RBAC Enforcement
-
-The entire CRM platform is built on **proper Role-Based Access Control**:
-
-- **Middleware-level**: `authenticate` (JWT verification) + `requireAppAccess('crm')` + `requireRoles(...)` + `requirePermission(resource, action)`
-- **Route-level**: Every CRM endpoint is gated by role and permission
-- **Frontend-level**: `ProtectedRoute` (auth check) + `RoleGuard` (role check) on every route
-- **Data-level**: Backend services filter data by the requesting user's role and ownership
-
-Permissions follow a hierarchy: `manage > write > read`, `schedule > write > read`, `approve > write > read`.
+- **Client accounts** (`/crm/client-accounts`, admin + AM API): CRM profile fields on the ATS client — health (`green|yellow|red`), BAA signed and date, EMR system, onboarding complete, SOP received, satisfaction (1–5), open issues, last check-in, account owner, service start, primary/secondary contact, notes. `provisioned` lists clients that have an active CRM user.
+- **VA profiles** (`/crm/va-profiles`, one per VA, auto-created): workload (`low|normal|high|overloaded`), satisfaction, burnout flag, replacement-risk flag, last check-in, notes. A VA can read their own.
+- **Editing is admin-only in the UI** (the API allows admin and AM).
+- **Internal notes threads** for a client or a VA (call / email / meeting / message / other) are **admin-only** end to end.
+- `GET /crm/client-accounts/:id/hired-vas` returns the VAs hired for a client; a client can call it only for their own id.
 
 ---
 
-## 8. Dashboard Requirements
+## 6. Reminders, Scorecards, Reviews
 
-The CRM dashboard must be:
+### Survey reminders (admin and AM)
 
-- **Better** — more useful metrics than just raw counts
-- **Easy** — glanceable, no training needed to interpret
-- **Understandable** — clear labels, obvious meaning
-- **Insightful** — surface problems proactively (missing EODs, low compliance, overloaded VAs)
+Created automatically for each new assignment, assigned to its account manager, due after the start date:
 
-Key metrics to surface:
+| Type | Due |
+| ---- | --- |
+| `3_day` | +3 days |
+| `1_week` | +7 days |
+| `30_day` | +30 days |
+| `monthly` | +60 days |
 
-- Active assignments count and trend
-- Work entries logged today
-- EOD submission rate (compliance %)
-- Missing EOD alerts
-- Per-VA and per-Client activity breakdown
-- Weekly work hours summary
+Other types exist for manual creation (`60_day`, `90_day`). Statuses: `pending → sent → completed | skipped`. The 9:00 cron emails the account manager for every `pending` reminder due by the end of today and marks it `sent`. Admin/AM can create and update reminders in the API; the UI page updates them.
+
+### EOD reminders (cron)
+
+At 17:00 company time, every `active` assignment without an EOD for today's business day gets an email to the VA and an `EodReminder` record (`sent` or `failed`). Admin/AM can read them (AMs: own). Both crons run once per local day, are not replayed after downtime, and take a database lock.
+
+### Scorecards (weekly, admin and AM)
+
+`POST /crm/scorecards/generate` builds or refreshes the **current week** for every active assignment (or one VA), one per VA + assignment + week. Metrics: hours, tasks completed, tasks/day, EOD compliance %, on-time submission %, productivity score and category mix. Score = EOD compliance 40 + work volume (hours ÷ 40) 30 + tasks completed 20 + on-time submission 10. Soft-deleted work entries are excluded. Read access: admin and AM (AM limited to own assignments).
+
+### Performance reviews (admin and AM; VA reads own)
+
+- **Generate** (AI, Claude or OpenAI per ATS Settings): needs VA, client, review type, period and role; optional job, client expectations and manager notes. Result is a draft with a role summary, responsibilities, strengths, improvement areas, goals and 6–8 rating categories.
+- **Edit** categories (1–5 ratings, comments), overall rating, client satisfaction, final recommendation and manager summary; regenerate categories, goals or the summary; status may be set to `draft`, `ai_generated`, `in_review`, `sent_to_client` or `archived`.
+- **Complete** (`PATCH /:id/complete`) locks the review: no further edits or regeneration.
+- Delete and PDF export are available; a VA can view and export only their own. AMs can act only on VAs they manage.
 
 ---
 
-## 9. UI/UX Design Principles
+## 7. Dashboard & Reports
 
-The CRM UI will follow these principles:
+**Admin / AM dashboard** (`GET /crm/dashboard`; AMs see only their assignments, and an AM with none sees zeros):
 
-- **Modern** — clean, minimal, uses the established design system
-- **User-friendly** — intuitive navigation, clear CTAs, helpful empty states
-- **Standard** — follows common SaaS patterns users already know
-- **Responsive** — works on desktop and mobile (vertical form layouts, responsive tables, touch-friendly controls)
-- **Consistent** — same component library (shadcn/ui + Tailwind) across all pages
-- **Accessible** — proper contrast, keyboard navigation, screen-reader friendly
+- Assignment counts by status.
+- EODs submitted today (company day), work entries today, missing-EOD count (EOD reminders sent today — so it fills in after the 17:00 job), and compliance % = EODs today ÷ active assignments.
+- Weekly hours and per-VA / per-client breakdowns, and the latest 10 EODs.
+- Soft-deleted work entries are excluded.
+
+**Reports** (admin and AM; AMs limited to own): CSV or Excel exports of work entries, EOD submissions (one row per EOD in the client's reporting format) and completed performance reviews. In CSV, cells starting with `=`, `+`, `-` or `@` are prefixed with `'` so spreadsheets do not run them as formulas. The dashboard and EOD pages offer the export buttons.
+
+**VA and client dashboards** are built in the browser from their own scoped lists. The client portal has a dashboard and a Work Activity page, both read-only.
 
 ---
 
-## 10. Data Ownership Summary
+## 8. Data the CRM reads from the ATS
 
-| Data                           | System of Record |                  CRM Access                  |
-| ------------------------------ | :--------------: | :------------------------------------------: |
-| Clients (master data)          |       ATS        |        Read-only (via `/ats/clients`)        |
-| Candidates / VAs (master data) |       ATS        |      Read-only (via `/ats/candidates`)       |
-| Jobs                           |       ATS        |             Read-only reference              |
-| Users (roles, access, status)  |       ATS        |       Read-only (via `/shared/users`)        |
-| Assignments                    |     **CRM**      |       Full CRUD (admin), Read (others)       |
-| Work Entries                   |     **CRM**      |           CRUD (VA), Read (others)           |
-| EOD Submissions                |     **CRM**      |           CRU (VA), Read (others)            |
-| EOD Reminders                  |     **CRM**      |      System-generated, Read (admin/AM)       |
-| Survey Reminders               |     **CRM**      |               CRUD (admin/AM)                |
-| Performance Reviews            |     **CRM**      | Generate/Edit/Complete (admin/AM), Read (VA) |
-| Scorecards                     |     **CRM**      |           Generate/Read (admin/AM)           |
-| Activity Logs                  |      Shared      |                 Read (admin)                 |
-| Settings (AI provider, etc.)   |       ATS        |                  Read-only                   |
+| Data | Owner | How the CRM gets it |
+| ---- | ----- | ------------------- |
+| Users, roles, status | ATS | `/shared/users` (needs team read), `/shared/users/crm-accounts` (scoped, any signed-in user) |
+| Clients, VAs (candidates), jobs | ATS | `/ats/clients`, `/ats/candidates`, `/ats/jobs` |
+| Company timezone, AI provider | ATS Settings | read server-side |
+| Assignments, work entries, EODs, reminders, scorecards, reviews, VA/client CRM profiles | CRM | `/crm/*` |
+
+Account managers have **no ATS access**, so `/ats/*` answers 403 for them. For VA and client filters the UI then builds the lists from the AM's own assignments. Other lookups that need team read (such as the account-manager list) are empty for AMs; names come from the joined assignment data instead.
+
+---
+
+## 9. Realtime
+
+The backend emits `assignment:*`, `workEntry:*`, `eod:submitted|updated|deleted` and `performanceReview:*` on the `/crm` socket, to a room only admins and AMs join. The CRM UI does not use sockets today; it relies on React Query (5-minute stale time, no refetch on focus).
+
+---
+
+## 10. UI notes
+
+- Stack: React 19, Vite, React Router, Redux Toolkit (auth only), TanStack Query, axios, Tailwind 4 + shadcn/ui, Zod + react-hook-form.
+- Query keys that hold per-user data include the user id, so a different login never reuses another user's cache.
+- Dates that are business days are `YYYY-MM-DD` strings and are formatted from their parts, never through `new Date(key)`, to avoid off-by-one days.
