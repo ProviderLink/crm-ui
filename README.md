@@ -10,7 +10,7 @@ Requires Node >= 20.19 and pnpm >= 10.
 
 ```bash
 pnpm install
-cp .env.example .env   # set VITE_API_URL, e.g. http://localhost:5001/api/v1
+cp .env.example .env   # set VITE_API_URL, e.g. http://localhost:4000/api/v1
 pnpm dev
 ```
 
