@@ -53,12 +53,25 @@ export function TimePickerField({
     onChange(`${hh}:${mm}`)
   }
 
+  // A minute typed or tapped before any hour is chosen is held back, not
+  // committed: guessing hour 0 would silently set 12 AM.
+  function pendingMinute(): string | null {
+    const num = parseInt(minuteInput, 10)
+    return !isNaN(num) && num >= 0 && num <= 59
+      ? String(num).padStart(2, '0')
+      : null
+  }
+
   function handleHourClick(h: number) {
-    applyTime(h, selectedMinute ?? '00')
+    applyTime(h, selectedMinute ?? pendingMinute() ?? '00')
   }
 
   function handleQuickMinute(m: string) {
-    applyTime(selectedHour ?? 0, m)
+    if (selectedHour === null) {
+      setMinuteInput(m)
+      return
+    }
+    applyTime(selectedHour, m)
     setOpen(false)
   }
 
@@ -66,8 +79,8 @@ export function TimePickerField({
     const raw = e.target.value.replace(/\D/g, '').slice(0, 2)
     setMinuteInput(raw)
     const num = parseInt(raw, 10)
-    if (raw.length === 2 && num >= 0 && num <= 59) {
-      applyTime(selectedHour ?? 0, raw)
+    if (selectedHour !== null && raw.length === 2 && num >= 0 && num <= 59) {
+      applyTime(selectedHour, raw)
     }
   }
 
@@ -75,9 +88,11 @@ export function TimePickerField({
     const num = parseInt(minuteInput, 10)
     if (!isNaN(num) && num >= 0 && num <= 59) {
       const mm = String(num).padStart(2, '0')
-      applyTime(selectedHour ?? 0, mm)
       setMinuteInput(mm)
-      setOpen(false)
+      if (selectedHour !== null) {
+        applyTime(selectedHour, mm)
+        setOpen(false)
+      }
     } else {
       setMinuteInput(selectedMinute ?? '')
     }
