@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
 import { useEodContextQuery, useEodSubmissionsQuery } from '@/hooks/queries';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
+import { getApiError } from '@/lib/api-error';
 import { calcHours, todayString } from '@/lib/time';
 import { createEodSubmission } from '@/services/eod-submissions.service';
 
@@ -70,6 +70,18 @@ export function useEodSubmitForm() {
     ? submittedKeys.has(`${selectedAssignmentId}::${selectedDate}`)
     : false;
 
+  // Late reports can be filed for an earlier day, so check that day too (same
+  // query as today's when the dates match). The server rejects duplicates
+  // either way; this just tells the VA before they fill in the form.
+  const { data: selectedDayEods = [] } = useEodSubmissionsQuery({
+    date: selectedDate,
+  });
+  const duplicateOnSelectedDate = selectedAssignmentId
+    ? selectedDayEods.some(
+        e => e.assignmentId === selectedAssignmentId && e.date === selectedDate
+      )
+    : false;
+
   // Correct the placeholder date once the company business day is known, but
   // only while the VA has not picked a date themselves.
   useEffect(() => {
@@ -96,11 +108,7 @@ export function useEodSubmitForm() {
       queryClient.invalidateQueries({ queryKey: ['eod-context'] });
       navigate('/va/eod/history');
     } catch (err) {
-      const msg = axios.isAxiosError(err)
-        ? (err.response?.data?.error?.message ??
-          'Failed to submit EOD. Please try again.')
-        : 'Failed to submit EOD. Please try again.';
-      setError(msg);
+      setError(getApiError(err, 'Failed to submit EOD. Please try again.'));
     }
   }
 
@@ -122,5 +130,6 @@ export function useEodSubmitForm() {
     selectedDate,
     hoursWorked,
     alreadySubmitted,
+    duplicateOnSelectedDate,
   };
 }

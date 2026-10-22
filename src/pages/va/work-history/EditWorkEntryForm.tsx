@@ -35,7 +35,11 @@ const editSchema = z.object({
     'Other',
   ]),
   taskDescription: z.string().min(1, 'Required'),
-  timeSpent: z.number().int().min(1, 'At least 1 minute'),
+  timeSpent: z
+    .number()
+    .int()
+    .min(1, 'At least 1 minute')
+    .max(480, 'Maximum is 480 minutes (8 hours) per entry'),
   status: z.enum(['completed', 'in_progress', 'pending']),
   notes: z.string().optional(),
 });

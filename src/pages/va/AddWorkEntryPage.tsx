@@ -47,7 +47,11 @@ const schema = z.object({
     'Other',
   ]),
   taskDescription: z.string().min(1, 'Description is required'),
-  timeSpent: z.number().int().min(1, 'Enter at least 1 minute'),
+  timeSpent: z
+    .number()
+    .int()
+    .min(1, 'Enter at least 1 minute')
+    .max(480, 'Maximum is 480 minutes (8 hours) per entry'),
   status: z.enum(['completed', 'in_progress', 'pending']),
   notes: z.string().optional(),
 });
