@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -52,8 +52,14 @@ export function useReviewEditor() {
   const [completeOpen, setCompleteOpen] = useState(false);
   const [completing, setCompleting] = useState(false);
 
+  // Seed the form once per review. Refetches (after save, or after
+  // regenerating one section) must not overwrite edits made elsewhere in the
+  // form; the AI handlers below update their own section from the response.
+  const seededReviewId = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!review) return;
+    if (!review || seededReviewId.current === review.id) return;
+    seededReviewId.current = review.id;
     setRoleSummary(review.roleSummary ?? '');
     setCoreResponsibilities(review.coreResponsibilities ?? []);
     setCategories(review.categories ?? []);
@@ -67,6 +73,7 @@ export function useReviewEditor() {
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: QK.performanceReview(id!) });
+    queryClient.invalidateQueries({ queryKey: QK.performanceReviews() });
   }
 
   async function handleSaveDraft() {
