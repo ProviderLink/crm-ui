@@ -32,12 +32,10 @@ import {
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import { dateKeyToLocalDate, formatMinutes, todayString, weekStartOfDateKey } from '@/lib/time';
-import { getAllAssignments } from '@/services/assignments.service';
-import { getClientAccounts } from '@/services/client-accounts.service';
-import { getVaProfiles } from '@/services/va-profiles.service';
-import type { IClientAccount } from '@/types/client-account';
+import { getAssignment } from '@/services/assignments.service';
+import { getClientAccount } from '@/services/client-accounts.service';
+import { getVaProfile } from '@/services/va-profiles.service';
 import type { IEodSubmission } from '@/types/eod-submission';
-import type { IVaProfile } from '@/types/va-profile';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 import { useQuery } from '@tanstack/react-query';
 
@@ -229,29 +227,34 @@ export default function AssignmentDetailPage() {
   const user = useAppSelector(s => s.auth.user);
   const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
 
-  const { data: assignments = [], isLoading: loadingAssignment } = useQuery({
+  const { data: assignmentData, isLoading: loadingAssignment } = useQuery({
     queryKey: ['assignments', 'detail', id],
-    queryFn: () => getAllAssignments(),
+    queryFn: () => getAssignment(id!),
+    enabled: !!id,
   });
 
-  const assignment = assignments.find(a => a._id === id) ?? null;
+  const assignment = assignmentData ?? null;
 
   const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: crmClients = [] } = useProvisionedClientsQuery();
   const { data: accountManagers = [] } = useActiveAccountManagersQuery();
+  // Only this assignment's rows, filtered by the server.
   const { data: allEntries = [], isLoading: loadingEntries } =
-    useWorkEntriesQuery();
-  const { data: allEods = [], isLoading: loadingEods } =
-    useEodSubmissionsQuery();
+    useWorkEntriesQuery({ assignmentId: id });
+  const { data: allEods = [], isLoading: loadingEods } = useEodSubmissionsQuery(
+    { assignmentId: id }
+  );
 
-  const { data: clientAccounts = [] } = useQuery({
-    queryKey: ['client-accounts'],
-    queryFn: () => getClientAccounts(),
+  const { data: clientAccount = null } = useQuery({
+    queryKey: ['client-account', assignment?.clientId],
+    queryFn: () => getClientAccount(assignment!.clientId),
+    enabled: !!assignment,
   });
 
-  const { data: vaProfiles = [] } = useQuery({
-    queryKey: ['va-profiles'],
-    queryFn: () => getVaProfiles(),
+  const { data: vaProfile = null } = useQuery({
+    queryKey: ['va-profile', assignment?.candidateId],
+    queryFn: () => getVaProfile(assignment!.candidateId),
+    enabled: !!assignment,
   });
 
   const { data: reviews = [] } = usePerformanceReviewsQuery(
@@ -281,22 +284,6 @@ export default function AssignmentDetailPage() {
     const va = atsVAs.find(v => v.id === assignment?.candidateId);
     return va?.email ?? null;
   }, [atsVAs, assignment]);
-
-  const clientAccount = useMemo(() => {
-    return (
-      clientAccounts.find(
-        (ca: IClientAccount) => ca.clientId === assignment?.clientId
-      ) ?? null
-    );
-  }, [clientAccounts, assignment]);
-
-  const vaProfile = useMemo(() => {
-    return (
-      vaProfiles.find(
-        (vp: IVaProfile) => vp.vaId === assignment?.candidateId
-      ) ?? null
-    );
-  }, [vaProfiles, assignment]);
 
   // Filters
   const [dateFrom, setDateFrom] = useState('');

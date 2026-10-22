@@ -64,6 +64,7 @@ export const QK = {
 };
 
 export function useWorkEntriesQuery(filters?: {
+  assignmentId?: string;
   candidateId?: string;
   clientId?: string;
   dateFrom?: string;
@@ -78,6 +79,7 @@ export function useWorkEntriesQuery(filters?: {
 }
 
 export function useEodSubmissionsQuery(filters?: {
+  assignmentId?: string;
   candidateId?: string;
   clientId?: string;
   date?: string;

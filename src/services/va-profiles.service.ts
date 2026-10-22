@@ -10,6 +10,12 @@ export async function getVaProfiles(): Promise<IVaProfile[]> {
   return data.data.map((v: any) => ({ ...v, id: v._id ?? v.id }));
 }
 
+/** One VA's profile (the API creates an empty one on first read). */
+export async function getVaProfile(vaId: string): Promise<IVaProfile> {
+  const { data } = await api.get<{ data: any }>(`/crm/va-profiles/${vaId}`);
+  return { ...data.data, id: data.data._id ?? data.data.id };
+}
+
 export async function updateVaProfile(
   id: string,
   payload: UpdateVaProfilePayload

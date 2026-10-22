@@ -34,6 +34,13 @@ export async function getAllAssignments(
   return data.data;
 }
 
+export async function getAssignment(id: string): Promise<IAssignment> {
+  const { data } = await api.get<{ data: IAssignment }>(
+    `/crm/assignments/${id}`
+  );
+  return data.data;
+}
+
 export async function createAssignment(
   payload: CreateAssignmentPayload
 ): Promise<IAssignment> {
