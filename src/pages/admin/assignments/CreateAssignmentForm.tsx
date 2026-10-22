@@ -98,7 +98,9 @@ export function CreateAssignmentForm({
               No eligible clients
             </p>
             <p className="mt-1 text-xs text-muted-foreground/60">
-              Only clients who have hired a VA via the ATS appear here.
+              A client appears here once an admin has provisioned its CRM
+              access in the ATS (Clients → open the client → CRM access). That
+              needs an active client with a hired VA.
             </p>
           </div>
         </div>
