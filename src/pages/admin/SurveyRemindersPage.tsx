@@ -21,6 +21,8 @@ import {
 import {
   QK,
   useAllAssignmentsQuery,
+  useAtsClientsQuery,
+  useAtsVAsQuery,
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
@@ -69,6 +71,23 @@ export default function SurveyRemindersPage() {
   }, [isAccountManager, amAssignments]);
 
   const { data: allReminders = [], isLoading } = useSurveyRemindersQuery();
+  const { data: atsVAs = [] } = useAtsVAsQuery();
+  const { data: atsClients = [] } = useAtsClientsQuery();
+
+  // Names for the "For" column, so it shows people and companies, not ids.
+  const relatedNames = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const v of atsVAs) names.set(v.id, `${v.firstName} ${v.lastName}`);
+    for (const c of atsClients) names.set(c.id, c.companyName);
+    for (const a of amAssignments) {
+      const va = names.get(a.candidateId);
+      const client = names.get(a.clientId);
+      if (va || client) {
+        names.set(a._id, [va, client].filter(Boolean).join(' · '));
+      }
+    }
+    return names;
+  }, [atsVAs, atsClients, amAssignments]);
   const [statusFilter, setStatusFilter] = useState<SurveyStatus | 'all'>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
@@ -123,9 +142,11 @@ export default function SurveyRemindersPage() {
         cell: ({ row }) => (
           <span className="text-xs text-muted-foreground capitalize">
             {row.original.relatedType} ·{' '}
-            <span className="font-mono">
-              {row.original.relatedId.slice(-8)}
-            </span>
+            {relatedNames.get(row.original.relatedId) ?? (
+              <span className="font-mono">
+                {row.original.relatedId.slice(-8)}
+              </span>
+            )}
           </span>
         ),
         enableSorting: false,
@@ -217,7 +238,7 @@ export default function SurveyRemindersPage() {
         },
       },
     ],
-    [updatingId] // eslint-disable-line react-hooks/exhaustive-deps
+    [updatingId, relatedNames] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return (
