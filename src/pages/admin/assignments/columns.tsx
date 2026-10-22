@@ -88,8 +88,7 @@ export function buildColumns(
     },
   ];
 
-  if (canManage) {
-    columns.push({
+  columns.push({
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
@@ -113,6 +112,7 @@ export function buildColumns(
               <TooltipContent side="top">View Details</TooltipContent>
             </Tooltip>
 
+            {canManage && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -126,8 +126,9 @@ export function buildColumns(
               </TooltipTrigger>
               <TooltipContent side="top">Edit</TooltipContent>
             </Tooltip>
+            )}
 
-            {row.original.status !== 'ended' ? (
+            {canManage && (row.original.status !== 'ended' ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -143,12 +144,11 @@ export function buildColumns(
               </Tooltip>
             ) : (
               <div className="size-7" />
-            )}
+            ))}
           </div>
         </TooltipProvider>
       ),
-    });
-  }
+  });
 
   return columns;
 }

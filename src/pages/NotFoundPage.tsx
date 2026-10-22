@@ -1,16 +1,11 @@
 import { useAppSelector } from '@/hooks/store';
+import { roleHome } from '@/lib/role-home';
 import { Link } from 'react-router-dom';
 
 export default function NotFoundPage() {
   const user = useAppSelector(s => s.auth.user);
 
-  const homeHref = user
-    ? user.role === 'va'
-      ? '/va/dashboard'
-      : user.role === 'client'
-        ? '/client/dashboard'
-        : '/admin/dashboard'
-    : '/login';
+  const homeHref = (user && roleHome[user.role]) || '/login';
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
