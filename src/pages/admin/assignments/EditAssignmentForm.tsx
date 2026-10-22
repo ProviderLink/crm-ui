@@ -8,6 +8,7 @@ import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { getApiError } from '@/lib/api-error';
 import { type IAccountManager } from '@/services/account-managers.service';
 import { updateAssignment } from '@/services/assignments.service';
 import { type IAssignment } from '@/types/assignment';
@@ -72,9 +73,9 @@ export function EditAssignmentForm({
       });
       onSuccess();
     } catch (err: unknown) {
-      const apiMsg = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      setServerError(apiMsg ?? 'Failed to save changes. Please try again.');
+      setServerError(
+        getApiError(err, 'Failed to save changes. Please try again.')
+      );
     }
   }
 

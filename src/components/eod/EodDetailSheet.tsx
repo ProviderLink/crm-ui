@@ -1,4 +1,5 @@
 import { useEodSubmissionQuery } from '@/hooks/queries';
+import { getApiError } from '@/lib/api-error';
 import { formatMinutes } from '@/lib/time';
 import type {
   CommunicatedWithClient,
@@ -134,9 +135,10 @@ export function EodDetailSheet({
         {isError && (
           <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
             <AlertCircle size={15} className="mt-0.5 shrink-0" />
-            {(error as { response?: { data?: { message?: string } } })?.response
-              ?.data?.message ??
-              'Failed to load EOD details. You may not have permission to view this submission.'}
+            {getApiError(
+              error,
+              'Failed to load EOD details. You may not have permission to view this submission.'
+            )}
           </div>
         )}
 

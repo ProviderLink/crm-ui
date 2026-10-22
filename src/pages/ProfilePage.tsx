@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAppSelector } from '@/hooks/store';
+import { getApiError } from '@/lib/api-error';
 import { changePassword } from '@/services/auth.service';
 
 const roleLabel: Record<string, string> = {
@@ -50,9 +51,7 @@ export default function ProfilePage() {
       toast.success('Password changed successfully.');
       reset();
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to change password.';
-      setServerError(msg);
+      setServerError(getApiError(err, 'Failed to change password.'));
     }
   }
 

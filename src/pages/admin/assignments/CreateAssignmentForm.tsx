@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useHiredVasForClientQuery } from '@/hooks/queries';
+import { getApiError } from '@/lib/api-error';
 import { type IAccountManager } from '@/services/account-managers.service';
 import { createAssignment } from '@/services/assignments.service';
 import { type IAssignment } from '@/types/assignment';
@@ -80,10 +81,8 @@ export function CreateAssignmentForm({
       });
       onSuccess();
     } catch (err: unknown) {
-      const apiMsg = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
       setServerError(
-        apiMsg ?? 'Failed to create assignment. Please try again.'
+        getApiError(err, 'Failed to create assignment. Please try again.')
       );
     }
   }

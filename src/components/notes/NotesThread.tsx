@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, MessageSquareIcon, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 
+import { getApiError } from '@/lib/api-error';
 import { addNote, listNotes } from '@/services/notes.service';
 import {
   NOTE_METHODS,
@@ -86,9 +87,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
         queryKey: queryKey(subjectType, subjectId),
       });
     } catch (err: unknown) {
-      const apiMsg = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      setSubmitError(apiMsg ?? 'Failed to add note. Please try again.');
+      setSubmitError(getApiError(err, 'Failed to add note. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -119,9 +118,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
       ) : isError ? (
         <div className="flex items-start gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 text-xs text-destructive">
           <AlertCircle size={13} className="mt-0.5 shrink-0" />
-          {(error as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message ??
-            'Failed to load notes. You may not have permission.'}
+          {getApiError(error, 'Failed to load notes. You may not have permission.')}
         </div>
       ) : notes.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">
