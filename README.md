@@ -36,7 +36,7 @@ Users are created and managed in the ATS; the CRM only reads them. Public pages:
 - Access token lives in memory only; the refresh token is an httpOnly cookie (`app: 'crm'`).
 - "Today" for EODs is the company business day set in the ATS settings, not the device clock.
 - Account managers cannot read ATS lists, so their VA/client filters are built from their own assignments.
-- More detail: [BUSINESS_LOGIC.md](BUSINESS_LOGIC.md).
+- Audit with known issues and the file map: [AUDIT.md](AUDIT.md).
 
 ## Deploy
 
