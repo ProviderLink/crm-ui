@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import {
   useAccountManagersQuery,
+  useAtsClientsQuery,
   useCrmAdminUsersQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
@@ -127,14 +128,25 @@ export function useAccountRows() {
     clientAccounts.map(a => [a.clientId, a])
   );
 
+  // A client only has a CRM profile (and so a row in `clientAccounts`) after
+  // someone first edits it; fall back to the ATS client record for the name.
+  const { data: atsClients = [] } = useAtsClientsQuery();
+  const atsNameById = Object.fromEntries(
+    atsClients.map(c => [c.id, c.companyName])
+  );
+
   const clientRows: UserRow[] = clientUsers.map(u => {
     const row = toRow(u);
     const acc = row.clientRef ? accountByClientId[row.clientRef] : undefined;
     return {
       ...row,
-      companyName: acc?.companyName ?? null,
-      primaryContactName: acc?.primaryContact ?? null,
-      primaryContactEmail: acc?.primaryContactEmail ?? null,
+      companyName:
+        acc?.companyName ??
+        (row.clientRef ? atsNameById[row.clientRef] : undefined) ??
+        null,
+      // The CRM user is the client's contact when no profile lists one.
+      primaryContactName: acc?.primaryContact || row.name,
+      primaryContactEmail: acc?.primaryContactEmail || row.email,
       healthStatus: acc?.healthStatus ?? null,
       satisfactionScore: acc?.satisfactionScore ?? null,
     };
