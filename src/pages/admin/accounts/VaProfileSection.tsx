@@ -14,7 +14,8 @@ import { Field } from './field';
 
 export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) {
   const authUser = useAppSelector(s => s.auth.user);
-  const canEdit = authUser?.role === 'admin';
+  const canEdit =
+    authUser?.role === 'admin' || authUser?.role === 'account_manager';
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading: profileLoading } = useQuery({

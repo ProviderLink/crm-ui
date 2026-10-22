@@ -23,10 +23,9 @@ export function useReviewEditor() {
   const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
   const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
-  const isAccountManager = user?.role === 'account_manager';
 
   const { data: review, isLoading } = usePerformanceReviewQuery(id ?? '');
-  const isReadOnly = isAccountManager || review?.reviewStatus === 'Completed';
+  const isReadOnly = review?.reviewStatus === 'Completed';
 
   // Form state
   const [roleSummary, setRoleSummary] = useState('');

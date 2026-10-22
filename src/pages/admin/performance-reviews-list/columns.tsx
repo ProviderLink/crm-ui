@@ -13,7 +13,6 @@ export function buildReviewColumns({
   vaMap,
   clientMap,
   exportingId,
-  isAccountManager,
   onView,
   onExport,
   onDelete,
@@ -21,7 +20,6 @@ export function buildReviewColumns({
   vaMap: Record<string, string>;
   clientMap: Record<string, string>;
   exportingId: string | null;
-  isAccountManager: boolean;
   onView: (review: IPerformanceReview) => void;
   onExport: (review: IPerformanceReview) => void;
   onDelete: (review: IPerformanceReview) => void;
@@ -107,11 +105,11 @@ export function buildReviewColumns({
         return (
           <div className="flex items-center gap-1 justify-end">
             <Button
-              size="icon" aria-label={isCompleted || isAccountManager ? 'View review (read-only)' : 'Edit review'}
+              size="icon" aria-label={isCompleted ? 'View review (read-only)' : 'Edit review'}
               variant="ghost"
-              className={`size-7 ${isCompleted || isAccountManager ? 'text-muted-foreground' : ''}`}
+              className={`size-7 ${isCompleted ? 'text-muted-foreground' : ''}`}
               title={
-                isCompleted || isAccountManager ? 'View (read-only)' : 'Edit'
+                isCompleted ? 'View (read-only)' : 'Edit'
               }
               onClick={() => onView(r)}
             >
@@ -131,7 +129,6 @@ export function buildReviewColumns({
                 <DownloadIcon className="size-3.5" />
               )}
             </Button>
-            {!isAccountManager && (
               <Button
                 size="icon" aria-label="Delete review"
                 variant="ghost"
@@ -141,7 +138,6 @@ export function buildReviewColumns({
               >
                 <Trash2Icon className="size-3.5" />
               </Button>
-            )}
           </div>
         );
       },

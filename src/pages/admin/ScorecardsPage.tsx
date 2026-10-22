@@ -210,7 +210,6 @@ export default function ScorecardsPage() {
               {generateError && (
                 <p className="text-xs text-destructive">{generateError}</p>
               )}
-              {!isAccountManager && (
                 <Button
                   size="sm"
                   variant="ghost"
@@ -223,7 +222,6 @@ export default function ScorecardsPage() {
                   />
                   {generating ? 'Generating…' : 'Generate Now'}
                 </Button>
-              )}
             </div>
           </div>
 
@@ -239,7 +237,9 @@ export default function ScorecardsPage() {
             description={
               vaId
                 ? 'Generate a new scorecard for this VA for the current week.'
-                : 'Generate scorecards for ALL VAs for the current week. This may take a moment.'
+                : isAccountManager
+                  ? 'Generate scorecards for your assigned VAs for the current week. This may take a moment.'
+                  : 'Generate scorecards for ALL VAs for the current week. This may take a moment.'
             }
             onConfirm={handleGenerate}
             onCancel={() => setConfirmOpen(false)}

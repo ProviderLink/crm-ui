@@ -193,12 +193,7 @@ export default function SurveyRemindersPage() {
         size: 80,
         cell: ({ row }) => {
           const { _id, status } = row.original;
-          if (
-            status === 'completed' ||
-            status === 'skipped' ||
-            isAccountManager
-          )
-            return null;
+          if (status === 'completed' || status === 'skipped') return null;
           const busy = updatingId === _id;
           return (
             <TooltipProvider delayDuration={300}>

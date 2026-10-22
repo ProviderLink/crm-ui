@@ -16,7 +16,8 @@ import { Field } from './field';
 
 export function ClientProfileSection({ clientId }: { clientId: string }) {
   const user = useAppSelector(s => s.auth.user);
-  const canEdit = user?.role === 'admin';
+  const canEdit =
+    user?.role === 'admin' || user?.role === 'account_manager';
   const queryClient = useQueryClient();
 
   const { data: account, isLoading } = useQuery({

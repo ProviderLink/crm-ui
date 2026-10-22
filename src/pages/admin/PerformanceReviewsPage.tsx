@@ -19,7 +19,6 @@ export default function PerformanceReviewsPage() {
         vaMap: p.vaMap,
         clientMap: p.clientMap,
         exportingId: p.exportingId,
-        isAccountManager,
         onView: r => navigate(`${p.rolePrefix}/performance-reviews/${r.id}`),
         onExport: p.handleExportPdf,
         onDelete: p.setDeleteTarget,
@@ -37,16 +36,14 @@ export default function PerformanceReviewsPage() {
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {isAccountManager
-                  ? 'View performance reviews for your assigned VAs'
+                  ? 'AI-generated performance reviews for your assigned VAs'
                   : 'AI-generated performance reviews for VAs'}
               </p>
             </div>
-            {!isAccountManager && (
-              <Button size="sm" onClick={() => p.setGenerateOpen(true)}>
-                <PlusIcon className="size-4" />
-                Generate Review
-              </Button>
-            )}
+            <Button size="sm" onClick={() => p.setGenerateOpen(true)}>
+              <PlusIcon className="size-4" />
+              Generate Review
+            </Button>
           </div>
 
           <ReviewFilters
