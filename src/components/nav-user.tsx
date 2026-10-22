@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { LogOutIcon, MoreVerticalIcon, UserIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -54,6 +55,7 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const initials = user.name
     .split(' ')
@@ -67,6 +69,8 @@ export function NavUser({
   async function handleLogout() {
     await logout();
     dispatch(clearAuth());
+    // Drop cached data so the next user on this tab never sees it.
+    queryClient.clear();
     navigate('/login');
   }
 

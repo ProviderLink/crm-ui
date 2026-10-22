@@ -12,11 +12,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import {
-  QK,
   useMyAssignmentsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import type { IWorkEntry } from '@/types/work-entry';
+import { addDaysToDateKey, todayString } from '@/lib/time';
 
 import { buildWorkHistoryColumns } from './work-history/columns';
 import { EditWorkEntryForm } from './work-history/EditWorkEntryForm';
@@ -44,15 +44,10 @@ export default function WorkHistoryPage() {
     myAssignments.forEach(a => m.set(a._id, a.serviceType ?? 'VA Service'));
     return m;
   }, [myAssignments]);
-  const [dateFrom, setDateFrom] = useState(
-    () =>
-      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0]
+  const [dateFrom, setDateFrom] = useState(() =>
+    addDaysToDateKey(todayString(), -30)
   );
-  const [dateTo, setDateTo] = useState(
-    () => new Date().toISOString().split('T')[0]
-  );
+  const [dateTo, setDateTo] = useState(() => todayString());
   const [editEntry, setEditEntry] = useState<IWorkEntry | null>(null);
 
   const filtered = useMemo(
@@ -153,7 +148,7 @@ export default function WorkHistoryPage() {
               key={editEntry._id}
               entry={editEntry}
               onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: QK.workEntries() });
+                queryClient.invalidateQueries({ queryKey: ['work-entries'] });
                 setEditEntry(null);
               }}
             />

@@ -3,7 +3,6 @@ import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import {
-  QK,
   useEodContextQuery,
   useEodSubmissionsQuery,
   useMyAssignmentsQuery,
@@ -169,7 +168,7 @@ export default function EodHistoryPage() {
     setDeleteError(null);
     try {
       await deleteEodSubmission(deleteTarget._id);
-      queryClient.invalidateQueries({ queryKey: QK.eodSubmissions() });
+      queryClient.invalidateQueries({ queryKey: ['eod-submissions'] });
     } catch {
       setDeleteError('Failed to delete EOD submission. Please try again.');
     } finally {
