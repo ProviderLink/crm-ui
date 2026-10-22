@@ -23,6 +23,7 @@ import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
+  useEodContextQuery,
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
@@ -39,8 +40,6 @@ const SURVEY_TYPE_LABELS: Record<ISurveyReminder['surveyType'], string> = {
   '30_day': '30-Day',
   monthly: 'Monthly',
 };
-
-const todayStr = () => todayString();
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -65,6 +64,10 @@ export default function SurveyRemindersPage() {
   }, [isAccountManager, amAssignments]);
 
   const { data: allReminders = [], isLoading } = useSurveyRemindersQuery();
+  // Due dates are company business days, so judge "overdue" against the
+  // company's current day, not the device clock.
+  const { data: eodContext } = useEodContextQuery();
+  const today = eodContext?.dateKey ?? todayString();
   const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
 
@@ -154,7 +157,7 @@ export default function SurveyRemindersPage() {
           // Finished reminders are never overdue.
           const open =
             row.original.status === 'pending' || row.original.status === 'sent';
-          const overdue = open && v < todayStr();
+          const overdue = open && v < today;
           return (
             <span
               className={`text-xs whitespace-nowrap ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
@@ -227,7 +230,7 @@ export default function SurveyRemindersPage() {
         },
       },
     ],
-    [updatingId, relatedNames] // eslint-disable-line react-hooks/exhaustive-deps
+    [updatingId, relatedNames, today] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return (
