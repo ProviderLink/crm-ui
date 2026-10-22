@@ -2,7 +2,7 @@ import { AppLogo } from '@/components/app-logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAppDispatch } from '@/hooks/store';
+import { useAppDispatch, useAppSelector } from '@/hooks/store';
 import { roleHome } from '@/lib/role-home';
 import { NoCrmAccessError, login, logout } from '@/services/auth.service';
 import { setAuth } from '@/store/slices/authSlice';
@@ -11,7 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -36,6 +36,12 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  // Already signed in (for example following a bookmark): skip the form.
+  const signedInUser = useAppSelector(s => s.auth.user);
+  if (signedInUser) {
+    return <Navigate to={roleHome[signedInUser.role]} replace />;
+  }
 
   async function onSubmit(data: FormData) {
     setError(null);
