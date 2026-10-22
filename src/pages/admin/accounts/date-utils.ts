@@ -1,3 +1,5 @@
+import { dateKeyToLocalDate } from '@/lib/time';
+
 // yyyy-MM-dd → ISO 8601 datetime string the backend expects, or null
 export function toISO(ymd: string): string | null {
   if (!ymd) return null;
@@ -15,9 +17,9 @@ export function toYMD(val: unknown): string {
 // Safe display formatter — never shows "Invalid Date"
 export function fmtDate(val: unknown): string {
   if (!val) return '—';
-  const d = new Date(val as string);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString();
+  // Build from the date parts so a UTC-midnight value is not shifted a day.
+  const d = dateKeyToLocalDate(String(val));
+  return d ? d.toLocaleDateString() : '—';
 }
 
 export function durationLabel(start: string, end: string | null): string {

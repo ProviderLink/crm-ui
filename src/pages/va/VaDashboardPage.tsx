@@ -29,21 +29,11 @@ import {
   useScorecardsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
-import { todayString } from '@/lib/time';
-
-function weekStartStr() {
-  const d = new Date();
-  const dow = d.getDay();
-  d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+import { formatDateKeyLong, todayString, weekStartOfDateKey } from '@/lib/time';
 
 export default function VaDashboardPage() {
   const today = todayString();
-  const weekStart = weekStartStr();
+  const weekStart = weekStartOfDateKey(today);
   // EOD compliance is judged on the company's business day, not the device's.
   const { data: eodContext } = useEodContextQuery();
   const companyToday = eodContext?.dateKey ?? today;
@@ -54,7 +44,7 @@ export default function VaDashboardPage() {
       date: companyToday,
     });
   const { data: scorecards = [], isLoading: loadingScores } =
-    useScorecardsQuery();
+    useScorecardsQuery(undefined, false); // scorecards are admin/AM only
   const { data: allAssignments = [], isLoading: loadingAssignments } =
     useMyAllAssignmentsQuery();
 
@@ -246,18 +236,10 @@ export default function VaDashboardPage() {
                       </p>
                       <span className="flex items-center gap-1.5 text-sm text-foreground">
                         <CalendarIcon className="size-3 shrink-0 text-muted-foreground" />
-                        {new Date(a.startDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
+                        {formatDateKeyLong(a.startDate)}
                         <span className="text-muted-foreground">→</span>
                         {a.endDate ? (
-                          new Date(a.endDate).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })
+                          formatDateKeyLong(a.endDate)
                         ) : (
                           <span className="text-green-400">Present</span>
                         )}

@@ -19,7 +19,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { formatMinutes } from '@/lib/time';
+import { addDaysToDateKey, formatMinutes, todayString } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
@@ -32,15 +32,10 @@ export default function WorkEntriesPage() {
   const user = useAppSelector(s => s.auth.user);
   const isAccountManager = user?.role === 'account_manager';
 
-  const [dateFrom, setDateFrom] = useState(
-    () =>
-      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0]
+  const [dateFrom, setDateFrom] = useState(() =>
+    addDaysToDateKey(todayString(), -30)
   );
-  const [dateTo, setDateTo] = useState(
-    () => new Date().toISOString().split('T')[0]
-  );
+  const [dateTo, setDateTo] = useState(() => todayString());
   const [vaFilter, setVaFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
 

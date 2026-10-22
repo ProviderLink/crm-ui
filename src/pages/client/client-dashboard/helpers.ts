@@ -1,3 +1,4 @@
+import { formatDateKeyShort } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
 export function tenureLabel(startDate: string) {
@@ -25,12 +26,7 @@ export function initials(name: string) {
     .slice(0, 2);
 }
 
-export function formatMonthDay(date: string) {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
-}
+export const formatMonthDay = formatDateKeyShort;
 
 export const assignmentBadge: Record<
   IAssignment['status'],

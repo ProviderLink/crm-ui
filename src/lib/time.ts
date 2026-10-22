@@ -81,6 +81,23 @@ export function weekdayOfDateKey(dateKey: string): number {
   return new Date(y, m - 1, d).getDay();
 }
 
+/** Monday of the week containing a `YYYY-MM-DD` key, as a key. */
+export function weekStartOfDateKey(dateKey: string): string {
+  const dow = weekdayOfDateKey(dateKey);
+  return addDaysToDateKey(dateKey, -(dow === 0 ? 6 : dow - 1));
+}
+
+/**
+ * Local-midnight `Date` for the `YYYY-MM-DD` part of a date key or ISO string,
+ * or null if it is not a valid date. Use this instead of `new Date(key)`,
+ * which parses date-only values as UTC and can display the previous day.
+ */
+export function dateKeyToLocalDate(value: string): Date | null {
+  const [y, m, d] = value.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+
 /** Current time as "HH:MM" */
 export function nowTimeString(): string {
   return new Date().toTimeString().slice(0, 5);

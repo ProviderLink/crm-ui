@@ -31,7 +31,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { formatMinutes } from '@/lib/time';
+import { dateKeyToLocalDate, formatMinutes, todayString, weekStartOfDateKey } from '@/lib/time';
 import { getAllAssignments } from '@/services/assignments.service';
 import { getClientAccounts } from '@/services/client-accounts.service';
 import { getVaProfiles } from '@/services/va-profiles.service';
@@ -69,8 +69,9 @@ const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
 };
 
 function fmtDate(iso: string | undefined | null) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-GB', {
+  const date = iso ? dateKeyToLocalDate(iso) : null;
+  if (!date) return '—';
+  return date.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -538,15 +539,9 @@ export default function AssignmentDetailPage() {
                 This Week
               </p>
               {(() => {
-                const weekStart = new Date();
-                weekStart.setDate(
-                  weekStart.getDate() - ((weekStart.getDay() + 6) % 7)
-                );
-                weekStart.setHours(0, 0, 0, 0);
+                const weekStart = weekStartOfDateKey(todayString());
                 const weekEntries = allEntries.filter(
-                  e =>
-                    e.assignmentId === id &&
-                    e.entryDate >= weekStart.toISOString().split('T')[0]
+                  e => e.assignmentId === id && e.entryDate >= weekStart
                 );
                 const hours =
                   weekEntries.reduce((s, e) => s + e.timeSpent, 0) / 60;

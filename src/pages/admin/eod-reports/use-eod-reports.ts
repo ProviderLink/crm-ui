@@ -11,20 +11,16 @@ import {
 import { useAppSelector } from '@/hooks/store';
 import { exportReport, type ExportFormat } from '@/services/reports.service';
 import type { IEodSubmission } from '@/types/eod-submission';
+import { addDaysToDateKey, todayString } from '@/lib/time';
 
 export function useEodReports() {
   const user = useAppSelector(s => s.auth.user);
   const isAccountManager = user?.role === 'account_manager';
 
-  const [dateFrom, setDateFrom] = useState(
-    () =>
-      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0]
+  const [dateFrom, setDateFrom] = useState(() =>
+    addDaysToDateKey(todayString(), -30)
   );
-  const [dateTo, setDateTo] = useState(
-    () => new Date().toISOString().split('T')[0]
-  );
+  const [dateTo, setDateTo] = useState(() => todayString());
   const [vaFilter, setVaFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
   const [selectedEodId, setSelectedEodId] = useState<string | null>(null);
