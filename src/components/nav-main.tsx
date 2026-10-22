@@ -41,7 +41,7 @@ export function NavMain({
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip={quickAction.label}
-              className="min-w-8 bg-[#E8E6E1] text-[#0D0D0D] duration-150 ease-out hover:bg-white hover:text-[#0D0D0D] active:bg-white active:text-[#0D0D0D]"
+              className="min-w-8 bg-primary text-text-inverse duration-150 ease-out hover:bg-white hover:text-text-inverse active:bg-white active:text-text-inverse"
               asChild
             >
               <Link to={quickAction.to}>

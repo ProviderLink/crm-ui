@@ -59,9 +59,9 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  completed: { label: 'Completed', color: 'text-[#A0A0A0]' },
-  in_progress: { label: 'In Progress', color: 'text-[#A0A0A0]' },
-  pending: { label: 'Pending', color: 'text-[#6E6E6E]' },
+  completed: { label: 'Completed', color: 'text-text-secondary' },
+  in_progress: { label: 'In Progress', color: 'text-text-secondary' },
+  pending: { label: 'Pending', color: 'text-text-tertiary' },
 };
 
 export default function AddWorkEntryPage() {

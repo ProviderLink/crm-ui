@@ -76,7 +76,7 @@ export default function LoginPage() {
     <div
       className="relative min-h-screen flex flex-col"
       style={{
-        backgroundColor: '#0A0A0A',
+        backgroundColor: 'var(--bg-canvas)',
         backgroundImage:
           "url('/assets/patterns/dark-square-four-triangle.svg')",
         backgroundRepeat: 'repeat',
@@ -96,14 +96,14 @@ export default function LoginPage() {
             <h1 className="text-2xl font-medium text-white tracking-[-0.02em] leading-tight">
               Sign in
             </h1>
-            <p className="text-sm text-[#A0A0A0] mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               Internal workspace — authorised access only.
             </p>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="mb-5 rounded-md border border-[rgba(255,255,255,0.08)] bg-[#121212] px-4 py-3 text-sm text-[#F87171] flex items-start gap-2">
+            <div className="mb-5 rounded-md border border-[rgba(255,255,255,0.08)] bg-surface-raised px-4 py-3 text-sm text-status-error flex items-start gap-2">
               <span className="shrink-0 mt-0.5">⚠</span>
               {error}
             </div>
@@ -119,7 +119,7 @@ export default function LoginPage() {
               <div className="flex items-center">
                 <Label
                   htmlFor="email"
-                  className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#6E6E6E]"
+                  className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-text-tertiary"
                 >
                   Email
                 </Label>
@@ -133,7 +133,7 @@ export default function LoginPage() {
                 {...register('email')}
               />
               {errors.email && (
-                <p className="text-xs text-[#F87171]">{errors.email.message}</p>
+                <p className="text-xs text-status-error">{errors.email.message}</p>
               )}
             </div>
 
@@ -141,13 +141,13 @@ export default function LoginPage() {
               <div className="flex items-center justify-between">
                 <Label
                   htmlFor="password"
-                  className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[#6E6E6E]"
+                  className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-text-tertiary"
                 >
                   Password
                 </Label>
                 <Link
                   to="/reset-password"
-                  className="text-xs text-[#6E6E6E] hover:text-[#A0A0A0] transition-colors duration-150"
+                  className="text-xs text-text-tertiary hover:text-text-secondary transition-colors duration-150"
                 >
                   Forgot?
                 </Link>
@@ -161,7 +161,7 @@ export default function LoginPage() {
                 {...register('password')}
               />
               {errors.password && (
-                <p className="text-xs text-[#F87171]">
+                <p className="text-xs text-status-error">
                   {errors.password.message}
                 </p>
               )}
@@ -170,11 +170,11 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-10 rounded-md font-medium text-sm bg-[#E8E6E1] hover:bg-white text-[#0D0D0D] mt-1 transition-colors duration-150"
+              className="w-full h-10 rounded-md font-medium text-sm bg-primary hover:bg-white text-text-inverse mt-1 transition-colors duration-150"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
-                  <span className="h-3.5 w-3.5 rounded-full border-2 border-[#0D0D0D]/30 border-t-[#0D0D0D] animate-spin" />
+                  <span className="h-3.5 w-3.5 rounded-full border-2 border-text-inverse/30 border-t-text-inverse animate-spin" />
                   Signing in…
                 </span>
               ) : (
@@ -184,10 +184,10 @@ export default function LoginPage() {
           </form>
 
           {/* Back to home */}
-          <p className="mt-6 text-center text-xs text-[#6E6E6E]">
+          <p className="mt-6 text-center text-xs text-text-tertiary">
             <Link
               to="/"
-              className="hover:text-[#A0A0A0] transition-colors duration-150"
+              className="hover:text-text-secondary transition-colors duration-150"
             >
               ← Back to home
             </Link>
@@ -196,14 +196,14 @@ export default function LoginPage() {
       </div>
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 shrink-0 border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 flex items-center justify-between bg-[#0A0A0A]">
+      <footer className="relative z-10 shrink-0 border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 flex items-center justify-between bg-canvas">
         <div className="flex items-center gap-1.5">
-          <CheckCircle2 className="h-3.5 w-3.5 text-[#6E6E6E]" />
-          <span className="text-xs text-[#6E6E6E]">
+          <CheckCircle2 className="h-3.5 w-3.5 text-text-tertiary" />
+          <span className="text-xs text-text-tertiary">
             All systems operational
           </span>
         </div>
-        <p className="text-xs text-[#6E6E6E]">
+        <p className="text-xs text-text-tertiary">
           © {new Date().getFullYear()} Arista CRM
         </p>
       </footer>

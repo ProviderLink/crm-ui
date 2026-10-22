@@ -32,7 +32,7 @@ export function buildClientColumns(
           .slice(0, 2);
         return (
           <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-xs">
               {initials}
             </div>
             <p className="text-sm font-semibold truncate">
@@ -140,7 +140,7 @@ export function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>
         const u = row.original;
         return (
           <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs font-medium">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-xs font-medium">
               {u.name
                 .split(' ')
                 .map(n => n[0])
@@ -277,7 +277,7 @@ export function buildAmColumns(): ColumnDef<UserRow>[] {
         const u = row.original;
         return (
           <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs font-medium">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-xs font-medium">
               {u.name
                 .split(' ')
                 .map(n => n[0])
@@ -332,7 +332,7 @@ export function buildAdminColumns(): ColumnDef<UserRow>[] {
         const u = row.original;
         return (
           <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs font-medium">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-xs font-medium">
               {u.name
                 .split(' ')
                 .map(n => n[0])

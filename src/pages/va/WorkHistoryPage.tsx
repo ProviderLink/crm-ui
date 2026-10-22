@@ -91,7 +91,7 @@ export default function WorkHistoryPage() {
             </div>
             <Link
               to="/va/work/new"
-              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-[#E8E6E1] text-[#0D0D0D] hover:bg-white transition-colors duration-150"
+              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-primary text-text-inverse hover:bg-white transition-colors duration-150"
             >
               + Add Entry
             </Link>

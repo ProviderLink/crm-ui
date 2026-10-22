@@ -99,7 +99,7 @@ export default function VaDashboardPage() {
               </CardTitle>
               <div className="absolute right-4 top-4">
                 <ClipboardCheckIcon
-                  className={`size-4 ${!loadingEods && eodSubmitted ? 'text-[#A0A0A0]' : 'text-muted-foreground'}`}
+                  className={`size-4 ${!loadingEods && eodSubmitted ? 'text-text-secondary' : 'text-muted-foreground'}`}
                 />
               </div>
             </CardHeader>

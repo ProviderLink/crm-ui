@@ -159,7 +159,7 @@ export default function PerformanceReviewEditorPage() {
           {/* ── Strengths + Areas (side by side) ─────────────────────────── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <SectionCard
-              icon={<span className="text-[#A0A0A0]">↑</span>}
+              icon={<span className="text-text-secondary">↑</span>}
               title="Strengths"
             >
               <Textarea

@@ -14,7 +14,7 @@ export function RecentEodItem({
                       <div
                         className="flex items-start gap-3 rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2.5"
                       >
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-[10px] font-medium mt-0.5">
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-[10px] font-medium mt-0.5">
                           {initials(displayName)}
                         </div>
                         <div className="flex flex-1 flex-col gap-0.5 min-w-0">
@@ -40,7 +40,7 @@ export function RecentEodItem({
                           </p>
                           {eod.pendingTasks && (
                             <p className="text-xs text-muted-foreground/70 line-clamp-1">
-                              <span className="font-medium text-[#A0A0A0]">
+                              <span className="font-medium text-text-secondary">
                                 Pending:{' '}
                               </span>
                               {eod.pendingTasks}

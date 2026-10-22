@@ -45,7 +45,7 @@ export default function HomePage() {
     <div
       className="relative min-h-screen flex flex-col"
       style={{
-        backgroundColor: '#0A0A0A',
+        backgroundColor: 'var(--bg-canvas)',
         backgroundImage:
           "url('/assets/patterns/dark-square-four-triangle.svg')",
         backgroundRepeat: 'repeat',
@@ -59,7 +59,7 @@ export default function HomePage() {
         </div>
         <Link
           to="/login"
-          className="inline-flex items-center gap-1.5 rounded-md border border-[rgba(255,255,255,0.12)] bg-transparent px-5 py-2 text-sm font-medium text-[#A0A0A0] hover:border-[rgba(255,255,255,0.20)] hover:text-white transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 rounded-md border border-[rgba(255,255,255,0.12)] bg-transparent px-5 py-2 text-sm font-medium text-text-secondary hover:border-[rgba(255,255,255,0.20)] hover:text-white transition-colors duration-150"
         >
           Sign in
           <ChevronRight className="h-3.5 w-3.5" />
@@ -69,13 +69,13 @@ export default function HomePage() {
       {/* ── Main ── */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 min-h-0 py-10 sm:py-0">
         {/* Intro text */}
-        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-[#6E6E6E] mb-3 text-center">
+        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary mb-3 text-center">
           Internal operations platform
         </p>
         <h1 className="text-2xl sm:text-3xl font-medium text-white tracking-[-0.02em] text-center mb-3">
           Four roles. One workflow.
         </h1>
-        <p className="text-sm text-[#A0A0A0] text-center max-w-sm mb-10 leading-relaxed">
+        <p className="text-sm text-text-secondary text-center max-w-sm mb-10 leading-relaxed">
           Manage assignments, log work, review performance, and track client
           activity — all in one place.
         </p>
@@ -88,7 +88,7 @@ export default function HomePage() {
               className="flex-1 h-px"
               style={{ background: 'rgba(255,255,255,0.08)' }}
             />
-            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-[#6E6E6E] shrink-0">
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary shrink-0">
               How it works
             </span>
             <div
@@ -125,21 +125,21 @@ export default function HomePage() {
               {flow.map(({ step, icon: Icon, role, verb, desc }) => (
                 <div key={role} className="flex flex-col items-center gap-3">
                   {/* Icon circle */}
-                  <div className="relative z-10 h-11 w-11 rounded-full border border-[rgba(255,255,255,0.12)] flex items-center justify-center shrink-0 bg-[#121212]">
-                    <Icon className="h-5 w-5 text-[#A0A0A0]" />
+                  <div className="relative z-10 h-11 w-11 rounded-full border border-[rgba(255,255,255,0.12)] flex items-center justify-center shrink-0 bg-surface-raised">
+                    <Icon className="h-5 w-5 text-text-secondary" />
                   </div>
                   {/* Text */}
                   <div className="text-center px-1">
-                    <span className="font-mono text-[10px] font-medium text-[#6E6E6E]">
+                    <span className="font-mono text-[10px] font-medium text-text-tertiary">
                       {step}
                     </span>
                     <p className="text-sm font-medium text-white leading-tight mt-0.5">
                       {role}
                     </p>
-                    <p className="text-xs font-medium text-[#A0A0A0] mt-0.5 mb-2">
+                    <p className="text-xs font-medium text-text-secondary mt-0.5 mb-2">
                       {verb}
                     </p>
-                    <p className="text-xs text-[#6E6E6E] leading-snug">
+                    <p className="text-xs text-text-tertiary leading-snug">
                       {desc}
                     </p>
                   </div>
@@ -153,11 +153,11 @@ export default function HomePage() {
             {flow.map(({ step, icon: Icon, role, verb, desc }) => (
               <div
                 key={role}
-                className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#121212] p-4"
+                className="rounded-lg border border-[rgba(255,255,255,0.08)] bg-surface-raised p-4"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="h-8 w-8 rounded-md border border-[rgba(255,255,255,0.12)] flex items-center justify-center bg-transparent">
-                    <Icon className="h-4 w-4 text-[#A0A0A0]" />
+                    <Icon className="h-4 w-4 text-text-secondary" />
                   </div>
                   <span className="font-mono text-[10px] text-white/20">
                     {step}
@@ -166,10 +166,10 @@ export default function HomePage() {
                 <p className="text-sm font-medium text-white leading-none">
                   {role}
                 </p>
-                <p className="text-xs font-medium text-[#A0A0A0] mt-1 mb-2">
+                <p className="text-xs font-medium text-text-secondary mt-1 mb-2">
                   {verb}
                 </p>
-                <p className="text-xs text-[#6E6E6E] leading-snug">{desc}</p>
+                <p className="text-xs text-text-tertiary leading-snug">{desc}</p>
               </div>
             ))}
           </div>
@@ -179,7 +179,7 @@ export default function HomePage() {
         <div className="mt-10 mb-2 sm:mb-0">
           <Link
             to="/login"
-            className="group inline-flex items-center gap-2 rounded-md px-6 py-2.5 text-sm font-medium bg-[#E8E6E1] text-[#0D0D0D] hover:bg-white transition-colors duration-150"
+            className="group inline-flex items-center gap-2 rounded-md px-6 py-2.5 text-sm font-medium bg-primary text-text-inverse hover:bg-white transition-colors duration-150"
           >
             Access Workspace
             <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -188,14 +188,14 @@ export default function HomePage() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 shrink-0 border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 flex items-center justify-between bg-[#0A0A0A]">
+      <footer className="relative z-10 shrink-0 border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 flex items-center justify-between bg-canvas">
         <div className="flex items-center gap-1.5">
-          <CheckCircle2 className="h-3.5 w-3.5 text-[#6E6E6E]" />
-          <span className="text-xs text-[#6E6E6E]">
+          <CheckCircle2 className="h-3.5 w-3.5 text-text-tertiary" />
+          <span className="text-xs text-text-tertiary">
             All systems operational
           </span>
         </div>
-        <p className="text-xs text-[#6E6E6E]">
+        <p className="text-xs text-text-tertiary">
           © {new Date().getFullYear()} Arista CRM
         </p>
       </footer>

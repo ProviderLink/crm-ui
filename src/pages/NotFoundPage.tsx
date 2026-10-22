@@ -19,7 +19,7 @@ export default function NotFoundPage() {
       </p>
       <Link
         to={homeHref}
-        className="inline-flex h-10 items-center justify-center rounded-md bg-[#E8E6E1] px-6 text-sm font-medium text-[#0D0D0D] hover:bg-white transition-colors duration-150"
+        className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-text-inverse hover:bg-white transition-colors duration-150"
       >
         Go home
       </Link>

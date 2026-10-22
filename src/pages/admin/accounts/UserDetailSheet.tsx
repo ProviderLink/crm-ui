@@ -30,7 +30,7 @@ export function UserDetailSheet({
             {showCrmProfile ? 'CRM account profile' : 'Read-only account view'}
           </SheetDescription>
           <div className="flex items-start gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-[#A0A0A0] font-mono text-base font-medium border border-white/[0.08]">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-text-secondary font-mono text-base font-medium border border-white/[0.08]">
               {isClient
                 ? (user.companyName ?? user.name)
                     .split(' ')

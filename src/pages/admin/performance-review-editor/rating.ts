@@ -8,11 +8,11 @@ export const RATING_OPTIONS = [
 ];
 
 export const RATING_COLORS: Record<number, string> = {
-  1: 'bg-white/[0.04] text-[#F87171] border-[rgba(255,255,255,0.08)]',
-  2: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  3: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  4: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  5: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
+  1: 'bg-white/[0.04] text-status-error border-[rgba(255,255,255,0.08)]',
+  2: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
+  3: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
+  4: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
+  5: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
 };
 
 export function ratingToValue(r: number | null): string {

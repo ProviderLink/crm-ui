@@ -19,7 +19,7 @@ export function PastEngagementCard({
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-[#A0A0A0] font-mono text-xs font-medium">
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-xs font-medium">
                             {initials(displayName)}
                           </div>
                           <div className="min-w-0">

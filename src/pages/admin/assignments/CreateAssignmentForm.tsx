@@ -194,11 +194,11 @@ export function CreateAssignmentForm({
                         <span className="flex items-center gap-2">
                           {v.firstName} {v.lastName}
                           {hasAssignment ? (
-                            <span className="ml-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] rounded px-1.5 py-0.5 bg-white/[0.04] text-[#A0A0A0] ring-1 ring-[rgba(255,255,255,0.08)]">
+                            <span className="ml-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] rounded px-1.5 py-0.5 bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]">
                               Assigned
                             </span>
                           ) : (
-                            <span className="ml-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] rounded px-1.5 py-0.5 bg-white/[0.04] text-[#6E6E6E] ring-1 ring-[rgba(255,255,255,0.08)]">
+                            <span className="ml-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] rounded px-1.5 py-0.5 bg-white/[0.04] text-text-tertiary ring-1 ring-[rgba(255,255,255,0.08)]">
                               Free
                             </span>
                           )}

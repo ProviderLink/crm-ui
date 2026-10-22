@@ -104,7 +104,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
   const statusColors: Record<string, string> = {
     active: 'text-emerald-400 bg-emerald-500/10',
     on_hold: 'text-amber-400 bg-amber-500/10',
-    ended: 'text-[#A0A0A0] bg-white/[0.04]',
+    ended: 'text-text-secondary bg-white/[0.04]',
   };
 
   const statusLabels: Record<string, string> = {

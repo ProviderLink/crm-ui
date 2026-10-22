@@ -62,7 +62,7 @@ export default function ProfilePage() {
         <CardContent className="pt-6 pb-6">
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-[#A0A0A0] font-mono text-lg select-none">
+            <div className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-text-secondary font-mono text-lg select-none">
               {user?.name
                 ? user.name
                     .split(' ')
@@ -77,7 +77,7 @@ export default function ProfilePage() {
               <p className="text-lg font-semibold leading-tight truncate">
                 {user?.name ?? '—'}
               </p>
-              <span className="inline-flex w-fit items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] px-2.5 py-0.5 text-[#A0A0A0]">
+              <span className="inline-flex w-fit items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] px-2.5 py-0.5 text-text-secondary">
                 {user?.role ? (roleLabel[user.role] ?? user.role) : '—'}
               </span>
             </div>
