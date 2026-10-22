@@ -77,7 +77,7 @@ export default function EodSubmitPage() {
       <PageShell>
         <PageHeader />
         <AlreadySubmittedCard
-          dateLabel={f.selectedDate === f.today ? 'today' : f.selectedDate}
+          dateLabel="today"
           onViewHistory={() => navigate('/va/eod/history')}
         />
       </PageShell>
@@ -89,14 +89,6 @@ export default function EodSubmitPage() {
       <PageHeader />
 
       <form onSubmit={f.onFormSubmit} noValidate className="space-y-4">
-        {f.duplicateOnSelectedDate && (
-          <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-            <AlertCircle size={15} className="mt-0.5 shrink-0" />
-            An EOD for this assignment has already been submitted for{' '}
-            {f.selectedDate}. Pick a different date.
-          </div>
-        )}
-
         {f.error && (
           <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
             <AlertCircle size={15} className="mt-0.5 shrink-0" />
@@ -269,7 +261,7 @@ export default function EodSubmitPage() {
         <div className="flex items-center gap-3 pt-1">
           <Button
             type="submit"
-            disabled={f.isSubmitting || f.duplicateOnSelectedDate}
+            disabled={f.isSubmitting}
             className="flex-1 rounded-xl h-10 font-medium gap-2"
           >
             {f.isSubmitting ? (

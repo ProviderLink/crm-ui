@@ -16,7 +16,6 @@ export const workEntrySchema = z.object({
 
 export const schema = z.object({
   assignmentId: z.string().min(1, 'Assignment is required'),
-  date: z.string().min(1, 'Date is required'),
   shiftStart: z.string().min(1, 'Shift start is required'),
   shiftEnd: z.string().min(1, 'Shift end is required'),
   workEntries: z.array(workEntrySchema).min(1, 'Add at least one work entry'),

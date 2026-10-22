@@ -1,8 +1,8 @@
 import { CalendarDays, Clock } from 'lucide-react';
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
 
-import { DatePickerField } from '@/components/ui/date-picker-field';
 import { TimePickerField } from '@/components/ui/time-picker-field';
+import { formatDateKeyLong } from '@/lib/time';
 
 import { Field, Section } from './layout';
 import type { FormData } from './schema';
@@ -25,24 +25,15 @@ export function ShiftSection({
           <div className="grid grid-cols-3 gap-4">
             <Field
               label="Date"
-              error={errors.date?.message}
               hint={
                 companyTimezone
-                  ? `Your report is filed against the company's business day (${companyTimezone}), which may differ from your local date. Late submissions for an earlier day are still accepted.`
+                  ? `Filed against the company's business day (${companyTimezone}), which may differ from your local date.`
                   : undefined
               }
             >
-              <Controller
-                name="date"
-                control={control}
-                render={({ field }) => (
-                  <DatePickerField
-                    value={field.value}
-                    onChange={field.onChange}
-                    toDate={new Date(`${today}T23:59:59`)}
-                  />
-                )}
-              />
+              <p className="flex h-9 items-center text-sm text-foreground">
+                {formatDateKeyLong(today)}
+              </p>
             </Field>
             <Field label="Shift Start" error={errors.shiftStart?.message}>
               <Controller

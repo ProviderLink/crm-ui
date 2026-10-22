@@ -17,7 +17,9 @@ export function useEodSubmitForm() {
   /**
    * VAs work from every timezone but report against the **company's** business
    * day, so "today" comes from the backend (company timezone) rather than the
-   * device clock. The device value is only a placeholder until it resolves.
+   * device clock. The form never sends a date: the server files the EOD
+   * against its own current company day. The device value is only a
+   * placeholder until the context resolves.
    */
   const deviceToday = todayString();
   const { data: eodContext, isLoading: loadingContext } = useEodContextQuery();
@@ -40,14 +42,12 @@ export function useEodSubmitForm() {
     handleSubmit,
     control,
     setValue,
-    getValues,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       communicatedWithClient: undefined,
-      date: today,
       shiftStart: '',
       shiftEnd: '',
       workEntries: [DEFAULT_WORK_ENTRY],
@@ -60,37 +60,14 @@ export function useEodSubmitForm() {
     remove: removeWork,
   } = useFieldArray({ control, name: 'workEntries' });
 
-  const selectedDate = watch('date') ?? today;
   const selectedAssignmentId = watch('assignmentId') ?? '';
   const shiftStart = watch('shiftStart') ?? '';
   const shiftEnd = watch('shiftEnd') ?? '';
   // Preview only — the server recomputes this from the shift times.
   const hoursWorked = calcHours(shiftStart, shiftEnd);
   const alreadySubmitted = selectedAssignmentId
-    ? submittedKeys.has(`${selectedAssignmentId}::${selectedDate}`)
+    ? submittedKeys.has(`${selectedAssignmentId}::${today}`)
     : false;
-
-  // Late reports can be filed for an earlier day, so check that day too (same
-  // query as today's when the dates match). The server rejects duplicates
-  // either way; this just tells the VA before they fill in the form.
-  const { data: selectedDayEods = [] } = useEodSubmissionsQuery({
-    date: selectedDate,
-  });
-  const duplicateOnSelectedDate = selectedAssignmentId
-    ? selectedDayEods.some(
-        e => e.assignmentId === selectedAssignmentId && e.date === selectedDate
-      )
-    : false;
-
-  // Correct the placeholder date once the company business day is known, but
-  // only while the VA has not picked a date themselves.
-  useEffect(() => {
-    if (!eodContext) return;
-    const current = getValues('date');
-    if (!current || current === deviceToday) {
-      setValue('date', eodContext.dateKey, { shouldValidate: true });
-    }
-  }, [eodContext, deviceToday, getValues, setValue]);
 
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
@@ -101,8 +78,9 @@ export function useEodSubmitForm() {
   async function onSubmit(data: FormData) {
     setError(null);
     try {
-      // `date` is sent as the company business day; `hoursWorked` is derived
-      // server-side so overnight shifts are not under-counted.
+      // `date` is omitted so the server uses the company's current day, and
+      // `hoursWorked` is derived server-side so overnight shifts are not
+      // under-counted.
       await createEodSubmission(data);
       queryClient.invalidateQueries({ queryKey: ['eod-submissions'] });
       queryClient.invalidateQueries({ queryKey: ['eod-context'] });
@@ -127,9 +105,7 @@ export function useEodSubmitForm() {
     workFields,
     appendWork,
     removeWork,
-    selectedDate,
     hoursWorked,
     alreadySubmitted,
-    duplicateOnSelectedDate,
   };
 }
