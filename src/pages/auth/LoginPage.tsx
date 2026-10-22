@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAppDispatch } from '@/hooks/store';
-import { login } from '@/services/auth.service';
+import { roleHome } from '@/lib/role-home';
+import { NoCrmAccessError, login, logout } from '@/services/auth.service';
 import { setAuth } from '@/store/slices/authSlice';
-import type { UserRole } from '@/types/auth';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -21,16 +22,13 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const roleRedirect: Record<UserRole, string> = {
-  admin: '/admin/dashboard',
-  account_manager: '/am/dashboard',
-  va: '/va/dashboard',
-  client: '/client/dashboard',
-};
+const NO_ACCESS_MESSAGE =
+  'Your account does not have access to the CRM. Contact your administrator.';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -43,14 +41,24 @@ export default function LoginPage() {
     setError(null);
     try {
       const result = await login(data);
+      // Never carry cached data over from a previous session on this tab.
+      queryClient.clear();
       dispatch(setAuth({ user: result.user, accessToken: result.accessToken }));
       toast.success('Welcome back!');
-      navigate(roleRedirect[result.user.role], { replace: true });
+      navigate(roleHome[result.user.role], { replace: true });
     } catch (err) {
-      if (err && typeof err === 'object' && 'response' in err) {
+      if (err instanceof NoCrmAccessError) {
+        // The server already issued a session; end it so no cookie lingers.
+        await logout();
+        setError(NO_ACCESS_MESSAGE);
+        toast.error(NO_ACCESS_MESSAGE);
+      } else if (err && typeof err === 'object' && 'response' in err) {
         const status = (err as { response?: { status?: number } }).response
           ?.status;
-        if (status === 401 || status === 400) {
+        if (status === 403) {
+          setError(NO_ACCESS_MESSAGE);
+          toast.error(NO_ACCESS_MESSAGE);
+        } else if (status === 401 || status === 400) {
           setError('Invalid email or password.');
           toast.error('Invalid email or password.');
         } else {

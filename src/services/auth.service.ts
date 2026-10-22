@@ -21,12 +21,33 @@ export interface LoginResponse {
   accessToken: string;
 }
 
+const CRM_ROLES: readonly UserRole[] = [
+  'admin',
+  'account_manager',
+  'va',
+  'client',
+];
+
+/** The signed-in account has no role that can use the CRM. */
+export class NoCrmAccessError extends Error {
+  constructor() {
+    super('This account does not have access to the CRM.');
+    this.name = 'NoCrmAccessError';
+  }
+}
+
 function mapUser(u: BackendUser): IUser {
+  // Pick the first CRM role: a user may also hold ATS-only roles, and an
+  // unknown role must never fall through to the VA portal.
+  const role = (u.roles ?? []).find((r): r is UserRole =>
+    CRM_ROLES.includes(r)
+  );
+  if (!role) throw new NoCrmAccessError();
   return {
     id: u._id,
     email: u.email,
     name: `${u.firstName} ${u.lastName}`,
-    role: u.roles[0] ?? 'va', // CRM users have a single role; fallback safe
+    role,
     clientRef: u.clientRef ?? null,
   };
 }
@@ -35,7 +56,8 @@ export async function login(payload: LoginPayload): Promise<LoginResponse> {
   const { data } = await api.post<{
     data: { accessToken: string; user: BackendUser };
   }>('/auth/login', { ...payload, app: 'crm' });
-  return { user: mapUser(data.data.user), accessToken: data.data.accessToken };
+  const user = mapUser(data.data.user);
+  return { user, accessToken: data.data.accessToken };
 }
 
 /**
