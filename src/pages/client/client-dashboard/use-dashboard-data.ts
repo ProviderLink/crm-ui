@@ -25,7 +25,10 @@ export function useDashboardData() {
   const { data: hiredVAs = [] } = useHiredVasForClientQuery(
     user?.clientRef ?? undefined
   );
-  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery();
+  // Only this week's hours are shown, so only ask for this week.
+  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery({
+    dateFrom: weekStart,
+  });
   const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery();
 
   // Build VA name map from hired-vas endpoint (client-scoped, always accessible)

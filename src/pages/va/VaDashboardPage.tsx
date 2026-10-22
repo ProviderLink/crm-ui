@@ -38,7 +38,10 @@ export default function VaDashboardPage() {
   const { data: eodContext } = useEodContextQuery();
   const companyToday = eodContext?.dateKey ?? today;
 
-  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery();
+  // Everything shown here is from this week, so only ask for this week.
+  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery({
+    dateFrom: weekStart,
+  });
   const { data: todayEods = [], isLoading: loadingEods } =
     useEodSubmissionsQuery({
       date: companyToday,
