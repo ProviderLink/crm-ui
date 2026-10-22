@@ -1,24 +1,9 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import type { ColumnDef } from '@tanstack/react-table';
-import { PenLineIcon } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { z } from 'zod';
 
 import { DataTable } from '@/components/shared/DataTable';
-import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Sheet,
   SheetContent,
@@ -26,251 +11,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   QK,
   useMyAssignmentsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
-import { formatMinutes } from '@/lib/time';
-import { updateWorkEntry } from '@/services/work-entries.service';
-import {
-  WORK_ENTRY_CATEGORIES,
-  WORK_ENTRY_STATUSES,
-  type IWorkEntry,
-  type WorkEntryStatus,
-} from '@/types/work-entry';
+import type { IWorkEntry } from '@/types/work-entry';
 
-// ── Edit schema ───────────────────────────────────────────────────────────────
-
-const editSchema = z.object({
-  entryDate: z.string().min(1, 'Required'),
-  entryTime: z.string().min(1, 'Required'),
-  taskCategory: z.enum([
-    'Administrative',
-    'Clinical Coordination',
-    'Data Entry',
-    'Communication',
-    'Research',
-    'Scheduling',
-    'Other',
-  ]),
-  taskDescription: z.string().min(1, 'Required'),
-  timeSpent: z.number().int().min(1, 'At least 1 minute'),
-  status: z.enum(['completed', 'in_progress', 'pending']),
-  notes: z.string().optional(),
-});
-type EditFormData = z.infer<typeof editSchema>;
-
-// ── Status styles ───────────────────────────────────────────────────────────
-
-const STATUS_STYLES: Record<WorkEntryStatus, string> = {
-  completed: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  in_progress: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  pending: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
-};
-
-// ── Edit sheet form ──────────────────────────────────────────────────────────
-
-function EditWorkEntryForm({
-  entry,
-  onSuccess,
-}: {
-  entry: IWorkEntry;
-  onSuccess: () => void;
-}) {
-  const {
-    register,
-    handleSubmit,
-    control,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<EditFormData>({
-    resolver: zodResolver(editSchema),
-    defaultValues: {
-      entryDate: entry.entryDate?.slice(0, 10) ?? '',
-      entryTime: entry.entryTime ?? '',
-      taskCategory: entry.taskCategory,
-      taskDescription: entry.taskDescription,
-      timeSpent: entry.timeSpent,
-      status: entry.status,
-      notes: entry.notes ?? '',
-    },
-  });
-
-  const [serverError, setServerError] = useState('');
-
-  useEffect(() => {
-    reset({
-      entryDate: entry.entryDate?.slice(0, 10) ?? '',
-      entryTime: entry.entryTime ?? '',
-      taskCategory: entry.taskCategory,
-      taskDescription: entry.taskDescription,
-      timeSpent: entry.timeSpent,
-      status: entry.status,
-      notes: entry.notes ?? '',
-    });
-  }, [entry, reset]);
-
-  async function onSubmit(data: EditFormData) {
-    setServerError('');
-    try {
-      await updateWorkEntry(entry._id, data);
-      onSuccess();
-    } catch {
-      setServerError('Failed to save. Please try again.');
-    }
-  }
-
-  return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mt-6 flex flex-col gap-5 pb-6"
-    >
-      {serverError && (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {serverError}
-        </p>
-      )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <Label>Date</Label>
-          <Controller
-            name="entryDate"
-            control={control}
-            render={({ field }) => (
-              <DatePickerField
-                value={field.value}
-                onChange={field.onChange}
-                toDate={new Date()}
-              />
-            )}
-          />
-          {errors.entryDate && (
-            <p className="text-xs text-destructive">
-              {errors.entryDate.message}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label>Time</Label>
-          <Input
-            type="time"
-            {...register('entryTime')}
-            className="rounded-md border-input"
-          />
-          {errors.entryTime && (
-            <p className="text-xs text-destructive">
-              {errors.entryTime.message}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>Category</Label>
-        <Controller
-          control={control}
-          name="taskCategory"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-md border-input">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {WORK_ENTRY_CATEGORIES.map(cat => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.taskCategory && (
-          <p className="text-xs text-destructive">
-            {errors.taskCategory.message}
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>Task Description</Label>
-        <Textarea
-          {...register('taskDescription')}
-          rows={3}
-          className="rounded-md border-input resize-none"
-        />
-        {errors.taskDescription && (
-          <p className="text-xs text-destructive">
-            {errors.taskDescription.message}
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <Label>Time Spent (minutes)</Label>
-          <Input
-            type="number"
-            min={1}
-            {...register('timeSpent', { valueAsNumber: true })}
-            className="rounded-md border-input"
-          />
-          {errors.timeSpent && (
-            <p className="text-xs text-destructive">
-              {errors.timeSpent.message}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label>Status</Label>
-          <Controller
-            control={control}
-            name="status"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="rounded-md border-input">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WORK_ENTRY_STATUSES.map(s => (
-                    <SelectItem key={s} value={s}>
-                      {s
-                        .replace('_', ' ')
-                        .replace(/\b\w/g, c => c.toUpperCase())}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>Notes (optional)</Label>
-        <Textarea
-          {...register('notes')}
-          rows={2}
-          className="rounded-md border-input resize-none"
-        />
-      </div>
-
-      <Button type="submit" disabled={isSubmitting} className="mt-2">
-        {isSubmitting ? 'Saving…' : 'Save Changes'}
-      </Button>
-    </form>
-  );
-}
-
-// ── Page ─────────────────────────────────────────────────────────────────────
+import { buildWorkHistoryColumns } from './work-history/columns';
+import { EditWorkEntryForm } from './work-history/EditWorkEntryForm';
 
 export default function WorkHistoryPage() {
   const queryClient = useQueryClient();
@@ -322,109 +71,14 @@ export default function WorkHistoryPage() {
     setDateTo('');
   }
 
-  const columns = useMemo<ColumnDef<IWorkEntry>[]>(
-    () => [
-      {
-        accessorKey: 'clientId',
-        header: 'Client',
-        size: 200,
-        cell: ({ row }) => (
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium text-foreground">
-              {clientMap.get(row.original.clientId) ?? '—'}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {assignmentMap.get(row.original.assignmentId) ?? '—'}
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'entryDate',
-        header: 'Date',
-        size: 105,
-        cell: ({ getValue }) => (
-          <span className="text-xs text-muted-foreground">
-            {getValue<string>()?.slice(0, 10)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'entryTime',
-        header: 'Time',
-        size: 75,
-        cell: ({ getValue }) => (
-          <span className="text-xs text-muted-foreground">
-            {getValue<string>()}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'taskCategory',
-        header: 'Category',
-        size: 160,
-        cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-[#A0A0A0] whitespace-nowrap">
-            {getValue<string>()}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'taskDescription',
-        header: 'Description',
-        enableSorting: false,
-        cell: ({ getValue }) => (
-          <span className="text-sm">{getValue<string>()}</span>
-        ),
-      },
-      {
-        accessorKey: 'timeSpent',
-        header: 'Time Spent',
-        size: 95,
-        cell: ({ getValue }) => (
-          <span className="text-xs text-muted-foreground">
-            {formatMinutes(getValue<number>())}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'status',
-        header: 'Status',
-        size: 125,
-        cell: ({ getValue }) => {
-          const s = getValue<WorkEntryStatus>();
-          return (
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
-            >
-              {s.replace('_', ' ')}
-            </span>
-          );
-        },
-      },
-      {
-        id: 'actions',
-        header: '',
-        enableSorting: false,
-        size: 60,
-        cell: ({ row }) => (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                onClick={() => setEditEntry(row.original)}
-              >
-                <PenLineIcon className="size-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Edit</TooltipContent>
-          </Tooltip>
-        ),
-      },
-    ],
-    [setEditEntry, clientMap, assignmentMap]
+  const columns = useMemo(
+    () =>
+      buildWorkHistoryColumns({
+        clientMap,
+        assignmentMap,
+        onEdit: setEditEntry,
+      }),
+    [clientMap, assignmentMap]
   );
 
   return (
