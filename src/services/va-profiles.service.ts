@@ -2,7 +2,11 @@ import api from '@/lib/api';
 import type { IVaProfile, UpdateVaProfilePayload } from '@/types/va-profile';
 
 export async function getVaProfiles(): Promise<IVaProfile[]> {
-  const { data } = await api.get<{ data: any[] }>('/crm/va-profiles');
+  // Backend defaults to limit=20 when omitted, which silently truncates the list;
+  // fetch a large page so every row is returned.
+  const { data } = await api.get<{ data: any[] }>(
+    '/crm/va-profiles?limit=1000'
+  );
   return data.data.map((v: any) => ({ ...v, id: v._id ?? v.id }));
 }
 

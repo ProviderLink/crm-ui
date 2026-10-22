@@ -14,7 +14,11 @@ export async function getProvisionedClients(): Promise<
 }
 
 export async function getClientAccounts(): Promise<IClientAccount[]> {
-  const { data } = await api.get<{ data: any[] }>('/crm/client-accounts');
+  // Backend defaults to limit=20 when omitted, which silently truncates the list;
+  // fetch a large page so every row is returned.
+  const { data } = await api.get<{ data: any[] }>(
+    '/crm/client-accounts?limit=1000'
+  );
   return data.data.map((c: any) => ({ ...c, id: c._id ?? c.id }));
 }
 
