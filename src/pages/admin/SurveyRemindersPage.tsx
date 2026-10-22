@@ -29,6 +29,7 @@ import { useAppSelector } from '@/hooks/store';
 import { todayString } from '@/lib/time';
 import { updateSurveyReminder } from '@/services/survey-reminders.service';
 import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder';
+import { SURVEY_STATUS_STYLES } from '@/lib/status-styles';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -37,13 +38,6 @@ const SURVEY_TYPE_LABELS: Record<ISurveyReminder['surveyType'], string> = {
   '1_week': '1-Week',
   '30_day': '30-Day',
   monthly: 'Monthly',
-};
-
-const STATUS_STYLES: Record<SurveyStatus, string> = {
-  pending: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
-  sent: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
-  completed: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
-  skipped: 'bg-white/[0.04] text-text-tertiary border-[rgba(255,255,255,0.08)]',
 };
 
 const todayStr = () => todayString();
@@ -179,7 +173,7 @@ export default function SurveyRemindersPage() {
           const s = getValue<SurveyStatus>();
           return (
             <span
-              className={`text-xs px-2 py-0.5 rounded-full border capitalize whitespace-nowrap ${STATUS_STYLES[s]}`}
+              className={`text-xs px-2 py-0.5 rounded-full border capitalize whitespace-nowrap ${SURVEY_STATUS_STYLES[s]}`}
             >
               {s}
             </span>

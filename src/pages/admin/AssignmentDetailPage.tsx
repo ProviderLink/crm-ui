@@ -37,15 +37,10 @@ import { getClientAccount } from '@/services/client-accounts.service';
 import { getVaProfile } from '@/services/va-profiles.service';
 import type { IEodSubmission } from '@/types/eod-submission';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
+import { WORK_ENTRY_STATUS_STYLES } from '@/lib/status-styles';
 import { useQuery } from '@tanstack/react-query';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const STATUS_STYLES: Record<WorkEntryStatus, string> = {
-  completed: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
-  in_progress: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
-  pending: 'bg-white/[0.04] text-text-tertiary border-[rgba(255,255,255,0.08)]',
-};
 
 const HEALTH_COLORS: Record<string, string> = {
   green: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
@@ -136,7 +131,7 @@ function buildWorkColumns(): ColumnDef<IWorkEntry>[] {
         const s = getValue<WorkEntryStatus>();
         return (
           <span
-            className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
+            className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[s]}`}
           >
             {s.replace('_', ' ')}
           </span>

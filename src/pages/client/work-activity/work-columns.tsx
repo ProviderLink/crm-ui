@@ -2,14 +2,9 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
+import { WORK_ENTRY_STATUS_STYLES } from '@/lib/status-styles';
 
 import { VaCell } from './VaCell';
-
-const STATUS_STYLES: Record<WorkEntryStatus, string> = {
-  completed: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
-  in_progress: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
-  pending: 'bg-white/[0.04] text-text-tertiary border-[rgba(255,255,255,0.08)]',
-};
 
 export function buildWorkColumns(
   vaMap: Map<string, string>,
@@ -80,7 +75,7 @@ export function buildWorkColumns(
         const s = getValue<WorkEntryStatus>();
         return (
           <span
-            className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[s]}`}
+            className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[s]}`}
           >
             {s.replace('_', ' ')}
           </span>

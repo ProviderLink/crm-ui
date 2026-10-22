@@ -83,6 +83,9 @@
   --color-text-tertiary: var(--text-tertiary);
   --color-text-inverse: var(--text-inverse);
   --color-status-error: var(--status-error);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-info: var(--status-info);
   --color-primary-hover: var(--accent-inverse-hover);
   --color-canvas: var(--bg-canvas);
   --color-surface: var(--bg-surface);
