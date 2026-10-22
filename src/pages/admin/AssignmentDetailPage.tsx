@@ -556,8 +556,17 @@ export default function AssignmentDetailPage() {
                     <div className="grid grid-cols-3 gap-2 pt-1">
                       {[
                         { label: 'Entries', value: weekEntries.length },
-                        { label: 'EODs', value: filteredEods.length },
-                        { label: 'Reviews', value: reviews.length },
+                        {
+                          label: 'EODs',
+                          value: filteredEods.filter(e => e.date >= weekStart)
+                            .length,
+                        },
+                        {
+                          label: 'Reviews',
+                          value: reviews.filter(
+                            r => r.clientId === assignment?.clientId
+                          ).length,
+                        },
                       ].map(stat => (
                         <div key={stat.label} className="text-center">
                           <p className="text-sm font-semibold text-foreground">
