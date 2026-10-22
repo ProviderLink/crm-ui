@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import type { IAtsCandidate, IAtsClient, IAtsUser } from '@/types/ats';
+import type { IAtsCandidate, IAtsClient } from '@/types/ats';
 import axios from 'axios';
 
 interface AssignmentLookup {
@@ -67,10 +67,4 @@ export async function getAtsVAs(): Promise<IAtsCandidate[]> {
     }
     return [...byId.values()];
   }
-}
-
-/** Team members = users with ATS or admin roles. */
-export async function getAtsTeam(): Promise<IAtsUser[]> {
-  const { data } = await api.get<{ data: any[] }>('/shared/users');
-  return data.data.map((u: any) => ({ ...u, id: u._id ?? u.id }));
 }

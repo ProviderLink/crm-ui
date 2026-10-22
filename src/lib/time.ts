@@ -8,7 +8,7 @@ export function formatMinutes(minutes: number): string {
 
 /**
  * Decimal hours between two "HH:MM" strings, mirroring the backend's
- * `computeShiftHours`.
+ * shift-hours calculation.
  *
  * An end time earlier than the start is treated as an overnight shift that
  * wraps past midnight (22:00 → 02:00 = 4h) instead of collapsing to 0.
@@ -101,23 +101,4 @@ export function dateKeyToLocalDate(value: string): Date | null {
 /** Current time as "HH:MM" */
 export function nowTimeString(): string {
   return new Date().toTimeString().slice(0, 5);
-}
-
-/**
- * Shift hours for a "HH:MM" pair, mirroring the backend's `computeShiftHours`.
- *
- * Unlike `calcHours`, an end time earlier than the start is treated as an
- * overnight shift that wraps past midnight (22:00 → 02:00 = 4h) instead of
- * collapsing to 0. The server is the source of truth for the stored value; this
- * is only used for the live preview in the form.
- */
-export function computeShiftHours(start: string, end: string): number {
-  if (!start || !end) return 0;
-  const [sh, sm] = start.split(':').map(Number);
-  const [eh, em] = end.split(':').map(Number);
-  const startMin = (sh ?? 0) * 60 + (sm ?? 0);
-  const endMin = (eh ?? 0) * 60 + (em ?? 0);
-  const diff =
-    endMin >= startMin ? endMin - startMin : endMin + 1440 - startMin;
-  return Math.round((Math.min(diff, 1440) / 60) * 100) / 100;
 }

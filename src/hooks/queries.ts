@@ -9,9 +9,8 @@ import {
   getMyAllAssignments,
   getMyAssignments,
 } from '@/services/assignments.service';
-import { getAtsClients, getAtsTeam, getAtsVAs } from '@/services/ats.service';
+import { getAtsClients, getAtsVAs } from '@/services/ats.service';
 import {
-  getClientAccounts,
   getHiredVasForClient,
   getProvisionedClients,
 } from '@/services/client-accounts.service';
@@ -20,7 +19,6 @@ import {
   getEodSubmission,
   getEodSubmissions,
 } from '@/services/eod-submissions.service';
-import { getAtsJobs } from '@/services/jobs.service';
 import {
   getReview,
   getReviews,
@@ -28,7 +26,6 @@ import {
 } from '@/services/performance-reviews.service';
 import { getScorecards } from '@/services/scorecards.service';
 import { getSurveyReminders } from '@/services/survey-reminders.service';
-import { getVaProfiles } from '@/services/va-profiles.service';
 import { getWorkEntries } from '@/services/work-entries.service';
 import { useQuery } from '@tanstack/react-query';
 
@@ -48,8 +45,6 @@ export const QK = {
     ['assignments', 'all', uid ?? 'anon'] as const,
   atsVAs: ['ats', 'vas'] as const,
   atsClients: ['ats', 'clients'] as const,
-  atsTeam: ['ats', 'team'] as const,
-  atsJobs: ['ats', 'jobs'] as const,
   accountManagers: ['account-managers'] as const,
   activeAccountManagers: ['account-managers', 'active'] as const,
   crmVaUsers: ['crm-users', 'va'] as const,
@@ -57,9 +52,7 @@ export const QK = {
   crmAdminUsers: ['crm-users', 'admin'] as const,
   dashboardStats: ['dashboard-stats'] as const,
   surveyReminders: ['survey-reminders'] as const,
-  clientAccounts: ['client-accounts'] as const,
   provisionedClients: ['client-accounts', 'provisioned'] as const,
-  vaProfiles: ['va-profiles'] as const,
   scorecards: (vaId?: string) => ['scorecards', vaId ?? 'all'] as const,
   hiredVasForClient: (clientId?: string) =>
     ['hired-vas', clientId ?? 'none'] as const,
@@ -159,14 +152,6 @@ export function useAtsClientsQuery() {
   return useQuery({ queryKey: QK.atsClients, queryFn: getAtsClients });
 }
 
-export function useAtsTeamQuery() {
-  return useQuery({ queryKey: QK.atsTeam, queryFn: getAtsTeam });
-}
-
-export function useAtsJobsQuery() {
-  return useQuery({ queryKey: QK.atsJobs, queryFn: getAtsJobs });
-}
-
 /**
  * `enabled: false` for callers that are not allowed to list users (account
  * managers lack team.read), so the request is never made instead of 403ing.
@@ -220,10 +205,6 @@ export function useSurveyRemindersQuery() {
   });
 }
 
-export function useClientAccountsQuery() {
-  return useQuery({ queryKey: QK.clientAccounts, queryFn: getClientAccounts });
-}
-
 export function useProvisionedClientsQuery() {
   return useQuery({
     queryKey: QK.provisionedClients,
@@ -237,10 +218,6 @@ export function useHiredVasForClientQuery(clientId?: string) {
     queryFn: () => getHiredVasForClient(clientId!),
     enabled: !!clientId,
   });
-}
-
-export function useVaProfilesQuery() {
-  return useQuery({ queryKey: QK.vaProfiles, queryFn: getVaProfiles });
 }
 
 /** Scorecards are admin/AM only; pass `enabled = false` for other roles. */

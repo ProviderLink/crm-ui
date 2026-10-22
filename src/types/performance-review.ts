@@ -174,8 +174,3 @@ export interface IUpdateReviewPayload {
     { rating: number; managerComments: string }
   > | null;
 }
-
-export interface IUpdateCategoryPayload {
-  rating?: number | null;
-  managerComments?: string;
-}

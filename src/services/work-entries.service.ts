@@ -51,7 +51,3 @@ export async function updateWorkEntry(
   );
   return data.data;
 }
-
-export async function deleteWorkEntry(id: string): Promise<void> {
-  await api.delete(`/crm/work-entries/${id}`);
-}

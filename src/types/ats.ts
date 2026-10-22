@@ -37,8 +37,3 @@ export interface IAtsCandidate {
     | 'withdrawn';
 }
 
-export interface IAtsUser {
-  id: string;
-  firstName: string;
-  lastName: string;
-}

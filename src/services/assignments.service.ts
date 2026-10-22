@@ -54,7 +54,3 @@ export async function updateAssignment(
   );
   return data.data;
 }
-
-export async function deleteAssignment(id: string): Promise<void> {
-  await api.delete(`/crm/assignments/${id}`);
-}
