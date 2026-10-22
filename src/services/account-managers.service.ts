@@ -48,6 +48,12 @@ export async function getAccountManagers(
 export async function getCrmUsersByRole(
   role: 'va' | 'client' | 'account_manager' | 'admin'
 ): Promise<ICrmUser[]> {
+  // VAs and clients come from the self-scoped endpoint: /shared/users needs
+  // team.read, which account managers lack, so it answered 403 for them.
+  if (role === 'va' || role === 'client') {
+    const { vas, clients } = await getCrmAccountsList();
+    return role === 'va' ? vas : clients;
+  }
   const { data } = await api.get<{ data: any[] }>(`/shared/users?role=${role}`);
   return data.data.map((u: any) => ({ ...u, id: u._id ?? u.id }));
 }

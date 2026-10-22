@@ -4,6 +4,7 @@ import {
   useAccountManagersQuery,
   useCrmAdminUsersQuery,
 } from '@/hooks/queries';
+import { useAppSelector } from '@/hooks/store';
 import api from '@/lib/api';
 import {
   type IAccountManager,
@@ -41,10 +42,15 @@ export function useAccountRows() {
   const vaUsers = crmAccounts?.vas ?? [];
   const clientUsers = crmAccounts?.clients ?? [];
 
+  // The AM and admin tabs are admin-only, and account managers cannot list
+  // users, so skip those requests for them.
+  const canListUsers = useAppSelector(
+    s => s.auth.user?.role !== 'account_manager'
+  );
   const { data: amUsers = [], isLoading: loadingAm } =
-    useAccountManagersQuery();
+    useAccountManagersQuery(canListUsers);
   const { data: adminUsers = [], isLoading: loadingAdmin } =
-    useCrmAdminUsersQuery();
+    useCrmAdminUsersQuery(canListUsers);
 
   const adminRows: UserRow[] = adminUsers.map(toRow);
 

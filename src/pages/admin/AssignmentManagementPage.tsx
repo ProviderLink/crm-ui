@@ -39,7 +39,9 @@ export default function AssignmentManagementPage() {
   // Clients provisioned with CRM access — from the dedicated CRM endpoint
   const { data: crmClients = [] } = useProvisionedClientsQuery();
   const { data: atsVas = [] } = useAtsVAsQuery();
-  const { data: accountManagers = [] } = useActiveAccountManagersQuery();
+  const { data: accountManagers = [] } = useActiveAccountManagersQuery(
+    user?.role !== 'account_manager'
+  );
 
   const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null);
   const [editTarget, setEditTarget] = useState<IAssignment | null>(null);

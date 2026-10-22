@@ -167,17 +167,23 @@ export function useAtsJobsQuery() {
   return useQuery({ queryKey: QK.atsJobs, queryFn: getAtsJobs });
 }
 
-export function useAccountManagersQuery() {
+/**
+ * `enabled: false` for callers that are not allowed to list users (account
+ * managers lack team.read), so the request is never made instead of 403ing.
+ */
+export function useAccountManagersQuery(enabled = true) {
   return useQuery({
     queryKey: QK.accountManagers,
     queryFn: () => getAccountManagers(),
+    enabled,
   });
 }
 
-export function useActiveAccountManagersQuery() {
+export function useActiveAccountManagersQuery(enabled = true) {
   return useQuery({
     queryKey: QK.activeAccountManagers,
     queryFn: () => getAccountManagers(true),
+    enabled,
   });
 }
 
@@ -195,10 +201,11 @@ export function useCrmClientUsersQuery() {
   });
 }
 
-export function useCrmAdminUsersQuery() {
+export function useCrmAdminUsersQuery(enabled = true) {
   return useQuery({
     queryKey: QK.crmAdminUsers,
     queryFn: () => getCrmUsersByRole('admin'),
+    enabled,
   });
 }
 
@@ -236,10 +243,12 @@ export function useVaProfilesQuery() {
   return useQuery({ queryKey: QK.vaProfiles, queryFn: getVaProfiles });
 }
 
-export function useScorecardsQuery(vaId?: string) {
+/** Scorecards are admin/AM only; pass `enabled = false` for other roles. */
+export function useScorecardsQuery(vaId?: string, enabled = true) {
   return useQuery({
     queryKey: QK.scorecards(vaId),
     queryFn: () => getScorecards(vaId),
+    enabled,
   });
 }
 
