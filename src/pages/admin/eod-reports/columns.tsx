@@ -125,7 +125,7 @@ export function buildEodColumns({
         cell: ({ row }) => (
           <Button
             variant="ghost"
-            size="icon"
+            size="icon" aria-label="View EOD details"
             className="size-8 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
             title="View Details"
             onClick={() => onView(row.original)}

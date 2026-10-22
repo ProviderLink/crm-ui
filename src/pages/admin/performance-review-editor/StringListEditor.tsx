@@ -43,7 +43,7 @@ export function StringListEditor({
           />
           {!readOnly && (
             <Button
-              size="icon"
+              size="icon" aria-label="Remove item"
               variant="ghost"
               className="size-7 shrink-0 text-muted-foreground/60 hover:text-destructive"
               onClick={() => onChange(items.filter((_, j) => j !== i))}

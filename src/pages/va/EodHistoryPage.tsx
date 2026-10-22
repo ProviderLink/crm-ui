@@ -123,7 +123,7 @@ function buildColumns(
       cell: ({ row }) => (
         <Button
           variant="ghost"
-          size="icon"
+          size="icon" aria-label="Delete EOD submission"
           className="size-8 text-muted-foreground hover:text-destructive"
           onClick={() => onDelete(row.original)}
         >
@@ -222,7 +222,7 @@ export default function EodHistoryPage() {
             </div>
             <Link
               to="/va/eod/new"
-              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-[#E8E6E1] text-[#0D0D0D] hover:bg-white transition-colors duration-150"
+              className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-primary text-text-inverse hover:bg-white transition-colors duration-150"
             >
               + Submit EOD
             </Link>
@@ -254,6 +254,12 @@ export default function EodHistoryPage() {
             </span>
           </div>
 
+          {deleteError && (
+            <p className="mb-2 text-sm text-destructive" role="alert">
+              {deleteError}
+            </p>
+          )}
+
           <DataTable
             columns={columns}
             data={filtered}
@@ -276,9 +282,6 @@ export default function EodHistoryPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-      {deleteError && (
-        <p className="text-sm text-destructive px-4">{deleteError}</p>
-      )}
     </div>
   );
 }

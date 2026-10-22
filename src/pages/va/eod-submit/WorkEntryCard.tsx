@@ -48,7 +48,7 @@ export function WorkEntryCard({
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Remove this work entry"
                       className="size-7 text-muted-foreground hover:text-destructive"
                       onClick={onRemove}
                       title="Remove this work entry"

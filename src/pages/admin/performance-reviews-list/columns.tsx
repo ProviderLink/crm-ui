@@ -107,7 +107,7 @@ export function buildReviewColumns({
         return (
           <div className="flex items-center gap-1 justify-end">
             <Button
-              size="icon"
+              size="icon" aria-label={isCompleted || isAccountManager ? 'View review (read-only)' : 'Edit review'}
               variant="ghost"
               className={`size-7 ${isCompleted || isAccountManager ? 'text-muted-foreground' : ''}`}
               title={
@@ -118,7 +118,7 @@ export function buildReviewColumns({
               <EyeIcon className="size-3.5" />
             </Button>
             <Button
-              size="icon"
+              size="icon" aria-label="Export review as PDF"
               variant="ghost"
               className="size-7"
               title="Export PDF"
@@ -133,7 +133,7 @@ export function buildReviewColumns({
             </Button>
             {!isAccountManager && (
               <Button
-                size="icon"
+                size="icon" aria-label="Delete review"
                 variant="ghost"
                 className="size-7 text-destructive/60 hover:text-destructive"
                 title="Delete"

@@ -70,13 +70,13 @@ export function buildColumns(
         const styles =
           {
             active:
-              'bg-white/[0.04] text-[#A0A0A0] ring-1 ring-[rgba(255,255,255,0.08)]',
+              'bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]',
             on_hold:
-              'bg-white/[0.04] text-[#A0A0A0] ring-1 ring-[rgba(255,255,255,0.08)]',
+              'bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]',
             ended:
-              'bg-white/[0.04] text-[#6E6E6E] ring-1 ring-[rgba(255,255,255,0.08)]',
+              'bg-white/[0.04] text-text-tertiary ring-1 ring-[rgba(255,255,255,0.08)]',
           }[v] ??
-          'bg-white/[0.04] text-[#6E6E6E] ring-1 ring-[rgba(255,255,255,0.08)]';
+          'bg-white/[0.04] text-text-tertiary ring-1 ring-[rgba(255,255,255,0.08)]';
         return (
           <span
             className={`inline-flex items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] px-2 py-0.5 whitespace-nowrap ${styles}`}
@@ -100,7 +100,7 @@ export function buildColumns(
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="icon" aria-label="View assignment details"
                   className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
                   asChild
                 >
@@ -117,7 +117,7 @@ export function buildColumns(
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="icon" aria-label="Edit assignment"
                   className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
                   onClick={() => onEdit(row.original)}
                 >
@@ -133,7 +133,7 @@ export function buildColumns(
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="icon" aria-label="End assignment"
                     className="size-7 bg-destructive/[0.04] text-destructive/60 hover:text-destructive hover:bg-destructive/[0.08]"
                     onClick={() => onDeactivate(row.original)}
                   >

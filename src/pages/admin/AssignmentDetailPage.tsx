@@ -44,9 +44,9 @@ import { useQuery } from '@tanstack/react-query';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<WorkEntryStatus, string> = {
-  completed: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  in_progress: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  pending: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
+  completed: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
+  in_progress: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
+  pending: 'bg-white/[0.04] text-text-tertiary border-[rgba(255,255,255,0.08)]',
 };
 
 const HEALTH_COLORS: Record<string, string> = {
@@ -65,7 +65,7 @@ const WORKLOAD_COLORS: Record<string, string> = {
 const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
   active: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
   on_hold: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
-  ended: 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]',
+  ended: 'bg-white/[0.04] text-text-secondary ring-white/[0.08]',
 };
 
 function fmtDate(iso: string | undefined | null) {
@@ -107,7 +107,7 @@ function buildWorkColumns(): ColumnDef<IWorkEntry>[] {
       header: 'Category',
       size: 160,
       cell: ({ getValue }) => (
-        <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-[#A0A0A0] whitespace-nowrap">
+        <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-text-secondary whitespace-nowrap">
           {getValue<string>()}
         </span>
       ),
@@ -359,7 +359,7 @@ export default function AssignmentDetailPage() {
           <div className="flex items-start gap-3 mb-6">
             <Button
               variant="ghost"
-              size="icon"
+              size="icon" aria-label="Back to assignments"
               asChild
               className="size-8 mt-0.5 shrink-0"
             >
@@ -385,7 +385,7 @@ export default function AssignmentDetailPage() {
 
                 {/* Status badge */}
                 <span
-                  className={`inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.08em] ring-1 ring-inset ${ASSIGNMENT_STATUS_COLORS[assignment.status] ?? 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]'}`}
+                  className={`inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.08em] ring-1 ring-inset ${ASSIGNMENT_STATUS_COLORS[assignment.status] ?? 'bg-white/[0.04] text-text-secondary ring-white/[0.08]'}`}
                 >
                   {assignment.status.replace('_', ' ')}
                 </span>
@@ -437,7 +437,7 @@ export default function AssignmentDetailPage() {
                         Workload:
                       </span>
                       <span
-                        className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ring-1 ring-inset ${WORKLOAD_COLORS[vaProfile.workloadLevel] ?? 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]'}`}
+                        className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ring-1 ring-inset ${WORKLOAD_COLORS[vaProfile.workloadLevel] ?? 'bg-white/[0.04] text-text-secondary ring-white/[0.08]'}`}
                       >
                         {vaProfile.workloadLevel}
                       </span>
@@ -511,7 +511,7 @@ export default function AssignmentDetailPage() {
                         Client Health:
                       </span>
                       <span
-                        className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium capitalize ring-1 ring-inset ${HEALTH_COLORS[clientAccount.healthStatus] ?? 'bg-white/[0.04] text-[#A0A0A0] ring-white/[0.08]'}`}
+                        className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium capitalize ring-1 ring-inset ${HEALTH_COLORS[clientAccount.healthStatus] ?? 'bg-white/[0.04] text-text-secondary ring-white/[0.08]'}`}
                       >
                         {clientAccount.healthStatus}
                       </span>
