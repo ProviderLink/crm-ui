@@ -81,7 +81,9 @@ export default function PerformanceReviewsPage() {
         title="Delete Review"
         description="Are you sure you want to delete this performance review? This action cannot be undone."
         confirmLabel="Delete"
-        onConfirm={() => p.deleteTarget && p.handleDelete(p.deleteTarget)}
+        onConfirm={async () => {
+          if (p.deleteTarget) await p.handleDelete(p.deleteTarget);
+        }}
         variant="destructive"
       />
     </div>

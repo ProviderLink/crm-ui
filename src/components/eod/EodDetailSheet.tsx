@@ -90,7 +90,7 @@ function WorkEntryCard({
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Work {index + 1}
         </span>
-        <span className="text-[10px] font-mono uppercase tracking-wider rounded px-1.5 py-0.5 bg-white/[0.04] text-[#A0A0A0] ring-1 ring-[rgba(255,255,255,0.08)]">
+        <span className="text-[10px] font-mono uppercase tracking-wider rounded px-1.5 py-0.5 bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]">
           {STATUS_LABELS[entry.status] ?? entry.status}
         </span>
       </div>
@@ -178,8 +178,10 @@ export function EodDetailSheet({
               </Field>
             </Section>
 
-            <Section title="Blockers / Client Updates">
-              <Field label="Notes for Client">{eod.blockers || '—'}</Field>
+            <Section title="Blockers">
+              <Field label="Anything preventing progress">
+                {eod.blockers || '—'}
+              </Field>
             </Section>
 
             <Section title="Client Communication">

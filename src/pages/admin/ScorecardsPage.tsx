@@ -23,9 +23,9 @@ import { BarChart3Icon, RefreshCwIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 const scoreColor = (score: number) => {
-  if (score >= 80) return 'text-[#A0A0A0]';
-  if (score >= 60) return 'text-[#A0A0A0]';
-  return 'text-[#F87171]';
+  if (score >= 80) return 'text-text-secondary';
+  if (score >= 60) return 'text-text-secondary';
+  return 'text-status-error';
 };
 
 export default function ScorecardsPage() {
@@ -144,10 +144,10 @@ export default function ScorecardsPage() {
         const s = getValue<number>();
         const colorClass =
           s >= 80
-            ? 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]'
+            ? 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]'
             : s >= 60
-              ? 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]'
-              : 'bg-white/[0.04] text-[#F87171] border-[rgba(255,255,255,0.08)]';
+              ? 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]'
+              : 'bg-white/[0.04] text-status-error border-[rgba(255,255,255,0.08)]';
         return (
           <span
             className={`font-mono text-[10px] font-medium tabular-nums px-2 py-0.5 rounded border whitespace-nowrap ${colorClass}`}
@@ -170,8 +170,8 @@ export default function ScorecardsPage() {
               </h1>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {isAccountManager
-                  ? 'Weekly scores for your assigned VAs — generated every Sunday at 11 PM'
-                  : 'Weekly performance scores — generated every Sunday at 11 PM'}
+                  ? 'Weekly scores for your assigned VAs'
+                  : 'Weekly performance scores'}
               </p>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">

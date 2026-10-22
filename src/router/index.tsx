@@ -1,5 +1,6 @@
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { RoleGuard } from '@/components/shared/RoleGuard';
+import { RouteError } from '@/components/shared/RouteError';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
@@ -78,6 +79,7 @@ function SuspenseLayout() {
 const router = createBrowserRouter([
   {
     element: <SuspenseLayout />,
+    errorElement: <RouteError />,
     children: [
       // Public routes
       { path: '/', element: <HomePage /> },

@@ -38,10 +38,10 @@ const SURVEY_TYPE_LABELS: Record<ISurveyReminder['surveyType'], string> = {
 };
 
 const STATUS_STYLES: Record<SurveyStatus, string> = {
-  pending: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  sent: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  completed: 'bg-white/[0.04] text-[#A0A0A0] border-[rgba(255,255,255,0.08)]',
-  skipped: 'bg-white/[0.04] text-[#6E6E6E] border-[rgba(255,255,255,0.08)]',
+  pending: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
+  sent: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
+  completed: 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]',
+  skipped: 'bg-white/[0.04] text-text-tertiary border-[rgba(255,255,255,0.08)]',
 };
 
 const todayStr = () => todayString();
@@ -110,8 +110,9 @@ export default function SurveyRemindersPage() {
         header: 'Survey',
         size: 100,
         cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-[#A0A0A0] whitespace-nowrap">
-            {SURVEY_TYPE_LABELS[getValue<ISurveyReminder['surveyType']>()]}
+          <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-text-secondary whitespace-nowrap">
+            {SURVEY_TYPE_LABELS[getValue<ISurveyReminder['surveyType']>()] ??
+              getValue<string>()}
           </span>
         ),
       },
@@ -133,9 +134,12 @@ export default function SurveyRemindersPage() {
         accessorKey: 'dueDate',
         header: 'Due Date',
         size: 155,
-        cell: ({ getValue }) => {
+        cell: ({ row, getValue }) => {
           const v = getValue<string>()?.slice(0, 10) ?? '';
-          const overdue = v < todayStr();
+          // Finished reminders are never overdue.
+          const open =
+            row.original.status === 'pending' || row.original.status === 'sent';
+          const overdue = open && v < todayStr();
           return (
             <span
               className={`text-xs whitespace-nowrap ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
@@ -182,8 +186,8 @@ export default function SurveyRemindersPage() {
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="size-7 bg-white/[0.04] text-[#6E6E6E] hover:text-[#A0A0A0] hover:bg-white/[0.08]"
+                      size="icon" aria-label="Mark reminder as completed"
+                      className="size-7 bg-white/[0.04] text-text-tertiary hover:text-text-secondary hover:bg-white/[0.08]"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(_id, 'completed')}
                     >
@@ -197,7 +201,7 @@ export default function SurveyRemindersPage() {
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Skip reminder"
                       className="size-7 bg-white/[0.02] text-muted-foreground/60 hover:text-muted-foreground hover:bg-white/[0.05]"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(_id, 'skipped')}
