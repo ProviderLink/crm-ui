@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
 /* ─── Design Tokens (CRM Restyle — monochrome, dark-only) ─ */
 :root {
@@ -77,6 +78,15 @@
 
 /* ─── shadcn/ui CSS Variable Bridge ──────────────────────── */
 @theme inline {
+  --color-text-secondary: var(--text-secondary);
+  --color-border-strong: var(--border-strong);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-inverse: var(--text-inverse);
+  --color-status-error: var(--status-error);
+  --color-primary-hover: var(--accent-inverse-hover);
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-surface-raised: var(--bg-surface-raised);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -146,29 +156,6 @@
 
   #root {
     min-height: 100vh;
-  }
-}
-
-/* ─── Utility Classes ────────────────────────────────────── */
-@layer components {
-  /* Dashed background grid — "blueprint" motif */
-  .grid-blueprint {
-    background-image: linear-gradient(
-      to right,
-      var(--grid-line) 1px,
-      transparent 1px
-    );
-    background-size: calc(100% / 6) 100%;
-  }
-
-  /* Mono meta label — tags, IDs, timestamps, system labels */
-  .meta-label {
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
   }
 }
 
