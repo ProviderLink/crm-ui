@@ -19,7 +19,7 @@ import {
 // ─── Chart config ─────────────────────────────────────────────────────────────
 
 const activityChartConfig = {
-  count: { label: 'Entries', color: 'hsl(var(--primary))' },
+  count: { label: 'Entries', color: 'var(--primary)' },
 } satisfies ChartConfig;
 
 export type VABreakdownRow = {

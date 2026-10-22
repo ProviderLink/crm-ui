@@ -68,7 +68,8 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
     );
   }
 
-  if (!account) {
+  // With no profile yet, show the empty state until the admin starts editing.
+  if (!account && !editing) {
     return (
       <div className="border-t border-border pt-4 space-y-3">
         <p className="text-xs text-muted-foreground italic">
@@ -95,7 +96,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
   function getFormVal(key: string, fallback: unknown = '') {
     return form[key] !== undefined
       ? form[key]
-      : ((account as any)[key] ?? fallback);
+      : ((account as any)?.[key] ?? fallback);
   }
 
   async function handleSave() {
@@ -107,6 +108,8 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
       await queryClient.invalidateQueries({
         queryKey: ['client-account', clientId],
       });
+      // The Accounts table enriches rows from this list.
+      queryClient.invalidateQueries({ queryKey: ['client-accounts-list'] });
       setSuccess(true);
       setTimeout(() => {
         setEditing(false);
@@ -139,7 +142,8 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
       className: 'bg-red-500/10 text-red-400 ring-red-500/20',
     },
   };
-  const health = healthConfig[account.healthStatus] ?? healthConfig.green;
+  const health =
+    healthConfig[account?.healthStatus ?? 'green'] ?? healthConfig.green;
 
   return (
     <div className="pt-4 space-y-4">
@@ -333,7 +337,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
             )}
           </div>
         </div>
-      ) : (
+      ) : account ? (
         <div className="space-y-3">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
@@ -525,7 +529,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
             </div>
           )}
         </div>
-      )}
+      ) : null}
 
       {/* Admin internal notes thread (Requirement 4) — admin-only */}
       <NotesThread subjectType="client" subjectId={clientId} />

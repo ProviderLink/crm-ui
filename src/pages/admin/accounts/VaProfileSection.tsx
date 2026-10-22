@@ -76,6 +76,8 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
     try {
       await updateVaProfile(vaId!, form as any);
       await queryClient.invalidateQueries({ queryKey: ['va-profile', vaId] });
+      // The Accounts table enriches rows from this list.
+      queryClient.invalidateQueries({ queryKey: ['va-profiles-list'] });
       setSuccess(true);
       setTimeout(() => {
         setEditing(false);
@@ -433,9 +435,9 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
               <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <CalendarIcon className="size-3" />
-                  {new Date(a.startDate).toLocaleDateString()}
+                  {fmtDate(a.startDate)}
                   {a.endDate
-                    ? ` → ${new Date(a.endDate).toLocaleDateString()}`
+                    ? ` → ${fmtDate(a.endDate)}`
                     : ' → Present'}
                 </span>
                 <span className="flex items-center gap-1">
