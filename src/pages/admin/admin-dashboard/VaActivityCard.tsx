@@ -1,26 +1,17 @@
-import type { ColumnDef } from '@tanstack/react-table';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-
-import { DataTable } from '@/components/shared/DataTable';
+import { useState } from 'react';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from '@/components/ui/chart';
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
-// ─── Chart config ─────────────────────────────────────────────────────────────
-
-const activityChartConfig = {
-  count: { label: 'Entries', color: 'var(--primary)' },
-} satisfies ChartConfig;
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChartContainer, type ChartConfig } from '@/components/ui/chart';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export type VABreakdownRow = {
   vaId: string;
@@ -30,57 +21,196 @@ export type VABreakdownRow = {
   tasks: number;
 };
 
-const breakdownColumns: ColumnDef<VABreakdownRow>[] = [
-  { accessorKey: 'vaName', header: 'VA' },
-  { accessorKey: 'hours', header: 'Hours' },
-  { accessorKey: 'tasks', header: 'Tasks Done' },
-  { accessorKey: 'count', header: 'Entries' },
+type Metric = 'hours' | 'tasks' | 'count';
+
+/** Bars shown before "Show all", so a long VA list does not stretch the page. */
+const VISIBLE_ROWS = 8;
+const ROW_HEIGHT = 36;
+const AXIS_HEIGHT = 28;
+
+const METRICS: {
+  key: Metric;
+  label: string;
+  format: (v: number) => string;
+  summary: (v: number) => string;
+}[] = [
+  {
+    key: 'hours',
+    label: 'Hours',
+    format: v => `${v.toLocaleString()}h`,
+    summary: v => `${v.toLocaleString()}h logged`,
+  },
+  {
+    key: 'tasks',
+    label: 'Tasks done',
+    format: v => v.toLocaleString(),
+    summary: v => `${v.toLocaleString()} tasks done`,
+  },
+  {
+    key: 'count',
+    label: 'Entries',
+    format: v => v.toLocaleString(),
+    summary: v => `${v.toLocaleString()} entries`,
+  },
 ];
 
-export function VaActivityCard({ breakdown }: { breakdown: VABreakdownRow[] }) {
+const config = {
+  value: { label: 'Value', color: 'var(--text-secondary)' },
+} satisfies ChartConfig;
+
+const GRID = 'rgba(255,255,255,0.06)';
+const MUTED = 'var(--text-tertiary)';
+
+/** 1,000 -> 1K, so axis ticks stay short whatever the size of the numbers. */
+const compact = (v: number) =>
+  v >= 1_000_000
+    ? `${v / 1_000_000}M`
+    : v >= 1_000
+      ? `${v / 1_000}K`
+      : String(v);
+
+const shortName = (name: string) =>
+  name.length > 16 ? `${name.slice(0, 15)}…` : name;
+
+type ChartRow = VABreakdownRow & { value: number };
+
+function ChartTip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: ChartRow }[];
+}) {
+  const row = payload?.[0]?.payload;
+  if (!active || !row) return null;
   return (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base font-medium">
-                  VA Activity This Week
-                </CardTitle>
-                <CardDescription>
-                  Work entries logged per VA in the last 7 days
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ChartContainer
-                  config={activityChartConfig}
-                  className="h-[200px] w-full"
-                >
-                  <BarChart
-                    data={breakdown}
-                    margin={{ top: 4, right: 8, bottom: 4, left: 0 }}
-                  >
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="vaName"
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fontSize: 11 }}
-                    />
-                    <YAxis
-                      allowDecimals={false}
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fontSize: 11 }}
-                      width={28}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar
-                      dataKey="count"
-                      fill="var(--color-count)"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ChartContainer>
-                <DataTable columns={breakdownColumns} data={breakdown} />
-              </CardContent>
-            </Card>
+    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
+      <p className="mb-1.5 font-medium text-foreground">{row.vaName}</p>
+      <dl className="space-y-0.5 text-muted-foreground">
+        <div className="flex justify-between gap-6">
+          <dt>Hours</dt>
+          <dd className="tabular-nums text-foreground">
+            {row.hours.toLocaleString()}h
+          </dd>
+        </div>
+        <div className="flex justify-between gap-6">
+          <dt>Tasks done</dt>
+          <dd className="tabular-nums text-foreground">
+            {row.tasks.toLocaleString()}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-6">
+          <dt>Entries</dt>
+          <dd className="tabular-nums text-foreground">
+            {row.count.toLocaleString()}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
+/** How much each VA has done over the last 7 days: one bar per VA. */
+export function VaActivityCard({ breakdown }: { breakdown: VABreakdownRow[] }) {
+  const [metric, setMetric] = useState<Metric>('hours');
+  const [showAll, setShowAll] = useState(false);
+  const current = METRICS.find(m => m.key === metric)!;
+
+  const rows: ChartRow[] = breakdown
+    .map(r => ({ ...r, value: r[metric] }))
+    .sort((a, b) => b.value - a.value);
+  const visible = showAll ? rows : rows.slice(0, VISIBLE_ROWS);
+  const total = Math.round(rows.reduce((sum, r) => sum + r.value, 0) * 10) / 10;
+
+  return (
+    <Card className="gap-4 p-5">
+      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 p-0">
+        <div>
+          <CardTitle className="text-sm font-medium">
+            VA activity, last 7 days
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            {current.summary(total)} across {rows.length}{' '}
+            {rows.length === 1 ? 'VA' : 'VAs'}
+          </p>
+        </div>
+        <Tabs value={metric} onValueChange={v => setMetric(v as Metric)}>
+          <TabsList className="h-8">
+            {METRICS.map(m => (
+              <TabsTrigger key={m.key} value={m.key} className="px-3 text-xs">
+                {m.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </CardHeader>
+
+      <CardContent className="p-0">
+        <ChartContainer
+          config={config}
+          className="w-full"
+          style={{ height: visible.length * ROW_HEIGHT + AXIS_HEIGHT }}
+        >
+          <BarChart
+            data={visible}
+            layout="vertical"
+            margin={{ top: 0, right: 80, bottom: 0, left: 0 }}
+            barSize={14}
+          >
+            <CartesianGrid horizontal={false} stroke={GRID} />
+            <XAxis
+              type="number"
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={compact}
+              tick={{ fill: MUTED, fontSize: 11 }}
+              allowDecimals={false}
+              domain={[0, 'auto']}
+            />
+            <YAxis
+              type="category"
+              dataKey="vaName"
+              width={118}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={shortName}
+              tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+            />
+            <Tooltip
+              content={<ChartTip />}
+              cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+              isAnimationActive={false}
+            />
+            <Bar
+              dataKey="value"
+              fill="var(--text-secondary)"
+              radius={[0, 4, 4, 0]}
+              activeBar={{ fill: 'var(--foreground)' }}
+              isAnimationActive={false}
+            >
+              <LabelList
+                dataKey="value"
+                position="right"
+                formatter={(v: number) => current.format(v)}
+                style={{
+                  fill: 'var(--foreground)',
+                  fontSize: 12,
+                  fontWeight: 500,
+                }}
+              />
+            </Bar>
+          </BarChart>
+        </ChartContainer>
+        {rows.length > VISIBLE_ROWS && (
+          <button
+            type="button"
+            onClick={() => setShowAll(v => !v)}
+            className="mt-3 text-xs text-muted-foreground hover:text-foreground hover:underline"
+          >
+            {showAll ? 'Show fewer' : `Show all ${rows.length} VAs`}
+          </button>
+        )}
+      </CardContent>
+    </Card>
   );
 }
