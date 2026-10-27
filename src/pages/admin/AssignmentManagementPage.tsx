@@ -22,6 +22,7 @@ import { updateAssignment } from '@/services/assignments.service';
 import type { IAssignment } from '@/types/assignment';
 import { useQueryClient } from '@tanstack/react-query';
 
+import { AssignmentDetailDialog } from './assignments/AssignmentDetailDialog';
 import { buildColumns } from './assignments/columns';
 import { CreateAssignmentForm } from './assignments/CreateAssignmentForm';
 import { EditAssignmentForm } from './assignments/EditAssignmentForm';
@@ -29,7 +30,6 @@ import { EditAssignmentForm } from './assignments/EditAssignmentForm';
 export default function AssignmentManagementPage() {
   const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
-  const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
   const isAccountManager = user?.role === 'account_manager';
   // AMs can only view their own assignments; only admins can create/edit/delete
   const canManageAssignments = user?.role === 'admin';
@@ -43,6 +43,7 @@ export default function AssignmentManagementPage() {
     user?.role !== 'account_manager'
   );
 
+  const [openAssignmentId, setOpenAssignmentId] = useState<string | null>(null);
   const [sheetMode, setSheetMode] = useState<'create' | 'edit' | null>(null);
   const [editTarget, setEditTarget] = useState<IAssignment | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<IAssignment | null>(
@@ -76,18 +77,17 @@ export default function AssignmentManagementPage() {
   const amMap: Record<string, string> = {};
   for (const u of accountManagers) amMap[u.id] = `${u.firstName} ${u.lastName}`;
 
-  const columns = buildColumns(
+  const columns = buildColumns({
     clientMap,
     vaMap,
     amMap,
-    a => {
+    onEdit: a => {
       setEditTarget(a);
       setSheetMode('edit');
     },
-    a => setDeactivateTarget(a),
-    canManageAssignments,
-    rolePrefix
-  );
+    onDeactivate: a => setDeactivateTarget(a),
+    canManage: canManageAssignments,
+  });
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -119,9 +119,15 @@ export default function AssignmentManagementPage() {
             columns={columns}
             data={assignments}
             isLoading={isLoading}
+            onRowClick={a => setOpenAssignmentId(a._id)}
           />
         </div>
       </div>
+
+      <AssignmentDetailDialog
+        assignmentId={openAssignmentId}
+        onClose={() => setOpenAssignmentId(null)}
+      />
 
       {/* Sheet */}
       <Sheet open={sheetMode !== null} onOpenChange={handleSheetClose}>

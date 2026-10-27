@@ -2,7 +2,6 @@ import { DatePickerField } from '@/components/ui/date-picker-field';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   AlertTriangleIcon,
-  ArrowLeftIcon,
   BriefcaseIcon,
   BuildingIcon,
   CalendarIcon,
@@ -13,13 +12,20 @@ import {
   StarIcon,
   StickyNoteIcon,
   UserIcon,
+  XIcon,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
 
 import { DataTable } from '@/components/shared/DataTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -30,15 +36,20 @@ import {
   useProvisionedClientsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
-import { dateKeyToLocalDate, formatMinutes, todayString, weekStartOfDateKey } from '@/lib/time';
+import {
+  dateKeyToLocalDate,
+  formatMinutes,
+  todayString,
+  weekStartOfDateKey,
+} from '@/lib/time';
 import { getAssignment } from '@/services/assignments.service';
 import { getClientAccount } from '@/services/client-accounts.service';
 import { getVaProfile } from '@/services/va-profiles.service';
 import type { IEodSubmission } from '@/types/eod-submission';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 import { WORK_ENTRY_STATUS_STYLES } from '@/lib/status-styles';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { IAssignment } from '@/types/assignment';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -217,15 +228,63 @@ function buildEodColumns(): ColumnDef<IEodSubmission>[] {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function AssignmentDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const user = useAppSelector(s => s.auth.user);
-  const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
+/**
+ * An assignment opened in a dialog over the list. The detail only mounts while
+ * one is open, so its filters and tab start fresh each time.
+ */
+export function AssignmentDetailDialog({
+  assignmentId,
+  onClose,
+}: {
+  assignmentId: string | null;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={!!assignmentId} onOpenChange={open => !open && onClose()}>
+      <DialogContent
+        animated={false}
+        // Dim and blur the whole screen behind the dialog.
+        overlayClassName="bg-black/80 backdrop-blur-md"
+        className="flex h-[88vh] w-[calc(100vw-2rem)] max-w-5xl flex-col gap-0 overflow-visible p-0 [&>button:last-child]:hidden"
+      >
+        <DialogTitle className="sr-only">Assignment details</DialogTitle>
+        <DialogDescription className="sr-only">
+          The VA, client, activity and reports for this assignment.
+        </DialogDescription>
+        {/* Outside the panel: beside its top-left corner, or just above it on
+            narrow screens where there is no room at the side. */}
+        <DialogClose asChild>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Close assignment"
+            className="absolute -top-9 left-0 size-8 rounded-md bg-background min-[1120px]:-left-11 min-[1120px]:top-0"
+          >
+            <XIcon className="size-4" />
+          </Button>
+        </DialogClose>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
+          {assignmentId && (
+            <AssignmentDetail key={assignmentId} id={assignmentId} />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AssignmentDetail({ id }: { id: string }) {
+  const queryClient = useQueryClient();
 
   const { data: assignmentData, isLoading: loadingAssignment } = useQuery({
     queryKey: ['assignments', 'detail', id],
-    queryFn: () => getAssignment(id!),
-    enabled: !!id,
+    queryFn: () => getAssignment(id),
+    // The list already holds this assignment, so show it straight away.
+    placeholderData: () =>
+      queryClient
+        .getQueriesData<IAssignment[]>({ queryKey: ['assignments'] })
+        .flatMap(([, rows]) => (Array.isArray(rows) ? rows : []))
+        .find(r => r._id === id),
   });
 
   const assignment = assignmentData ?? null;
@@ -314,57 +373,34 @@ export default function AssignmentDetailPage() {
 
   if (loadingAssignment) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Skeleton className="h-64 w-full max-w-3xl" />
+      <div className="flex flex-1 items-center justify-center p-6">
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
   if (!assignment) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+      <div className="flex flex-1 items-center justify-center">
         <p className="text-lg font-medium text-muted-foreground">
           Assignment not found
         </p>
-        <Button variant="outline" asChild>
-          <Link to={`${rolePrefix}/assignments`}>Back to Assignments</Link>
-        </Button>
       </div>
     );
   }
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+    <div className="@container/main min-h-0 flex-1 overflow-y-auto">
+      <div className="px-6 py-6">
         {/* Header */}
-        <div className="px-4 lg:px-6">
-          <div className="flex items-start gap-3 mb-6">
-            <Button
-              variant="ghost"
-              size="icon" aria-label="Back to assignments"
-              asChild
-              className="size-8 mt-0.5 shrink-0"
-            >
-              <Link to={`${rolePrefix}/assignments`}>
-                <ArrowLeftIcon className="size-4" />
-              </Link>
-            </Button>
-            <div className="flex-1 min-w-0">
+        <div>
+          <div className="mb-6 flex items-start gap-3">
+            <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-semibold text-foreground">
                 {vaMap[assignment.candidateId] ?? 'VA'} —{' '}
                 {clientMap[assignment.clientId] ?? 'Client'}
               </h1>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
-                {/* Assignment ID */}
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground">ID</span>
-                  <span className="font-mono text-sm text-muted-foreground">
-                    {id?.slice(-8)}
-                  </span>
-                </span>
-
-                <span className="text-muted-foreground/30 text-xs">·</span>
-
                 {/* Status badge */}
                 <span
                   className={`inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.08em] ring-1 ring-inset ${ASSIGNMENT_STATUS_COLORS[assignment.status] ?? 'bg-white/[0.04] text-text-secondary ring-white/[0.08]'}`}

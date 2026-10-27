@@ -1,124 +1,169 @@
-import { type ColumnDef } from '@tanstack/react-table';
-import { EyeIcon, PenLineIcon, XIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { type IAssignment } from '@/types/assignment';
+import type { ColumnDef } from '@tanstack/react-table';
+import { PenLineIcon, XIcon } from 'lucide-react';
 
-export function buildColumns(
-  clientMap: Record<string, string>,
-  vaMap: Record<string, string>,
-  amMap: Record<string, string>,
-  onEdit: (a: IAssignment) => void,
-  onDeactivate: (a: IAssignment) => void,
-  canManage: boolean,
-  rolePrefix: string
-): ColumnDef<IAssignment>[] {
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { formatDateKeyLong } from '@/lib/time';
+import type { IAssignment } from '@/types/assignment';
+
+const STATUS_STYLES: Record<IAssignment['status'], string> = {
+  active: 'bg-white/[0.04] text-status-success border-status-success/20',
+  on_hold: 'bg-white/[0.04] text-status-warning border-status-warning/20',
+  ended: 'bg-white/[0.04] text-text-tertiary border-white/[0.08]',
+};
+
+const STATUS_LABELS: Record<IAssignment['status'], string> = {
+  active: 'Active',
+  on_hold: 'On hold',
+  ended: 'Ended',
+};
+
+const initialsOf = (name: string) =>
+  name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+export function buildColumns({
+  clientMap,
+  vaMap,
+  amMap,
+  onEdit,
+  onDeactivate,
+  canManage,
+}: {
+  clientMap: Record<string, string>;
+  vaMap: Record<string, string>;
+  amMap: Record<string, string>;
+  onEdit: (a: IAssignment) => void;
+  onDeactivate: (a: IAssignment) => void;
+  canManage: boolean;
+}): ColumnDef<IAssignment>[] {
   const columns: ColumnDef<IAssignment>[] = [
     {
-      id: 'assignmentId',
-      accessorKey: '_id',
-      header: 'ID',
-      size: 130,
-      cell: ({ getValue }) => {
-        const full = getValue<string>() ?? '';
-        const suffix = full.slice(-8);
+      // Who works for whom: the VA, with their client underneath.
+      id: 'va',
+      header: 'Assignment',
+      meta: { fill: true, cellClassName: 'max-w-0' },
+      accessorFn: a => a.candidateName || vaMap[a.candidateId] || '',
+      cell: ({ row }) => {
+        const a = row.original;
+        const va = a.candidateName || vaMap[a.candidateId] || a.candidateId;
+        const client = a.companyName || clientMap[a.clientId] || a.clientId;
         return (
-          <span className="font-mono text-sm text-muted-foreground whitespace-nowrap">
-            {suffix}
-          </span>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] font-mono text-xs text-text-secondary">
+              {initialsOf(va) || '?'}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium" title={va}>
+                {va}
+              </p>
+              <p
+                className="truncate text-xs text-muted-foreground"
+                title={a.serviceType ? `${client} · ${a.serviceType}` : client}
+              >
+                {client}
+                {/* Narrow screens: the service type folds in here. */}
+                {a.serviceType && (
+                  <span className="@min-[1000px]/main:hidden">
+                    {' · '}
+                    {a.serviceType}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
         );
       },
     },
     {
-      accessorKey: 'clientId',
-      header: 'Client',
-      size: 210,
-      cell: ({ getValue }) =>
-        clientMap[getValue<string>()] ?? getValue<string>(),
-    },
-    {
-      accessorKey: 'candidateId',
-      header: 'VA',
-      size: 130,
-      cell: ({ row, getValue }) =>
-        row.original.candidateName ||
-        vaMap[getValue<string>()] ||
-        getValue<string>(),
+      accessorKey: 'serviceType',
+      header: 'Service',
+      meta: {
+        thClassName: 'hidden @min-[1000px]/main:table-cell',
+        cellClassName: 'hidden @min-[1000px]/main:table-cell',
+      },
+      cell: ({ getValue }) => (
+        <span className="text-sm whitespace-nowrap">
+          {getValue<string | undefined>() || '—'}
+        </span>
+      ),
     },
     {
       accessorKey: 'accountManagerId',
       header: 'Account Manager',
-      size: 165,
-      cell: ({ row, getValue }) =>
-        row.original.accountManagerName ||
-        amMap[getValue<string>() ?? ''] ||
-        '—',
+      meta: { thClassName: 'whitespace-nowrap' },
+      cell: ({ row, getValue }) => (
+        <span className="text-sm whitespace-nowrap">
+          {row.original.accountManagerName ||
+            amMap[getValue<string>() ?? ''] ||
+            '—'}
+        </span>
+      ),
     },
     {
       accessorKey: 'startDate',
-      header: 'Start Date',
-      size: 115,
-      cell: ({ getValue }) => getValue<string>()?.slice(0, 10) ?? '—',
+      header: 'Started',
+      cell: ({ row }) => {
+        const { startDate, endDate } = row.original;
+        return (
+          <div className="leading-tight whitespace-nowrap">
+            <p className="text-sm">
+              {startDate ? formatDateKeyLong(startDate) : '—'}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {endDate ? `Ended ${formatDateKeyLong(endDate)}` : 'Ongoing'}
+            </p>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'status',
       header: 'Status',
-      size: 90,
       cell: ({ getValue }) => {
-        const v = getValue<string>();
-        const styles =
-          {
-            active:
-              'bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]',
-            on_hold:
-              'bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]',
-            ended:
-              'bg-white/[0.04] text-text-tertiary ring-1 ring-[rgba(255,255,255,0.08)]',
-          }[v] ??
-          'bg-white/[0.04] text-text-tertiary ring-1 ring-[rgba(255,255,255,0.08)]';
+        const v = getValue<IAssignment['status']>();
         return (
           <span
-            className={`inline-flex items-center rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] px-2 py-0.5 whitespace-nowrap ${styles}`}
+            className={`rounded-full border px-2 py-0.5 text-xs whitespace-nowrap ${STATUS_STYLES[v] ?? STATUS_STYLES.ended}`}
           >
-            {v}
+            {STATUS_LABELS[v] ?? v}
           </span>
         );
       },
     },
   ];
 
-  columns.push({
+  // Opening an assignment is the row click; the only buttons left are for
+  // admins, who can edit or end it.
+  if (canManage) {
+    columns.push({
       id: 'actions',
       header: 'Actions',
       enableSorting: false,
-      size: 130,
+      size: 100,
       cell: ({ row }) => (
         <TooltipProvider delayDuration={300}>
-          <div className="flex items-center gap-1 whitespace-nowrap">
+          {/* Keep a click on a button from also opening the row. */}
+          <div
+            className="flex items-center gap-1.5 whitespace-nowrap"
+            onClick={e => e.stopPropagation()}
+          >
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon" aria-label="View assignment details"
-                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
-                  asChild
-                >
-                  <Link to={`${rolePrefix}/assignments/${row.original._id}`}>
-                    <EyeIcon className="size-3.5" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">View Details</TooltipContent>
-            </Tooltip>
-
-            {canManage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon" aria-label="Edit assignment"
-                  className="size-7 bg-white/[0.02] text-muted-foreground hover:text-foreground hover:bg-white/[0.05]"
+                  size="icon"
+                  aria-label="Edit assignment"
+                  className="size-7 border border-white/[0.08] bg-white/[0.02] text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
                   onClick={() => onEdit(row.original)}
                 >
                   <PenLineIcon className="size-3.5" />
@@ -126,15 +171,15 @@ export function buildColumns(
               </TooltipTrigger>
               <TooltipContent side="top">Edit</TooltipContent>
             </Tooltip>
-            )}
 
-            {canManage && (row.original.status !== 'ended' ? (
+            {row.original.status !== 'ended' ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon" aria-label="End assignment"
-                    className="size-7 bg-destructive/[0.04] text-destructive/60 hover:text-destructive hover:bg-destructive/[0.08]"
+                    size="icon"
+                    aria-label="End assignment"
+                    className="size-7 border border-status-error/30 bg-white/[0.02] text-status-error/80 hover:border-status-error/50 hover:bg-status-error/10 hover:text-status-error"
                     onClick={() => onDeactivate(row.original)}
                   >
                     <XIcon className="size-3.5" />
@@ -144,11 +189,12 @@ export function buildColumns(
               </Tooltip>
             ) : (
               <div className="size-7" />
-            ))}
+            )}
           </div>
         </TooltipProvider>
       ),
-  });
+    });
+  }
 
   return columns;
 }

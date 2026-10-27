@@ -48,7 +48,7 @@ export function ReviewDetailDialog({
         animated={false}
         // Dim and blur the whole screen behind the review.
         overlayClassName="bg-black/80 backdrop-blur-md"
-        className="flex h-[90vh] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-visible p-0 [&>button:last-child]:hidden"
+        className="flex h-[88vh] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-visible p-0 [&>button:last-child]:hidden"
         // Clicking the backdrop must not throw away unsaved edits; the close
         // button and Escape still close it.
         onInteractOutside={e => e.preventDefault()}
@@ -64,7 +64,7 @@ export function ReviewDetailDialog({
             size="icon"
             variant="outline"
             aria-label="Close review"
-            className="absolute -top-10 left-0 size-8 rounded-md bg-background sm:-left-11 sm:top-0"
+            className="absolute -top-9 left-0 size-8 rounded-md bg-background min-[1000px]:-left-11 min-[1000px]:top-0"
           >
             <XIcon className="size-4" />
           </Button>
