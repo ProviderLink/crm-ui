@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { BellIcon, CheckIcon, XIcon } from 'lucide-react';
+import { BellIcon, Building2Icon, CheckIcon, XIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DataTable } from '@/components/shared/DataTable';
@@ -41,6 +41,20 @@ const SURVEY_TYPE_LABELS: Record<ISurveyReminder['surveyType'], string> = {
   monthly: 'Monthly',
 };
 
+interface RelatedInfo {
+  title: string;
+  subtitle: string;
+  isCompany: boolean;
+}
+
+const initialsOf = (name: string) =>
+  name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SurveyRemindersPage() {
@@ -71,19 +85,35 @@ export default function SurveyRemindersPage() {
   const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
 
-  // Names for the "For" column, so it shows people and companies, not ids.
-  const relatedNames = useMemo(() => {
-    const names = new Map<string, string>();
-    for (const v of atsVAs) names.set(v.id, `${v.firstName} ${v.lastName}`);
-    for (const c of atsClients) names.set(c.id, c.companyName);
+  // What the "For" column shows for each related record: a main line and a
+  // supporting line, so it reads as people and companies, not ids.
+  const relatedInfo = useMemo(() => {
+    const info = new Map<string, RelatedInfo>();
+    for (const v of atsVAs)
+      info.set(v.id, {
+        title: `${v.firstName} ${v.lastName}`,
+        subtitle: 'Virtual Assistant',
+        isCompany: false,
+      });
+    for (const c of atsClients)
+      info.set(c.id, {
+        title: c.companyName,
+        subtitle: 'Client',
+        isCompany: true,
+      });
+    // An assignment is shown by its VA, with the client underneath.
     for (const a of amAssignments) {
-      const va = names.get(a.candidateId);
-      const client = names.get(a.clientId);
+      const va = info.get(a.candidateId);
+      const client = info.get(a.clientId);
       if (va || client) {
-        names.set(a._id, [va, client].filter(Boolean).join(' · '));
+        info.set(a._id, {
+          title: va?.title ?? client?.title ?? '',
+          subtitle: va && client ? client.title : 'Assignment',
+          isCompany: !va,
+        });
       }
     }
-    return names;
+    return info;
   }, [atsVAs, atsClients, amAssignments]);
   const [statusFilter, setStatusFilter] = useState<SurveyStatus | 'all'>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -135,18 +165,38 @@ export default function SurveyRemindersPage() {
       {
         accessorKey: 'relatedType',
         header: 'For',
-        size: 160,
-        cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground capitalize">
-            {row.original.relatedType} ·{' '}
-            {relatedNames.get(row.original.relatedId) ?? (
-              <span className="font-mono">
-                {row.original.relatedId.slice(-8)}
-              </span>
-            )}
-          </span>
-        ),
+        size: 220,
         enableSorting: false,
+        cell: ({ row }) => {
+          const { relatedId, relatedType } = row.original;
+          const info = relatedInfo.get(relatedId);
+          const title = info?.title ?? `…${relatedId.slice(-8)}`;
+          const subtitle = info?.subtitle ?? relatedType;
+          return (
+            <div
+              className="flex max-w-[16rem] min-w-0 items-center gap-3"
+              title={`${title} · ${subtitle}`}
+            >
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] font-mono text-xs text-text-secondary">
+                {info && !info.isCompany ? (
+                  initialsOf(info.title) || '?'
+                ) : (
+                  <Building2Icon className="size-3.5" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p
+                  className={`truncate text-sm font-medium ${info ? '' : 'font-mono'}`}
+                >
+                  {title}
+                </p>
+                <p className="truncate text-xs text-muted-foreground capitalize">
+                  {subtitle}
+                </p>
+              </div>
+            </div>
+          );
+        },
       },
       {
         accessorKey: 'dueDate',
@@ -187,7 +237,7 @@ export default function SurveyRemindersPage() {
         id: 'actions',
         header: 'Actions',
         enableSorting: false,
-        size: 80,
+        size: 96,
         cell: ({ row }) => {
           const { _id, status } = row.original;
           if (status === 'completed' || status === 'skipped') return null;
@@ -200,7 +250,7 @@ export default function SurveyRemindersPage() {
                     <Button
                       variant="ghost"
                       size="icon" aria-label="Mark reminder as completed"
-                      className="size-7 bg-white/[0.04] text-text-tertiary hover:text-text-secondary hover:bg-white/[0.08]"
+                      className="size-7 border border-status-success/30 bg-white/[0.02] text-status-success/80 hover:border-status-success/50 hover:bg-status-success/10 hover:text-status-success"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(_id, 'completed')}
                     >
@@ -215,7 +265,7 @@ export default function SurveyRemindersPage() {
                     <Button
                       variant="ghost"
                       size="icon" aria-label="Skip reminder"
-                      className="size-7 bg-white/[0.02] text-muted-foreground/60 hover:text-muted-foreground hover:bg-white/[0.05]"
+                      className="size-7 border border-status-error/30 bg-white/[0.02] text-status-error/80 hover:border-status-error/50 hover:bg-status-error/10 hover:text-status-error"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(_id, 'skipped')}
                     >
@@ -230,7 +280,7 @@ export default function SurveyRemindersPage() {
         },
       },
     ],
-    [updatingId, relatedNames, today] // eslint-disable-line react-hooks/exhaustive-deps
+    [updatingId, relatedInfo, today] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return (

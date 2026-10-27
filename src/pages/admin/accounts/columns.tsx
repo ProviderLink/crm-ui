@@ -107,7 +107,7 @@ export function buildClientColumns(
     },
     {
       id: 'actions',
-      header: '',
+      header: 'Actions',
       size: 100,
       cell: ({ row }) => (
         <Button
@@ -251,7 +251,7 @@ export function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>
     },
     {
       id: 'actions',
-      header: '',
+      header: 'Actions',
       size: 120,
       cell: ({ row }) => (
         <Button

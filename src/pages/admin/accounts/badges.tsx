@@ -25,8 +25,8 @@ export function RoleBadge({ role }: { role: string }) {
 
 export function ActiveBadge({ active }: { active: boolean }) {
   return active ? (
-    <span className="inline-flex items-center gap-1 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] px-2 py-0.5 text-text-secondary ring-1 ring-inset ring-[rgba(255,255,255,0.08)]">
-      <span className="size-1.5 rounded-full bg-text-secondary" />
+    <span className="inline-flex items-center gap-1 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-status-success/10 px-2 py-0.5 text-status-success ring-1 ring-inset ring-status-success/25">
+      <span className="size-1.5 rounded-full bg-status-success" />
       Active
     </span>
   ) : (
