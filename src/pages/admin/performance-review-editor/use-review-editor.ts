@@ -1,10 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { QK, usePerformanceReviewQuery } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
 import {
   completeReview,
   exportReviewPdf,
@@ -18,13 +16,10 @@ import type {
   IPerformanceCategory,
 } from '@/types/performance-review';
 
-export function useReviewEditor() {
-  const { id } = useParams<{ id: string }>();
+export function useReviewEditor(id: string) {
   const queryClient = useQueryClient();
-  const user = useAppSelector(s => s.auth.user);
-  const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
 
-  const { data: review, isLoading } = usePerformanceReviewQuery(id ?? '');
+  const { data: review, isLoading } = usePerformanceReviewQuery(id);
   const isReadOnly = review?.reviewStatus === 'Completed';
 
   // Form state
@@ -206,7 +201,6 @@ export function useReviewEditor() {
     review,
     isLoading,
     isReadOnly,
-    rolePrefix,
     roleSummary,
     setRoleSummary,
     coreResponsibilities,

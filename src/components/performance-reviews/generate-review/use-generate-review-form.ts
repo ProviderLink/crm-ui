@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import {
@@ -10,7 +9,6 @@ import {
   useCrmClientUsersQuery,
   useCrmVaUsersQuery,
 } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
 import { generateReview } from '@/services/performance-reviews.service';
 import { ROLE_TYPES, type RoleType } from '@/types/performance-review';
 
@@ -18,6 +16,7 @@ import { schema, type FormValues } from './schema';
 
 export function useGenerateReviewForm({
   onOpenChange,
+  onCreated,
   defaultCandidateName,
   defaultClientName,
   defaultJobTitle,
@@ -27,6 +26,8 @@ export function useGenerateReviewForm({
   jobId,
 }: {
   onOpenChange: (open: boolean) => void;
+  /** Called with the new review's id once it has been generated. */
+  onCreated: (reviewId: string) => void;
   defaultCandidateName: string;
   defaultClientName: string;
   defaultJobTitle: string;
@@ -35,9 +36,6 @@ export function useGenerateReviewForm({
   propClientId?: string;
   jobId?: string;
 }) {
-  const navigate = useNavigate();
-  const user = useAppSelector(s => s.auth.user);
-  const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
 
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
@@ -130,7 +128,7 @@ export function useGenerateReviewForm({
       toast.success('Review generated successfully');
       reset();
       onOpenChange(false);
-      navigate(`${rolePrefix}/performance-reviews/${review.id}`);
+      onCreated(review.id);
     } catch {
       toast.error('Failed to generate review. Please try again.');
     }

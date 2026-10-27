@@ -2,40 +2,50 @@ import { LockIcon, StarIcon } from 'lucide-react';
 
 import { RATING_LABELS, type ReviewStatus } from '@/types/performance-review';
 
+// Same pill language as the rest of the CRM: status colour on the text and a
+// faint border only, never a coloured fill (see lib/status-styles.ts).
+const PILL = 'bg-white/[0.04]';
+
 const STATUS_STYLES: Record<ReviewStatus, string> = {
-  Draft: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
-  'AI Generated': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  'In Review': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  Completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  'Sent to Client': 'bg-sky-500/10 text-sky-400 border-sky-500/20',
-  Archived: 'bg-zinc-500/8 text-zinc-500 border-zinc-500/15',
+  Draft: `${PILL} text-text-tertiary border-white/[0.08]`,
+  'AI Generated': `${PILL} text-status-info border-status-info/20`,
+  'In Review': `${PILL} text-status-warning border-status-warning/20`,
+  Completed: `${PILL} text-status-success border-status-success/20`,
+  'Sent to Client': `${PILL} text-foreground border-white/[0.16]`,
+  Archived: `${PILL} text-text-tertiary border-white/[0.08]`,
 };
 
 export function StatusBadge({ status }: { status: ReviewStatus }) {
   return (
     <span
-      className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap ${STATUS_STYLES[status] ?? STATUS_STYLES['Draft']}`}
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${STATUS_STYLES[status] ?? STATUS_STYLES['Draft']}`}
     >
       {status === 'Completed' && (
-        <LockIcon className="size-2.5 mr-1 opacity-70" />
+        <LockIcon className="mr-1 size-2.5 opacity-70" />
       )}
       {status}
     </span>
   );
 }
 
+/** Five-star meter with the score; the label ("Exceeds Expectations") is the tooltip. */
 export function RatingDisplay({ rating }: { rating: number | null }) {
   if (rating == null)
     return <span className="text-xs text-muted-foreground/50">—</span>;
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-      <span className="inline-flex items-center gap-0.5 font-semibold text-sm tabular-nums">
-        <StarIcon className="size-3 text-amber-400 fill-amber-400" />
-        {rating}
+    <span
+      className="inline-flex items-center gap-2 whitespace-nowrap"
+      title={`${rating} / 5 · ${RATING_LABELS[rating]}`}
+    >
+      <span className="inline-flex items-center gap-0.5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <StarIcon
+            key={i}
+            className={`size-3 ${i < rating ? 'fill-status-warning text-status-warning' : 'text-muted-foreground/20'}`}
+          />
+        ))}
       </span>
-      <span className="text-[11px] text-muted-foreground leading-none">
-        {RATING_LABELS[rating]}
-      </span>
+      <span className="text-sm font-medium tabular-nums">{rating}</span>
     </span>
   );
 }

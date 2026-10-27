@@ -27,7 +27,8 @@ import {
 import { getScorecards } from '@/services/scorecards.service';
 import { getSurveyReminders } from '@/services/survey-reminders.service';
 import { getWorkEntries } from '@/services/work-entries.service';
-import { useQuery } from '@tanstack/react-query';
+import type { IPerformanceReview } from '@/types/performance-review';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 /** Return the current user's ID, scoped per login session to prevent cache pollution. */
 function useUserId(): string | undefined {
@@ -239,9 +240,19 @@ export function usePerformanceReviewsQuery(filters?: IReviewFilters) {
 }
 
 export function usePerformanceReviewQuery(id: string) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: QK.performanceReview(id),
     queryFn: () => getReview(id),
     enabled: !!id,
+    // The list already holds this review, so show that copy straight away
+    // instead of a spinner; the full fetch then replaces it.
+    placeholderData: () =>
+      queryClient
+        .getQueriesData<IPerformanceReview[]>({
+          queryKey: ['performance-reviews'],
+        })
+        .flatMap(([, rows]) => (Array.isArray(rows) ? rows : []))
+        .find(r => r.id === id),
   });
 }

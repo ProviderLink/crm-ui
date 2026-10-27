@@ -1,25 +1,25 @@
 import { PlusIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 import { GenerateReviewModal } from '@/components/performance-reviews/GenerateReviewModal';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 
+import { ReviewDetailDialog } from './performance-review-editor/ReviewDetailDialog';
 import { buildReviewColumns } from './performance-reviews-list/columns';
 import { ReviewFilters } from './performance-reviews-list/ReviewFilters';
 import { useReviewsList } from './performance-reviews-list/use-reviews-list';
 
 export default function PerformanceReviewsPage() {
-  const navigate = useNavigate();
   const p = useReviewsList();
+  const [openReviewId, setOpenReviewId] = useState<string | null>(null);
   const { isAccountManager } = p;
 
   const columns = buildReviewColumns({
         vaMap: p.vaMap,
         clientMap: p.clientMap,
         exportingId: p.exportingId,
-        onView: r => navigate(`${p.rolePrefix}/performance-reviews/${r.id}`),
         onExport: p.handleExportPdf,
         onDelete: p.setDeleteTarget,
   });
@@ -63,6 +63,7 @@ export default function PerformanceReviewsPage() {
             columns={columns}
             data={p.reviews}
             isLoading={p.isLoading}
+            onRowClick={r => setOpenReviewId(r.id)}
           />
         </div>
       </div>
@@ -70,6 +71,12 @@ export default function PerformanceReviewsPage() {
       <GenerateReviewModal
         open={p.generateOpen}
         onOpenChange={p.setGenerateOpen}
+        onCreated={setOpenReviewId}
+      />
+
+      <ReviewDetailDialog
+        reviewId={openReviewId}
+        onClose={() => setOpenReviewId(null)}
       />
 
       <ConfirmDialog

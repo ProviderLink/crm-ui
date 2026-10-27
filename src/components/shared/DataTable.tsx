@@ -36,6 +36,8 @@ interface DataTableProps<T> {
   isError?: boolean;
   error?: Error | null;
   pageSize?: number;
+  /** Makes each row clickable (and keyboard-activatable). */
+  onRowClick?: (row: T) => void;
 }
 
 export function DataTable<T>({
@@ -45,6 +47,7 @@ export function DataTable<T>({
   isError = false,
   error = null,
   pageSize = 10,
+  onRowClick,
 }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize });
@@ -174,7 +177,19 @@ export function DataTable<T>({
               table.getRowModel().rows.map(row => (
                 <tr
                   key={row.id}
-                  className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors"
+                  className={`border-b border-border last:border-0 hover:bg-muted/50 transition-colors ${onRowClick ? 'cursor-pointer focus-visible:bg-muted/50 focus-visible:outline-none' : ''}`}
+                  onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                  onKeyDown={
+                    onRowClick
+                      ? e => {
+                          if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                            e.preventDefault();
+                            onRowClick(row.original);
+                          }
+                        }
+                      : undefined
+                  }
+                  tabIndex={onRowClick ? 0 : undefined}
                 >
                   {row.getVisibleCells().map(cell => (
                     <td

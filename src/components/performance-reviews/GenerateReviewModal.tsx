@@ -29,6 +29,8 @@ import { useGenerateReviewForm } from './generate-review/use-generate-review-for
 export interface GenerateReviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called with the new review's id once it has been generated. */
+  onCreated: (reviewId: string) => void;
   defaultCandidateName?: string;
   defaultClientName?: string;
   defaultJobTitle?: string;
@@ -41,6 +43,7 @@ export interface GenerateReviewModalProps {
 export function GenerateReviewModal({
   open,
   onOpenChange,
+  onCreated,
   defaultCandidateName = '',
   defaultClientName = '',
   defaultJobTitle = '',
@@ -51,6 +54,7 @@ export function GenerateReviewModal({
 }: GenerateReviewModalProps) {
   const f = useGenerateReviewForm({
     onOpenChange,
+    onCreated,
     defaultCandidateName,
     defaultClientName,
     defaultJobTitle,

@@ -6,63 +6,117 @@ import {
   StarIcon,
   TargetIcon,
   UserIcon,
+  XIcon,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 
-import { AddItemButton } from './performance-review-editor/AddItemButton';
-import { AiButton } from './performance-review-editor/AiButton';
-import { CategoriesList } from './performance-review-editor/CategoriesList';
-import { FinalAssessmentCard } from './performance-review-editor/FinalAssessmentCard';
-import { ReviewMetadataCard } from './performance-review-editor/ReviewMetadataCard';
-import { ReviewSaveBar } from './performance-review-editor/ReviewSaveBar';
-import { ReviewToolbar } from './performance-review-editor/ReviewToolbar';
-import { SectionCard } from './performance-review-editor/SectionCard';
-import { StringListEditor } from './performance-review-editor/StringListEditor';
-import { useReviewEditor } from './performance-review-editor/use-review-editor';
+import { AddItemButton } from './AddItemButton';
+import { AiButton } from './AiButton';
+import { CategoriesList } from './CategoriesList';
+import { FinalAssessmentCard } from './FinalAssessmentCard';
+import { ReviewMetadataCard } from './ReviewMetadataCard';
+import { ReviewSaveBar } from './ReviewSaveBar';
+import { ReviewToolbar } from './ReviewToolbar';
+import { SectionCard } from './SectionCard';
+import { StringListEditor } from './StringListEditor';
+import { useReviewEditor } from './use-review-editor';
 
-export default function PerformanceReviewEditorPage() {
-  const navigate = useNavigate();
-  const e = useReviewEditor();
+/**
+ * A performance review opened in a modal over the list. The editor only mounts
+ * while a review is open, so its form state is seeded fresh for each review.
+ */
+export function ReviewDetailDialog({
+  reviewId,
+  onClose,
+}: {
+  reviewId: string | null;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={!!reviewId} onOpenChange={open => !open && onClose()}>
+      <DialogContent
+        animated={false}
+        // Dim and blur the whole screen behind the review.
+        overlayClassName="bg-black/80 backdrop-blur-md"
+        className="flex h-[90vh] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-visible p-0 [&>button:last-child]:hidden"
+        // Clicking the backdrop must not throw away unsaved edits; the close
+        // button and Escape still close it.
+        onInteractOutside={e => e.preventDefault()}
+      >
+        <DialogTitle className="sr-only">Performance review</DialogTitle>
+        <DialogDescription className="sr-only">
+          View and edit this performance review.
+        </DialogDescription>
+        {/* Outside the panel: beside its top-left corner, or just above it on
+            narrow screens where there is no room at the side. */}
+        <DialogClose asChild>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Close review"
+            className="absolute -top-10 left-0 size-8 rounded-md bg-background sm:-left-11 sm:top-0"
+          >
+            <XIcon className="size-4" />
+          </Button>
+        </DialogClose>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
+          {reviewId && <ReviewEditor key={reviewId} reviewId={reviewId} />}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReviewEditor({ reviewId }: { reviewId: string }) {
+  const e = useReviewEditor(reviewId);
   const { review, isReadOnly } = e;
 
   if (e.isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center min-h-[400px]">
-        <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
-      </div>
+      <>
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      </>
     );
   }
 
   if (!review) {
     return (
-      <div className="flex flex-1 items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">Review not found.</p>
-      </div>
+      <>
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-muted-foreground">Review not found.</p>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="@container/main flex flex-1 flex-col">
+    <>
       <ReviewToolbar
         review={review}
         isReadOnly={isReadOnly}
         exporting={e.exporting}
         saving={e.saving}
-        onBack={() => navigate(`${e.rolePrefix}/performance-reviews`)}
         onExport={e.handleExportPdf}
         onSave={e.handleSaveDraft}
         onComplete={() => e.setCompleteOpen(true)}
       />
 
-      {/* ── Page body ────────────────────────────────────────────────────── */}
-      <div className="flex-1 px-4 lg:px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-6">
         <div className="space-y-5">
-          {/* AI disclaimer */}
           {!isReadOnly && (
-            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-amber-500/8 border border-amber-500/25 text-amber-700 dark:text-amber-400">
+            <div className="flex items-center gap-2.5 rounded-lg border border-amber-500/25 bg-amber-500/8 px-4 py-2.5 text-amber-700 dark:text-amber-400">
               <AlertTriangleIcon className="size-4 shrink-0" />
               <p className="text-sm font-medium">
                 AI-generated draft — please review and edit before finalizing.
@@ -115,7 +169,9 @@ export default function PerformanceReviewEditorPage() {
             action={
               !isReadOnly ? (
                 <AddItemButton
-                  onClick={() => e.setCoreResponsibilities(prev => [...prev, ''])}
+                  onClick={() =>
+                    e.setCoreResponsibilities(prev => [...prev, ''])
+                  }
                 />
               ) : undefined
             }
@@ -143,7 +199,7 @@ export default function PerformanceReviewEditorPage() {
             }
           >
             {e.categories.length === 0 ? (
-              <p className="text-sm text-muted-foreground italic py-1">
+              <p className="py-1 text-sm italic text-muted-foreground">
                 No categories yet.{' '}
                 {!isReadOnly && 'Use "Regenerate" to generate them with AI.'}
               </p>
@@ -156,8 +212,7 @@ export default function PerformanceReviewEditorPage() {
             )}
           </SectionCard>
 
-          {/* ── Strengths + Areas (side by side) ─────────────────────────── */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <SectionCard
               icon={<span className="text-text-secondary">↑</span>}
               title="Strengths"
@@ -246,6 +301,6 @@ export default function PerformanceReviewEditorPage() {
         onConfirm={e.handleMarkCompleted}
         variant="default"
       />
-    </div>
+    </>
   );
 }

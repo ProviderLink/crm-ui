@@ -44,9 +44,6 @@ const EodReportsPage = lazy(() => import('@/pages/admin/EodReportsPage'));
 const PerformanceReviewsPage = lazy(
   () => import('@/pages/admin/PerformanceReviewsPage')
 );
-const PerformanceReviewEditorPage = lazy(
-  () => import('@/pages/admin/PerformanceReviewEditorPage')
-);
 const AssignmentDetailPage = lazy(
   () => import('@/pages/admin/AssignmentDetailPage')
 );
@@ -141,10 +138,6 @@ const router = createBrowserRouter([
                     path: 'performance-reviews',
                     element: <PerformanceReviewsPage />,
                   },
-                  {
-                    path: 'performance-reviews/:id',
-                    element: <PerformanceReviewEditorPage />,
-                  },
                 ],
               },
             ],
@@ -175,10 +168,6 @@ const router = createBrowserRouter([
                   {
                     path: 'performance-reviews',
                     element: <PerformanceReviewsPage />,
-                  },
-                  {
-                    path: 'performance-reviews/:id',
-                    element: <PerformanceReviewEditorPage />,
                   },
                 ],
               },
