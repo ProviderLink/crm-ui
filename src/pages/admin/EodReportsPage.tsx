@@ -12,7 +12,6 @@ export default function EodReportsPage() {
     vaMap: r.vaMap,
     clientMap: r.clientMap,
     assignmentMap: r.assignmentMap,
-    isAccountManager: r.isAccountManager,
     onView: eod => {
       r.setSelectedEodId(eod._id);
       r.setSelectedEodFallback(eod);

@@ -1,13 +1,12 @@
-import { useEodSubmissionQuery } from '@/hooks/queries';
-import { getApiError } from '@/lib/api-error';
-import { formatMinutes } from '@/lib/time';
-import type {
-  CommunicatedWithClient,
-  EodWorkStatus,
-  IEodSubmission,
-  IEodWorkEntry,
-} from '@/types/eod-submission';
-import { AlertCircle } from 'lucide-react';
+import {
+  AlertCircle,
+  AlertTriangleIcon,
+  ClockIcon,
+  HourglassIcon,
+  ListChecksIcon,
+  MessageSquareIcon,
+  StickyNoteIcon,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import {
@@ -17,6 +16,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { useEodSubmissionQuery } from '@/hooks/queries';
+import { getApiError } from '@/lib/api-error';
+import { WORK_ENTRY_STATUS_STYLES } from '@/lib/status-styles';
+import { formatMinutes } from '@/lib/time';
+import type {
+  CommunicatedWithClient,
+  EodWorkStatus,
+  IEodSubmission,
+} from '@/types/eod-submission';
 
 const STATUS_LABELS: Record<EodWorkStatus, string> = {
   completed: 'Completed',
@@ -24,7 +32,13 @@ const STATUS_LABELS: Record<EodWorkStatus, string> = {
   pending: 'Pending Client Input',
 };
 
-const Q2_LABELS: Record<CommunicatedWithClient, string> = {
+const COMMUNICATED_STYLES: Record<CommunicatedWithClient, string> = {
+  yes: 'bg-white/[0.04] text-status-success border-status-success/20',
+  no: 'bg-white/[0.04] text-text-secondary border-white/[0.08]',
+  other: 'bg-white/[0.04] text-status-info border-status-info/20',
+};
+
+const COMMUNICATED_LABELS: Record<CommunicatedWithClient, string> = {
   yes: 'Yes',
   no: 'No',
   other: 'Other',
@@ -41,65 +55,225 @@ interface EodDetailSheetProps {
   fallback?: IEodSubmission | null;
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <div className="text-sm text-foreground whitespace-pre-wrap break-words">
-        {children}
-      </div>
-    </div>
-  );
+/** "Tuesday, Oct 27, 2026", built from the key's parts to avoid timezone drift. */
+function formatDay(raw?: string): string {
+  const [y, m, d] = (raw ?? '').slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return raw ?? '—';
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </p>
-      {children}
-    </div>
-  );
-}
-
-function formatDate(raw?: string): string {
-  if (!raw) return '—';
-  return raw.slice(0, 10);
-}
-
-function formatTimestamp(raw?: string): string {
+function formatSubmitted(raw?: string): string {
   if (!raw) return '—';
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleString();
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
-function WorkEntryCard({
-  entry,
-  index,
+const initialsOf = (name: string) =>
+  name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+function Stat({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="rounded-lg border border-border bg-white/[0.02] px-3 py-2.5">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function Section({
+  icon,
+  title,
+  aside,
+  children,
 }: {
-  entry: IEodWorkEntry;
-  index: number;
+  icon: ReactNode;
+  title: string;
+  aside?: ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-border/60 bg-background/40 p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Work {index + 1}
-        </span>
-        <span className="text-[10px] font-mono uppercase tracking-wider rounded px-1.5 py-0.5 bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]">
-          {STATUS_LABELS[entry.status] ?? entry.status}
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <span className="text-muted-foreground">{icon}</span>
+          {title}
+        </h3>
+        {aside}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Free text from the VA; empty values read as a quiet "None". */
+function TextBlock({ value, empty }: { value?: string | null; empty: string }) {
+  return value?.trim() ? (
+    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground">
+      {value}
+    </p>
+  ) : (
+    <p className="text-sm text-muted-foreground/60">{empty}</p>
+  );
+}
+
+function WorkList({ eod }: { eod: IEodSubmission }) {
+  const entries = eod.workEntries ?? [];
+
+  // Older reports only have a free-text summary.
+  if (entries.length === 0) {
+    return <TextBlock value={eod.summaryOfWork} empty="No work recorded." />;
+  }
+
+  const totalMinutes = entries.reduce((sum, e) => sum + (e.timeSpent || 0), 0);
+  return (
+    <div className="rounded-lg border border-border">
+      <ul className="divide-y divide-border">
+        {entries.map((e, i) => (
+          <li key={i} className="flex items-start justify-between gap-4 p-3.5">
+            <div className="min-w-0">
+              <p className="flex items-baseline gap-2 text-sm font-medium text-foreground">
+                <span className="break-words">{e.task || '—'}</span>
+                {e.quantity ? (
+                  <span className="shrink-0 font-mono text-xs font-normal text-muted-foreground">
+                    ×{e.quantity}
+                  </span>
+                ) : null}
+              </p>
+              {e.description && (
+                <p className="mt-1 text-sm leading-relaxed break-words text-muted-foreground">
+                  {e.description}
+                </p>
+              )}
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-1.5">
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[e.status]}`}
+              >
+                {STATUS_LABELS[e.status] ?? e.status}
+              </span>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {formatMinutes(e.timeSpent)}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="flex items-center justify-between border-t border-border bg-white/[0.02] px-3.5 py-2 text-xs text-muted-foreground">
+        <span>Total time logged</span>
+        <span className="font-medium tabular-nums text-foreground">
+          {formatMinutes(totalMinutes)}
         </span>
       </div>
-      <Field label="Task">{entry.task || '—'}</Field>
-      <Field label="Description">{entry.description || '—'}</Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Quantity">{entry.quantity}</Field>
-        <Field label="Time Spent">{formatMinutes(entry.timeSpent)}</Field>
+    </div>
+  );
+}
+
+function EodBody({ eod }: { eod: IEodSubmission }) {
+  const entries = eod.workEntries ?? [];
+  const done = entries.filter(e => e.status === 'completed').length;
+  const hasBlockers = !!eod.blockers?.trim();
+
+  return (
+    <div className="space-y-6">
+      <div
+        className={`grid gap-3 ${entries.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}
+      >
+        <Stat
+          label="Shift"
+          value={`${eod.shiftStart || '—'} – ${eod.shiftEnd || '—'}`}
+        />
+        <Stat label="Hours worked" value={`${eod.hoursWorked}h`} />
+        {entries.length > 0 && (
+          <Stat label="Tasks done" value={`${done} of ${entries.length}`} />
+        )}
       </div>
+
+      <Section
+        icon={<ListChecksIcon className="size-4" />}
+        title="Work done"
+        aside={
+          entries.length > 0 ? (
+            <span className="text-xs text-muted-foreground">
+              {entries.length} {entries.length === 1 ? 'task' : 'tasks'}
+            </span>
+          ) : undefined
+        }
+      >
+        <WorkList eod={eod} />
+      </Section>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Section
+          icon={<HourglassIcon className="size-4" />}
+          title="Still pending"
+        >
+          <TextBlock value={eod.pendingTasks} empty="Nothing pending." />
+        </Section>
+
+        <Section
+          icon={
+            <AlertTriangleIcon
+              className={`size-4 ${hasBlockers ? 'text-status-warning' : ''}`}
+            />
+          }
+          title="Blockers"
+        >
+          {hasBlockers ? (
+            <p className="rounded-lg border border-status-warning/20 bg-status-warning/5 px-3 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground">
+              {eod.blockers}
+            </p>
+          ) : (
+            <TextBlock value={null} empty="No blockers." />
+          )}
+        </Section>
+      </div>
+
+      <Section
+        icon={<MessageSquareIcon className="size-4" />}
+        title="Client communication"
+        aside={
+          eod.communicatedWithClient ? (
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${COMMUNICATED_STYLES[eod.communicatedWithClient]}`}
+            >
+              {COMMUNICATED_LABELS[eod.communicatedWithClient] ??
+                eod.communicatedWithClient}
+            </span>
+          ) : undefined
+        }
+      >
+        <div className="border-l-2 border-border pl-3">
+          <TextBlock
+            value={eod.clientNote}
+            empty="No note was left for the client."
+          />
+        </div>
+      </Section>
+
+      {eod.notes?.trim() && (
+        <Section icon={<StickyNoteIcon className="size-4" />} title="VA notes">
+          <TextBlock value={eod.notes} empty="" />
+        </Section>
+      )}
     </div>
   );
 }
@@ -114,99 +288,54 @@ export function EodDetailSheet({
   );
 
   const eod: IEodSubmission | undefined = data ?? fallback ?? undefined;
+  const vaName = eod ? eod.candidateName || eod.candidateId : '';
 
   return (
     <Sheet open={eodId !== null} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>EOD Submission</SheetTitle>
-          <SheetDescription>
-            {eod ? formatDate(eod.date) : 'Loading…'}
-          </SheetDescription>
+      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
+        <SheetHeader className="space-y-0 border-b border-border px-6 py-5 pr-12">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] font-mono text-sm text-text-secondary">
+              {vaName ? initialsOf(vaName) || '?' : '…'}
+            </div>
+            <div className="min-w-0">
+              <SheetTitle className="truncate">
+                {vaName || 'EOD report'}
+              </SheetTitle>
+              <SheetDescription className="mt-0.5 truncate">
+                {eod
+                  ? `${eod.companyName || eod.clientId} · ${formatDay(eod.date)}`
+                  : 'Loading…'}
+              </SheetDescription>
+            </div>
+          </div>
         </SheetHeader>
 
-        {isLoading && (
-          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="h-3.5 w-3.5 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
-            Loading EOD details…
-          </div>
-        )}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {isLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+              Loading EOD details…
+            </div>
+          )}
 
-        {isError && (
-          <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-            <AlertCircle size={15} className="mt-0.5 shrink-0" />
-            {getApiError(
-              error,
-              'Failed to load EOD details. You may not have permission to view this submission.'
-            )}
-          </div>
-        )}
+          {isError && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <AlertCircle size={15} className="mt-0.5 shrink-0" />
+              {getApiError(
+                error,
+                'Failed to load EOD details. You may not have permission to view this submission.'
+              )}
+            </div>
+          )}
+
+          {!isLoading && !isError && eod && <EodBody eod={eod} />}
+        </div>
 
         {!isLoading && !isError && eod && (
-          <div className="mt-4 space-y-4">
-            <Section title="People">
-              <Field label="VA">{eod.candidateName || eod.candidateId}</Field>
-              <Field label="Client">{eod.companyName || eod.clientId}</Field>
-            </Section>
-
-            <Section title="Shift">
-              <div className="grid grid-cols-3 gap-3">
-                <Field label="Date">{formatDate(eod.date)}</Field>
-                <Field label="Start">{eod.shiftStart || '—'}</Field>
-                <Field label="End">{eod.shiftEnd || '—'}</Field>
-              </div>
-              <Field label="Hours Worked">{eod.hoursWorked}h</Field>
-            </Section>
-
-            <Section title="Summary of Work">
-              {eod.workEntries && eod.workEntries.length > 0 ? (
-                <div className="space-y-3">
-                  {eod.workEntries.map((entry, idx) => (
-                    <WorkEntryCard key={idx} entry={entry} index={idx} />
-                  ))}
-                </div>
-              ) : (
-                <Field label="Tasks Completed">
-                  {eod.summaryOfWork || '—'}
-                </Field>
-              )}
-            </Section>
-
-            <Section title="Pending Tasks">
-              <Field label="Pending / In Progress">
-                {eod.pendingTasks || '—'}
-              </Field>
-            </Section>
-
-            <Section title="Blockers">
-              <Field label="Anything preventing progress">
-                {eod.blockers || '—'}
-              </Field>
-            </Section>
-
-            <Section title="Client Communication">
-              <Field label="Did you communicate with the client today?">
-                {eod.communicatedWithClient
-                  ? (Q2_LABELS[eod.communicatedWithClient] ??
-                    eod.communicatedWithClient)
-                  : '—'}
-              </Field>
-              <Field label="Additional notes for the client">
-                {eod.clientNote || '—'}
-              </Field>
-            </Section>
-
-            {eod.notes && (
-              <Section title="Additional Notes">
-                <Field label="VA Notes">{eod.notes}</Field>
-              </Section>
-            )}
-
-            <Section title="Submission">
-              <Field label="Submitted At">
-                {formatTimestamp(eod.createdAt)}
-              </Field>
-            </Section>
+          <div className="flex items-center gap-2 border-t border-border px-6 py-3 text-xs text-muted-foreground">
+            <ClockIcon className="size-3.5" />
+            Submitted {formatSubmitted(eod.createdAt)}
           </div>
         )}
       </SheetContent>
