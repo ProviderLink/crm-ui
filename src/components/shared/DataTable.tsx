@@ -224,7 +224,10 @@ export function DataTable<T>({
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {/* Keep the footer while there are more rows than the smallest page
+          size, so "Rows per page" can still be changed back after everything
+          fits on one page. */}
+      {data.length > PAGE_SIZE_OPTIONS[0]! && (
         <div className="flex items-center justify-between px-1 flex-wrap gap-2">
           {/* Left: total info + rows per page */}
           <div className="flex items-center gap-3">
