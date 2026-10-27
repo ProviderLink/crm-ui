@@ -1,5 +1,4 @@
 import { DatePickerField } from '@/components/ui/date-picker-field';
-import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
 
 import { DataTable } from '@/components/shared/DataTable';
@@ -19,9 +18,9 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { addDaysToDateKey, formatMinutes, todayString } from '@/lib/time';
-import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
-import { WORK_ENTRY_STATUS_STYLES } from '@/lib/status-styles';
+import { addDaysToDateKey, todayString } from '@/lib/time';
+
+import { buildWorkEntryColumns } from './work-entries/columns';
 
 export default function WorkEntriesPage() {
   const user = useAppSelector(s => s.auth.user);
@@ -134,96 +133,8 @@ export default function WorkEntriesPage() {
     return m;
   }, [assignments]);
 
-  const columns = useMemo<ColumnDef<IWorkEntry>[]>(
-    () => [
-      {
-        accessorKey: 'entryDate',
-        header: 'Date',
-        size: 115,
-        cell: ({ getValue }) => (
-          <span className="text-xs text-muted-foreground">
-            {getValue<string>()?.slice(0, 10)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'candidateId',
-        header: 'VA',
-        size: 140,
-        cell: ({ row, getValue }) => (
-          <span className="text-sm">
-            {row.original.candidateName ||
-              vaMap[getValue<string>()] ||
-              getValue<string>()}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'clientId',
-        header: 'Client',
-        size: 220,
-        cell: ({ row }) => (
-          <div className="flex flex-col gap-0.5">
-            <span className="text-sm">
-              {row.original.companyName ||
-                clientMap[row.original.clientId] ||
-                row.original.clientId}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {assignmentMap[row.original.assignmentId] ?? '—'}
-            </span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'taskCategory',
-        header: 'Category',
-        meta: { shrink: true, cellClassName: 'whitespace-nowrap' },
-        cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-text-secondary whitespace-nowrap">
-            {getValue<string>()}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'taskDescription',
-        header: 'Description',
-        enableSorting: false,
-        meta: {
-          fill: true,
-          cellClassName: 'bg-white/[0.04] border-l border-white/[0.06]',
-        },
-        cell: ({ getValue }) => (
-          <span className="text-sm">{getValue<string>()}</span>
-        ),
-      },
-      {
-        accessorKey: 'timeSpent',
-        header: 'Time',
-        size: 85,
-        meta: { headerClassName: 'text-center', cellClassName: 'text-center' },
-        cell: ({ getValue }) => (
-          <span className="text-xs text-muted-foreground">
-            {formatMinutes(getValue<number>())}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'status',
-        header: 'Status',
-        meta: { shrink: true, cellClassName: 'whitespace-nowrap' },
-        cell: ({ getValue }) => {
-          const s = getValue<WorkEntryStatus>();
-          return (
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[s]}`}
-            >
-              {s.replace('_', ' ')}
-            </span>
-          );
-        },
-      },
-    ],
+  const columns = useMemo(
+    () => buildWorkEntryColumns({ vaMap, clientMap, assignmentMap }),
     [vaMap, clientMap, assignmentMap]
   );
 
