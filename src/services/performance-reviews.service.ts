@@ -50,6 +50,9 @@ const STATUS_TO_BACKEND: Record<ReviewStatus, string> = {
 };
 
 /** Normalize a backend review document to frontend IPerformanceReview shape */
+// The backend document is loosely shaped (legacy fields, optional blocks), so
+// it is read untyped here and typed on the way out.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapReview(r: any): IPerformanceReview {
   const aiGen = r.aiGenerated ?? {};
   return {
@@ -73,6 +76,7 @@ function mapReview(r: any): IPerformanceReview {
     goalsNextPeriod: aiGen.goals ?? [],
     finalManagerSummary: r.finalManagerSummary ?? '',
     // Normalize category IDs so cat.id works in the editor
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     categories: (r.categories ?? []).map((c: any) => ({
       ...c,
       id: c._id ?? c.id,
@@ -168,9 +172,9 @@ export async function updateReview(
 
   // Include categories if provided (each must have _id)
   if (payload.categories !== undefined) {
-    backendPayload.categories = payload.categories.map((c: any) => ({
+    backendPayload.categories = payload.categories.map(c => ({
       ...c,
-      _id: c._id ?? c.id,
+      _id: (c as { _id?: string })._id ?? c.id,
     }));
   }
 

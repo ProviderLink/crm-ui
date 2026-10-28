@@ -7,6 +7,7 @@ import {
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import api from '@/lib/api';
+import type { IAssignment } from '@/types/assignment';
 import {
   type IAccountManager,
   type ICrmUser,
@@ -65,7 +66,7 @@ export function useAccountRows() {
     queryKey: ['all-assignments-list'],
     queryFn: () =>
       api
-        .get<{ data: any[] }>('/crm/assignments?limit=1000')
+        .get<{ data: IAssignment[] }>('/crm/assignments?limit=1000')
         .then(r => r.data.data ?? []),
   });
 

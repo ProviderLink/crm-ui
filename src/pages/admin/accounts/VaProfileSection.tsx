@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useAppSelector } from '@/hooks/store';
 import api from '@/lib/api';
+import type { UpdateVaProfilePayload } from '@/types/va-profile';
 import { getVaAssignments, updateVaProfile } from '@/services/va-profiles.service';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toISO, toYMD, fmtDate, durationLabel } from './date-utils';
@@ -67,7 +68,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
   function getFormVal(key: string, fallback: unknown = '') {
     return form[key] !== undefined
       ? form[key]
-      : ((profile as any)?.[key] ?? fallback);
+      : ((profile as unknown as Record<string, unknown> | undefined)?.[key] ?? fallback);
   }
 
   async function handleSave() {
@@ -75,7 +76,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
     setError('');
     setSuccess(false);
     try {
-      await updateVaProfile(vaId!, form as any);
+      await updateVaProfile(vaId!, form as UpdateVaProfilePayload);
       await queryClient.invalidateQueries({ queryKey: ['va-profile', vaId] });
       // The Accounts table enriches rows from this list.
       queryClient.invalidateQueries({ queryKey: ['va-profiles-list'] });

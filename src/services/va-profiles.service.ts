@@ -1,19 +1,23 @@
 import api from '@/lib/api';
+import { withId, type ApiDoc } from '@/lib/with-id';
+import type { IAssignment } from '@/types/assignment';
 import type { IVaProfile, UpdateVaProfilePayload } from '@/types/va-profile';
 
 export async function getVaProfiles(): Promise<IVaProfile[]> {
   // Backend defaults to limit=20 when omitted, which silently truncates the list;
   // fetch a large page so every row is returned.
-  const { data } = await api.get<{ data: any[] }>(
+  const { data } = await api.get<{ data: ApiDoc<IVaProfile>[] }>(
     '/crm/va-profiles?limit=1000'
   );
-  return data.data.map((v: any) => ({ ...v, id: v._id ?? v.id }));
+  return data.data.map(v => withId<IVaProfile>(v));
 }
 
 /** One VA's profile (the API creates an empty one on first read). */
 export async function getVaProfile(vaId: string): Promise<IVaProfile> {
-  const { data } = await api.get<{ data: any }>(`/crm/va-profiles/${vaId}`);
-  return { ...data.data, id: data.data._id ?? data.data.id };
+  const { data } = await api.get<{ data: ApiDoc<IVaProfile> }>(
+    `/crm/va-profiles/${vaId}`
+  );
+  return withId<IVaProfile>(data.data);
 }
 
 export async function updateVaProfile(
@@ -41,15 +45,15 @@ export interface IVaAssignment {
 export async function getVaAssignments(
   candidateId: string
 ): Promise<IVaAssignment[]> {
-  const { data } = await api.get<{ data: any[] }>(
+  const { data } = await api.get<{ data: IAssignment[] }>(
     `/crm/assignments?candidateId=${candidateId}&limit=100`
   );
-  return (data.data ?? []).map((a: any) => ({
+  return (data.data ?? []).map(a => ({
     _id: a._id,
     clientId: a.clientId,
     companyName: a.companyName ?? '',
     status: a.status,
-    serviceType: a.serviceType,
+    serviceType: a.serviceType ?? '',
     startDate: a.startDate,
     endDate: a.endDate ?? null,
     notes: a.notes ?? null,

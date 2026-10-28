@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { withId, type ApiDoc } from '@/lib/with-id';
 
 export interface IAccountManager {
   id: string;
@@ -39,10 +40,10 @@ export async function getAccountManagers(
 ): Promise<IAccountManager[]> {
   const params = new URLSearchParams({ role: 'account_manager' });
   if (activeOnly) params.set('isActive', 'true');
-  const { data } = await api.get<{ data: any[] }>(
+  const { data } = await api.get<{ data: ApiDoc<IAccountManager>[] }>(
     `/shared/users?${params.toString()}`
   );
-  return data.data.map((u: any) => ({ ...u, id: u._id ?? u.id }));
+  return data.data.map(u => withId<IAccountManager>(u));
 }
 
 export async function getCrmUsersByRole(
@@ -54,8 +55,10 @@ export async function getCrmUsersByRole(
     const { vas, clients } = await getCrmAccountsList();
     return role === 'va' ? vas : clients;
   }
-  const { data } = await api.get<{ data: any[] }>(`/shared/users?role=${role}`);
-  return data.data.map((u: any) => ({ ...u, id: u._id ?? u.id }));
+  const { data } = await api.get<{ data: ApiDoc<ICrmUser>[] }>(
+    `/shared/users?role=${role}`
+  );
+  return data.data.map(u => withId<ICrmUser>(u));
 }
 
 /**
@@ -70,11 +73,10 @@ export async function getCrmAccountsList(): Promise<{
   vas: ICrmUser[];
 }> {
   const { data } = await api.get<{
-    data: { clients: any[]; vas: any[] };
+    data: { clients: ApiDoc<ICrmUser>[]; vas: ApiDoc<ICrmUser>[] };
   }>(`/shared/users/crm-accounts`);
-  const map = (u: any) => ({ ...u, id: u._id ?? u.id }) as ICrmUser;
   return {
-    clients: data.data.clients.map(map),
-    vas: data.data.vas.map(map),
+    clients: data.data.clients.map(u => withId<ICrmUser>(u)),
+    vas: data.data.vas.map(u => withId<ICrmUser>(u)),
   };
 }

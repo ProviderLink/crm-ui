@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import api from '@/lib/api';
+import { withId, type ApiDoc } from '@/lib/with-id';
 import type {
   IClientAccount,
   UpdateClientAccountPayload,
@@ -18,10 +19,10 @@ export async function getProvisionedClients(): Promise<
 export async function getClientAccounts(): Promise<IClientAccount[]> {
   // Backend defaults to limit=20 when omitted, which silently truncates the list;
   // fetch a large page so every row is returned.
-  const { data } = await api.get<{ data: any[] }>(
+  const { data } = await api.get<{ data: ApiDoc<IClientAccount>[] }>(
     '/crm/client-accounts?limit=1000'
   );
-  return data.data.map((c: any) => ({ ...c, id: c._id ?? c.id }));
+  return data.data.map(c => withId<IClientAccount>(c));
 }
 
 /** One client's CRM profile, or null when it has none yet (the API 404s). */
@@ -29,10 +30,10 @@ export async function getClientAccount(
   clientId: string
 ): Promise<IClientAccount | null> {
   try {
-    const { data } = await api.get<{ data: any }>(
+    const { data } = await api.get<{ data: ApiDoc<IClientAccount> }>(
       `/crm/client-accounts/${clientId}`
     );
-    return { ...data.data, id: data.data._id ?? data.data.id };
+    return withId<IClientAccount>(data.data);
   } catch (e) {
     if (axios.isAxiosError(e) && e.response?.status === 404) return null;
     throw e;

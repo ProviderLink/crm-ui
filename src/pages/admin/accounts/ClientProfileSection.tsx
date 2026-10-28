@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useAppSelector } from '@/hooks/store';
 import api from '@/lib/api';
+import type { UpdateClientAccountPayload } from '@/types/client-account';
 import { getHiredVasForClient, updateClientAccount } from '@/services/client-accounts.service';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toISO, toYMD, fmtDate } from './date-utils';
@@ -97,7 +98,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
   function getFormVal(key: string, fallback: unknown = '') {
     return form[key] !== undefined
       ? form[key]
-      : ((account as any)?.[key] ?? fallback);
+      : ((account as unknown as Record<string, unknown> | undefined)?.[key] ?? fallback);
   }
 
   async function handleSave() {
@@ -105,7 +106,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
     setError('');
     setSuccess(false);
     try {
-      await updateClientAccount(clientId, form as any);
+      await updateClientAccount(clientId, form as UpdateClientAccountPayload);
       await queryClient.invalidateQueries({
         queryKey: ['client-account', clientId],
       });
