@@ -1,6 +1,7 @@
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -19,14 +20,25 @@ import { generateScorecards } from '@/services/scorecards.service';
 import type { IScorecard } from '@/types/scorecard';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { BarChart3Icon, RefreshCwIcon } from 'lucide-react';
+import { RefreshCwIcon, SearchIcon, StarIcon, XIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+// Three clear levels, colour on the text only (no coloured fills).
 const scoreColor = (score: number) => {
-  if (score >= 80) return 'text-text-secondary';
-  if (score >= 60) return 'text-text-secondary';
+  if (score >= 80) return 'text-status-success';
+  if (score >= 60) return 'text-status-warning';
   return 'text-status-error';
 };
+
+// "2026-10-26" -> "Oct 26", built from parts so the day never shifts by timezone.
+function shortDate(iso?: string) {
+  if (!iso) return '';
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(y!, m! - 1, d).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  });
+}
 
 export default function ScorecardsPage() {
   const queryClient = useQueryClient();
@@ -42,17 +54,18 @@ export default function ScorecardsPage() {
     [amAssignments]
   );
 
-  const [vaFilter, setVaFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  // null = follow the latest week; 'all' = every week.
+  const [weekChoice, setWeekChoice] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const vaId = vaFilter === 'all' ? undefined : vaFilter;
-  const { data: allScorecards = [], isLoading } = useScorecardsQuery(vaId);
+  const { data: allScorecards = [], isLoading } = useScorecardsQuery();
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
   const { data: atsVAs = [] } = useAtsVAsQuery();
 
   // For AM, client-side filter by their assignments' candidateIds
-  const scorecards = useMemo(() => {
+  const scopedScorecards = useMemo(() => {
     if (!isAccountManager) return allScorecards;
     return allScorecards.filter(s => amCandidateIds.has(s.vaId));
   }, [allScorecards, isAccountManager, amCandidateIds]);
@@ -69,12 +82,33 @@ export default function ScorecardsPage() {
     if (v._id && !vaMap[v._id]) vaMap[v._id] = name;
   }
 
+  const nameOf = (s: IScorecard) =>
+    s.vaName || vaMap[s.vaId] || 'Unknown VA';
+
+  // Distinct weeks, newest first, keyed by their start date.
+  const weeks = useMemo(() => {
+    const map = new Map<string, IScorecard>();
+    for (const s of scopedScorecards) {
+      const key = s.weekStart?.slice(0, 10);
+      if (key && !map.has(key)) map.set(key, s);
+    }
+    return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  }, [scopedScorecards]);
+  const week = weekChoice ?? weeks[0]?.[0] ?? 'all';
+
+  const query = search.trim().toLowerCase();
+  const scorecards = scopedScorecards.filter(s => {
+    if (week !== 'all' && s.weekStart?.slice(0, 10) !== week) return false;
+    if (!query) return true;
+    return `${nameOf(s)} ${s.companyName ?? ''}`.toLowerCase().includes(query);
+  });
+
   async function handleGenerate() {
     setGenerateError(null);
     setConfirmOpen(false);
     setGenerating(true);
     try {
-      await generateScorecards(vaId);
+      await generateScorecards();
       queryClient.invalidateQueries({ queryKey: ['scorecards'] });
     } catch {
       setGenerateError('Failed to generate scorecards. Please try again.');
@@ -85,23 +119,45 @@ export default function ScorecardsPage() {
 
   const columns: ColumnDef<IScorecard>[] = [
     {
-      accessorKey: 'vaId',
+      id: 'va',
       header: 'VA',
-      size: 155,
-      cell: ({ row, getValue }) => (
-        <span className="text-sm font-medium">
-          {row.original.vaName || vaMap[getValue<string>()] || 'Unknown VA'}
-        </span>
-      ),
+      meta: { fill: true, cellClassName: 'max-w-0' },
+      accessorFn: s => nameOf(s),
+      cell: ({ row }) => {
+        const name = nameOf(row.original);
+        const initials = name
+          .split(' ')
+          .map(n => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+        return (
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
+              {initials || '?'}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium" title={name}>
+                {name}
+              </p>
+              {row.original.companyName && (
+                <p className="truncate text-xs text-muted-foreground">
+                  {row.original.companyName}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'weekStart',
       header: 'Week',
-      size: 210,
+      size: 130,
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {row.original.weekStart?.slice(0, 10)} –{' '}
-          {row.original.weekEnd?.slice(0, 10)}
+        <span className="text-sm whitespace-nowrap text-muted-foreground">
+          {shortDate(row.original.weekStart)} –{' '}
+          {shortDate(row.original.weekEnd)}
         </span>
       ),
     },
@@ -125,12 +181,12 @@ export default function ScorecardsPage() {
     },
     {
       accessorKey: 'eodComplianceRate',
-      header: 'EOD Rate',
-      size: 95,
+      header: 'EOD rate',
+      size: 120,
       cell: ({ getValue }) => {
         const v = getValue<number>();
         return (
-          <span className={`text-sm tabular-nums font-medium ${scoreColor(v)}`}>
+          <span className={`text-sm font-medium tabular-nums ${scoreColor(v)}`}>
             {v.toFixed(0)}%
           </span>
         );
@@ -139,20 +195,16 @@ export default function ScorecardsPage() {
     {
       accessorKey: 'productivityScore',
       header: 'Score',
-      size: 80,
+      size: 90,
       cell: ({ getValue }) => {
-        const s = getValue<number>();
-        const colorClass =
-          s >= 80
-            ? 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]'
-            : s >= 60
-              ? 'bg-white/[0.04] text-text-secondary border-[rgba(255,255,255,0.08)]'
-              : 'bg-white/[0.04] text-status-error border-[rgba(255,255,255,0.08)]';
+        const v = getValue<number>();
         return (
-          <span
-            className={`font-mono text-[10px] font-medium tabular-nums px-2 py-0.5 rounded border whitespace-nowrap ${colorClass}`}
-          >
-            {s.toFixed(0)}
+          <span className="inline-flex items-center gap-1.5 text-sm tabular-nums">
+            <StarIcon
+              className={`size-3.5 fill-current ${scoreColor(v)}`}
+              aria-hidden
+            />
+            <span className="font-medium">{v.toFixed(0)}</span>
           </span>
         );
       },
@@ -163,7 +215,7 @@ export default function ScorecardsPage() {
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold text-foreground">
                 Productivity Scorecards
@@ -174,55 +226,64 @@ export default function ScorecardsPage() {
                   : 'Weekly performance scores'}
               </p>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <BarChart3Icon className="size-4" />
-              <span className="text-sm">{scorecards.length} records</span>
-            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setConfirmOpen(true)}
+              disabled={generating}
+            >
+              <RefreshCwIcon
+                className={`size-3.5 ${generating ? 'animate-spin' : ''}`}
+              />
+              {generating ? 'Generating…' : 'Generate scorecards'}
+            </Button>
           </div>
 
-          {/* Filters + actions */}
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">VA</span>
-              <Select value={vaFilter} onValueChange={setVaFilter}>
-                <SelectTrigger className="h-8 w-44 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All VAs</SelectItem>
-                  {atsVAs.map(v => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.firstName} {v.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Search + count */}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-72">
+              <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search VA or company…"
+                aria-label="Search by VA or company"
+                className="h-8 pl-8 text-sm"
+              />
             </div>
-            {vaFilter !== 'all' && (
-              <button
-                onClick={() => setVaFilter('all')}
-                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+            <Select value={week} onValueChange={setWeekChoice}>
+              <SelectTrigger
+                className="h-8 w-48 text-sm"
+                aria-label="Filter by week"
               >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All weeks</SelectItem>
+                {weeks.map(([key, sc], i) => (
+                  <SelectItem key={key} value={key}>
+                    {shortDate(sc.weekStart)} – {shortDate(sc.weekEnd)}
+                    {i === 0 && ' (latest)'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <XIcon className="size-3.5" />
                 Clear
               </button>
             )}
-            <div className="ml-auto flex items-center gap-2">
-              {generateError && (
-                <p className="text-xs text-destructive">{generateError}</p>
-              )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="border border-white/10 hover:border-white/20 hover:bg-white/5 text-muted-foreground hover:text-foreground"
-                  onClick={() => setConfirmOpen(true)}
-                  disabled={generating}
-                >
-                  <RefreshCwIcon
-                    className={`size-3.5 ${generating ? 'animate-spin' : ''}`}
-                  />
-                  {generating ? 'Generating…' : 'Generate Now'}
-                </Button>
-            </div>
+            {generateError && (
+              <p className="text-xs text-destructive">{generateError}</p>
+            )}
+            <span className="ml-auto text-xs text-muted-foreground">
+              {scorecards.length} scorecard{scorecards.length !== 1 ? 's' : ''}
+            </span>
           </div>
 
           <DataTable
@@ -235,11 +296,9 @@ export default function ScorecardsPage() {
             open={confirmOpen}
             title="Generate Scorecards"
             description={
-              vaId
-                ? 'Generate a new scorecard for this VA for the current week.'
-                : isAccountManager
-                  ? 'Generate scorecards for your assigned VAs for the current week. This may take a moment.'
-                  : 'Generate scorecards for ALL VAs for the current week. This may take a moment.'
+              isAccountManager
+                ? 'Generate scorecards for your assigned VAs for the current week. This may take a moment.'
+                : 'Generate scorecards for ALL VAs for the current week. This may take a moment.'
             }
             onConfirm={handleGenerate}
             onCancel={() => setConfirmOpen(false)}
