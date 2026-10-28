@@ -133,15 +133,15 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
   const healthConfig: Record<string, { label: string; className: string }> = {
     green: {
       label: 'Healthy',
-      className: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
+      className: 'bg-white/[0.04] text-status-success ring-status-success/20',
     },
     yellow: {
       label: 'At Risk',
-      className: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
+      className: 'bg-white/[0.04] text-status-warning ring-status-warning/20',
     },
     red: {
       label: 'Critical',
-      className: 'bg-red-500/10 text-red-400 ring-red-500/20',
+      className: 'bg-white/[0.04] text-status-error ring-status-error/20',
     },
   };
   const health =
@@ -151,7 +151,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
     <div className="pt-4 space-y-4">
       {/* CRM section label + edit */}
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <span className="text-sm font-semibold text-foreground">
           CRM Profile
         </span>
         {canEdit && !editing && (
@@ -231,8 +231,8 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
             />
           </Field>
 
-          <div className="rounded-xl border border-border px-3 py-2.5 space-y-2.5">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <div className="rounded-lg border border-white/[0.1] px-3 py-3 space-y-2.5">
+            <span className="text-sm font-semibold text-foreground">
               Status Flags
             </span>
             {(
@@ -333,7 +333,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
               </p>
             )}
             {success && (
-              <p className="text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2">
+              <p className="text-xs text-status-success bg-white/[0.04] rounded-lg px-3 py-2">
                 Changes saved successfully.
               </p>
             )}
@@ -359,13 +359,12 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
                 value: totalAssignments,
                 label: 'Total Assignments',
               },
-            ].map(({ icon, value, label }) => (
+            ].map(({ value, label }) => (
               <div
                 key={label}
-                className="flex flex-col justify-between gap-3 rounded-xl bg-white/[0.03] border border-white/[0.07] p-3 min-h-[88px]"
+                className="flex flex-col gap-1 rounded-lg border border-white/[0.1] bg-white/[0.03] p-3"
               >
-                <span className="text-muted-foreground">{icon}</span>
-                <div>
+                                <div>
                   <p className="text-2xl font-semibold tabular-nums leading-none">
                     {value}
                   </p>
@@ -378,7 +377,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
           </div>
 
           {/* Health + Satisfaction */}
-          <div className="flex items-center justify-between rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
+          <div className="flex items-center justify-between border-t border-border pt-4">
             <div className="flex items-center gap-2">
               <GaugeIcon className="size-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Health</span>
@@ -396,7 +395,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
                 {Array.from({ length: 5 }).map((_, i) => (
                   <StarIcon
                     key={i}
-                    className={`size-3 ${i < (account.satisfactionScore ?? 0) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/20'}`}
+                    className={`size-3 ${i < (account.satisfactionScore ?? 0) ? 'fill-status-warning text-status-warning' : 'text-muted-foreground/20'}`}
                   />
                 ))}
               </div>
@@ -405,8 +404,8 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
 
           {/* Primary Contact */}
           {(account.primaryContact || account.primaryContactEmail) && (
-            <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+            <div className="border-t border-border pt-4">
+              <p className="text-sm font-semibold text-foreground mb-2">
                 Primary Contact
               </p>
               <div className="space-y-1">
@@ -435,8 +434,8 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
           )}
 
           {/* Status flags */}
-          <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+          <div className="border-t border-border pt-4">
+            <p className="text-sm font-semibold text-foreground mb-2">
               Compliance
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -449,7 +448,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
                   key={label}
                   className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${
                     done
-                      ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'
+                      ? 'bg-white/[0.04] text-status-success ring-status-success/20'
                       : 'bg-white/[0.03] text-muted-foreground/60 ring-white/[0.06]'
                   }`}
                 >
@@ -465,8 +464,8 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
           </div>
 
           {/* Details */}
-          <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <div className="border-t border-border pt-4 space-y-2">
+            <p className="text-sm font-semibold text-foreground">
               Details
             </p>
             {account.emrSystem && (
@@ -500,11 +499,11 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
             )}
             {account.openIssuesCount > 0 && (
               <div className="flex items-center gap-2">
-                <AlertTriangleIcon className="size-3.5 text-yellow-500 shrink-0" />
+                <AlertTriangleIcon className="size-3.5 text-status-warning shrink-0" />
                 <span className="text-xs text-muted-foreground">
                   Open Issues
                 </span>
-                <span className="text-xs ml-auto text-yellow-500 font-medium">
+                <span className="text-xs ml-auto text-status-warning font-medium">
                   {account.openIssuesCount}
                 </span>
               </div>
@@ -521,8 +520,8 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
 
           {/* Notes */}
           {account.notes && (
-            <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+            <div className="border-t border-border pt-4">
+              <p className="text-sm font-semibold text-foreground mb-1.5">
                 Notes
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">

@@ -1,8 +1,17 @@
-import { MailIcon } from 'lucide-react';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
-import { RoleBadge, ActiveBadge } from './badges';
-import { type UserRow } from './types';
+import { MailIcon, XIcon } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from '@/components/ui/sheet';
+
+import { ActiveBadge, Avatar, RoleBadge } from './badges';
 import { ClientProfileSection } from './ClientProfileSection';
+import type { UserRow } from './types';
 import { VaProfileSection } from './VaProfileSection';
 
 export function UserDetailSheet({
@@ -19,82 +28,68 @@ export function UserDetailSheet({
   const isClient = user.role === 'client' && !!user.clientRef;
   const isVa = user.role === 'va';
   const showCrmProfile = isClient || isVa;
+  const title = isClient ? (user.companyName ?? user.name) : user.name;
 
   return (
     <Sheet open={open} onOpenChange={o => !o && onClose()}>
-      <SheetContent className="sm:max-w-md overflow-y-auto p-0">
-        {/* Hero header */}
-        <div className="px-6 pt-6 pb-4 border-b border-border">
-          <SheetTitle className="sr-only">Account Details</SheetTitle>
-          <SheetDescription className="sr-only">
-            {showCrmProfile ? 'CRM account profile' : 'Read-only account view'}
-          </SheetDescription>
-          <div className="flex items-start gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-text-secondary font-mono text-base font-medium border border-white/[0.08]">
-              {isClient
-                ? (user.companyName ?? user.name)
-                    .split(' ')
-                    .map(n => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2)
-                : user.name
-                    .split(' ')
-                    .map(n => n[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2)}
-            </div>
-            <div className="flex-1 min-w-0">
-              {isClient ? (
-                <>
-                  <p className="text-base font-semibold leading-tight truncate">
-                    {user.companyName ?? '—'}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <RoleBadge role={user.role} />
-                    <ActiveBadge active={user.isActive} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-base font-semibold leading-tight">
-                      {user.name}
-                    </p>
-                    <RoleBadge role={user.role} />
-                  </div>
-                  <a
-                    href={`mailto:${user.email}`}
-                    className="flex items-center gap-1 mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors truncate"
-                  >
-                    <MailIcon className="size-3 shrink-0" />
-                    {user.email}
-                  </a>
-                  <div className="mt-2">
-                    <ActiveBadge active={user.isActive} />
-                  </div>
-                </>
+      <SheetContent
+        side="right"
+        // Floats with a gap to the viewport; the built-in close button is
+        // hidden in favour of the one below, outside the drawer's top-left.
+        className="flex w-[calc(100vw-2rem)] flex-col gap-0 overflow-visible border-white/[0.14] bg-surface-raised p-0 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.9)] sm:max-w-lg [&>button:last-child]:hidden"
+      >
+        <SheetTitle className="sr-only">Account details</SheetTitle>
+        <SheetDescription className="sr-only">
+          {showCrmProfile ? 'CRM account profile' : 'Read-only account view'}
+        </SheetDescription>
+
+        {/* Beside the drawer's top-left corner when there is room; inside
+            its top-right corner on narrow screens. */}
+        <SheetClose asChild>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Close"
+            className="absolute right-3 top-3 z-10 size-8 rounded-md border-white/[0.14] bg-surface-raised min-[700px]:-left-11 min-[700px]:right-auto min-[700px]:top-0"
+          >
+            <XIcon className="size-4" />
+          </Button>
+        </SheetClose>
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
+          <header className="flex items-start gap-3 border-b border-border px-6 py-4 pr-14 min-[700px]:pr-6">
+            <Avatar name={title} />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="truncate text-xl font-semibold">{title}</h2>
+                <RoleBadge role={user.role} />
+                <ActiveBadge active={user.isActive} />
+              </div>
+              {!isClient && (
+                <a
+                  href={`mailto:${user.email}`}
+                  className="mt-1 flex items-center gap-1.5 truncate text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <MailIcon className="size-3.5 shrink-0" />
+                  {user.email}
+                </a>
               )}
             </div>
-          </div>
-        </div>
+          </header>
 
-        {/* Body */}
-        <div className="px-6 pb-6">
-          {isClient && <ClientProfileSection clientId={user.clientRef!} />}
-          {isVa && <VaProfileSection vaId={user.candidateRef} />}
-          {!showCrmProfile && (
-            <div className="mt-6 space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Account Info
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Internal staff accounts do not have a separate CRM profile.
-                Manage access and roles in the ATS system.
-              </p>
-            </div>
-          )}
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+            {isClient && <ClientProfileSection clientId={user.clientRef!} />}
+            {isVa && <VaProfileSection vaId={user.candidateRef} />}
+            {!showCrmProfile && (
+              <div className="mt-6 space-y-2">
+                <p className="text-sm font-semibold">Account info</p>
+                <p className="text-sm text-muted-foreground">
+                  Internal staff accounts do not have a separate CRM profile.
+                  Manage access and roles in the ATS system.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </SheetContent>
     </Sheet>

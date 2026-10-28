@@ -1,63 +1,69 @@
 import { type ColumnDef } from '@tanstack/react-table';
-import { AlertTriangleIcon, BriefcaseIcon, CheckCircle2Icon, EyeIcon, FlameIcon, StarIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ActiveBadge } from './badges';
+import { BriefcaseIcon } from 'lucide-react';
+
+import {
+  ActiveBadge,
+  Avatar,
+  HealthBadge,
+  Pill,
+  Score,
+  WorkloadBadge,
+} from './badges';
 import { type UserRow } from './types';
 
-const healthStyle: Record<string, string> = {
-  green: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
-  yellow: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
-  red: 'bg-red-500/10 text-red-400 ring-red-500/20',
-};
-const healthLabel: Record<string, string> = {
-  green: 'Healthy',
-  yellow: 'At Risk',
-  red: 'Critical',
+const dash = <span className="text-xs text-muted-foreground/50">—</span>;
+
+/** Avatar with a name and a supporting line; the column takes the spare width. */
+function identity(name: string, sub?: string | null) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <Avatar name={name} />
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium" title={name}>
+          {name}
+        </p>
+        {sub && (
+          <p className="truncate text-xs text-muted-foreground" title={sub}>
+            {sub}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const FILL = { fill: true, cellClassName: 'max-w-0' } as const;
+
+const statusColumn: ColumnDef<UserRow> = {
+  accessorKey: 'isActive',
+  header: 'Status',
+  size: 110,
+  cell: ({ getValue }) => <ActiveBadge active={getValue<boolean>()} />,
 };
 
-export function buildClientColumns(
-  onView: (u: UserRow) => void
-): ColumnDef<UserRow>[] {
+export function buildClientColumns(): ColumnDef<UserRow>[] {
   return [
     {
       accessorKey: 'companyName',
       header: 'Client',
-      cell: ({ row }) => {
-        const { companyName } = row.original;
-        const initials = (companyName ?? '?')
-          .split(' ')
-          .map((n: string) => n[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2);
-        return (
-          <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-xs">
-              {initials}
-            </div>
-            <p className="text-sm font-semibold truncate">
-              {companyName ?? '—'}
-            </p>
-          </div>
-        );
-      },
+      meta: FILL,
+      cell: ({ row }) => identity(row.original.companyName ?? '—'),
     },
     {
       id: 'primaryContact',
-      header: 'Primary Contact',
+      header: 'Primary contact',
+      size: 240,
+      enableSorting: false,
       cell: ({ row }) => {
         const { primaryContactName, primaryContactEmail } = row.original;
-        if (!primaryContactName && !primaryContactEmail)
-          return <span className="text-xs text-muted-foreground">—</span>;
+        if (!primaryContactName && !primaryContactEmail) return dash;
         return (
           <div className="min-w-0">
             {primaryContactName && (
-              <p className="text-sm font-medium truncate">
-                {primaryContactName}
-              </p>
+              <p className="truncate text-sm">{primaryContactName}</p>
             )}
             {primaryContactEmail && (
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="truncate text-xs text-muted-foreground">
                 {primaryContactEmail}
               </p>
             )}
@@ -68,127 +74,52 @@ export function buildClientColumns(
     {
       accessorKey: 'healthStatus',
       header: 'Health',
+      size: 110,
       cell: ({ getValue }) => {
-        const val = getValue<string | null>();
-        if (!val)
-          return <span className="text-xs text-muted-foreground">—</span>;
-        return (
-          <span
-            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${healthStyle[val] ?? healthStyle.green}`}
-          >
-            {healthLabel[val] ?? val}
-          </span>
-        );
+        const v = getValue<string | null>();
+        return v ? <HealthBadge value={v} /> : dash;
       },
     },
     {
       accessorKey: 'satisfactionScore',
       header: 'Satisfaction',
-      cell: ({ getValue }) => {
-        const score = getValue<number | null>();
-        if (score == null)
-          return <span className="text-xs text-muted-foreground">—</span>;
-        return (
-          <div className="flex items-center gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <StarIcon
-                key={i}
-                className={`size-3 ${i < score ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/20'}`}
-              />
-            ))}
-          </div>
-        );
-      },
+      size: 120,
+      cell: ({ getValue }) => <Score value={getValue<number | null>()} />,
     },
-    {
-      accessorKey: 'isActive',
-      header: 'Status',
-      cell: ({ getValue }) => <ActiveBadge active={getValue<boolean>()} />,
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      size: 100,
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs rounded-lg gap-1.5 text-muted-foreground hover:text-foreground"
-          onClick={() => onView(row.original)}
-        >
-          <EyeIcon className="size-3.5" />
-          View Details
-        </Button>
-      ),
-    },
+    statusColumn,
   ];
 }
 
-const workloadStyle: Record<string, string> = {
-  low: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
-  normal: 'bg-blue-500/10 text-blue-400 ring-blue-500/20',
-  high: 'bg-amber-500/10 text-amber-400 ring-amber-500/20',
-  overloaded: 'bg-red-500/10 text-red-400 ring-red-500/20',
-};
-
-export function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>[] {
+export function buildVaColumns(): ColumnDef<UserRow>[] {
   return [
     {
       accessorKey: 'name',
-      header: 'Virtual Assistant',
-      cell: ({ row }) => {
-        const u = row.original;
-        return (
-          <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-xs font-medium">
-              {u.name
-                .split(' ')
-                .map(n => n[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2)}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium leading-tight truncate">
-                {u.name}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {u.email}
-              </p>
-            </div>
-          </div>
-        );
-      },
+      header: 'Virtual assistant',
+      meta: FILL,
+      cell: ({ row }) => identity(row.original.name, row.original.email),
     },
     {
       accessorKey: 'vaWorkload',
       header: 'Workload',
-      cell: ({ row }) => {
-        const w = row.original.vaWorkload;
-        if (!w) return <span className="text-xs text-muted-foreground">—</span>;
-        return (
-          <span
-            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${workloadStyle[w] ?? 'bg-white/[0.04] text-muted-foreground ring-white/[0.08]'}`}
-          >
-            {w.charAt(0).toUpperCase() + w.slice(1)}
-          </span>
-        );
+      size: 110,
+      cell: ({ getValue }) => {
+        const w = getValue<string | null>();
+        return w ? <WorkloadBadge value={w} /> : dash;
       },
     },
     {
       accessorKey: 'vaTotalAssignments',
       header: 'Assignments',
+      size: 130,
       cell: ({ row }) => {
         const total = row.original.vaTotalAssignments ?? 0;
         const clients = row.original.vaActiveClients ?? 0;
         return (
-          <div className="flex flex-col leading-tight">
-            <span className="text-base font-semibold tabular-nums">
-              {total}
-            </span>
-            <span className="text-[11px] text-muted-foreground">
-              {clients} {clients === 1 ? 'client' : 'clients'}
-            </span>
+          <div className="whitespace-nowrap">
+            <p className="text-sm tabular-nums">{total}</p>
+            <p className="text-xs text-muted-foreground">
+              {clients} active {clients === 1 ? 'client' : 'clients'}
+            </p>
           </div>
         );
       },
@@ -196,75 +127,27 @@ export function buildVaColumns(onView: (u: UserRow) => void): ColumnDef<UserRow>
     {
       accessorKey: 'vaSatisfactionScore',
       header: 'Satisfaction',
-      cell: ({ row }) => {
-        const score = row.original.vaSatisfactionScore;
-        if (score == null)
-          return <span className="text-xs text-muted-foreground">—</span>;
-        return (
-          <div className="flex items-center gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <StarIcon
-                key={i}
-                className={`size-3 ${i < score ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/20'}`}
-              />
-            ))}
-          </div>
-        );
-      },
+      size: 120,
+      cell: ({ getValue }) => <Score value={getValue<number | null>()} />,
     },
     {
-      accessorKey: 'vaBurnoutRisk',
+      id: 'risk',
       header: 'Risk',
+      size: 150,
+      enableSorting: false,
       cell: ({ row }) => {
-        const burnout = row.original.vaBurnoutRisk;
-        const replacement = row.original.vaReplacementRisk;
-        if (!burnout && !replacement) {
-          return (
-            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400">
-              <CheckCircle2Icon className="size-3" />
-              Clear
-            </span>
-          );
-        }
+        const { vaBurnoutRisk, vaReplacementRisk } = row.original;
+        if (!vaBurnoutRisk && !vaReplacementRisk)
+          return <span className="text-xs text-muted-foreground">None</span>;
         return (
           <div className="flex flex-wrap gap-1">
-            {burnout && (
-              <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-red-500/10 text-red-400 ring-1 ring-inset ring-red-500/20">
-                <FlameIcon className="size-2.5" />
-                Burnout
-              </span>
-            )}
-            {replacement && (
-              <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-amber-500/10 text-amber-400 ring-1 ring-inset ring-amber-500/20">
-                <AlertTriangleIcon className="size-2.5" />
-                Replace
-              </span>
-            )}
+            {vaBurnoutRisk && <Pill tone="error">Burnout</Pill>}
+            {vaReplacementRisk && <Pill tone="warning">Replace</Pill>}
           </div>
         );
       },
     },
-    {
-      accessorKey: 'isActive',
-      header: 'Status',
-      cell: ({ getValue }) => <ActiveBadge active={getValue<boolean>()} />,
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      size: 120,
-      cell: ({ row }) => (
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 rounded-lg text-xs gap-1.5"
-          onClick={() => onView(row.original)}
-        >
-          <EyeIcon className="size-3" />
-          View Details
-        </Button>
-      ),
-    },
+    statusColumn,
   ];
 }
 
@@ -272,54 +155,25 @@ export function buildAmColumns(): ColumnDef<UserRow>[] {
   return [
     {
       accessorKey: 'name',
-      header: 'Account Manager',
-      cell: ({ row }) => {
-        const u = row.original;
-        return (
-          <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-xs font-medium">
-              {u.name
-                .split(' ')
-                .map(n => n[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2)}
-            </div>
-            <p className="text-sm font-medium leading-tight truncate">
-              {u.name}
-            </p>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-      cell: ({ getValue }) => (
-        <span className="text-sm text-muted-foreground">
-          {getValue<string>()}
-        </span>
-      ),
+      header: 'Account manager',
+      meta: FILL,
+      cell: ({ row }) => identity(row.original.name, row.original.email),
     },
     {
       accessorKey: 'amAssignmentCount',
       header: 'Assignments',
-      cell: ({ row }) => {
-        const count = row.original.amAssignmentCount ?? 0;
-        return (
-          <div className="flex items-center gap-1.5 text-sm">
-            <BriefcaseIcon className="size-3.5 text-muted-foreground" />
-            <span className="font-medium tabular-nums">{count}</span>
-            <span className="text-muted-foreground text-xs">active</span>
-          </div>
-        );
-      },
+      size: 150,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-sm whitespace-nowrap">
+          <BriefcaseIcon className="size-3.5 text-muted-foreground" />
+          <span className="tabular-nums">
+            {row.original.amAssignmentCount ?? 0}
+          </span>
+          <span className="text-xs text-muted-foreground">active</span>
+        </div>
+      ),
     },
-    {
-      accessorKey: 'isActive',
-      header: 'Status',
-      cell: ({ getValue }) => <ActiveBadge active={getValue<boolean>()} />,
-    },
+    statusColumn,
   ];
 }
 
@@ -328,38 +182,9 @@ export function buildAdminColumns(): ColumnDef<UserRow>[] {
     {
       accessorKey: 'name',
       header: 'Admin',
-      cell: ({ row }) => {
-        const u = row.original;
-        return (
-          <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] text-text-secondary font-mono text-xs font-medium">
-              {u.name
-                .split(' ')
-                .map(n => n[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2)}
-            </div>
-            <p className="text-sm font-medium leading-tight truncate">
-              {u.name}
-            </p>
-          </div>
-        );
-      },
+      meta: FILL,
+      cell: ({ row }) => identity(row.original.name, row.original.email),
     },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-      cell: ({ getValue }) => (
-        <span className="text-sm text-muted-foreground">
-          {getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'isActive',
-      header: 'Status',
-      cell: ({ getValue }) => <ActiveBadge active={getValue<boolean>()} />,
-    },
+    statusColumn,
   ];
 }

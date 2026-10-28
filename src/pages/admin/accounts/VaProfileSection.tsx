@@ -97,15 +97,15 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
   const totalCount = assignments.length;
 
   const workloadColors: Record<string, string> = {
-    low: 'text-emerald-400 bg-emerald-500/10',
-    normal: 'text-blue-400 bg-blue-500/10',
-    high: 'text-amber-400 bg-amber-500/10',
-    overloaded: 'text-red-400 bg-red-500/10',
+    low: 'text-status-success bg-white/[0.04]',
+    normal: 'text-status-info bg-white/[0.04]',
+    high: 'text-status-warning bg-white/[0.04]',
+    overloaded: 'text-status-error bg-white/[0.04]',
   };
 
   const statusColors: Record<string, string> = {
-    active: 'text-emerald-400 bg-emerald-500/10',
-    on_hold: 'text-amber-400 bg-amber-500/10',
+    active: 'text-status-success bg-white/[0.04]',
+    on_hold: 'text-status-warning bg-white/[0.04]',
     ended: 'text-text-secondary bg-white/[0.04]',
   };
 
@@ -138,13 +138,12 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
                 : '—',
             label: 'Satisfaction',
           },
-        ].map(({ icon, value, label }) => (
+        ].map(({ value, label }) => (
           <div
             key={label}
-            className="flex flex-col justify-between gap-3 rounded-xl bg-white/[0.03] border border-white/[0.07] p-3 min-h-[88px]"
+            className="flex flex-col gap-1 rounded-lg border border-white/[0.1] bg-white/[0.03] p-3"
           >
-            <span className="text-muted-foreground">{icon}</span>
-            <div>
+                        <div>
               <p className="text-2xl font-semibold tabular-nums leading-none">
                 {value}
               </p>
@@ -158,7 +157,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
 
       {/* CRM Profile header + edit toggle */}
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <span className="text-sm font-semibold text-foreground">
           CRM Profile
         </span>
         {canEdit && !editing && (
@@ -178,7 +177,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
       </div>
 
       {editing ? (
-        <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-3 space-y-3">
+        <div className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-3 space-y-3">
           <Field label="Workload">
             <Select
               value={String(getFormVal('workloadLevel', 'normal'))}
@@ -299,7 +298,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
               </p>
             )}
             {success && (
-              <p className="text-xs text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2">
+              <p className="text-xs text-status-success bg-white/[0.04] rounded-lg px-3 py-2">
                 Changes saved successfully.
               </p>
             )}
@@ -308,7 +307,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
       ) : profile ? (
         <>
           {/* Workload + Satisfaction */}
-          <div className="flex items-center justify-between rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
+          <div className="flex items-center justify-between border-t border-border pt-4">
             <div className="flex items-center gap-2">
               <GaugeIcon className="size-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Workload</span>
@@ -327,7 +326,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
                 {Array.from({ length: 5 }).map((_, i) => (
                   <StarIcon
                     key={i}
-                    className={`size-3 ${i < (profile.satisfactionScore ?? 0) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/20'}`}
+                    className={`size-3 ${i < (profile.satisfactionScore ?? 0) ? 'fill-status-warning text-status-warning' : 'text-muted-foreground/20'}`}
                   />
                 ))}
               </div>
@@ -335,8 +334,8 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
           </div>
 
           {/* Risk flags */}
-          <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+          <div className="border-t border-border pt-4">
+            <p className="text-sm font-semibold text-foreground mb-2">
               Risk Flags
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -349,7 +348,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
               ].map(({ label, flagged }) => (
                 <span
                   key={label}
-                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${flagged ? 'bg-red-500/10 text-red-400 ring-red-500/20' : 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20'}`}
+                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${flagged ? 'bg-white/[0.04] text-status-error ring-status-error/20' : 'bg-white/[0.04] text-status-success ring-status-success/20'}`}
                 >
                   {flagged ? (
                     <AlertTriangleIcon className="size-3" />
@@ -363,8 +362,8 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
           </div>
 
           {/* Details */}
-          <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5 space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <div className="border-t border-border pt-4 space-y-2">
+            <p className="text-sm font-semibold text-foreground">
               Details
             </p>
             <div className="flex items-center gap-2">
@@ -380,8 +379,8 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
 
           {/* Notes */}
           {profile.notes && (
-            <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">
+            <div className="border-t border-border pt-4">
+              <p className="text-sm font-semibold text-foreground mb-1.5">
                 Notes
               </p>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -397,7 +396,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
 
       {/* Client Assignments */}
       <div className="flex items-center justify-between pt-1">
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+        <span className="text-sm font-semibold text-foreground">
           Client Assignments
         </span>
         <span className="text-[11px] text-muted-foreground">
@@ -414,7 +413,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
           {assignments.map(a => (
             <div
               key={a._id}
-              className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 space-y-2"
+              className="rounded-lg border border-white/[0.1] bg-white/[0.03] p-3 space-y-2"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">

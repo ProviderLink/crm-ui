@@ -10,7 +10,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useAppSelector } from '@/hooks/store';
 import { useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, MessageSquareIcon, PlusIcon } from 'lucide-react';
+import { AlertCircle, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { getApiError } from '@/lib/api-error';
@@ -67,6 +67,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
 
   const [method, setMethod] = useState<NoteMethod>('other');
   const [content, setContent] = useState('');
+  const [adding, setAdding] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -83,6 +84,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
       await addNote(subjectType, subjectId, { method, content: trimmed });
       setContent('');
       setMethod('other');
+      setAdding(false);
       queryClient.invalidateQueries({
         queryKey: queryKey(subjectType, subjectId),
       });
@@ -94,13 +96,10 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-white/[0.02] px-3 py-3 space-y-3">
+    <div className="border-t border-border pt-4 space-y-3">
       <div className="flex items-center gap-2">
-        <MessageSquareIcon className="size-3.5 text-muted-foreground" />
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Admin Notes
-        </p>
-        <span className="ml-auto text-[10px] text-muted-foreground/60">
+          <p className="text-sm font-semibold text-foreground">Admin notes</p>
+        <span className="ml-auto text-xs text-muted-foreground">
           {notes.length} {notes.length === 1 ? 'note' : 'notes'}
         </span>
       </div>
@@ -138,7 +137,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
                 <span className="text-[10px] text-muted-foreground">
                   {formatTimestamp(note.createdAt)}
                 </span>
-                <span className="ml-auto text-[10px] font-mono uppercase tracking-wider rounded px-1.5 py-0.5 bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]">
+                <span className="ml-auto text-[11px] rounded-full px-2 py-0.5 bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]">
                   {NOTE_METHOD_LABELS[note.method] ?? note.method}
                 </span>
               </div>
@@ -150,53 +149,81 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
         </ol>
       )}
 
-      {/* Add note form */}
-      <div className="space-y-2 pt-2 border-t border-border/60">
-        <Label className="text-xs font-medium text-muted-foreground">
-          Add a note
-        </Label>
-        <div className="flex items-start gap-2">
-          <div className="w-32 shrink-0">
-            <Select
-              value={method}
-              onValueChange={v => setMethod(v as NoteMethod)}
-            >
-              <SelectTrigger className="h-9 rounded-xl text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {NOTE_METHODS.map(m => (
-                  <SelectItem key={m} value={m}>
-                    {NOTE_METHOD_LABELS[m]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* Add note — collapsed until asked for */}
+      {!adding ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 text-xs"
+          onClick={() => setAdding(true)}
+        >
+          <PlusIcon className="size-3.5" />
+          Add note
+        </Button>
+      ) : (
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground">
+            New note
+          </Label>
+          <div className="flex items-start gap-2">
+            <div className="w-32 shrink-0">
+              <Select
+                value={method}
+                onValueChange={v => setMethod(v as NoteMethod)}
+              >
+                <SelectTrigger className="h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {NOTE_METHODS.map(m => (
+                    <SelectItem key={m} value={m}>
+                      {NOTE_METHOD_LABELS[m]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Textarea
+              value={content}
+              onChange={e => setContent(e.target.value)}
+              placeholder={`Internal note about this ${subjectType === 'va' ? 'VA' : 'client'} (visible only to admins)`}
+              className="text-xs resize-none"
+              rows={2}
+              autoFocus
+            />
           </div>
-          <Textarea
-            value={content}
-            onChange={e => setContent(e.target.value)}
-            placeholder="Internal note about this client… (visible only to admins)"
-            className="rounded-xl text-xs resize-none"
-            rows={2}
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={handleAdd}
+              disabled={submitting || !content.trim()}
+            >
+              {submitting ? 'Adding…' : 'Add note'}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs"
+              onClick={() => {
+                setAdding(false);
+                setContent('');
+                setSubmitError(null);
+              }}
+            >
+              Cancel
+            </Button>
+            {submitError && (
+              <span className="text-[11px] text-destructive">
+                {submitError}
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            className="h-7 rounded-lg text-xs gap-1"
-            onClick={handleAdd}
-            disabled={submitting || !content.trim()}
-          >
-            <PlusIcon className="size-3" />
-            {submitting ? 'Adding…' : 'Add Note'}
-          </Button>
-          {submitError && (
-            <span className="text-[11px] text-destructive">{submitError}</span>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
