@@ -382,7 +382,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
               <GaugeIcon className="size-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Health</span>
               <span
-                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${health.className}`}
+                className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${health.className}`}
               >
                 {health.label}
               </span>
@@ -446,7 +446,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
               ].map(({ label, done }) => (
                 <span
                   key={label}
-                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${
+                  className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${
                     done
                       ? 'bg-white/[0.04] text-status-success ring-status-success/20'
                       : 'bg-white/[0.03] text-muted-foreground/60 ring-white/[0.06]'

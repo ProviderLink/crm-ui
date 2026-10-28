@@ -126,7 +126,7 @@ export function NavUser({
                 Role
               </span>
               <span
-                className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tracking-wide ${role.className}`}
+                className={`inline-flex items-center rounded px-2.5 py-1 text-xs font-semibold tracking-wide ${role.className}`}
               >
                 {role.label}
               </span>

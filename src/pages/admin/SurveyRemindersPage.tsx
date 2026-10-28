@@ -292,7 +292,7 @@ export default function SurveyRemindersPage() {
           const s = getValue<SurveyStatus>();
           return (
             <span
-              className={`text-xs px-2 py-0.5 rounded-full border capitalize whitespace-nowrap ${SURVEY_STATUS_STYLES[s]}`}
+              className={`text-xs px-2 py-0.5 rounded border capitalize whitespace-nowrap ${SURVEY_STATUS_STYLES[s]}`}
             >
               {s}
             </span>

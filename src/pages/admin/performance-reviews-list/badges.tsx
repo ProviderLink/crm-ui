@@ -1,4 +1,4 @@
-import { LockIcon, StarIcon } from 'lucide-react';
+import { StarIcon } from 'lucide-react';
 
 import { RATING_LABELS, type ReviewStatus } from '@/types/performance-review';
 
@@ -18,11 +18,8 @@ const STATUS_STYLES: Record<ReviewStatus, string> = {
 export function StatusBadge({ status }: { status: ReviewStatus }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${STATUS_STYLES[status] ?? STATUS_STYLES['Draft']}`}
+      className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${STATUS_STYLES[status] ?? STATUS_STYLES['Draft']}`}
     >
-      {status === 'Completed' && (
-        <LockIcon className="mr-1 size-2.5 opacity-70" />
-      )}
       {status}
     </span>
   );

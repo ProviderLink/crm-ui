@@ -3,7 +3,7 @@ import { StarIcon } from 'lucide-react';
 // Same pill language as the rest of the CRM: status colour on the text and a
 // faint border only, never a coloured fill (see lib/status-styles.ts).
 const PILL =
-  'inline-flex items-center gap-1 rounded-full border bg-white/[0.04] px-2 py-0.5 text-[11px] font-medium whitespace-nowrap';
+  'inline-flex items-center gap-1 rounded border bg-white/[0.04] px-2 py-0.5 text-[11px] font-medium whitespace-nowrap';
 const NEUTRAL = 'text-text-secondary border-white/[0.08]';
 const SUCCESS = 'text-status-success border-status-success/20';
 const WARNING = 'text-status-warning border-status-warning/20';

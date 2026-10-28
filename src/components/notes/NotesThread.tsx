@@ -137,7 +137,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
                 <span className="text-[10px] text-muted-foreground">
                   {formatTimestamp(note.createdAt)}
                 </span>
-                <span className="ml-auto text-[11px] rounded-full px-2 py-0.5 bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]">
+                <span className="ml-auto text-[11px] rounded px-2 py-0.5 bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]">
                   {NOTE_METHOD_LABELS[note.method] ?? note.method}
                 </span>
               </div>

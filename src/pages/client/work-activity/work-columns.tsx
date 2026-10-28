@@ -75,7 +75,7 @@ export function buildWorkColumns(
         const s = getValue<WorkEntryStatus>();
         return (
           <span
-            className={`text-xs px-2 py-0.5 rounded-full border whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[s]}`}
+            className={`text-xs px-2 py-0.5 rounded border whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[s]}`}
           >
             {s.replace('_', ' ')}
           </span>

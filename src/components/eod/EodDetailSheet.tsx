@@ -154,7 +154,7 @@ function WorkList({ eod }: { eod: IEodSubmission }) {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1.5">
               <span
-                className={`rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[e.status]}`}
+                className={`rounded border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[e.status]}`}
               >
                 {STATUS_LABELS[e.status] ?? e.status}
               </span>
@@ -233,7 +233,7 @@ function EodBody({ eod }: { eod: IEodSubmission }) {
         aside={
           eod.communicatedWithClient ? (
             <span
-              className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${COMMUNICATED_STYLES[eod.communicatedWithClient]}`}
+              className={`rounded border px-2 py-0.5 text-[11px] font-medium ${COMMUNICATED_STYLES[eod.communicatedWithClient]}`}
             >
               {COMMUNICATED_LABELS[eod.communicatedWithClient] ??
                 eod.communicatedWithClient}

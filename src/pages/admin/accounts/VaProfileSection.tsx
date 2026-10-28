@@ -312,7 +312,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
               <GaugeIcon className="size-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Workload</span>
               <span
-                className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${workloadColors[profile.workloadLevel] ?? 'text-muted-foreground bg-white/[0.04] ring-white/[0.08]'}`}
+                className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${workloadColors[profile.workloadLevel] ?? 'text-muted-foreground bg-white/[0.04] ring-white/[0.08]'}`}
               >
                 {profile.workloadLevel.charAt(0).toUpperCase() +
                   profile.workloadLevel.slice(1)}
@@ -348,7 +348,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
               ].map(({ label, flagged }) => (
                 <span
                   key={label}
-                  className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${flagged ? 'bg-white/[0.04] text-status-error ring-status-error/20' : 'bg-white/[0.04] text-status-success ring-status-success/20'}`}
+                  className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${flagged ? 'bg-white/[0.04] text-status-error ring-status-error/20' : 'bg-white/[0.04] text-status-success ring-status-success/20'}`}
                 >
                   {flagged ? (
                     <AlertTriangleIcon className="size-3" />
@@ -428,7 +428,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
                   </p>
                 </div>
                 <span
-                  className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium ${statusColors[a.status] ?? 'text-muted-foreground bg-white/[0.04]'}`}
+                  className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${statusColors[a.status] ?? 'text-muted-foreground bg-white/[0.04]'}`}
                 >
                   {statusLabels[a.status] ?? a.status}
                 </span>
