@@ -1,10 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { BellIcon, Building2Icon, CheckIcon, XIcon } from 'lucide-react';
+import {
+  Building2Icon,
+  CheckIcon,
+  SearchIcon,
+  XIcon,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -46,6 +52,29 @@ interface RelatedInfo {
   subtitle: string;
   isCompany: boolean;
 }
+
+const isOpen = (r: ISurveyReminder) =>
+  r.status === 'pending' || r.status === 'sent';
+
+// Whole days from `today` to `due` (both YYYY-MM-DD); negative when past.
+function daysUntil(due: string, today: string) {
+  const [dy, dm, dd] = due.split('-').map(Number);
+  const [ty, tm, td] = today.split('-').map(Number);
+  return Math.round(
+    (Date.UTC(dy!, dm! - 1, dd) - Date.UTC(ty!, tm! - 1, td)) / 86_400_000
+  );
+}
+
+function shortDate(iso: string) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y!, m! - 1, d).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
 const initialsOf = (name: string) =>
   name
@@ -115,21 +144,48 @@ export default function SurveyRemindersPage() {
     }
     return info;
   }, [atsVAs, atsClients, amAssignments]);
-  const [statusFilter, setStatusFilter] = useState<SurveyStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    SurveyStatus | 'overdue' | 'all'
+  >('all');
+  const [search, setSearch] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
   // For AM, client-side filter by related IDs
+  const scoped = useMemo(
+    () =>
+      isAccountManager && amScopedIds
+        ? allReminders.filter(r => amScopedIds.has(r.relatedId))
+        : allReminders,
+    [allReminders, isAccountManager, amScopedIds]
+  );
+
+  const isOverdue = (r: ISurveyReminder) =>
+    isOpen(r) && (r.dueDate?.slice(0, 10) ?? '') < today;
+  const overdueCount = scoped.filter(isOverdue).length;
+
+  // Open reminders first (soonest due first, so overdue leads), finished ones last.
   const reminders = useMemo(() => {
-    let list = allReminders;
-    if (isAccountManager && amScopedIds) {
-      list = list.filter(r => amScopedIds.has(r.relatedId));
-    }
-    if (statusFilter !== 'all') {
-      list = list.filter(r => r.status === statusFilter);
-    }
-    return list;
-  }, [allReminders, isAccountManager, amScopedIds, statusFilter]);
+    const query = search.trim().toLowerCase();
+    const list = scoped.filter(r => {
+      if (statusFilter === 'overdue') {
+        if (!isOverdue(r)) return false;
+      } else if (statusFilter !== 'all' && r.status !== statusFilter) {
+        return false;
+      }
+      if (!query) return true;
+      const info = relatedInfo.get(r.relatedId);
+      return `${info?.title ?? ''} ${info?.subtitle ?? ''}`
+        .toLowerCase()
+        .includes(query);
+    });
+    return list.sort((a, b) => {
+      if (isOpen(a) !== isOpen(b)) return isOpen(a) ? -1 : 1;
+      const cmp = (a.dueDate ?? '').localeCompare(b.dueDate ?? '');
+      return isOpen(a) ? cmp : -cmp;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scoped, statusFilter, search, relatedInfo, today]);
 
   async function handleUpdateStatus(id: string, status: SurveyStatus) {
     setUpdatingId(id);
@@ -154,9 +210,9 @@ export default function SurveyRemindersPage() {
       {
         accessorKey: 'surveyType',
         header: 'Survey',
-        size: 100,
+        size: 90,
         cell: ({ getValue }) => (
-          <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-text-secondary whitespace-nowrap">
+          <span className="text-sm whitespace-nowrap">
             {SURVEY_TYPE_LABELS[getValue<ISurveyReminder['surveyType']>()] ??
               getValue<string>()}
           </span>
@@ -164,8 +220,9 @@ export default function SurveyRemindersPage() {
       },
       {
         accessorKey: 'relatedType',
-        header: 'For',
-        size: 220,
+        header: () => <span className="normal-case">For</span>,
+        // Takes all the spare width; long names truncate inside it.
+        meta: { fill: true, cellClassName: 'max-w-0' },
         enableSorting: false,
         cell: ({ row }) => {
           const { relatedId, relatedType } = row.original;
@@ -174,10 +231,10 @@ export default function SurveyRemindersPage() {
           const subtitle = info?.subtitle ?? relatedType;
           return (
             <div
-              className="flex max-w-[16rem] min-w-0 items-center gap-3"
+              className="flex min-w-0 items-center gap-3"
               title={`${title} · ${subtitle}`}
             >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] font-mono text-xs text-text-secondary">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
                 {info && !info.isCompany ? (
                   initialsOf(info.title) || '?'
                 ) : (
@@ -200,28 +257,37 @@ export default function SurveyRemindersPage() {
       },
       {
         accessorKey: 'dueDate',
-        header: 'Due Date',
-        size: 155,
+        header: 'Due date',
+        size: 160,
         cell: ({ row, getValue }) => {
           const v = getValue<string>()?.slice(0, 10) ?? '';
-          // Finished reminders are never overdue.
-          const open =
-            row.original.status === 'pending' || row.original.status === 'sent';
-          const overdue = open && v < today;
+          if (!v) return <span className="text-muted-foreground/40">—</span>;
+          let note: string | null = null;
+          let noteClass = 'text-muted-foreground';
+          if (isOpen(row.original)) {
+            const d = daysUntil(v, today);
+            if (d < 0) {
+              note = `Overdue by ${plural(-d, 'day')}`;
+              noteClass = 'text-destructive';
+            } else if (d === 0) {
+              note = 'Due today';
+              noteClass = 'text-status-warning';
+            } else {
+              note = `In ${plural(d, 'day')}`;
+            }
+          }
           return (
-            <span
-              className={`text-xs whitespace-nowrap ${overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
-            >
-              {v}
-              {overdue ? ' (overdue)' : ''}
-            </span>
+            <div className="whitespace-nowrap">
+              <p className="text-sm">{shortDate(v)}</p>
+              {note && <p className={`text-xs ${noteClass}`}>{note}</p>}
+            </div>
           );
         },
       },
       {
         accessorKey: 'status',
         header: 'Status',
-        size: 105,
+        size: 110,
         cell: ({ getValue }) => {
           const s = getValue<SurveyStatus>();
           return (
@@ -235,22 +301,22 @@ export default function SurveyRemindersPage() {
       },
       {
         id: 'actions',
-        header: 'Actions',
+        header: () => <span className="sr-only">Actions</span>,
         enableSorting: false,
-        size: 96,
+        meta: { shrink: true },
         cell: ({ row }) => {
           const { _id, status } = row.original;
           if (status === 'completed' || status === 'skipped') return null;
           const busy = updatingId === _id;
           return (
             <TooltipProvider delayDuration={300}>
-              <div className="flex items-center gap-1 whitespace-nowrap">
+              <div className="flex items-center justify-end gap-0.5 whitespace-nowrap">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon" aria-label="Mark reminder as completed"
-                      className="size-7 border border-status-success/30 bg-white/[0.02] text-status-success/80 hover:border-status-success/50 hover:bg-status-success/10 hover:text-status-success"
+                      className="size-8 text-muted-foreground hover:bg-status-success/10 hover:text-status-success"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(_id, 'completed')}
                     >
@@ -265,7 +331,7 @@ export default function SurveyRemindersPage() {
                     <Button
                       variant="ghost"
                       size="icon" aria-label="Skip reminder"
-                      className="size-7 border border-status-error/30 bg-white/[0.02] text-status-error/80 hover:border-status-error/50 hover:bg-status-error/10 hover:text-status-error"
+                      className="size-8 text-muted-foreground hover:bg-status-error/10 hover:text-status-error"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(_id, 'skipped')}
                     >
@@ -287,49 +353,72 @@ export default function SurveyRemindersPage() {
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">
-                Survey Reminders
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Track and action scheduled check-in reminders
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <BellIcon className="size-4" />
-              <span className="text-sm">{reminders.length} reminders</span>
-            </div>
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold text-foreground">
+              Survey Reminders
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Track and action scheduled check-in reminders
+            </p>
           </div>
 
-          {/* Filters */}
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Status</span>
-              <Select
-                value={statusFilter}
-                onValueChange={v => setStatusFilter(v as SurveyStatus | 'all')}
-              >
-                <SelectTrigger className="h-8 w-36 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="skipped">Skipped</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Search + filter */}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-72">
+              <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search VA or client…"
+                aria-label="Search by VA or client"
+                className="h-8 pl-8 text-sm"
+              />
             </div>
-            {statusFilter !== 'all' && (
-              <button
-                onClick={() => setStatusFilter('all')}
-                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+            <Select
+              value={statusFilter}
+              onValueChange={v =>
+                setStatusFilter(v as SurveyStatus | 'overdue' | 'all')
+              }
+            >
+              <SelectTrigger
+                className="h-8 w-40 text-sm"
+                aria-label="Filter by status"
               >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="overdue">
+                  Overdue{overdueCount > 0 && ` (${overdueCount})`}
+                </SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="skipped">Skipped</SelectItem>
+              </SelectContent>
+            </Select>
+            {(search || statusFilter !== 'all') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  setStatusFilter('all');
+                }}
+                className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <XIcon className="size-3.5" />
                 Clear
               </button>
             )}
+            <span className="ml-auto text-xs text-muted-foreground">
+              {reminders.length} reminder{reminders.length !== 1 ? 's' : ''}
+              {overdueCount > 0 && statusFilter !== 'overdue' && (
+                <span className="text-destructive">
+                  {' '}
+                  · {overdueCount} overdue
+                </span>
+              )}
+            </span>
           </div>
 
           {updateError && (
