@@ -1,115 +1,102 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { EyeIcon } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import type { IEodSubmission } from '@/types/eod-submission';
 
 import { TaskSummary } from './TaskSummary';
+
+const initialsOf = (name: string) =>
+  name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+// "2026-10-27" -> "Oct 27, 2026", built from parts so the day never shifts.
+function shortDate(raw?: string) {
+  const [y, m, d] = (raw ?? '').slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return '—';
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
 
 export function buildEodColumns({
   vaMap,
   clientMap,
   assignmentMap,
-  onView,
 }: {
   vaMap: Record<string, string>;
   clientMap: Record<string, string>;
   assignmentMap: Record<string, string>;
-  onView: (eod: IEodSubmission) => void;
 }): ColumnDef<IEodSubmission>[] {
   return [
     {
+      id: 'va',
+      header: 'VA',
+      size: 250,
+      accessorFn: e => e.candidateName || vaMap[e.candidateId] || e.candidateId,
+      cell: ({ row }) => {
+        const e = row.original;
+        const name = e.candidateName || vaMap[e.candidateId] || e.candidateId;
+        const client = e.companyName || clientMap[e.clientId] || e.clientId;
+        const service = assignmentMap[e.assignmentId];
+        const sub = service ? `${client} · ${service}` : client;
+        return (
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
+              {initialsOf(name) || '?'}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium whitespace-nowrap">{name}</p>
+              <p className="text-xs whitespace-nowrap text-muted-foreground">
+                {sub}
+              </p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: 'date',
       header: 'Date',
-      size: 105,
-      // Narrow screens: the date folds under the VA's name instead.
-      meta: {
-        thClassName: 'hidden @min-[1000px]/main:table-cell',
-        cellClassName: 'hidden @min-[1000px]/main:table-cell',
-      },
+      size: 125,
       cell: ({ getValue }) => (
-        <span className="text-sm whitespace-nowrap text-muted-foreground">
-          {getValue<string>()?.slice(0, 10)}
+        <span className="text-sm whitespace-nowrap">
+          {shortDate(getValue<string>())}
         </span>
       ),
     },
     {
-      accessorKey: 'candidateId',
-      header: 'VA',
-      size: 140,
-      cell: ({ row, getValue }) => (
-        <div>
-          <p className="text-sm font-medium">
-            {row.original.candidateName ||
-              vaMap[getValue<string>()] ||
-              getValue<string>()}
-          </p>
-          <p className="mt-0.5 text-xs whitespace-nowrap text-muted-foreground @min-[1000px]/main:hidden">
-            {row.original.date?.slice(0, 10)}
-          </p>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'clientId',
-      header: 'Client',
-      size: 190,
-      cell: ({ row }) => (
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm">
-            {row.original.companyName ||
-              clientMap[row.original.clientId] ||
-              row.original.clientId}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {assignmentMap[row.original.assignmentId] ?? '—'}
-          </span>
-        </div>
-      ),
-    },
-    {
-      // Start, end and hours in one column: "09:00 – 17:00  8h". Narrow
-      // screens keep just the hours.
+      // Hours on top, the shift window underneath.
       accessorKey: 'hoursWorked',
-      header: 'Shift',
+      header: 'Hours',
+      size: 130,
       cell: ({ row }) => {
         const { shiftStart, shiftEnd, hoursWorked } = row.original;
         return (
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className="hidden text-sm tabular-nums text-muted-foreground @3xl/main:inline">
+          <div className="inline-block rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-1 whitespace-nowrap">
+            <p className="text-sm tabular-nums">{hoursWorked}h</p>
+            <p className="text-xs tabular-nums text-muted-foreground">
               {shiftStart ?? '—'} – {shiftEnd ?? '—'}
-            </span>
-            <span className="rounded bg-white/[0.04] px-1.5 py-0.5 font-mono text-xs font-medium text-foreground">
-              {hoursWorked}h
-            </span>
+            </p>
           </div>
         );
       },
     },
     {
       accessorKey: 'summaryOfWork',
-      header: 'Summary',
+      header: () => <span className="normal-case">Summary</span>,
       enableSorting: false,
-      meta: { fill: true, cellClassName: 'max-w-0' },
+      // Text wraps rather than truncating; never squeezed below a readable width.
+      meta: {
+        fill: true,
+        thClassName: 'min-w-[16rem]',
+        cellClassName: 'min-w-[16rem]',
+      },
       cell: ({ row }) => <TaskSummary eod={row.original} />,
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      size: 90,
-      enableSorting: false,
-      cell: ({ row }) => (
-        <Button
-          variant="outline"
-          size="sm"
-          aria-label="View EOD details"
-          className="h-7 gap-1.5 rounded-lg text-xs"
-          onClick={() => onView(row.original)}
-        >
-          <EyeIcon className="size-3.5" />
-          View
-        </Button>
-      ),
     },
   ];
 }

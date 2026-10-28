@@ -1,19 +1,12 @@
-import {
-  AlertCircle,
-  AlertTriangleIcon,
-  ClockIcon,
-  HourglassIcon,
-  ListChecksIcon,
-  MessageSquareIcon,
-  StickyNoteIcon,
-} from 'lucide-react';
+import { AlertCircle, ClockIcon, XIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
 import { useEodSubmissionQuery } from '@/hooks/queries';
@@ -90,7 +83,7 @@ const initialsOf = (name: string) =>
 
 function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-white/[0.02] px-3 py-2.5">
+    <div className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-2.5">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
         {value}
@@ -100,23 +93,18 @@ function Stat({ label, value }: { label: string; value: ReactNode }) {
 }
 
 function Section({
-  icon,
   title,
   aside,
   children,
 }: {
-  icon: ReactNode;
   title: string;
   aside?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3">
+    <section className="space-y-3 border-t border-border pt-5">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <span className="text-muted-foreground">{icon}</span>
-          {title}
-        </h3>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         {aside}
       </div>
       {children}
@@ -145,15 +133,15 @@ function WorkList({ eod }: { eod: IEodSubmission }) {
 
   const totalMinutes = entries.reduce((sum, e) => sum + (e.timeSpent || 0), 0);
   return (
-    <div className="rounded-lg border border-border">
-      <ul className="divide-y divide-border">
+    <div className="rounded-lg border border-white/[0.1] bg-white/[0.03]">
+      <ul className="divide-y divide-white/[0.08]">
         {entries.map((e, i) => (
           <li key={i} className="flex items-start justify-between gap-4 p-3.5">
             <div className="min-w-0">
               <p className="flex items-baseline gap-2 text-sm font-medium text-foreground">
                 <span className="break-words">{e.task || '—'}</span>
                 {e.quantity ? (
-                  <span className="shrink-0 font-mono text-xs font-normal text-muted-foreground">
+                  <span className="shrink-0 text-xs font-normal tabular-nums text-muted-foreground">
                     ×{e.quantity}
                   </span>
                 ) : null}
@@ -177,7 +165,7 @@ function WorkList({ eod }: { eod: IEodSubmission }) {
           </li>
         ))}
       </ul>
-      <div className="flex items-center justify-between border-t border-border bg-white/[0.02] px-3.5 py-2 text-xs text-muted-foreground">
+      <div className="flex items-center justify-between border-t border-white/[0.08] px-3.5 py-2 text-xs text-muted-foreground">
         <span>Total time logged</span>
         <span className="font-medium tabular-nums text-foreground">
           {formatMinutes(totalMinutes)}
@@ -208,7 +196,6 @@ function EodBody({ eod }: { eod: IEodSubmission }) {
       </div>
 
       <Section
-        icon={<ListChecksIcon className="size-4" />}
         title="Work done"
         aside={
           entries.length > 0 ? (
@@ -223,19 +210,13 @@ function EodBody({ eod }: { eod: IEodSubmission }) {
 
       <div className="grid gap-6 sm:grid-cols-2">
         <Section
-          icon={<HourglassIcon className="size-4" />}
           title="Still pending"
         >
           <TextBlock value={eod.pendingTasks} empty="Nothing pending." />
         </Section>
 
         <Section
-          icon={
-            <AlertTriangleIcon
-              className={`size-4 ${hasBlockers ? 'text-status-warning' : ''}`}
-            />
-          }
-          title="Blockers"
+            title="Blockers"
         >
           {hasBlockers ? (
             <p className="rounded-lg border border-status-warning/20 bg-status-warning/5 px-3 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground">
@@ -248,7 +229,6 @@ function EodBody({ eod }: { eod: IEodSubmission }) {
       </div>
 
       <Section
-        icon={<MessageSquareIcon className="size-4" />}
         title="Client communication"
         aside={
           eod.communicatedWithClient ? (
@@ -270,7 +250,7 @@ function EodBody({ eod }: { eod: IEodSubmission }) {
       </Section>
 
       {eod.notes?.trim() && (
-        <Section icon={<StickyNoteIcon className="size-4" />} title="VA notes">
+        <Section title="VA notes">
           <TextBlock value={eod.notes} empty="" />
         </Section>
       )}
@@ -292,14 +272,30 @@ export function EodDetailSheet({
 
   return (
     <Sheet open={eodId !== null} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
-        <SheetHeader className="space-y-0 border-b border-border px-6 py-5 pr-12">
-          <div className="flex items-center gap-3.5">
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] font-mono text-sm text-text-secondary">
+      <SheetContent
+        side="right"
+        // Floats with a gap to the viewport; the built-in close button is
+        // hidden in favour of the one below, outside the drawer's top-left.
+        className="flex w-[calc(100vw-2rem)] flex-col gap-0 overflow-visible border-white/[0.14] bg-surface-raised p-0 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.9)] sm:max-w-xl [&>button:last-child]:hidden"
+      >
+        <SheetClose asChild>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Close"
+            className="absolute right-3 top-3 z-10 size-8 rounded-md border-white/[0.14] bg-surface-raised min-[700px]:-left-11 min-[700px]:right-auto min-[700px]:top-0"
+          >
+            <XIcon className="size-4" />
+          </Button>
+        </SheetClose>
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
+          <header className="flex items-center gap-3 border-b border-border px-6 py-4 pr-14 min-[700px]:pr-6">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-sm font-medium text-text-secondary">
               {vaName ? initialsOf(vaName) || '?' : '…'}
             </div>
             <div className="min-w-0">
-              <SheetTitle className="truncate">
+              <SheetTitle className="truncate text-xl">
                 {vaName || 'EOD report'}
               </SheetTitle>
               <SheetDescription className="mt-0.5 truncate">
@@ -308,36 +304,36 @@ export function EodDetailSheet({
                   : 'Loading…'}
               </SheetDescription>
             </div>
+          </header>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            {isLoading && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+                Loading EOD details…
+              </div>
+            )}
+
+            {isError && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                <AlertCircle size={15} className="mt-0.5 shrink-0" />
+                {getApiError(
+                  error,
+                  'Failed to load EOD details. You may not have permission to view this submission.'
+                )}
+              </div>
+            )}
+
+            {!isLoading && !isError && eod && <EodBody eod={eod} />}
           </div>
-        </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          {isLoading && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
-              Loading EOD details…
+          {!isLoading && !isError && eod && (
+            <div className="flex items-center gap-2 border-t border-border px-6 py-3 text-xs text-muted-foreground">
+              <ClockIcon className="size-3.5" />
+              Submitted {formatSubmitted(eod.createdAt)}
             </div>
           )}
-
-          {isError && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              <AlertCircle size={15} className="mt-0.5 shrink-0" />
-              {getApiError(
-                error,
-                'Failed to load EOD details. You may not have permission to view this submission.'
-              )}
-            </div>
-          )}
-
-          {!isLoading && !isError && eod && <EodBody eod={eod} />}
         </div>
-
-        {!isLoading && !isError && eod && (
-          <div className="flex items-center gap-2 border-t border-border px-6 py-3 text-xs text-muted-foreground">
-            <ClockIcon className="size-3.5" />
-            Submitted {formatSubmitted(eod.createdAt)}
-          </div>
-        )}
       </SheetContent>
     </Sheet>
   );

@@ -12,10 +12,6 @@ export default function EodReportsPage() {
     vaMap: r.vaMap,
     clientMap: r.clientMap,
     assignmentMap: r.assignmentMap,
-    onView: eod => {
-      r.setSelectedEodId(eod._id);
-      r.setSelectedEodFallback(eod);
-    },
   });
 
   return (
@@ -33,14 +29,9 @@ export default function EodReportsPage() {
             </p>
           </div>
 
-
           <EodFilters
-            vas={r.displayVAs}
-            clients={r.displayClients}
-            vaFilter={r.vaFilter}
-            onVaChange={r.setVaFilter}
-            clientFilter={r.clientFilter}
-            onClientChange={r.setClientFilter}
+            search={r.search}
+            onSearchChange={r.setSearch}
             dateFrom={r.dateFrom}
             onDateFromChange={r.setDateFrom}
             dateTo={r.dateTo}
@@ -62,6 +53,10 @@ export default function EodReportsPage() {
             isLoading={r.isLoading}
             isError={r.isError}
             error={r.error}
+            onRowClick={eod => {
+              r.setSelectedEodId(eod._id);
+              r.setSelectedEodFallback(eod);
+            }}
           />
         </div>
       </div>

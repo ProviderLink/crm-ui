@@ -1,7 +1,8 @@
-import { DownloadIcon } from 'lucide-react';
+import { DownloadIcon, SearchIcon, XIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -11,24 +12,9 @@ import {
 } from '@/components/ui/select';
 import type { ExportFormat } from '@/services/reports.service';
 
-interface VaOption {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
-
-interface ClientOption {
-  id: string;
-  companyName: string;
-}
-
 export function EodFilters({
-  vas,
-  clients,
-  vaFilter,
-  onVaChange,
-  clientFilter,
-  onClientChange,
+  search,
+  onSearchChange,
   dateFrom,
   onDateFromChange,
   dateTo,
@@ -43,12 +29,8 @@ export function EodFilters({
   exportError,
   recordCount,
 }: {
-  vas: VaOption[];
-  clients: ClientOption[];
-  vaFilter: string;
-  onVaChange: (v: string) => void;
-  clientFilter: string;
-  onClientChange: (v: string) => void;
+  search: string;
+  onSearchChange: (v: string) => void;
   dateFrom: string;
   onDateFromChange: (v: string) => void;
   dateTo: string;
@@ -65,90 +47,76 @@ export function EodFilters({
 }) {
   return (
     <>
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <Select value={vaFilter} onValueChange={onVaChange}>
-              <SelectTrigger className="rounded-xl border-input h-8 text-sm w-44">
-                <SelectValue placeholder="All VAs" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All VAs</SelectItem>
-                {vas.map(v => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.firstName} {v.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative w-full sm:w-64">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => onSearchChange(e.target.value)}
+            placeholder="Search VA or client…"
+            aria-label="Search by VA or client"
+            className="h-8 pl-8 text-sm"
+          />
+        </div>
 
-            <Select value={clientFilter} onValueChange={onClientChange}>
-              <SelectTrigger className="rounded-xl border-input h-8 text-sm w-44">
-                <SelectValue placeholder="All Clients" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Clients</SelectItem>
-                {clients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.companyName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* The same range drives the table and the export. */}
+        <div className="flex items-center gap-1.5">
+          <DatePickerField value={dateFrom} onChange={onDateFromChange} />
+          <span className="text-xs text-muted-foreground">to</span>
+          <DatePickerField value={dateTo} onChange={onDateToChange} />
+        </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">From</span>
-              <DatePickerField
-                value={dateFrom}
-                onChange={onDateFromChange}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">To</span>
-              <DatePickerField value={dateTo} onChange={onDateToChange} />
-            </div>
+        {hasFilter && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <XIcon className="size-3.5" />
+            Clear
+          </button>
+        )}
 
-            {hasFilter && (
-              <button
-                onClick={onClear}
-                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-              >
-                Clear
-              </button>
-            )}
-
-            <Select
-              value={exportFormat}
-              onValueChange={v => onExportFormatChange(v as ExportFormat)}
+        <div className="ml-auto flex items-center gap-2">
+          <span className="mr-1 text-xs text-muted-foreground">
+            {recordCount} report{recordCount !== 1 ? 's' : ''}
+          </span>
+          <Select
+            value={exportFormat}
+            onValueChange={v => onExportFormatChange(v as ExportFormat)}
+          >
+            <SelectTrigger
+              className="h-8 w-24 text-sm"
+              aria-label="Export format"
             >
-              <SelectTrigger className="rounded-xl border-input h-8 text-sm w-28">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="csv">CSV</SelectItem>
-                <SelectItem value="xlsx">Excel</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={onExport}
-              disabled={exporting || !exportRangeValid}
-              className="h-8 rounded-xl text-sm gap-2"
-            >
-              <DownloadIcon className="size-3.5" />
-              {exporting ? 'Exporting…' : 'Export EODs'}
-            </Button>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="csv">CSV</SelectItem>
+              <SelectItem value="xlsx">Excel</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onExport}
+            disabled={exporting || !exportRangeValid}
+            className="h-8 gap-1.5"
+          >
+            <DownloadIcon className="size-3.5" />
+            {exporting ? 'Exporting…' : 'Export'}
+          </Button>
+        </div>
+      </div>
 
-            <span className="text-xs text-muted-foreground ml-auto">
-              {recordCount} records
-            </span>
-          </div>
-
-          {exportError && (
-            <p className="text-xs text-destructive mb-4">{exportError}</p>
-          )}
-          {!exportRangeValid && dateFrom !== '' && dateTo !== '' && (
-            <p className="text-xs text-destructive mb-4">
-              From date must be before or equal to To date
-            </p>
-          )}
+      {exportError && (
+        <p className="mb-4 text-xs text-destructive">{exportError}</p>
+      )}
+      {!exportRangeValid && dateFrom !== '' && dateTo !== '' && (
+        <p className="mb-4 text-xs text-destructive">
+          From date must be before or equal to To date
+        </p>
+      )}
     </>
   );
 }

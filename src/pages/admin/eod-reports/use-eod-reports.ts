@@ -4,7 +4,6 @@ import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
-  useCrmClientUsersQuery,
   useCrmVaUsersQuery,
   useEodSubmissionsQuery,
 } from '@/hooks/queries';
@@ -17,12 +16,14 @@ export function useEodReports() {
   const user = useAppSelector(s => s.auth.user);
   const isAccountManager = user?.role === 'account_manager';
 
-  const [dateFrom, setDateFrom] = useState(() =>
-    addDaysToDateKey(todayString(), -30)
-  );
-  const [dateTo, setDateTo] = useState(() => todayString());
-  const [vaFilter, setVaFilter] = useState('all');
-  const [clientFilter, setClientFilter] = useState('all');
+  // The default window is the last 30 days; "Clear" returns to it.
+  const [defaults] = useState(() => ({
+    from: addDaysToDateKey(todayString(), -30),
+    to: todayString(),
+  }));
+  const [dateFrom, setDateFrom] = useState(defaults.from);
+  const [dateTo, setDateTo] = useState(defaults.to);
+  const [search, setSearch] = useState('');
   const [selectedEodId, setSelectedEodId] = useState<string | null>(null);
   const [selectedEodFallback, setSelectedEodFallback] =
     useState<IEodSubmission | null>(null);
@@ -67,14 +68,12 @@ export function useEodReports() {
     isError,
     error,
   } = useEodSubmissionsQuery({
-    candidateId: vaFilter !== 'all' ? vaFilter : undefined,
-    clientId: clientFilter !== 'all' ? clientFilter : undefined,
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
   });
 
   // For AM, client-side filter by their assignments' candidateIds/clientIds
-  const eods = useMemo(() => {
+  const scopedEods = useMemo(() => {
     if (!isAccountManager) return allEods;
     return allEods.filter(
       e => amCandidateIds.has(e.candidateId) || amClientIds.has(e.clientId)
@@ -84,7 +83,6 @@ export function useEodReports() {
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
   const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
-  const { data: crmClients = [] } = useCrmClientUsersQuery();
   const { data: assignments = [] } = useAllAssignmentsQuery(
     isAccountManager ? user?.id : undefined
   );
@@ -110,46 +108,32 @@ export function useEodReports() {
     return m;
   }, [atsClients]);
 
-  const crmClientRefs = useMemo(
-    () => new Set(crmClients.map(c => c.clientRef).filter(Boolean)),
-    [crmClients]
-  );
-  const filteredClients = useMemo(
-    () => atsClients.filter(c => crmClientRefs.has(c.id)),
-    [atsClients, crmClientRefs]
-  );
-
-  // AM: restrict VA/client dropdowns to their assignments only
-  const displayVAs = useMemo(() => {
-    if (!isAccountManager) return atsVAs;
-    const amVaIds = new Set(amAssignments.map(a => a.candidateId));
-    return atsVAs.filter(v => amVaIds.has(v.id));
-  }, [atsVAs, isAccountManager, amAssignments]);
-
-  const displayClients = useMemo(() => {
-    if (!isAccountManager) return filteredClients;
-    const amClientIdsSet = new Set(amAssignments.map(a => a.clientId));
-    return filteredClients.filter(c => amClientIdsSet.has(c.id));
-  }, [filteredClients, isAccountManager, amAssignments]);
-
   const assignmentMap = useMemo(() => {
     const m: Record<string, string> = {};
     for (const a of assignments) m[a._id] = a.serviceType ?? 'VA Service';
     return m;
   }, [assignments]);
 
+  // Search matches the VA, the client or the service type, case-insensitively.
+  const query = search.trim().toLowerCase();
+  const eods = useMemo(() => {
+    if (!query) return scopedEods;
+    return scopedEods.filter(e => {
+      const va = e.candidateName || vaMap[e.candidateId] || '';
+      const client = e.companyName || clientMap[e.clientId] || '';
+      const service = assignmentMap[e.assignmentId] ?? '';
+      return `${va} ${client} ${service}`.toLowerCase().includes(query);
+    });
+  }, [scopedEods, query, vaMap, clientMap, assignmentMap]);
+
   function clearFilters() {
-    setDateFrom('');
-    setDateTo('');
-    setVaFilter('all');
-    setClientFilter('all');
+    setSearch('');
+    setDateFrom(defaults.from);
+    setDateTo(defaults.to);
   }
 
   const hasFilter =
-    dateFrom !== '' ||
-    dateTo !== '' ||
-    vaFilter !== 'all' ||
-    clientFilter !== 'all';
+    search !== '' || dateFrom !== defaults.from || dateTo !== defaults.to;
 
   return {
     isAccountManager,
@@ -160,16 +144,12 @@ export function useEodReports() {
     vaMap,
     clientMap,
     assignmentMap,
-    displayVAs,
-    displayClients,
+    search,
+    setSearch,
     dateFrom,
     setDateFrom,
     dateTo,
     setDateTo,
-    vaFilter,
-    setVaFilter,
-    clientFilter,
-    setClientFilter,
     clearFilters,
     hasFilter,
     selectedEodId,
