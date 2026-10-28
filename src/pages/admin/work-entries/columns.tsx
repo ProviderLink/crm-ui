@@ -1,8 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { WORK_ENTRY_STATUS_STYLES } from '@/lib/status-styles';
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
+
+import { initialsOf, shortDate } from './format';
+import { StatusPill } from './StatusPill';
 
 export function buildWorkEntryColumns({
   vaMap,
@@ -15,21 +17,39 @@ export function buildWorkEntryColumns({
 }): ColumnDef<IWorkEntry>[] {
   return [
     {
+      id: 'va',
+      header: 'VA',
+      size: 250,
+      accessorFn: e => e.candidateName || vaMap[e.candidateId] || e.candidateId,
+      cell: ({ row }) => {
+        const e = row.original;
+        const name = e.candidateName || vaMap[e.candidateId] || e.candidateId;
+        const client = e.companyName || clientMap[e.clientId] || e.clientId;
+        const service = assignmentMap[e.assignmentId];
+        return (
+          <div className="flex items-center gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
+              {initialsOf(name) || '?'}
+            </div>
+            <div>
+              <p className="text-sm font-medium whitespace-nowrap">{name}</p>
+              <p className="text-xs whitespace-nowrap text-muted-foreground">
+                {service ? `${client} · ${service}` : client}
+              </p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: 'entryDate',
       header: 'Date',
-      size: 105,
-      // Narrow screens: the date folds under the VA's name instead.
-      meta: {
-        thClassName: 'hidden @min-[1000px]/main:table-cell',
-        cellClassName: 'hidden @min-[1000px]/main:table-cell',
-      },
+      size: 125,
       cell: ({ row }) => (
-        <div className="leading-tight">
-          <p className="text-sm whitespace-nowrap text-muted-foreground">
-            {row.original.entryDate?.slice(0, 10)}
-          </p>
+        <div className="whitespace-nowrap">
+          <p className="text-sm">{shortDate(row.original.entryDate)}</p>
           {row.original.entryTime && (
-            <p className="mt-0.5 text-xs text-muted-foreground/60">
+            <p className="text-xs tabular-nums text-muted-foreground">
               {row.original.entryTime}
             </p>
           )}
@@ -37,54 +57,22 @@ export function buildWorkEntryColumns({
       ),
     },
     {
-      accessorKey: 'candidateId',
-      header: 'VA',
-      size: 130,
-      cell: ({ row, getValue }) => (
-        <div>
-          <p className="text-sm font-medium @min-[1000px]/main:whitespace-nowrap">
-            {row.original.candidateName ||
-              vaMap[getValue<string>()] ||
-              getValue<string>()}
-          </p>
-          <p className="mt-0.5 text-xs whitespace-nowrap text-muted-foreground @min-[1000px]/main:hidden">
-            {row.original.entryDate?.slice(0, 10)}
-            {row.original.entryTime ? ` · ${row.original.entryTime}` : ''}
-          </p>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'clientId',
-      header: 'Client',
-      size: 160,
-      cell: ({ row }) => (
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm @min-[1000px]/main:whitespace-nowrap">
-            {row.original.companyName ||
-              clientMap[row.original.clientId] ||
-              row.original.clientId}
-          </span>
-          <span className="text-xs text-muted-foreground @min-[1000px]/main:whitespace-nowrap">
-            {assignmentMap[row.original.assignmentId] ?? '—'}
-          </span>
-        </div>
-      ),
-    },
-    {
-      // The task, with its category underneath instead of a column of its own.
+      // The task, with its category underneath; wraps as far as it needs.
       accessorKey: 'taskDescription',
-      header: 'Task',
+      header: () => <span className="normal-case">Task</span>,
       enableSorting: false,
-      meta: { fill: true, cellClassName: 'max-w-0' },
+      meta: {
+        fill: true,
+        thClassName: 'min-w-[16rem]',
+        cellClassName: 'min-w-[16rem]',
+      },
       cell: ({ row }) => (
-        <div title={row.original.taskDescription}>
-          <p className="line-clamp-2 text-sm leading-snug">
+        <div>
+          <p className="text-sm leading-snug">
             {row.original.taskDescription}
           </p>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="size-1 shrink-0 rounded-full bg-muted-foreground/50" />
-            <span className="truncate">{row.original.taskCategory}</span>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {row.original.taskCategory}
           </p>
         </div>
       ),
@@ -92,9 +80,9 @@ export function buildWorkEntryColumns({
     {
       accessorKey: 'timeSpent',
       header: 'Time',
-      size: 80,
+      size: 90,
       cell: ({ getValue }) => (
-        <span className="rounded bg-white/[0.04] px-1.5 py-0.5 font-mono text-xs font-medium whitespace-nowrap text-foreground">
+        <span className="inline-block rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-sm tabular-nums whitespace-nowrap">
           {formatMinutes(getValue<number>())}
         </span>
       ),
@@ -102,17 +90,8 @@ export function buildWorkEntryColumns({
     {
       accessorKey: 'status',
       header: 'Status',
-      meta: { shrink: true, cellClassName: 'whitespace-nowrap' },
-      cell: ({ getValue }) => {
-        const s = getValue<WorkEntryStatus>();
-        return (
-          <span
-            className={`rounded-full border px-2 py-0.5 text-xs whitespace-nowrap capitalize ${WORK_ENTRY_STATUS_STYLES[s]}`}
-          >
-            {s.replace('_', ' ')}
-          </span>
-        );
-      },
+      size: 120,
+      cell: ({ getValue }) => <StatusPill status={getValue<WorkEntryStatus>()} />,
     },
   ];
 }

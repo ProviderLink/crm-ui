@@ -1,37 +1,37 @@
-import { DatePickerField } from '@/components/ui/date-picker-field';
 import { useMemo, useState } from 'react';
 
 import { DataTable } from '@/components/shared/DataTable';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
-  useCrmClientUsersQuery,
   useCrmVaUsersQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import { addDaysToDateKey, todayString } from '@/lib/time';
 
+import type { IWorkEntry } from '@/types/work-entry';
+
 import { buildWorkEntryColumns } from './work-entries/columns';
+import { WorkEntryDrawer } from './work-entries/WorkEntryDrawer';
+import { WorkEntryFilters } from './work-entries/WorkEntryFilters';
 
 export default function WorkEntriesPage() {
   const user = useAppSelector(s => s.auth.user);
   const isAccountManager = user?.role === 'account_manager';
 
-  const [dateFrom, setDateFrom] = useState(() =>
-    addDaysToDateKey(todayString(), -30)
-  );
-  const [dateTo, setDateTo] = useState(() => todayString());
-  const [vaFilter, setVaFilter] = useState('all');
-  const [clientFilter, setClientFilter] = useState('all');
+  // The default window is the last 30 days; "Clear" returns to it.
+  const [defaults] = useState(() => ({
+    from: addDaysToDateKey(todayString(), -30),
+    to: todayString(),
+  }));
+  const [dateFrom, setDateFrom] = useState(defaults.from);
+  const [dateTo, setDateTo] = useState(defaults.to);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
+  const [category, setCategory] = useState('all');
+  const [selected, setSelected] = useState<IWorkEntry | null>(null);
 
   // AM scoping: only see work entries for their own assignments
   const { data: amAssignments = [] } = useAllAssignmentsQuery(
@@ -46,30 +46,18 @@ export default function WorkEntriesPage() {
     [amAssignments]
   );
 
-  const effectiveCandidateId =
-    vaFilter !== 'all' ? vaFilter : isAccountManager ? undefined : undefined;
-
-  const effectiveClientId =
-    clientFilter !== 'all'
-      ? clientFilter
-      : isAccountManager
-        ? undefined
-        : undefined;
-
   const {
     data: allEntries = [],
     isLoading,
     isError,
     error,
   } = useWorkEntriesQuery({
-    candidateId: effectiveCandidateId,
-    clientId: effectiveClientId,
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
   });
 
   // For AM, client-side filter by their assignments' candidateIds/clientIds
-  const entries = useMemo(() => {
+  const scopedEntries = useMemo(() => {
     if (!isAccountManager) return allEntries;
     return allEntries.filter(
       e => amCandidateIds.has(e.candidateId) || amClientIds.has(e.clientId)
@@ -79,7 +67,6 @@ export default function WorkEntriesPage() {
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
   const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
-  const { data: crmClients = [] } = useCrmClientUsersQuery();
   const { data: assignments = [] } = useAllAssignmentsQuery(
     isAccountManager ? user?.id : undefined
   );
@@ -105,28 +92,6 @@ export default function WorkEntriesPage() {
     return m;
   }, [atsClients]);
 
-  const crmClientRefs = useMemo(
-    () => new Set(crmClients.map(c => c.clientRef).filter(Boolean)),
-    [crmClients]
-  );
-  const filteredClients = useMemo(
-    () => atsClients.filter(c => crmClientRefs.has(c.id)),
-    [atsClients, crmClientRefs]
-  );
-
-  // AM: restrict VA/client dropdowns to their assignments only
-  const displayVAs = useMemo(() => {
-    if (!isAccountManager) return atsVAs;
-    const amVaIds = new Set(amAssignments.map(a => a.candidateId));
-    return atsVAs.filter(v => amVaIds.has(v.id));
-  }, [atsVAs, isAccountManager, amAssignments]);
-
-  const displayClients = useMemo(() => {
-    if (!isAccountManager) return filteredClients;
-    const amClientIdsSet = new Set(amAssignments.map(a => a.clientId));
-    return filteredClients.filter(c => amClientIdsSet.has(c.id));
-  }, [filteredClients, isAccountManager, amAssignments]);
-
   const assignmentMap = useMemo(() => {
     const m: Record<string, string> = {};
     for (const a of assignments) m[a._id] = a.serviceType ?? 'VA Service';
@@ -138,18 +103,38 @@ export default function WorkEntriesPage() {
     [vaMap, clientMap, assignmentMap]
   );
 
+  // Search matches the VA, the client, the service or the task text.
+  const query = search.trim().toLowerCase();
+  const entries = useMemo(
+    () =>
+      scopedEntries.filter(e => {
+        if (status !== 'all' && e.status !== status) return false;
+        if (category !== 'all' && e.taskCategory !== category) return false;
+        if (!query) return true;
+        const va = e.candidateName || vaMap[e.candidateId] || '';
+        const client = e.companyName || clientMap[e.clientId] || '';
+        const service = assignmentMap[e.assignmentId] ?? '';
+        return `${va} ${client} ${service} ${e.taskDescription}`
+          .toLowerCase()
+          .includes(query);
+      }),
+    [scopedEntries, status, category, query, vaMap, clientMap, assignmentMap]
+  );
+
   function clearFilters() {
-    setDateFrom('');
-    setDateTo('');
-    setVaFilter('all');
-    setClientFilter('all');
+    setSearch('');
+    setStatus('all');
+    setCategory('all');
+    setDateFrom(defaults.from);
+    setDateTo(defaults.to);
   }
 
   const hasFilter =
-    dateFrom !== '' ||
-    dateTo !== '' ||
-    vaFilter !== 'all' ||
-    clientFilter !== 'all';
+    search !== '' ||
+    status !== 'all' ||
+    category !== 'all' ||
+    dateFrom !== defaults.from ||
+    dateTo !== defaults.to;
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
@@ -166,59 +151,21 @@ export default function WorkEntriesPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <Select value={vaFilter} onValueChange={setVaFilter}>
-              <SelectTrigger className="rounded-xl border-input h-8 text-sm w-44">
-                <SelectValue placeholder="All VAs" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All VAs</SelectItem>
-                {displayVAs.map(v => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.firstName} {v.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={clientFilter} onValueChange={setClientFilter}>
-              <SelectTrigger className="rounded-xl border-input h-8 text-sm w-44">
-                <SelectValue placeholder="All Clients" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Clients</SelectItem>
-                {displayClients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.companyName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">From</span>
-              <DatePickerField
-                value={dateFrom}
-                onChange={v => setDateFrom(v)}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">To</span>
-              <DatePickerField value={dateTo} onChange={v => setDateTo(v)} />
-            </div>
-
-            {hasFilter && (
-              <button
-                onClick={clearFilters}
-                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-              >
-                Clear
-              </button>
-            )}
-            <span className="text-xs text-muted-foreground ml-auto">
-              {entries.length} records
-            </span>
-          </div>
+          <WorkEntryFilters
+            search={search}
+            onSearchChange={setSearch}
+            status={status}
+            onStatusChange={setStatus}
+            category={category}
+            onCategoryChange={setCategory}
+            dateFrom={dateFrom}
+            onDateFromChange={setDateFrom}
+            dateTo={dateTo}
+            onDateToChange={setDateTo}
+            hasFilter={hasFilter}
+            onClear={clearFilters}
+            recordCount={entries.length}
+          />
 
           <DataTable
             columns={columns}
@@ -226,9 +173,30 @@ export default function WorkEntriesPage() {
             isLoading={isLoading}
             isError={isError}
             error={error}
+            onRowClick={setSelected}
           />
         </div>
       </div>
+
+      <WorkEntryDrawer
+        entry={selected}
+        vaName={
+          selected
+            ? selected.candidateName ||
+              vaMap[selected.candidateId] ||
+              selected.candidateId
+            : ''
+        }
+        clientName={
+          selected
+            ? selected.companyName ||
+              clientMap[selected.clientId] ||
+              selected.clientId
+            : ''
+        }
+        service={selected ? assignmentMap[selected.assignmentId] : undefined}
+        onClose={() => setSelected(null)}
+      />
     </div>
   );
 }
