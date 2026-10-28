@@ -83,7 +83,7 @@ export function EditAssignmentForm({
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="mt-6 space-y-4"
+      className="space-y-4"
     >
       {serverError && (
         <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">

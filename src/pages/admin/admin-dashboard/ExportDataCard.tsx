@@ -5,13 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Label } from '@/components/ui/label';
 import {
@@ -72,127 +66,107 @@ export function ExportDataCard() {
   }
 
   return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-medium">
-                Export Data
-              </CardTitle>
-              <CardDescription>
-                Download work entries or EOD submissions as CSV or Excel.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form
-                onSubmit={handleSubmit(onExport)}
-                className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-              >
-                {/* Report type */}
-                <div className="grid gap-1.5">
-                  <Label>Report Type</Label>
-                  <Controller
-                    name="type"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="work_entries">
-                            Work Entries
-                          </SelectItem>
-                          <SelectItem value="eod">EOD Submissions</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  {errors.type && (
-                    <p className="text-xs text-destructive">
-                      {errors.type.message}
-                    </p>
-                  )}
-                </div>
+    <Card className="gap-4 p-5">
+      <CardHeader className="p-0">
+        <CardTitle className="text-sm font-medium">Export data</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Download work entries or EOD submissions as CSV or Excel.
+        </p>
+      </CardHeader>
+      <CardContent className="p-0 pt-3">
+        <form
+          onSubmit={handleSubmit(onExport)}
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end"
+        >
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Report</Label>
+            <Controller
+              name="type"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="work_entries">Work entries</SelectItem>
+                    <SelectItem value="eod">EOD submissions</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
 
-                {/* Format */}
-                <div className="grid gap-1.5">
-                  <Label>Format</Label>
-                  <Controller
-                    name="format"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select format" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="csv">CSV</SelectItem>
-                          <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Format</Label>
+            <Controller
+              name="format"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV</SelectItem>
+                    <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
 
-                {/* Date from */}
-                <div className="grid gap-1.5">
-                  <Label>From</Label>
-                  <Controller
-                    name="dateFrom"
-                    control={control}
-                    render={({ field }) => (
-                      <DatePickerField
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Pick a date"
-                      />
-                    )}
-                  />
-                  {errors.dateFrom && (
-                    <p className="text-xs text-destructive">
-                      {errors.dateFrom.message}
-                    </p>
-                  )}
-                </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">From</Label>
+            <Controller
+              name="dateFrom"
+              control={control}
+              render={({ field }) => (
+                <DatePickerField
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Pick a date"
+                />
+              )}
+            />
+            {errors.dateFrom && (
+              <p className="text-xs text-destructive">
+                {errors.dateFrom.message}
+              </p>
+            )}
+          </div>
 
-                {/* Date to */}
-                <div className="grid gap-1.5">
-                  <Label>To</Label>
-                  <Controller
-                    name="dateTo"
-                    control={control}
-                    render={({ field }) => (
-                      <DatePickerField
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Pick a date"
-                      />
-                    )}
-                  />
-                  {errors.dateTo && (
-                    <p className="text-xs text-destructive">
-                      {errors.dateTo.message}
-                    </p>
-                  )}
-                </div>
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">To</Label>
+            <Controller
+              name="dateTo"
+              control={control}
+              render={({ field }) => (
+                <DatePickerField
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Pick a date"
+                />
+              )}
+            />
+            {errors.dateTo && (
+              <p className="text-xs text-destructive">
+                {errors.dateTo.message}
+              </p>
+            )}
+          </div>
 
-                {/* Submit — spans full row */}
-                <div className="sm:col-span-2 lg:col-span-4 flex items-center gap-3">
-                  <Button type="submit" disabled={exporting}>
-                    <DownloadIcon className="size-4" />
-                    {exporting ? 'Downloading…' : 'Download Report'}
-                  </Button>
-                  {exportError && (
-                    <p className="text-sm text-destructive">{exportError}</p>
-                  )}
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+          <Button type="submit" variant="outline" disabled={exporting}>
+            <DownloadIcon className="size-4" />
+            {exporting ? 'Downloading…' : 'Download'}
+          </Button>
+          {exportError && (
+            <p className="text-sm text-destructive sm:col-span-2 lg:col-span-5">
+              {exportError}
+            </p>
+          )}
+        </form>
+      </CardContent>
+    </Card>
   );
 }

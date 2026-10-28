@@ -13,20 +13,18 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <div className="bg-card rounded-lg border border-border overflow-hidden">
-      <div className="flex items-center gap-2 px-5 py-3 border-b border-border/60 bg-muted/30">
-        <span className="text-muted-foreground">{icon}</span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <section className="space-y-4 border-t border-border pt-5 first:border-t-0 first:pt-0">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <span className="text-muted-foreground">{icon}</span>
           {title}
-        </span>
+        </h3>
         {optional && (
-          <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">
-            Optional
-          </span>
+          <span className="text-xs text-muted-foreground">Optional</span>
         )}
       </div>
-      <div className="p-5 space-y-4">{children}</div>
-    </div>
+      <div className="space-y-4">{children}</div>
+    </section>
   );
 }
 

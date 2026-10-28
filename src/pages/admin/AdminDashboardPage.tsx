@@ -5,9 +5,6 @@ import {
   ClipboardCheckIcon,
   UsersIcon,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-import { Button } from '@/components/ui/button';
 import {
   useAtsClientsQuery,
   useAtsVAsQuery,
@@ -17,6 +14,7 @@ import { useAppSelector } from '@/hooks/store';
 
 import { DashboardStatCard } from './admin-dashboard/DashboardStatCard';
 import { ExportDataCard } from './admin-dashboard/ExportDataCard';
+import { NeedsAttentionCard } from './admin-dashboard/NeedsAttentionCard';
 import {
   VaActivityCard,
   type VABreakdownRow,
@@ -25,6 +23,7 @@ import {
 export default function AdminDashboardPage() {
   const user = useAppSelector(s => s.auth.user);
   const isAccountManager = user?.role === 'account_manager';
+  const prefix = isAccountManager ? '/am' : '/admin';
 
   const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery();
   const { isLoading: loadingVAs } = useAtsVAsQuery();
@@ -58,21 +57,6 @@ export default function AdminDashboardPage() {
                 : 'How every VA is doing today'}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to={isAccountManager ? '/am/accounts' : '/admin/accounts'}>
-                View Accounts
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link
-                to={isAccountManager ? '/am/assignments' : '/admin/assignments'}
-              >
-                <UsersIcon className="size-4" />
-                Manage Assignments
-              </Link>
-            </Button>
-          </div>
         </div>
 
         {/* Today at a glance */}
@@ -82,6 +66,7 @@ export default function AdminDashboardPage() {
             value={overview?.activeAssignments ?? 0}
             icon={UsersIcon}
             isLoading={loadingStats}
+            to={`${prefix}/assignments`}
           >
             {overview?.onHoldAssignments ?? 0} on hold ·{' '}
             {overview?.endedAssignments ?? 0} ended
@@ -92,6 +77,7 @@ export default function AdminDashboardPage() {
             value={overview?.totalWorkEntriesToday ?? 0}
             icon={ClockIcon}
             isLoading={loadingStats}
+            to={`${prefix}/work-entries`}
           >
             {stats?.weeklyWorkHours.totalHours ?? 0}h logged this week
           </DashboardStatCard>
@@ -101,6 +87,7 @@ export default function AdminDashboardPage() {
             value={overview?.totalEodSubmissionsToday ?? 0}
             icon={ClipboardCheckIcon}
             isLoading={loadingStats}
+            to={`${prefix}/eod-reports`}
           >
             {compliance?.submittedToday ?? 0} of {compliance?.totalActive ?? 0}{' '}
             active assignments
@@ -112,6 +99,7 @@ export default function AdminDashboardPage() {
             icon={missing > 0 ? AlertTriangleIcon : CheckCircle2Icon}
             valueClassName={missing > 0 ? 'text-status-error' : ''}
             isLoading={loadingStats}
+            to={`${prefix}/eod-reports`}
           >
             {missing > 0
               ? 'Active assignments with no EOD yet'
@@ -119,10 +107,18 @@ export default function AdminDashboardPage() {
           </DashboardStatCard>
         </div>
 
+        {/* What to act on */}
+        <div className="px-4 lg:px-6">
+          <NeedsAttentionCard prefix={prefix} />
+        </div>
+
         {/* VA activity */}
         <div className="px-4 lg:px-6">
           {!loading && breakdown.length > 0 ? (
-            <VaActivityCard breakdown={breakdown} />
+            <VaActivityCard
+              breakdown={breakdown}
+              scorecardsPath={`${prefix}/scorecards`}
+            />
           ) : (
             !loading && (
               <div className="flex min-h-40 items-center justify-center rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">

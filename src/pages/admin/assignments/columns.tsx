@@ -1,35 +1,19 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { PenLineIcon, XIcon } from 'lucide-react';
+import { MoreHorizontalIcon, PenLineIcon, XIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { formatDateKeyLong } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
-const STATUS_STYLES: Record<IAssignment['status'], string> = {
-  active: 'bg-white/[0.04] text-status-success border-status-success/20',
-  on_hold: 'bg-white/[0.04] text-status-warning border-status-warning/20',
-  ended: 'bg-white/[0.04] text-text-tertiary border-white/[0.08]',
-};
-
-const STATUS_LABELS: Record<IAssignment['status'], string> = {
-  active: 'Active',
-  on_hold: 'On hold',
-  ended: 'Ended',
-};
-
-const initialsOf = (name: string) =>
-  name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+import { Avatar } from '../accounts/badges';
+import { AssignmentStatus } from './AssignmentStatus';
 
 export function buildColumns({
   clientMap,
@@ -59,9 +43,7 @@ export function buildColumns({
         const client = a.companyName || clientMap[a.clientId] || a.clientId;
         return (
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/[0.04] font-mono text-xs text-text-secondary">
-              {initialsOf(va) || '?'}
-            </div>
+            <Avatar name={va} />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium" title={va}>
                 {va}
@@ -99,7 +81,7 @@ export function buildColumns({
     },
     {
       accessorKey: 'accountManagerId',
-      header: 'Account Manager',
+      header: 'Account manager',
       meta: { thClassName: 'whitespace-nowrap' },
       cell: ({ row, getValue }) => (
         <span className="text-sm whitespace-nowrap">
@@ -129,69 +111,54 @@ export function buildColumns({
     {
       accessorKey: 'status',
       header: 'Status',
-      cell: ({ getValue }) => {
-        const v = getValue<IAssignment['status']>();
-        return (
-          <span
-            className={`rounded-full border px-2 py-0.5 text-xs whitespace-nowrap ${STATUS_STYLES[v] ?? STATUS_STYLES.ended}`}
-          >
-            {STATUS_LABELS[v] ?? v}
-          </span>
-        );
-      },
+      size: 110,
+      cell: ({ getValue }) => (
+        <AssignmentStatus status={getValue<IAssignment['status']>()} />
+      ),
     },
   ];
 
-  // Opening an assignment is the row click; the only buttons left are for
-  // admins, who can edit or end it.
+  // Opening an assignment is the row click; admins also get a quiet menu.
   if (canManage) {
     columns.push({
       id: 'actions',
-      header: 'Actions',
+      header: () => <span className="sr-only">Actions</span>,
       enableSorting: false,
-      size: 100,
+      meta: { shrink: true },
       cell: ({ row }) => (
-        <TooltipProvider delayDuration={300}>
-          {/* Keep a click on a button from also opening the row. */}
-          <div
-            className="flex items-center gap-1.5 whitespace-nowrap"
-            onClick={e => e.stopPropagation()}
-          >
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Edit assignment"
-                  className="size-7 border border-white/[0.08] bg-white/[0.02] text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
-                  onClick={() => onEdit(row.original)}
-                >
-                  <PenLineIcon className="size-3.5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Edit</TooltipContent>
-            </Tooltip>
-
-            {row.original.status !== 'ended' ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="End assignment"
-                    className="size-7 border border-status-error/30 bg-white/[0.02] text-status-error/80 hover:border-status-error/50 hover:bg-status-error/10 hover:text-status-error"
-                    onClick={() => onDeactivate(row.original)}
+        // Keep a click in the menu from also opening the row.
+        <div className="flex justify-end" onClick={e => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-8 text-muted-foreground"
+                aria-label="Assignment actions"
+              >
+                <MoreHorizontalIcon className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onEdit(row.original)}>
+                <PenLineIcon className="size-4" />
+                Edit
+              </DropdownMenuItem>
+              {row.original.status !== 'ended' && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onSelect={() => onDeactivate(row.original)}
                   >
-                    <XIcon className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="top">End Assignment</TooltipContent>
-              </Tooltip>
-            ) : (
-              <div className="size-7" />
-            )}
-          </div>
-        </TooltipProvider>
+                    <XIcon className="size-4" />
+                    End assignment
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ),
     });
   }

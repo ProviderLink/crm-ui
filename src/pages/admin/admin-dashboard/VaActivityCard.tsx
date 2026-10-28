@@ -1,4 +1,6 @@
+import { ArrowRightIcon } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Bar,
   BarChart,
@@ -23,8 +25,12 @@ export type VABreakdownRow = {
 
 type Metric = 'hours' | 'tasks' | 'count';
 
-/** Bars shown before "Show all", so a long VA list does not stretch the page. */
-const VISIBLE_ROWS = 8;
+/**
+ * With more VAs than this, only the busiest and the quietest are charted, so a
+ * long list never stretches the page; the full list lives in Scorecards.
+ */
+const MAX_ROWS = 8;
+const TOP_ROWS = 5;
 const ROW_HEIGHT = 36;
 const AXIS_HEIGHT = 28;
 
@@ -111,15 +117,23 @@ function ChartTip({
 }
 
 /** How much each VA has done over the last 7 days: one bar per VA. */
-export function VaActivityCard({ breakdown }: { breakdown: VABreakdownRow[] }) {
+export function VaActivityCard({
+  breakdown,
+  scorecardsPath,
+}: {
+  breakdown: VABreakdownRow[];
+  scorecardsPath: string;
+}) {
   const [metric, setMetric] = useState<Metric>('hours');
-  const [showAll, setShowAll] = useState(false);
   const current = METRICS.find(m => m.key === metric)!;
 
   const rows: ChartRow[] = breakdown
     .map(r => ({ ...r, value: r[metric] }))
     .sort((a, b) => b.value - a.value);
-  const visible = showAll ? rows : rows.slice(0, VISIBLE_ROWS);
+  const trimmed = rows.length > MAX_ROWS;
+  const visible = trimmed
+    ? [...rows.slice(0, TOP_ROWS), ...rows.slice(-(MAX_ROWS - TOP_ROWS))]
+    : rows;
   const total = Math.round(rows.reduce((sum, r) => sum + r.value, 0) * 10) / 10;
 
   return (
@@ -132,6 +146,8 @@ export function VaActivityCard({ breakdown }: { breakdown: VABreakdownRow[] }) {
           <p className="text-xs text-muted-foreground">
             {current.summary(total)} across {rows.length}{' '}
             {rows.length === 1 ? 'VA' : 'VAs'}
+            {trimmed &&
+              ` · top ${TOP_ROWS} and lowest ${MAX_ROWS - TOP_ROWS} shown`}
           </p>
         </div>
         <Tabs value={metric} onValueChange={v => setMetric(v as Metric)}>
@@ -155,7 +171,7 @@ export function VaActivityCard({ breakdown }: { breakdown: VABreakdownRow[] }) {
             data={visible}
             layout="vertical"
             margin={{ top: 0, right: 80, bottom: 0, left: 0 }}
-            barSize={14}
+            barSize={10}
           >
             <CartesianGrid horizontal={false} stroke={GRID} />
             <XAxis
@@ -201,15 +217,13 @@ export function VaActivityCard({ breakdown }: { breakdown: VABreakdownRow[] }) {
             </Bar>
           </BarChart>
         </ChartContainer>
-        {rows.length > VISIBLE_ROWS && (
-          <button
-            type="button"
-            onClick={() => setShowAll(v => !v)}
-            className="mt-3 text-xs text-muted-foreground hover:text-foreground hover:underline"
-          >
-            {showAll ? 'Show fewer' : `Show all ${rows.length} VAs`}
-          </button>
-        )}
+        <Link
+          to={scorecardsPath}
+          className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {trimmed ? `View all ${rows.length} VAs` : 'View scorecards'}
+          <ArrowRightIcon className="size-3" />
+        </Link>
       </CardContent>
     </Card>
   );

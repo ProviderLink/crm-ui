@@ -90,7 +90,7 @@ export function CreateAssignmentForm({
   // No eligible clients: CRM access is determined by crmProfile presence
   if (clients.length === 0) {
     return (
-      <div className="mt-6 flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-muted/20 py-10 text-center">
           <Users2 size={28} className="text-muted-foreground/40" />
           <div>
@@ -119,7 +119,7 @@ export function CreateAssignmentForm({
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="mt-6 space-y-4"
+      className="space-y-4"
     >
       {serverError && (
         <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
