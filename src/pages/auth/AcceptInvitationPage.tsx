@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { acceptInvitation } from '@/services/auth.service';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -160,12 +159,7 @@ function AuthShell({
       </div>
 
       <footer className="relative z-10 shrink-0 border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 flex items-center justify-between bg-canvas">
-        <div className="flex items-center gap-1.5">
-          <CheckCircle2 className="h-3.5 w-3.5 text-text-tertiary" />
-          <span className="text-xs text-text-tertiary">
-            All systems operational
-          </span>
-        </div>
+        <span />
         <p className="text-xs text-text-tertiary">
           © {new Date().getFullYear()} Arista CRM
         </p>

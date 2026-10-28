@@ -8,7 +8,6 @@ import { NoCrmAccessError, login, logout } from '@/services/auth.service';
 import { setAuth } from '@/store/slices/authSlice';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
@@ -203,12 +202,7 @@ export default function LoginPage() {
 
       {/* ── Footer ── */}
       <footer className="relative z-10 shrink-0 border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 flex items-center justify-between bg-canvas">
-        <div className="flex items-center gap-1.5">
-          <CheckCircle2 className="h-3.5 w-3.5 text-text-tertiary" />
-          <span className="text-xs text-text-tertiary">
-            All systems operational
-          </span>
-        </div>
+        <span />
         <p className="text-xs text-text-tertiary">
           © {new Date().getFullYear()} Arista CRM
         </p>

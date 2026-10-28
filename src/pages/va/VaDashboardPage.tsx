@@ -5,7 +5,6 @@ import {
   ClockIcon,
   MailIcon,
   PlusIcon,
-  TrophyIcon,
   UserIcon,
   ZapIcon,
 } from 'lucide-react';
@@ -26,7 +25,6 @@ import {
   useEodContextQuery,
   useEodSubmissionsQuery,
   useMyAllAssignmentsQuery,
-  useScorecardsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { formatDateKeyLong, todayString, weekStartOfDateKey } from '@/lib/time';
@@ -46,8 +44,6 @@ export default function VaDashboardPage() {
     useEodSubmissionsQuery({
       date: companyToday,
     });
-  const { data: scorecards = [], isLoading: loadingScores } =
-    useScorecardsQuery(undefined, false); // scorecards are admin/AM only
   const { data: allAssignments = [], isLoading: loadingAssignments } =
     useMyAllAssignmentsQuery();
 
@@ -57,16 +53,12 @@ export default function VaDashboardPage() {
     workAll
       .filter(e => e.entryDate.slice(0, 10) >= weekStart)
       .reduce((sum, e) => sum + e.timeSpent, 0) / 60;
-  const sorted = [...scorecards].sort(
-    (a, b) => new Date(b.weekStart).getTime() - new Date(a.weekStart).getTime()
-  );
-  const latestScore = sorted[0]?.productivityScore ?? null;
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         {/* Stat cards */}
-        <div className="*:data-[slot=card]:@xl/main:grid-cols-2 @5xl/main:grid-cols-4 grid grid-cols-1 gap-4 px-4 lg:px-6">
+        <div className="*:data-[slot=card]:@xl/main:grid-cols-2 @5xl/main:grid-cols-3 grid grid-cols-1 gap-4 px-4 lg:px-6">
           <Card className="@container/card">
             <CardHeader className="relative">
               <CardDescription>Entries Today</CardDescription>
@@ -130,29 +122,6 @@ export default function VaDashboardPage() {
             <CardFooter className="flex-col items-start gap-1 text-sm">
               <div className="text-muted-foreground">
                 Total time logged Mon–today
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>Productivity Score</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loadingScores ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : latestScore !== null ? (
-                  `${latestScore}`
-                ) : (
-                  'N/A'
-                )}
-              </CardTitle>
-              <div className="absolute right-4 top-4">
-                <TrophyIcon className="size-4 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">
-                Latest weekly scorecard (0–100)
               </div>
             </CardFooter>
           </Card>

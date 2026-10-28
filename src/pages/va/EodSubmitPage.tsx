@@ -104,7 +104,9 @@ export default function EodSubmitPage() {
               name="assignmentId"
               render={({ field }) => (
                 <Select
-                  value={field.value}
+                  // A lone assignment is passed straight in: setting it after mount races
+                  // the Select registering its options, which resets the field to "".
+                  value={field.value || (assignments.length === 1 ? assignments[0]!._id : '')}
                   onValueChange={field.onChange}
                   disabled={assignments.length === 1}
                 >

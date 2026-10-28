@@ -35,10 +35,10 @@ export default function WorkActivityPage() {
                 onValueChange={w.setAssignmentFilter}
               >
                 <SelectTrigger className="rounded-xl border-input h-8 text-sm w-52">
-                  <SelectValue placeholder="All w.assignments" />
+                  <SelectValue placeholder="All assignments" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All w.assignments</SelectItem>
+                  <SelectItem value="all">All assignments</SelectItem>
                   {w.assignments.map(a => (
                     <SelectItem key={a._id} value={a._id}>
                       {w.assignmentLabel(a)}

@@ -17,6 +17,13 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// DEMO — answer every call from fake in-memory data (no backend). Remove with src/demo.
+// Loaded lazily so a normal build drops it: the flag is replaced at build time.
+if (import.meta.env.VITE_DEMO === 'true') {
+  api.defaults.adapter = requestConfig =>
+    import('@/demo/adapter').then(m => m.demoAdapter(requestConfig));
+}
+
 // Attach access token to every request
 api.interceptors.request.use(requestConfig => {
   const token = store.getState().auth.accessToken;
@@ -25,6 +32,13 @@ api.interceptors.request.use(requestConfig => {
   }
   return requestConfig;
 });
+
+const PUBLIC_AUTH_PATHS = [
+  '/auth/login',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/set-password',
+];
 
 // Handle 401 — attempt token refresh then replay
 let isRefreshing = false;
@@ -45,10 +59,17 @@ api.interceptors.response.use(
 
     const originalRequest = error.config as RetryableConfig | undefined;
 
+    // A 401 from these endpoints means bad credentials or a bad token, not an
+    // expired session, so there is nothing to refresh and no redirect to make.
+    const isCredentialCall = PUBLIC_AUTH_PATHS.some(path =>
+      originalRequest?.url?.includes(path)
+    );
+
     if (
       error.response?.status !== 401 ||
       !originalRequest ||
-      originalRequest._retry
+      originalRequest._retry ||
+      isCredentialCall
     ) {
       return Promise.reject(error);
     }
