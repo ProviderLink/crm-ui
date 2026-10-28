@@ -7,7 +7,6 @@ import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
-  useCrmClientUsersQuery,
   useCrmVaUsersQuery,
   usePerformanceReviewsQuery,
 } from '@/hooks/queries';
@@ -39,8 +38,7 @@ export function useReviewsList() {
   );
 
   const [generateOpen, setGenerateOpen] = useState(false);
-  const [vaFilter, setVaFilter] = useState('all');
-  const [clientFilter, setClientFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<IPerformanceReview | null>(
@@ -57,8 +55,6 @@ export function useReviewsList() {
   };
 
   const filters: IReviewFilters = {
-    candidateId: vaFilter !== 'all' ? vaFilter : undefined,
-    clientId: clientFilter !== 'all' ? clientFilter : undefined,
     status:
       statusFilter !== 'all' ? STATUS_TO_BACKEND[statusFilter] : undefined,
   };
@@ -68,10 +64,9 @@ export function useReviewsList() {
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
   const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: clientList = [] } = useAtsClientsQuery();
-  const { data: crmClients = [] } = useCrmClientUsersQuery();
 
   // For AM, client-side filter by their assignments' candidateIds/clientIds
-  const reviews = useMemo(() => {
+  const scopedReviews = useMemo(() => {
     if (!isAccountManager) return allReviews;
     return allReviews.filter(
       r => amCandidateIds.has(r.vaId) || amClientIds.has(r.clientId)
@@ -93,23 +88,15 @@ export function useReviewsList() {
   const clientMap: Record<string, string> = {};
   for (const c of clientList) clientMap[c.id] = c.companyName;
 
-  const crmClientRefs = new Set(
-    crmClients.map(c => c.clientRef).filter(Boolean)
-  );
-  const filteredClients = clientList.filter(c => crmClientRefs.has(c.id));
-
-  // AM: restrict VA/client dropdowns to their assignments only
-  const displayVAs = useMemo(() => {
-    if (!isAccountManager) return atsVAs;
-    const amVaIds = new Set(amAssignments.map(a => a.candidateId));
-    return atsVAs.filter(v => amVaIds.has(v.id));
-  }, [atsVAs, isAccountManager, amAssignments]);
-
-  const displayClients = useMemo(() => {
-    if (!isAccountManager) return filteredClients;
-    const amClientIdsSet = new Set(amAssignments.map(a => a.clientId));
-    return filteredClients.filter(c => amClientIdsSet.has(c.id));
-  }, [filteredClients, isAccountManager, amAssignments]);
+  // Search matches the VA or the client name, case-insensitively.
+  const query = search.trim().toLowerCase();
+  const reviews = query
+    ? scopedReviews.filter(r => {
+        const va = r.candidateName ?? vaMap[r.vaId] ?? '';
+        const client = r.clientName ?? clientMap[r.clientId] ?? '';
+        return `${va} ${client}`.toLowerCase().includes(query);
+      })
+    : scopedReviews;
 
   async function handleExportPdf(review: IPerformanceReview) {
     setExportingId(review.id);
@@ -139,8 +126,7 @@ export function useReviewsList() {
   }
 
   function clearFilters() {
-    setVaFilter('all');
-    setClientFilter('all');
+    setSearch('');
     setStatusFilter('all');
   }
 
@@ -152,12 +138,8 @@ export function useReviewsList() {
     reviews,
     vaMap,
     clientMap,
-    displayVAs,
-    displayClients,
-    vaFilter,
-    setVaFilter,
-    clientFilter,
-    setClientFilter,
+    search,
+    setSearch,
     statusFilter,
     setStatusFilter,
     clearFilters,

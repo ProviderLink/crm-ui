@@ -7,10 +7,10 @@ export function AddItemButton({ onClick }: { onClick: () => void }) {
     <Button
       size="sm"
       variant="ghost"
-      className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+      className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
       onClick={onClick}
     >
-      <PlusIcon className="size-3" />
+      <PlusIcon className="size-3.5" />
       Add
     </Button>
   );

@@ -28,24 +28,18 @@ export function StatusBadge({ status }: { status: ReviewStatus }) {
   );
 }
 
-/** Five-star meter with the score; the label ("Exceeds Expectations") is the tooltip. */
+/** One star and the score out of five; the label is the tooltip. */
 export function RatingDisplay({ rating }: { rating: number | null }) {
   if (rating == null)
     return <span className="text-xs text-muted-foreground/50">—</span>;
   return (
     <span
-      className="inline-flex items-center gap-2 whitespace-nowrap"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm tabular-nums"
       title={`${rating} / 5 · ${RATING_LABELS[rating]}`}
     >
-      <span className="inline-flex items-center gap-0.5">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <StarIcon
-            key={i}
-            className={`size-3 ${i < rating ? 'fill-status-warning text-status-warning' : 'text-muted-foreground/20'}`}
-          />
-        ))}
-      </span>
-      <span className="text-sm font-medium tabular-nums">{rating}</span>
+      <StarIcon className="size-3.5 fill-status-warning text-status-warning" />
+      <span className="font-medium">{rating}</span>
+      <span className="text-muted-foreground">/ 5</span>
     </span>
   );
 }

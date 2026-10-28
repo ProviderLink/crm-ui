@@ -1,28 +1,27 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
+/** A flat section of the review drawer: a heading, optional actions, content. */
 export function SectionCard({
-  icon,
   title,
+  hint,
   action,
   children,
 }: {
-  icon: React.ReactNode;
   title: string;
+  hint?: string;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <Card className="shadow-none border-border/60">
-      <CardHeader className="px-5 py-4 pb-0">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <span className="text-muted-foreground">{icon}</span>
-            {title}
-          </CardTitle>
-          {action}
+    <section className="border-b border-border py-5 first:pt-0 last:border-b-0">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          {hint && (
+            <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
+          )}
         </div>
-      </CardHeader>
-      <CardContent className="px-5 py-4">{children}</CardContent>
-    </Card>
+        {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
+      </div>
+      {children}
+    </section>
   );
 }

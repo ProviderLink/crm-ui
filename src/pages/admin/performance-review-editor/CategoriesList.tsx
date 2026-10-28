@@ -1,13 +1,14 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { RATING_LABELS, type IPerformanceCategory } from '@/types/performance-review';
-
 import {
-  RATING_COLORS,
-  RATING_OPTIONS,
-  ratingToValue,
-  valueToRating,
-} from './rating';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import type { IPerformanceCategory } from '@/types/performance-review';
+
+import { RATING_OPTIONS, ratingToValue, valueToRating } from './rating';
 
 export function CategoriesList({
   categories,
@@ -23,88 +24,61 @@ export function CategoriesList({
   ) => void;
 }) {
   return (
-              <div className="space-y-3">
-                {categories
-                  .slice()
-                  .sort((a, b) => a.sortOrder - b.sortOrder)
-                  .map((cat, idx) => (
-                    <div
-                      key={cat.id}
-                      className="rounded-lg border border-border/50 bg-background p-4"
-                    >
-                      {/* Category header row */}
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex items-start gap-2.5 min-w-0">
-                          <span className="flex-none mt-0.5 size-5 rounded-full bg-muted text-muted-foreground text-xs flex items-center justify-center font-medium select-none">
-                            {idx + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold leading-tight">
-                              {cat.categoryName}
-                            </p>
-                            {cat.categoryDescription && (
-                              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                                {cat.categoryDescription}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Rating select + badge */}
-                        <div className="flex items-center gap-2 shrink-0">
-                          {cat.rating !== null && (
-                            <span
-                              className={`text-xs font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${RATING_COLORS[cat.rating] ?? ''}`}
-                            >
-                              {cat.rating} · {RATING_LABELS[cat.rating]}
-                            </span>
-                          )}
-                          <Select
-                            value={ratingToValue(cat.rating)}
-                            onValueChange={v =>
-                              onChangeField(
-                                cat.id,
-                                'rating',
-                                valueToRating(v)
-                              )
-                            }
-                            disabled={isReadOnly}
-                          >
-                            <SelectTrigger className="h-7 w-[130px] text-xs">
-                              <SelectValue placeholder="Set rating" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {RATING_OPTIONS.map(o => (
-                                <SelectItem
-                                  key={o.value}
-                                  value={o.value}
-                                  className="text-xs"
-                                >
-                                  {o.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      {/* Manager comments */}
-                      <Textarea
-                        value={cat.managerComments ?? ''}
-                        onChange={e =>
-                          onChangeField(
-                            cat.id,
-                            'managerComments',
-                            e.target.value
-                          )
-                        }
-                        rows={2}
-                        placeholder="Manager comments for this category..."
-                        className="text-sm resize-none bg-muted/30"
-                        disabled={isReadOnly}
-                      />
-                    </div>
-                  ))}
+    <div className="divide-y divide-white/[0.08] rounded-lg border border-white/[0.1] bg-white/[0.03]">
+      {categories
+        .slice()
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map(cat => (
+          <div key={cat.id} className="space-y-3 p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium leading-tight">
+                  {cat.categoryName}
+                </p>
+                {cat.categoryDescription && (
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {cat.categoryDescription}
+                  </p>
+                )}
               </div>
+              <Select
+                value={ratingToValue(cat.rating)}
+                onValueChange={v =>
+                  onChangeField(cat.id, 'rating', valueToRating(v))
+                }
+                disabled={isReadOnly}
+              >
+                <SelectTrigger
+                  className="h-8 w-full shrink-0 text-xs sm:w-52"
+                  aria-label={`Rating for ${cat.categoryName}`}
+                >
+                  <SelectValue placeholder="Set rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RATING_OPTIONS.map(o => (
+                    <SelectItem
+                      key={o.value}
+                      value={o.value}
+                      className="text-xs"
+                    >
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Textarea
+              value={cat.managerComments ?? ''}
+              onChange={e =>
+                onChangeField(cat.id, 'managerComments', e.target.value)
+              }
+              rows={2}
+              placeholder="Comments for this category…"
+              className="resize-none text-sm"
+              disabled={isReadOnly}
+            />
+          </div>
+        ))}
+    </div>
   );
 }

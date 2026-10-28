@@ -16,14 +16,14 @@ export function AiButton({
       type="button"
       size="sm"
       variant="ghost"
-      className="h-7 px-2.5 text-xs border border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 gap-1.5"
+      className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
       onClick={onClick}
       disabled={loading}
     >
       {loading ? (
-        <Loader2Icon className="size-3 animate-spin" />
+        <Loader2Icon className="size-3.5 animate-spin" />
       ) : (
-        <SparklesIcon className="size-3" />
+        <SparklesIcon className="size-3.5" />
       )}
       {loading ? 'Working…' : label}
     </Button>

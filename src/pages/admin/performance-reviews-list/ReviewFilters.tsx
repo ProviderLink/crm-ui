@@ -1,3 +1,6 @@
+import { SearchIcon, XIcon } from 'lucide-react';
+
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -7,116 +10,71 @@ import {
 } from '@/components/ui/select';
 import { REVIEW_STATUSES } from '@/types/performance-review';
 
-interface VaOption {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
-
-interface ClientOption {
-  id: string;
-  companyName: string;
-}
-
 export function ReviewFilters({
-  vaFilter,
-  onVaChange,
-  clientFilter,
-  onClientChange,
+  search,
+  onSearchChange,
   statusFilter,
   onStatusChange,
-  vas,
-  clients,
   recordCount,
   isAccountManager,
 }: {
-  vaFilter: string;
-  onVaChange: (v: string) => void;
-  clientFilter: string;
-  onClientChange: (v: string) => void;
+  search: string;
+  onSearchChange: (v: string) => void;
   statusFilter: string;
   onStatusChange: (v: string) => void;
-  vas: VaOption[];
-  clients: ClientOption[];
   recordCount: number;
   isAccountManager: boolean;
 }) {
+  const filtered = search !== '' || statusFilter !== 'all';
+
   return (
-          <div className="flex items-center gap-3 mb-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">VA</span>
-              <Select value={vaFilter} onValueChange={onVaChange}>
-                <SelectTrigger className="h-8 w-44 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All VAs</SelectItem>
-                  {vas.map(v => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.firstName} {v.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+    <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="relative w-full sm:w-72">
+        <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={e => onSearchChange(e.target.value)}
+          placeholder="Search VA or client…"
+          aria-label="Search by VA or client"
+          className="h-8 pl-8 text-sm"
+        />
+      </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Client</span>
-              <Select value={clientFilter} onValueChange={onClientChange}>
-                <SelectTrigger className="h-8 w-44 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Clients</SelectItem>
-                  {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.companyName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <Select value={statusFilter} onValueChange={onStatusChange}>
+        <SelectTrigger
+          className="h-8 w-40 text-sm"
+          aria-label="Filter by status"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All statuses</SelectItem>
+          {REVIEW_STATUSES.map(s => (
+            <SelectItem key={s} value={s}>
+              {s}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Status</span>
-              <Select value={statusFilter} onValueChange={onStatusChange}>
-                <SelectTrigger className="h-8 w-40 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  {REVIEW_STATUSES.map(s => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      {filtered && (
+        <button
+          type="button"
+          onClick={() => {
+            onSearchChange('');
+            onStatusChange('all');
+          }}
+          className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <XIcon className="size-3.5" />
+          Clear
+        </button>
+      )}
 
-            {(vaFilter !== 'all' ||
-              clientFilter !== 'all' ||
-              statusFilter !== 'all') && (
-              <button
-                onClick={() => {
-                  onVaChange('all');
-                  onClientChange('all');
-                  onStatusChange('all');
-                }}
-                className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-              >
-                Clear filters
-              </button>
-            )}
-
-            <span className="ml-auto text-xs text-muted-foreground">
-              {recordCount} record{recordCount !== 1 ? 's' : ''}
-            </span>
-            {isAccountManager && (
-              <span className="text-[11px] text-muted-foreground/60 ml-1">
-                (your assignments)
-              </span>
-            )}
-          </div>
+      <span className="ml-auto text-xs text-muted-foreground">
+        {recordCount} review{recordCount !== 1 ? 's' : ''}
+        {isAccountManager && ' · your assignments'}
+      </span>
+    </div>
   );
 }

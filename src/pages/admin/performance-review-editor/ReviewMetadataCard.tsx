@@ -1,40 +1,33 @@
-import { Card, CardContent } from '@/components/ui/card';
 import type { IPerformanceReview } from '@/types/performance-review';
 
+const fmt = (iso?: string) =>
+  iso
+    ? new Date(iso).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '—';
+
 export function ReviewMetadataCard({ review }: { review: IPerformanceReview }) {
+  const items = [
+    { label: 'VA', value: review.candidateName ?? '—' },
+    { label: 'Client', value: review.clientName ?? '—' },
+    {
+      label: 'Review period',
+      value: `${fmt(review.reviewPeriodStart)} – ${fmt(review.reviewPeriodEnd)}`,
+    },
+  ];
   return (
-          <Card className="shadow-none border-border/60 bg-muted/30">
-            <CardContent className="px-5 py-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-0.5">
-                    VA / Candidate
-                  </p>
-                  <p className="text-sm font-medium">
-                    {review.candidateName ?? '—'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-0.5">Client</p>
-                  <p className="text-sm font-medium">
-                    {review.clientName ?? '—'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-0.5">
-                    Review Period
-                  </p>
-                  <p className="text-sm font-medium">
-                    {review.reviewPeriodStart?.slice(0, 10)} –{' '}
-                    {review.reviewPeriodEnd?.slice(0, 10)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-0.5">Status</p>
-                  <p className="text-sm font-medium">{review.reviewStatus}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <dl className="grid grid-cols-1 gap-x-6 gap-y-3 rounded-lg border border-white/[0.1] bg-white/[0.03] px-4 py-3 sm:grid-cols-[1fr_1fr_auto]">
+      {items.map(i => (
+        <div key={i.label} className="min-w-0">
+          <dt className="text-xs text-muted-foreground">{i.label}</dt>
+          <dd className="mt-0.5 text-sm font-medium break-words">
+            {i.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }

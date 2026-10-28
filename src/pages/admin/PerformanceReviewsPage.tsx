@@ -6,7 +6,7 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 
-import { ReviewDetailDialog } from './performance-review-editor/ReviewDetailDialog';
+import { ReviewDrawer } from './performance-review-editor/ReviewDrawer';
 import { buildReviewColumns } from './performance-reviews-list/columns';
 import { ReviewFilters } from './performance-reviews-list/ReviewFilters';
 import { useReviewsList } from './performance-reviews-list/use-reviews-list';
@@ -17,11 +17,11 @@ export default function PerformanceReviewsPage() {
   const { isAccountManager } = p;
 
   const columns = buildReviewColumns({
-        vaMap: p.vaMap,
-        clientMap: p.clientMap,
-        exportingId: p.exportingId,
-        onExport: p.handleExportPdf,
-        onDelete: p.setDeleteTarget,
+    vaMap: p.vaMap,
+    clientMap: p.clientMap,
+    exportingId: p.exportingId,
+    onExport: p.handleExportPdf,
+    onDelete: p.setDeleteTarget,
   });
 
   return (
@@ -29,7 +29,7 @@ export default function PerformanceReviewsPage() {
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold text-foreground">
                 Performance Reviews
@@ -47,14 +47,10 @@ export default function PerformanceReviewsPage() {
           </div>
 
           <ReviewFilters
-            vaFilter={p.vaFilter}
-            onVaChange={p.setVaFilter}
-            clientFilter={p.clientFilter}
-            onClientChange={p.setClientFilter}
+            search={p.search}
+            onSearchChange={p.setSearch}
             statusFilter={p.statusFilter}
             onStatusChange={p.setStatusFilter}
-            vas={p.displayVAs}
-            clients={p.displayClients}
             recordCount={p.reviews.length}
             isAccountManager={isAccountManager}
           />
@@ -74,7 +70,7 @@ export default function PerformanceReviewsPage() {
         onCreated={setOpenReviewId}
       />
 
-      <ReviewDetailDialog
+      <ReviewDrawer
         reviewId={openReviewId}
         onClose={() => setOpenReviewId(null)}
       />
