@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -12,44 +11,47 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { TimePickerField } from '@/components/ui/time-picker-field';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
-import { nowTimeString, todayString } from '@/lib/time';
+import { formatMinutes, nowTimeString, todayString } from '@/lib/time';
 import { createWorkEntry } from '@/services/work-entries.service';
 import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  AlarmClock,
   Briefcase,
   CalendarDays,
   CheckCircle2,
-  Clock,
   FileText,
   StickyNote,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
+
+import { Field, Section } from '../admin/assignments/form-layout';
 
 const schema = z.object({
   assignmentId: z.string().min(1, 'Assignment is required'),
   entryDate: z.string().min(1, 'Date is required'),
   entryTime: z.string().min(1, 'Time is required'),
-  taskCategory: z.enum([
-    'Administrative',
-    'Clinical Coordination',
-    'Data Entry',
-    'Communication',
-    'Research',
-    'Scheduling',
-    'Other',
-  ]),
+  taskCategory: z.enum(
+    [
+      'Administrative',
+      'Clinical Coordination',
+      'Data Entry',
+      'Communication',
+      'Research',
+      'Scheduling',
+      'Other',
+    ],
+    { error: 'Category is required' }
+  ),
   taskDescription: z.string().min(1, 'Description is required'),
   timeSpent: z
-    .number()
-    .int()
+    .number({ error: 'Duration is required' })
+    .int('Enter whole minutes')
     .min(1, 'Enter at least 1 minute')
     .max(480, 'Maximum is 480 minutes (8 hours) per entry'),
   status: z.enum(['completed', 'in_progress', 'pending']),
@@ -58,11 +60,15 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  completed: { label: 'Completed', color: 'text-status-success' },
-  in_progress: { label: 'In Progress', color: 'text-status-info' },
-  pending: { label: 'Pending', color: 'text-status-warning' },
+// Status colour is a small dot only, like the pills elsewhere in the CRM.
+const STATUS_CONFIG: Record<string, { label: string; dot: string }> = {
+  completed: { label: 'Completed', dot: 'bg-status-success' },
+  in_progress: { label: 'In Progress', dot: 'bg-status-info' },
+  pending: { label: 'Pending', dot: 'bg-status-warning' },
 };
+
+// Shortcuts that fill the duration field; any value can still be typed.
+const DURATION_PRESETS = [15, 30, 60, 120];
 
 export default function AddWorkEntryPage() {
   const navigate = useNavigate();
@@ -88,6 +94,8 @@ export default function AddWorkEntryPage() {
       status: 'completed',
     },
   });
+
+  const timeSpent = useWatch({ control, name: 'timeSpent' });
 
   useEffect(() => {
     if (assignments.length === 1 && assignments[0]) {
@@ -136,220 +144,264 @@ export default function AddWorkEntryPage() {
     );
   }
 
+  const durationValid =
+    typeof timeSpent === 'number' && Number.isFinite(timeSpent) && timeSpent > 0;
+
   return (
     <PageShell>
       <PageHeader />
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-        {submitError && (
-          <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-            {submitError}
-          </div>
-        )}
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className="rounded-lg border border-border bg-card"
+      >
+        <div className="space-y-5 p-6">
+          {submitError && (
+            <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {submitError}
+            </div>
+          )}
 
-        {/* ── Section: Assignment ── */}
-        <Section icon={<Briefcase size={14} />} title="Assignment">
-          <Field label="Assigned Role" error={errors.assignmentId?.message}>
-            <Controller
-              control={control}
-              name="assignmentId"
-              render={({ field }) => (
-                <Select
-                  // A lone assignment is passed straight in: setting it after mount races
-                  // the Select registering its options, which resets the field to "".
-                  value={field.value || (assignments.length === 1 ? assignments[0]!._id : '')}
-                  onValueChange={field.onChange}
-                  disabled={assignments.length === 1}
-                >
-                  <SelectTrigger className="rounded-xl border-input h-10">
-                    <SelectValue placeholder="Select assignment" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assignments.map(a => (
-                      <SelectItem key={a._id} value={a._id}>
-                        <span className="flex flex-col">
-                          <span>{a.serviceType ?? a._id}</span>
-                          {a.companyName && (
-                            <span className="text-xs text-muted-foreground">
-                              {a.companyName}
+          {/* ── Assignment ── */}
+          <Section icon={<Briefcase size={14} />} title="Assignment">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Assigned role" error={errors.assignmentId?.message}>
+                <Controller
+                  control={control}
+                  name="assignmentId"
+                  render={({ field }) => {
+                    // A lone assignment is passed straight in: setting it after mount races
+                    // the Select registering its options, which resets the field to "".
+                    const only = assignments.length === 1 ? assignments[0]! : null;
+                    if (only) {
+                      return (
+                        <div className="flex h-10 min-w-0 flex-col justify-center rounded-md border border-border bg-white/[0.03] px-3">
+                          <span className="truncate text-sm leading-tight">
+                            {only.serviceType ?? only._id}
+                          </span>
+                          {only.companyName && (
+                            <span className="truncate text-xs leading-tight text-muted-foreground">
+                              {only.companyName}
                             </span>
                           )}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </Field>
-        </Section>
+                        </div>
+                      );
+                    }
+                    return (
+                      <Select
+                        value={field.value || ''}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select assignment" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assignments.map(a => (
+                            <SelectItem key={a._id} value={a._id}>
+                              <span className="flex flex-col">
+                                <span>{a.serviceType ?? a._id}</span>
+                                {a.companyName && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {a.companyName}
+                                  </span>
+                                )}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  }}
+                />
+              </Field>
 
-        {/* ── Section: When ── */}
-        <Section icon={<CalendarDays size={14} />} title="When">
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Date" error={errors.entryDate?.message}>
-              <Controller
-                name="entryDate"
-                control={control}
-                render={({ field }) => (
-                  <DatePickerField
-                    value={field.value}
-                    onChange={field.onChange}
-                    toDate={new Date()}
-                  />
-                )}
-              />
-            </Field>
-            <Field label="Start Time" error={errors.entryTime?.message}>
-              <Controller
-                name="entryTime"
-                control={control}
-                render={({ field }) => (
-                  <TimePickerField
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </Field>
-          </div>
-        </Section>
-
-        {/* ── Section: Task Details ── */}
-        <Section icon={<FileText size={14} />} title="Task Details">
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Category" error={errors.taskCategory?.message}>
-              <Controller
-                control={control}
-                name="taskCategory"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="rounded-xl border-input h-10">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {WORK_ENTRY_CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-            <Field label="Status" error={errors.status?.message}>
-              <Controller
-                control={control}
-                name="status"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="rounded-xl border-input h-10">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {WORK_ENTRY_STATUSES.map(s => (
-                        <SelectItem key={s} value={s}>
-                          <span className={STATUS_CONFIG[s]?.color}>
-                            {STATUS_CONFIG[s]?.label ?? s}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </Field>
-          </div>
-
-          <Field
-            label="Description"
-            error={errors.taskDescription?.message}
-            hint="Be specific — what did you do?"
-          >
-            <Textarea
-              placeholder="e.g. Updated 12 patient records in Epic, responded to 8 emails…"
-              className="rounded-xl border-input resize-none"
-              rows={3}
-              {...register('taskDescription')}
-            />
-          </Field>
-        </Section>
-
-        {/* ── Section: Time ── */}
-        <Section icon={<Clock size={14} />} title="Time Spent">
-          <Field
-            label="Duration (minutes)"
-            error={errors.timeSpent?.message}
-            hint="Total minutes spent on this task"
-          >
-            <div className="relative max-w-[180px]">
-              <Input
-                type="number"
-                min={1}
-                placeholder="60"
-                className="rounded-xl border-input h-10 pr-14"
-                {...register('timeSpent', { valueAsNumber: true })}
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-                min
-              </span>
+              <Field label="Category" error={errors.taskCategory?.message}>
+                <Controller
+                  control={control}
+                  name="taskCategory"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WORK_ENTRY_CATEGORIES.map(cat => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </Field>
             </div>
-          </Field>
-        </Section>
+          </Section>
 
-        {/* ── Section: Notes (optional) ── */}
-        <Section icon={<StickyNote size={14} />} title="Notes" optional>
-          <Field label="" error={errors.notes?.message}>
-            <Textarea
-              placeholder="Any additional context, links, or follow-up notes…"
-              className="rounded-xl border-input resize-none"
-              rows={2}
-              {...register('notes')}
-            />
-          </Field>
-        </Section>
+          {/* ── When and how long ── */}
+          <Section icon={<CalendarDays size={14} />} title="When and how long">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Date" error={errors.entryDate?.message}>
+                <Controller
+                  name="entryDate"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePickerField
+                      value={field.value}
+                      onChange={field.onChange}
+                      toDate={new Date()}
+                    />
+                  )}
+                />
+              </Field>
+              <Field label="Start time" error={errors.entryTime?.message}>
+                <Controller
+                  name="entryTime"
+                  control={control}
+                  render={({ field }) => (
+                    <TimePickerField
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              </Field>
+              <Field label="Duration" error={errors.timeSpent?.message}>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="60"
+                    className="pr-12"
+                    {...register('timeSpent', { valueAsNumber: true })}
+                  />
+                  <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-muted-foreground">
+                    min
+                  </span>
+                </div>
+              </Field>
+            </div>
+
+            {/* Quick durations, and the typed value read back as hours. */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-xs text-muted-foreground">Quick:</span>
+              {DURATION_PRESETS.map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() =>
+                    setValue('timeSpent', m, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                  className={`h-7 rounded-md border px-2.5 text-xs transition-colors ${
+                    timeSpent === m
+                      ? 'border-border-strong bg-white/[0.08] text-foreground'
+                      : 'border-border text-muted-foreground hover:border-input hover:text-foreground'
+                  }`}
+                >
+                  {formatMinutes(m)}
+                </button>
+              ))}
+              {durationValid && (
+                <span className="ml-2 text-xs tabular-nums text-muted-foreground">
+                  = {formatMinutes(timeSpent)}
+                </span>
+              )}
+            </div>
+          </Section>
+
+          {/* ── Task ── */}
+          <Section icon={<FileText size={14} />} title="Task">
+            <Field
+              label="Description"
+              error={errors.taskDescription?.message}
+              hint="Be specific — what did you do?"
+            >
+              <Textarea
+                placeholder="e.g. Updated 12 patient records in Epic, responded to 8 emails…"
+                className="resize-none"
+                rows={3}
+                {...register('taskDescription')}
+              />
+            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Status" error={errors.status?.message}>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WORK_ENTRY_STATUSES.map(s => (
+                          <SelectItem key={s} value={s}>
+                            <span className="flex items-center gap-2">
+                              <span
+                                className={`size-1.5 rounded-full ${STATUS_CONFIG[s]?.dot ?? 'bg-text-tertiary'}`}
+                              />
+                              {STATUS_CONFIG[s]?.label ?? s}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </Field>
+            </div>
+          </Section>
+
+          {/* ── Notes (optional) ── */}
+          <Section icon={<StickyNote size={14} />} title="Notes" optional>
+            <Field label="" error={errors.notes?.message}>
+              <Textarea
+                placeholder="Any additional context, links, or follow-up notes…"
+                className="resize-none"
+                rows={2}
+                {...register('notes')}
+              />
+            </Field>
+          </Section>
+        </div>
 
         {/* ── Actions ── */}
-        <div className="flex items-center gap-3 pt-1">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-1 rounded-xl h-10 font-medium gap-2"
-          >
+        <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting} className="gap-2">
             {isSubmitting ? (
               <>
-                <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                <span className="size-3.5 animate-spin rounded-full border-2 border-text-inverse/30 border-t-text-inverse" />
                 Saving…
               </>
             ) : (
               <>
                 <CheckCircle2 size={15} />
-                Save Work Entry
+                Save work entry
               </>
             )}
           </Button>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="px-4 h-10 rounded-xl text-sm text-muted-foreground hover:text-foreground border border-border hover:border-input transition-colors"
-          >
-            Cancel
-          </button>
         </div>
       </form>
     </PageShell>
   );
 }
 
-// ─── Shared layout pieces ──────────────────────────────────────
+// ─── Layout pieces ─────────────────────────────────────────────
 
 function PageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="@container/main flex flex-1 flex-col">
+    <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="px-4 lg:px-6">
-          <div className="max-w-2xl">{children}</div>
+          <div className="max-w-3xl">{children}</div>
         </div>
       </div>
     </div>
@@ -358,79 +410,18 @@ function PageShell({ children }: { children: ReactNode }) {
 
 function PageHeader() {
   return (
-    <div className="mb-5">
-      <div className="flex items-center gap-2 mb-1">
-        <AlarmClock size={18} className="text-muted-foreground" />
-        <h1 className="text-xl font-semibold text-foreground">
-          Log Work Entry
-        </h1>
-      </div>
-      <p className="text-sm text-muted-foreground ml-7">
+    <div className="mb-6">
+      <h1 className="text-2xl font-semibold text-foreground">Log Work Entry</h1>
+      <p className="mt-0.5 text-sm text-muted-foreground">
         Record a task you completed or are working on
       </p>
     </div>
   );
 }
 
-function Section({
-  icon,
-  title,
-  optional = false,
-  children,
-}: {
-  icon: ReactNode;
-  title: string;
-  optional?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div className="bg-card rounded-lg border border-border overflow-hidden">
-      <div className="flex items-center gap-2 px-5 py-3 border-b border-border/60 bg-muted/30">
-        <span className="text-muted-foreground">{icon}</span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {title}
-        </span>
-        {optional && (
-          <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">
-            Optional
-          </span>
-        )}
-      </div>
-      <div className="p-5 space-y-4">{children}</div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  error,
-  hint,
-  children,
-}: {
-  label: string;
-  error?: string;
-  hint?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      {label && (
-        <Label className="text-sm font-medium text-foreground block mb-1">
-          {label}
-        </Label>
-      )}
-      {hint && (
-        <p className="text-[11px] text-muted-foreground -mt-0.5">{hint}</p>
-      )}
-      {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
-    </div>
-  );
-}
-
 function EmptyCard({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-card rounded-lg border border-border p-8 text-center">
+    <div className="rounded-lg border border-border bg-card p-8 text-center">
       {children}
     </div>
   );
@@ -439,19 +430,15 @@ function EmptyCard({ children }: { children: ReactNode }) {
 function PageSkeleton() {
   return (
     <PageShell>
-      <div className="mb-5 space-y-2">
-        <div className="h-6 w-40 rounded-lg bg-muted animate-pulse" />
-        <div className="h-4 w-64 rounded-lg bg-muted animate-pulse" />
+      <div className="mb-6 space-y-2">
+        <div className="h-7 w-44 animate-pulse rounded-md bg-muted" />
+        <div className="h-4 w-64 animate-pulse rounded-md bg-muted" />
       </div>
-      {[1, 2, 3].map(i => (
-        <div key={i} className="bg-card rounded-2xl border border-border mb-4">
-          <div className="h-10 border-b border-border bg-muted/30 rounded-t-2xl animate-pulse" />
-          <div className="p-5 space-y-3">
-            <div className="h-10 rounded-xl bg-muted animate-pulse" />
-            <div className="h-10 rounded-xl bg-muted animate-pulse" />
-          </div>
-        </div>
-      ))}
+      <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-10 animate-pulse rounded-md bg-muted" />
+        ))}
+      </div>
     </PageShell>
   );
 }
