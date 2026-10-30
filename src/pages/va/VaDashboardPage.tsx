@@ -1,4 +1,5 @@
 import {
+  ArrowRightIcon,
   BriefcaseIcon,
   CalendarIcon,
   ClipboardCheckIcon,
@@ -10,16 +11,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useEodContextQuery,
@@ -27,7 +20,18 @@ import {
   useMyAllAssignmentsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
-import { formatDateKeyLong, todayString, weekStartOfDateKey } from '@/lib/time';
+import {
+  formatDateKeyLong,
+  formatMinutes,
+  todayString,
+  weekStartOfDateKey,
+} from '@/lib/time';
+
+import { DashboardStatCard } from '../admin/admin-dashboard/DashboardStatCard';
+import { AssignmentStatus } from '../admin/assignments/AssignmentStatus';
+import { StatusPill } from '../admin/work-entries/StatusPill';
+
+const MAX_TODAY_ROWS = 5;
 
 export default function VaDashboardPage() {
   const today = todayString();
@@ -49,109 +53,155 @@ export default function VaDashboardPage() {
 
   const todayEntries = workAll.filter(e => e.entryDate.slice(0, 10) === today);
   const eodSubmitted = todayEods.length > 0;
-  const weekHours =
-    workAll
-      .filter(e => e.entryDate.slice(0, 10) >= weekStart)
-      .reduce((sum, e) => sum + e.timeSpent, 0) / 60;
+  const weekEntries = workAll.filter(
+    e => e.entryDate.slice(0, 10) >= weekStart
+  );
+  const weekHours = weekEntries.reduce((sum, e) => sum + e.timeSpent, 0) / 60;
+
+  // Latest first, so the most recent task leads.
+  const latestToday = [...todayEntries]
+    .sort((a, b) => (b.entryTime ?? '').localeCompare(a.entryTime ?? ''))
+    .slice(0, MAX_TODAY_ROWS);
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        {/* Stat cards */}
-        <div className="*:data-[slot=card]:@xl/main:grid-cols-2 @5xl/main:grid-cols-3 grid grid-cols-1 gap-4 px-4 lg:px-6">
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>Entries Today</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loadingWork ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  todayEntries.length
-                )}
-              </CardTitle>
-              <div className="absolute right-4 top-4">
-                <ClockIcon className="size-4 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">
-                Work entries logged today
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>EOD Status</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loadingEods ? (
-                  <Skeleton className="h-8 w-28" />
-                ) : eodSubmitted ? (
-                  'Submitted'
-                ) : (
-                  'Pending'
-                )}
-              </CardTitle>
-              <div className="absolute right-4 top-4">
-                <ClipboardCheckIcon
-                  className={`size-4 ${!loadingEods && eodSubmitted ? 'text-text-secondary' : 'text-muted-foreground'}`}
-                />
-              </div>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">
-                End-of-day report for today
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className="@container/card">
-            <CardHeader className="relative">
-              <CardDescription>This Week's Hours</CardDescription>
-              <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                {loadingWork ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : (
-                  `${weekHours.toFixed(1)}h`
-                )}
-              </CardTitle>
-              <div className="absolute right-4 top-4">
-                <ZapIcon className="size-4 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <div className="text-muted-foreground">
-                Total time logged Mon–today
-              </div>
-            </CardFooter>
-          </Card>
+      <div className="flex flex-col gap-6 py-4 md:py-6">
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 lg:px-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">
+              Dashboard
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Your day at a glance
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link to="/va/eod/new">
+                <ClipboardCheckIcon className="size-4" />
+                {eodSubmitted ? 'EOD submitted' : 'Submit EOD'}
+              </Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link to="/va/work/new">
+                <PlusIcon className="size-4" />
+                Log Work Entry
+              </Link>
+            </Button>
+          </div>
         </div>
 
-        {/* Quick actions */}
-        <div className="flex gap-3 px-4 lg:px-6">
-          <Button asChild>
-            <Link to="/va/work/new">
-              <PlusIcon className="size-4" />
-              Log Work Entry
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to="/va/eod/new">
-              <ClipboardCheckIcon className="size-4" />
-              {eodSubmitted ? 'EOD Submitted ✓' : 'Submit EOD'}
-            </Link>
-          </Button>
+        {/* Today at a glance */}
+        <div className="grid grid-cols-1 gap-4 px-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-3 lg:px-6">
+          <DashboardStatCard
+            label="Entries today"
+            value={todayEntries.length}
+            icon={ClockIcon}
+            isLoading={loadingWork}
+            to="/va/work/history"
+          >
+            Work entries logged today
+          </DashboardStatCard>
+
+          <DashboardStatCard
+            label="EOD status"
+            value={eodSubmitted ? 'Submitted' : 'Pending'}
+            icon={ClipboardCheckIcon}
+            valueClassName={eodSubmitted ? '' : 'text-status-warning'}
+            isLoading={loadingEods}
+            to={eodSubmitted ? '/va/eod/history' : '/va/eod/new'}
+          >
+            {eodSubmitted
+              ? 'Today’s report is in'
+              : 'Submit today’s end-of-day report'}
+          </DashboardStatCard>
+
+          <DashboardStatCard
+            label="This week’s hours"
+            value={`${weekHours.toFixed(1)}h`}
+            icon={ZapIcon}
+            isLoading={loadingWork}
+            to="/va/work/history"
+          >
+            {weekEntries.length} {weekEntries.length === 1 ? 'entry' : 'entries'}{' '}
+            logged Mon–today
+          </DashboardStatCard>
+        </div>
+
+        {/* Today's work */}
+        <div className="px-4 lg:px-6">
+          <Card className="gap-4 p-5">
+            <CardHeader className="p-0">
+              <CardTitle className="text-sm font-medium">Today’s work</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 pt-3">
+              {loadingWork ? (
+                <Skeleton className="h-24 w-full rounded-md" />
+              ) : latestToday.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nothing logged yet today.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {latestToday.map(e => (
+                    <li
+                      key={e._id}
+                      className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0"
+                    >
+                      <div className="min-w-0">
+                        <p
+                          className="truncate text-sm"
+                          title={e.taskDescription}
+                        >
+                          {e.taskDescription}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {e.taskCategory}
+                          {e.entryTime && ` · ${e.entryTime}`}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className="text-sm tabular-nums text-muted-foreground">
+                          {formatMinutes(e.timeSpent)}
+                        </span>
+                        <StatusPill status={e.status} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {todayEntries.length > 0 && (
+                <Link
+                  to="/va/work/history"
+                  className="mt-3 inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {todayEntries.length > MAX_TODAY_ROWS
+                    ? `View all work (${todayEntries.length} today)`
+                    : 'View work history'}
+                  <ArrowRightIcon className="size-3" />
+                </Link>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* My Assignments */}
-        <div className="px-4 lg:px-6 flex flex-col gap-3">
-          <h2 className="text-sm font-semibold text-foreground">
-            My Assignments
-          </h2>
+        <div className="flex flex-col gap-3 px-4 lg:px-6">
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-sm font-semibold text-foreground">
+              My assignments
+            </h2>
+            {!loadingAssignments && allAssignments.length > 0 && (
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {allAssignments.length}
+              </span>
+            )}
+          </div>
           {loadingAssignments ? (
-            <div className="flex flex-col gap-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {[1, 2].map(i => (
-                <Skeleton key={i} className="h-28 w-full rounded-xl" />
+                <Skeleton key={i} className="h-36 w-full rounded-xl" />
               ))}
             </div>
           ) : allAssignments.length === 0 ? (
@@ -161,85 +211,65 @@ export default function VaDashboardPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {allAssignments.map(a => (
-                <Card key={a._id} className="flex flex-col gap-0">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
-                          Role
-                        </p>
-                        <CardTitle className="text-base leading-snug">
-                          {a.serviceType ?? 'VA Service'}
-                        </CardTitle>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={
-                          a.status === 'active'
-                            ? 'border-green-500/40 text-green-400 bg-green-500/10 shrink-0'
-                            : a.status === 'on_hold'
-                              ? 'border-yellow-500/40 text-yellow-400 bg-yellow-500/10 shrink-0'
-                              : 'border-muted text-muted-foreground shrink-0'
-                        }
-                      >
-                        {a.status === 'active'
-                          ? 'Active'
-                          : a.status === 'on_hold'
-                            ? 'On Hold'
-                            : 'Ended'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-3 pb-4 pt-0">
-                    {a.companyName && (
-                      <div>
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
-                          Client
-                        </p>
-                        <span className="flex items-center gap-1.5 text-sm text-foreground">
-                          <BriefcaseIcon className="size-3 shrink-0 text-muted-foreground" />
-                          {a.companyName}
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
-                        Duration
+                <Card key={a._id} className="flex flex-col gap-4 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {a.serviceType ?? 'VA Service'}
                       </p>
-                      <span className="flex items-center gap-1.5 text-sm text-foreground">
-                        <CalendarIcon className="size-3 shrink-0 text-muted-foreground" />
+                      {a.companyName && (
+                        <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-muted-foreground">
+                          <BriefcaseIcon className="size-3 shrink-0" />
+                          {a.companyName}
+                        </p>
+                      )}
+                    </div>
+                    <AssignmentStatus status={a.status} />
+                  </div>
+
+                  <dl className="space-y-2 border-t border-border pt-4 text-xs">
+                    <div className="flex items-center justify-between gap-3">
+                      <dt className="flex items-center gap-1.5 text-muted-foreground">
+                        <CalendarIcon className="size-3" />
+                        Duration
+                      </dt>
+                      <dd className="text-right">
                         {formatDateKeyLong(a.startDate)}
-                        <span className="text-muted-foreground">→</span>
+                        <span className="text-muted-foreground"> → </span>
                         {a.endDate ? (
                           formatDateKeyLong(a.endDate)
                         ) : (
-                          <span className="text-green-400">Present</span>
-                        )}
-                      </span>
-                    </div>
-                    {(a.accountManagerName || a.accountManagerEmail) && (
-                      <div>
-                        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
-                          Account Manager
-                        </p>
-                        {a.accountManagerName && (
-                          <span className="flex items-center gap-1.5 text-sm text-foreground">
-                            <UserIcon className="size-3 shrink-0 text-muted-foreground" />
-                            {a.accountManagerName}
+                          <span className="text-muted-foreground">
+                            Present
                           </span>
                         )}
-                        {a.accountManagerEmail && (
-                          <a
-                            href={`mailto:${a.accountManagerEmail}`}
-                            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mt-0.5 transition-colors"
-                          >
-                            <MailIcon className="size-3 shrink-0" />
-                            {a.accountManagerEmail}
-                          </a>
-                        )}
+                      </dd>
+                    </div>
+                    {(a.accountManagerName || a.accountManagerEmail) && (
+                      <div className="flex items-start justify-between gap-3">
+                        <dt className="flex items-center gap-1.5 text-muted-foreground">
+                          <UserIcon className="size-3" />
+                          Account manager
+                        </dt>
+                        <dd className="min-w-0 text-right">
+                          {a.accountManagerName && (
+                            <p className="truncate">{a.accountManagerName}</p>
+                          )}
+                          {a.accountManagerEmail && (
+                            <a
+                              href={`mailto:${a.accountManagerEmail}`}
+                              className="mt-0.5 inline-flex max-w-full items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+                            >
+                              <MailIcon className="size-3 shrink-0" />
+                              <span className="truncate">
+                                {a.accountManagerEmail}
+                              </span>
+                            </a>
+                          )}
+                        </dd>
                       </div>
                     )}
-                  </CardContent>
+                  </dl>
                 </Card>
               ))}
             </div>

@@ -15,7 +15,7 @@ export function DashboardStatCard({
   children,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   icon: LucideIcon;
   /** e.g. a red number when something needs attention. */
   valueClassName?: string;
