@@ -11,7 +11,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { TimePickerField } from '@/components/ui/time-picker-field';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
-import { formatMinutes, nowTimeString, todayString } from '@/lib/time';
+import { nowTimeString, todayString } from '@/lib/time';
 import { createWorkEntry } from '@/services/work-entries.service';
 import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Field, Section } from '../admin/assignments/form-layout';
+import { DurationPresets } from './duration-presets';
 
 const schema = z.object({
   assignmentId: z.string().min(1, 'Assignment is required'),
@@ -66,9 +67,6 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string }> = {
   in_progress: { label: 'In Progress', dot: 'bg-status-info' },
   pending: { label: 'Pending', dot: 'bg-status-warning' },
 };
-
-// Shortcuts that fill the duration field; any value can still be typed.
-const DURATION_PRESETS = [15, 30, 60, 120];
 
 export default function AddWorkEntryPage() {
   const navigate = useNavigate();
@@ -143,9 +141,6 @@ export default function AddWorkEntryPage() {
       </PageShell>
     );
   }
-
-  const durationValid =
-    typeof timeSpent === 'number' && Number.isFinite(timeSpent) && timeSpent > 0;
 
   return (
     <PageShell>
@@ -283,34 +278,15 @@ export default function AddWorkEntryPage() {
               </Field>
             </div>
 
-            {/* Quick durations, and the typed value read back as hours. */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="mr-1 text-xs text-muted-foreground">Quick:</span>
-              {DURATION_PRESETS.map(m => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() =>
-                    setValue('timeSpent', m, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
-                  className={`h-7 rounded-md border px-2.5 text-xs transition-colors ${
-                    timeSpent === m
-                      ? 'border-border-strong bg-white/[0.08] text-foreground'
-                      : 'border-border text-muted-foreground hover:border-input hover:text-foreground'
-                  }`}
-                >
-                  {formatMinutes(m)}
-                </button>
-              ))}
-              {durationValid && (
-                <span className="ml-2 text-xs tabular-nums text-muted-foreground">
-                  = {formatMinutes(timeSpent)}
-                </span>
-              )}
-            </div>
+            <DurationPresets
+              value={timeSpent}
+              onPick={m =>
+                setValue('timeSpent', m, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
           </Section>
 
           {/* ── Task ── */}

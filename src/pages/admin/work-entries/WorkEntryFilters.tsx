@@ -31,6 +31,7 @@ export function WorkEntryFilters({
   hasFilter,
   onClear,
   recordCount,
+  searchPlaceholder = 'Search VA, client or task…',
 }: {
   search: string;
   onSearchChange: (v: string) => void;
@@ -45,6 +46,7 @@ export function WorkEntryFilters({
   hasFilter: boolean;
   onClear: () => void;
   recordCount: number;
+  searchPlaceholder?: string;
 }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -53,7 +55,7 @@ export function WorkEntryFilters({
         <Input
           value={search}
           onChange={e => onSearchChange(e.target.value)}
-          placeholder="Search VA, client or task…"
+          placeholder={searchPlaceholder}
           aria-label="Search work entries"
           className="h-8 pl-8 text-sm"
         />

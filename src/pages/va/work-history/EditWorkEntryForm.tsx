@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CalendarDays, FileText, StickyNote } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { TimePickerField } from '@/components/ui/time-picker-field';
 import { updateWorkEntry } from '@/services/work-entries.service';
 import {
   WORK_ENTRY_CATEGORIES,
@@ -22,28 +23,40 @@ import {
   type IWorkEntry,
 } from '@/types/work-entry';
 
+import { Field, Section } from '../../admin/assignments/form-layout';
+import { DurationPresets } from '../duration-presets';
+
 const editSchema = z.object({
-  entryDate: z.string().min(1, 'Required'),
-  entryTime: z.string().min(1, 'Required'),
-  taskCategory: z.enum([
-    'Administrative',
-    'Clinical Coordination',
-    'Data Entry',
-    'Communication',
-    'Research',
-    'Scheduling',
-    'Other',
-  ]),
-  taskDescription: z.string().min(1, 'Required'),
+  entryDate: z.string().min(1, 'Date is required'),
+  entryTime: z.string().min(1, 'Time is required'),
+  taskCategory: z.enum(
+    [
+      'Administrative',
+      'Clinical Coordination',
+      'Data Entry',
+      'Communication',
+      'Research',
+      'Scheduling',
+      'Other',
+    ],
+    { error: 'Category is required' }
+  ),
+  taskDescription: z.string().min(1, 'Description is required'),
   timeSpent: z
-    .number()
-    .int()
+    .number({ error: 'Duration is required' })
+    .int('Enter whole minutes')
     .min(1, 'At least 1 minute')
     .max(480, 'Maximum is 480 minutes (8 hours) per entry'),
   status: z.enum(['completed', 'in_progress', 'pending']),
   notes: z.string().optional(),
 });
 type EditFormData = z.infer<typeof editSchema>;
+
+const STATUS_CONFIG: Record<string, { label: string; dot: string }> = {
+  completed: { label: 'Completed', dot: 'bg-status-success' },
+  in_progress: { label: 'In Progress', dot: 'bg-status-info' },
+  pending: { label: 'Pending', dot: 'bg-status-warning' },
+};
 
 function toFormValues(entry: IWorkEntry): EditFormData {
   return {
@@ -60,21 +73,25 @@ function toFormValues(entry: IWorkEntry): EditFormData {
 export function EditWorkEntryForm({
   entry,
   onSuccess,
+  onCancel,
 }: {
   entry: IWorkEntry;
   onSuccess: () => void;
+  onCancel: () => void;
 }) {
   const {
     register,
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
     defaultValues: toFormValues(entry),
   });
 
+  const timeSpent = useWatch({ control, name: 'timeSpent' });
   const [serverError, setServerError] = useState('');
 
   useEffect(() => {
@@ -94,142 +111,146 @@ export function EditWorkEntryForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="mt-6 flex flex-col gap-5 pb-6"
+      noValidate
+      className="flex min-h-0 flex-1 flex-col"
     >
-      {serverError && (
-        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {serverError}
-        </p>
-      )}
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+        {serverError && (
+          <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {serverError}
+          </p>
+        )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <Label>Date</Label>
-          <Controller
-            name="entryDate"
-            control={control}
-            render={({ field }) => (
-              <DatePickerField
-                value={field.value}
-                onChange={field.onChange}
-                toDate={new Date()}
+        <Section icon={<CalendarDays size={14} />} title="When and how long">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Date" error={errors.entryDate?.message}>
+              <Controller
+                name="entryDate"
+                control={control}
+                render={({ field }) => (
+                  <DatePickerField
+                    value={field.value}
+                    onChange={field.onChange}
+                    toDate={new Date()}
+                  />
+                )}
               />
-            )}
+            </Field>
+            <Field label="Start time" error={errors.entryTime?.message}>
+              <Controller
+                name="entryTime"
+                control={control}
+                render={({ field }) => (
+                  <TimePickerField
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </Field>
+          </div>
+
+          <Field label="Duration" error={errors.timeSpent?.message}>
+            <div className="relative sm:max-w-[calc(50%-0.5rem)]">
+              <Input
+                type="number"
+                min={1}
+                className="pr-12"
+                {...register('timeSpent', { valueAsNumber: true })}
+              />
+              <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs text-muted-foreground">
+                min
+              </span>
+            </div>
+          </Field>
+          <DurationPresets
+            value={timeSpent}
+            onPick={m =>
+              setValue('timeSpent', m, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
           />
-          {errors.entryDate && (
-            <p className="text-xs text-destructive">
-              {errors.entryDate.message}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label>Time</Label>
-          <Input
-            type="time"
-            {...register('entryTime')}
-            className="rounded-md border-input"
-          />
-          {errors.entryTime && (
-            <p className="text-xs text-destructive">
-              {errors.entryTime.message}
-            </p>
-          )}
-        </div>
+        </Section>
+
+        <Section icon={<FileText size={14} />} title="Task">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Category" error={errors.taskCategory?.message}>
+              <Controller
+                control={control}
+                name="taskCategory"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {WORK_ENTRY_CATEGORIES.map(cat => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </Field>
+            <Field label="Status" error={errors.status?.message}>
+              <Controller
+                control={control}
+                name="status"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {WORK_ENTRY_STATUSES.map(s => (
+                        <SelectItem key={s} value={s}>
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={`size-1.5 rounded-full ${STATUS_CONFIG[s]?.dot ?? 'bg-text-tertiary'}`}
+                            />
+                            {STATUS_CONFIG[s]?.label ?? s}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </Field>
+          </div>
+
+          <Field label="Description" error={errors.taskDescription?.message}>
+            <Textarea
+              {...register('taskDescription')}
+              rows={3}
+              className="resize-none"
+            />
+          </Field>
+        </Section>
+
+        <Section icon={<StickyNote size={14} />} title="Notes" optional>
+          <Field label="" error={errors.notes?.message}>
+            <Textarea
+              {...register('notes')}
+              rows={2}
+              className="resize-none"
+            />
+          </Field>
+        </Section>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label>Category</Label>
-        <Controller
-          control={control}
-          name="taskCategory"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger className="rounded-md border-input">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {WORK_ENTRY_CATEGORIES.map(cat => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.taskCategory && (
-          <p className="text-xs text-destructive">
-            {errors.taskCategory.message}
-          </p>
-        )}
+      <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">
+        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" size="sm" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving…' : 'Save changes'}
+        </Button>
       </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>Task Description</Label>
-        <Textarea
-          {...register('taskDescription')}
-          rows={3}
-          className="rounded-md border-input resize-none"
-        />
-        {errors.taskDescription && (
-          <p className="text-xs text-destructive">
-            {errors.taskDescription.message}
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-2">
-          <Label>Time Spent (minutes)</Label>
-          <Input
-            type="number"
-            min={1}
-            {...register('timeSpent', { valueAsNumber: true })}
-            className="rounded-md border-input"
-          />
-          {errors.timeSpent && (
-            <p className="text-xs text-destructive">
-              {errors.timeSpent.message}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label>Status</Label>
-          <Controller
-            control={control}
-            name="status"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="rounded-md border-input">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WORK_ENTRY_STATUSES.map(s => (
-                    <SelectItem key={s} value={s}>
-                      {s
-                        .replace('_', ' ')
-                        .replace(/\b\w/g, c => c.toUpperCase())}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label>Notes (optional)</Label>
-        <Textarea
-          {...register('notes')}
-          rows={2}
-          className="rounded-md border-input resize-none"
-        />
-      </div>
-
-      <Button type="submit" disabled={isSubmitting} className="mt-2">
-        {isSubmitting ? 'Saving…' : 'Save Changes'}
-      </Button>
     </form>
   );
 }
