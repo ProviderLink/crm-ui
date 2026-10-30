@@ -21,6 +21,8 @@ export type UserRow = {
   vaBurnoutRisk?: boolean | null;
   vaReplacementRisk?: boolean | null;
   vaSatisfactionScore?: number | null;
+  /** Date of the last check-in with this client or VA, when recorded. */
+  lastCheckin?: string | null;
   // am fields
   amAssignmentCount?: number | null;
 };

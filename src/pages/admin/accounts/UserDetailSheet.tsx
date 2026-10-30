@@ -77,7 +77,7 @@ export function UserDetailSheet({
             </div>
           </header>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-5 pb-6">
             {isClient && <ClientProfileSection clientId={user.clientRef!} />}
             {isVa && <VaProfileSection vaId={user.candidateRef} />}
             {!showCrmProfile && (

@@ -87,7 +87,7 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       },
       { title: 'Assignments', url: '/am/assignments', icon: LinkIcon },
       { title: 'Activity', url: '/am/activity', icon: ListChecksIcon },
-      { title: 'Accounts', url: '/am/accounts', icon: UsersIcon },
+      { title: 'People', url: '/am/accounts', icon: UsersIcon },
       { title: 'Check-ins', url: '/am/reminders', icon: BellIcon },
       { title: 'Performance', url: '/am/performance', icon: BarChart3Icon },
     ],

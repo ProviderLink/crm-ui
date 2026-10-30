@@ -55,6 +55,7 @@ const AmDashboardPage = lazy(() => import('@/pages/am/AmDashboardPage'));
 const AmActivityPage = lazy(() => import('@/pages/am/AmActivityPage'));
 const AmCheckinsPage = lazy(() => import('@/pages/am/AmCheckinsPage'));
 const AmPerformancePage = lazy(() => import('@/pages/am/AmPerformancePage'));
+const AmPeoplePage = lazy(() => import('@/pages/am/AmPeoplePage'));
 const AmAssignmentsPage = lazy(
   () => import('@/pages/am/AmAssignmentsPage')
 );
@@ -160,7 +161,7 @@ const router = createBrowserRouter([
                 children: [
                   { path: 'dashboard', element: <AmDashboardPage /> },
                   { path: 'assignments', element: <AmAssignmentsPage /> },
-                  { path: 'accounts', element: <AccountManagementPage /> },
+                  { path: 'accounts', element: <AmPeoplePage /> },
                   { path: 'reminders', element: <AmCheckinsPage /> },
                   { path: 'performance', element: <AmPerformancePage /> },
                   {

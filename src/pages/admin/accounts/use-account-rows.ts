@@ -103,6 +103,7 @@ export function useAccountRows() {
       vaBurnoutRisk: profile?.burnoutRiskFlag ?? false,
       vaReplacementRisk: profile?.replacementRiskFlag ?? false,
       vaSatisfactionScore: profile?.satisfactionScore ?? null,
+      lastCheckin: profile?.lastVaCheckin ?? null,
     };
   });
 
@@ -150,6 +151,7 @@ export function useAccountRows() {
       primaryContactEmail: acc?.primaryContactEmail || row.email,
       healthStatus: acc?.healthStatus ?? null,
       satisfactionScore: acc?.satisfactionScore ?? null,
+      lastCheckin: acc?.lastClientCheckin ?? null,
     };
   });
 

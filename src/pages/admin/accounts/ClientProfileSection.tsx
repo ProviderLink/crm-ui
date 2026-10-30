@@ -426,10 +426,13 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
                   </a>
                 )}
                 {account.primaryContactPhone && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <a
+                    href={`tel:${account.primaryContactPhone}`}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     <PhoneIcon className="size-3" />
                     {account.primaryContactPhone}
-                  </div>
+                  </a>
                 )}
               </div>
             </div>

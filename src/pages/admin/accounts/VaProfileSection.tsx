@@ -340,12 +340,17 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
             </p>
             <div className="flex flex-wrap gap-1.5">
               {[
-                { label: 'Burnout Risk', flagged: profile.burnoutRiskFlag },
                 {
-                  label: 'Replacement Risk',
+                  label: 'Burnout risk',
+                  clear: 'No burnout risk',
+                  flagged: profile.burnoutRiskFlag,
+                },
+                {
+                  label: 'Replacement risk',
+                  clear: 'No replacement risk',
                   flagged: profile.replacementRiskFlag,
                 },
-              ].map(({ label, flagged }) => (
+              ].map(({ label, clear, flagged }) => (
                 <span
                   key={label}
                   className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${flagged ? 'bg-white/[0.04] text-status-error ring-status-error/20' : 'bg-white/[0.04] text-status-success ring-status-success/20'}`}
@@ -355,7 +360,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
                   ) : (
                     <CheckCircle2Icon className="size-3" />
                   )}
-                  {label}
+                  {flagged ? label : clear}
                 </span>
               ))}
             </div>
