@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
+import { PublicFooter } from '@/components/shared/PublicFooter';
 
 const schema = z
   .object({
@@ -158,12 +159,7 @@ function AuthShell({
         </div>
       </div>
 
-      <footer className="relative z-10 shrink-0 border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 flex items-center justify-between bg-canvas">
-        <span />
-        <p className="text-xs text-text-tertiary">
-          © {new Date().getFullYear()} Arista CRM
-        </p>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

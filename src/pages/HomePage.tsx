@@ -7,6 +7,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { PublicFooter } from '@/components/shared/PublicFooter';
 
 const flow = [
   {
@@ -187,12 +188,7 @@ export default function HomePage() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 shrink-0 border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 flex items-center justify-between bg-canvas">
-        <span />
-        <p className="text-xs text-text-tertiary">
-          © {new Date().getFullYear()} Arista CRM
-        </p>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

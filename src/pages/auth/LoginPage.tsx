@@ -13,6 +13,7 @@ import { useForm } from 'react-hook-form';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { PublicFooter } from '@/components/shared/PublicFooter';
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -201,12 +202,7 @@ export default function LoginPage() {
       </div>
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 shrink-0 border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 flex items-center justify-between bg-canvas">
-        <span />
-        <p className="text-xs text-text-tertiary">
-          © {new Date().getFullYear()} Arista CRM
-        </p>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
