@@ -28,6 +28,8 @@ interface NotesThreadProps {
   subjectType: 'client' | 'va';
   /** Client._id for 'client', Candidate._id (vaId) for 'va'. */
   subjectId: string | null | undefined;
+  /** Heading of the thread; defaults to "Internal notes". */
+  title?: string;
 }
 
 function queryKey(subjectType: 'client' | 'va', subjectId: string) {
@@ -46,7 +48,11 @@ function formatTimestamp(raw: string): string {
   });
 }
 
-export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
+export function NotesThread({
+  subjectType,
+  subjectId,
+  title = 'Internal notes',
+}: NotesThreadProps) {
   const user = useAppSelector(s => s.auth.user);
   const queryClient = useQueryClient();
 
@@ -99,7 +105,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
   return (
     <div className="border-t border-border pt-4 space-y-3">
       <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-foreground">Internal notes</p>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
         <span className="ml-auto text-xs text-muted-foreground">
           {notes.length} {notes.length === 1 ? 'note' : 'notes'}
         </span>

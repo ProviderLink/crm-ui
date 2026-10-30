@@ -1,6 +1,4 @@
-import type { ColumnDef } from '@tanstack/react-table';
-import { MailIcon, PenLineIcon, XIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { PenLineIcon, XIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DataTable } from '@/components/shared/DataTable';
@@ -23,18 +21,11 @@ import {
   useProvisionedClientsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
-import {
-  dateKeyToLocalDate,
-  formatMinutes,
-  todayString,
-  weekStartOfDateKey,
-} from '@/lib/time';
+import { todayString, weekStartOfDateKey } from '@/lib/time';
 import { getAssignment } from '@/services/assignments.service';
 import { getClientAccount } from '@/services/client-accounts.service';
 import { getVaProfile } from '@/services/va-profiles.service';
 import type { IAssignment } from '@/types/assignment';
-import type { IEodSubmission } from '@/types/eod-submission';
-import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -43,173 +34,15 @@ import {
   Score,
   WorkloadBadge,
 } from '../accounts/badges';
-import { shortDate } from '../work-entries/format';
-import { StatusPill } from '../work-entries/StatusPill';
 import { AssignmentStatus } from './AssignmentStatus';
-
-// Underline tabs: a flat bar with a line under the active tab.
-const TAB_LIST =
-  'h-auto w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0';
-const TAB =
-  '-mb-px gap-2 rounded-none border-b-2 border-transparent px-0 pt-1 pb-3 text-muted-foreground hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground';
-
-function fmtDate(iso: string | undefined | null) {
-  const date = iso ? dateKeyToLocalDate(iso) : null;
-  if (!date) return '—';
-  return date.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-// ─── Table columns ────────────────────────────────────────────────────────────
-
-function buildWorkColumns(): ColumnDef<IWorkEntry>[] {
-  return [
-    {
-      accessorKey: 'entryDate',
-      header: 'Date',
-      size: 120,
-      cell: ({ row }) => (
-        <div className="whitespace-nowrap">
-          <p className="text-sm">{shortDate(row.original.entryDate)}</p>
-          <p className="text-xs tabular-nums text-muted-foreground">
-            {row.original.entryTime}
-          </p>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'taskDescription',
-      header: () => <span className="normal-case">Task</span>,
-      enableSorting: false,
-      meta: { fill: true, thClassName: 'min-w-[12rem]', cellClassName: 'min-w-[12rem]' },
-      cell: ({ row }) => (
-        <div>
-          <p className="text-sm leading-snug">{row.original.taskDescription}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {row.original.taskCategory}
-          </p>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'timeSpent',
-      header: 'Time',
-      size: 80,
-      cell: ({ getValue }) => (
-        <span className="text-sm tabular-nums whitespace-nowrap">
-          {formatMinutes(getValue<number>())}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      size: 120,
-      cell: ({ getValue }) => <StatusPill status={getValue<WorkEntryStatus>()} />,
-    },
-  ];
-}
-
-function buildEodColumns(): ColumnDef<IEodSubmission>[] {
-  return [
-    {
-      accessorKey: 'date',
-      header: 'Date',
-      size: 120,
-      cell: ({ getValue }) => (
-        <span className="text-sm whitespace-nowrap">
-          {shortDate(getValue<string>())}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'hoursWorked',
-      header: 'Hours',
-      size: 110,
-      cell: ({ row }) => (
-        <div className="whitespace-nowrap">
-          <p className="text-sm tabular-nums">{row.original.hoursWorked}h</p>
-          <p className="text-xs tabular-nums text-muted-foreground">
-            {row.original.shiftStart} – {row.original.shiftEnd}
-          </p>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'summaryOfWork',
-      header: () => <span className="normal-case">Summary</span>,
-      enableSorting: false,
-      meta: { fill: true, thClassName: 'min-w-[12rem]', cellClassName: 'min-w-[12rem]' },
-      cell: ({ row }) => {
-        const entries = row.original.workEntries;
-        const text =
-          entries && entries.length > 0
-            ? entries
-                .map(e => `${e.task}${e.quantity ? ` ×${e.quantity}` : ''}`)
-                .join(' · ')
-            : row.original.summaryOfWork || '—';
-        const pending = row.original.pendingTasks?.trim();
-        return (
-          <div>
-            <p className="text-sm leading-snug">{text}</p>
-            {pending && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Pending: {pending}
-              </p>
-            )}
-          </div>
-        );
-      },
-    },
-  ];
-}
-
-// ─── Small pieces ─────────────────────────────────────────────────────────────
-
-function Stat({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-2.5">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-base font-semibold tabular-nums">{value}</p>
-    </div>
-  );
-}
-
-function Party({
-  label,
-  name,
-  email,
-  children,
-}: {
-  label: string;
-  name: string;
-  email?: string | null;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="min-w-0 space-y-1.5">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold leading-tight">{name}</p>
-      {email && (
-        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <MailIcon className="size-3 shrink-0" />
-          <span className="truncate">{email}</span>
-        </p>
-      )}
-      {children}
-    </div>
-  );
-}
-
-const Row = ({ label, children }: { label: string; children: ReactNode }) => (
-  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-    <span>{label}</span>
-    {children}
-  </div>
-);
+import {
+  buildEodColumns,
+  buildWorkColumns,
+  fmtDate,
+  TAB,
+  TAB_LIST,
+} from './drawer-columns';
+import { Party, Row, Stat } from './drawer-parts';
 
 // ─── Drawer ───────────────────────────────────────────────────────────────────
 
