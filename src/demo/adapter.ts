@@ -436,12 +436,35 @@ on('GET', '/crm/client-accounts', () => {
   return list(clientAccounts.filter(c => role() !== 'account_manager' || ids.has(c.clientId)));
 });
 on('GET', '/crm/client-accounts/([^/]+)', ({ m }) => ok(find(clientAccounts, m[1]!)));
-on('PATCH', '/crm/client-accounts/([^/]+)', ({ m, body }) => ok(Object.assign(find(clientAccounts, m[1]!), body)));
+on('PATCH', '/crm/client-accounts/([^/]+)', ({ m, body }) => {
+  if (role() === 'account_manager')
+    throw new HttpError(403, 'You do not have permission to perform this action');
+  return ok(Object.assign(find(clientAccounts, m[1]!), body));
+});
 
 // VA profiles
 on('GET', '/crm/va-profiles', () => list(vaProfiles));
-on('GET', '/crm/va-profiles/([^/]+)/notes', ({ m }) => ok(notes[`va:${m[1]}`] ?? []));
-on('POST', '/crm/va-profiles/([^/]+)/notes', ({ m, body }) => ok(addNote(`va:${m[1]}`, body)));
+// An account manager may only use notes of the VAs and clients they manage.
+const assertNotesAccess = (key: 'candidateId' | 'clientId', id: string) => {
+  if (role() === 'account_manager' && !visibleAssignments().some(a => a[key] === id))
+    throw new HttpError(403, 'This record belongs to another account manager');
+};
+on('GET', '/crm/va-profiles/([^/]+)/notes', ({ m }) => {
+  assertNotesAccess('candidateId', m[1]!);
+  return ok(notes[`va:${m[1]}`] ?? []);
+});
+on('POST', '/crm/va-profiles/([^/]+)/notes', ({ m, body }) => {
+  assertNotesAccess('candidateId', m[1]!);
+  return ok(addNote(`va:${m[1]}`, body));
+});
+on('GET', '/crm/client-accounts/([^/]+)/notes', ({ m }) => {
+  assertNotesAccess('clientId', m[1]!);
+  return ok(notes[`client:${m[1]}`] ?? []);
+});
+on('POST', '/crm/client-accounts/([^/]+)/notes', ({ m, body }) => {
+  assertNotesAccess('clientId', m[1]!);
+  return ok(addNote(`client:${m[1]}`, body));
+});
 on('GET', '/crm/va-profiles/([^/]+)', ({ m }) => ok(find(vaProfiles, m[1]!)));
 on('PATCH', '/crm/va-profiles/([^/]+)', ({ m, body }) => ok(Object.assign(find(vaProfiles, m[1]!), body)));
 on('GET', '/ats/clients/([^/]+)/notes', ({ m }) => ok(notes[`client:${m[1]}`] ?? []));

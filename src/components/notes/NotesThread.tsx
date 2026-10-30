@@ -50,9 +50,10 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
   const user = useAppSelector(s => s.auth.user);
   const queryClient = useQueryClient();
 
-  // Defense-in-depth: never fetch the thread for non-admin users, even if the
-  // component were mounted by mistake. The backend route also enforces admin.
-  const isAdmin = user?.role === 'admin';
+  // Defense-in-depth: never fetch the thread for anyone but staff, even if the
+  // component were mounted by mistake. The backend also enforces this, and
+  // limits an account manager to the VAs and clients they manage.
+  const canUse = user?.role === 'admin' || user?.role === 'account_manager';
 
   const {
     data: notes = [],
@@ -62,7 +63,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
   } = useQuery<INote[], Error>({
     queryKey: queryKey(subjectType, subjectId ?? 'none'),
     queryFn: () => listNotes(subjectType, subjectId!),
-    enabled: !!subjectId && isAdmin,
+    enabled: !!subjectId && canUse,
   });
 
   const [method, setMethod] = useState<NoteMethod>('other');
@@ -71,8 +72,8 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Hidden entirely from non-admins — they cannot see the thread or the form.
-  if (!isAdmin) return null;
+  // Hidden entirely from everyone else — they cannot see the thread or the form.
+  if (!canUse) return null;
 
   async function handleAdd() {
     if (!subjectId) return;
@@ -98,7 +99,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
   return (
     <div className="border-t border-border pt-4 space-y-3">
       <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-foreground">Admin notes</p>
+          <p className="text-sm font-semibold text-foreground">Internal notes</p>
         <span className="ml-auto text-xs text-muted-foreground">
           {notes.length} {notes.length === 1 ? 'note' : 'notes'}
         </span>
@@ -121,7 +122,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
         </div>
       ) : notes.length === 0 ? (
         <p className="text-xs text-muted-foreground italic">
-          No admin notes yet.
+          No notes yet.
         </p>
       ) : (
         <ol className="space-y-2.5">
@@ -132,7 +133,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
             >
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] font-medium text-foreground">
-                  {note.authorName || 'Admin'}
+                  {note.authorName || 'Team member'}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
                   {formatTimestamp(note.createdAt)}
@@ -187,7 +188,7 @@ export function NotesThread({ subjectType, subjectId }: NotesThreadProps) {
             <Textarea
               value={content}
               onChange={e => setContent(e.target.value)}
-              placeholder={`Internal note about this ${subjectType === 'va' ? 'VA' : 'client'} (visible only to admins)`}
+              placeholder={`Internal note about this ${subjectType === 'va' ? 'VA' : 'client'} (visible only to your team, never to the client or VA)`}
               className="text-xs resize-none"
               rows={2}
               autoFocus

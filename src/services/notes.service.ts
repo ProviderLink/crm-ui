@@ -2,19 +2,19 @@ import api from '@/lib/api';
 import type { CreateNotePayload, INote, NoteMethod } from '@/types/note';
 
 /**
- * Admin-only internal notes thread (Requirement 4).
+ * Internal notes thread (Requirement 4), for admins and for the account manager
+ * of that VA or client (the backend checks which accounts they manage).
  *
- * Two subject types, two existing backend endpoints:
- *  - Client notes: reuse the existing /api/v1/ats/clients/:clientId/notes
- *    sub-resource (admin user has appAccess to 'ats' and 'crm').
- *  - VA notes: new /api/v1/crm/va-profiles/:vaId/notes sub-resource.
+ * Both subject types use CRM endpoints:
+ *  - Client notes: /api/v1/crm/client-accounts/:clientId/notes
+ *  - VA notes: /api/v1/crm/va-profiles/:vaId/notes
  */
 
 type NoteSubject = 'client' | 'va';
 
 function endpointFor(subject: NoteSubject, subjectId: string): string {
   return subject === 'client'
-    ? `/ats/clients/${subjectId}/notes`
+    ? `/crm/client-accounts/${subjectId}/notes`
     : `/crm/va-profiles/${subjectId}/notes`;
 }
 

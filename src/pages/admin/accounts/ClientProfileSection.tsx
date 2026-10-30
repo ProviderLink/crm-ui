@@ -17,8 +17,8 @@ import { Field } from './field';
 
 export function ClientProfileSection({ clientId }: { clientId: string }) {
   const user = useAppSelector(s => s.auth.user);
-  const canEdit =
-    user?.role === 'admin' || user?.role === 'account_manager';
+  // Editing a client is admin-only; account managers can read it and add notes.
+  const canEdit = user?.role === 'admin';
   const queryClient = useQueryClient();
 
   const { data: account, isLoading } = useQuery({
@@ -75,7 +75,9 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
     return (
       <div className="border-t border-border pt-4 space-y-3">
         <p className="text-xs text-muted-foreground italic">
-          No CRM profile yet — create one by editing.
+          {canEdit
+            ? 'No CRM profile yet — create one by editing.'
+            : 'No CRM profile yet.'}
         </p>
         {canEdit && (
           <Button
