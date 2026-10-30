@@ -2,8 +2,9 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
-import { WORK_ENTRY_STATUS_STYLES } from '@/lib/status-styles';
 
+import { shortDate } from '../../admin/work-entries/format';
+import { StatusPill } from '../../admin/work-entries/StatusPill';
 import { VaCell } from './VaCell';
 
 export function buildWorkColumns(
@@ -14,55 +15,61 @@ export function buildWorkColumns(
     {
       accessorKey: 'candidateId',
       header: 'VA',
-      size: 200,
+      size: 250,
       cell: ({ row }) => (
-        <VaCell name={vaMap.get(row.original.candidateId)} role={assignmentMap.get(row.original.assignmentId)} />
+        <VaCell
+          name={vaMap.get(row.original.candidateId)}
+          role={assignmentMap.get(row.original.assignmentId)}
+        />
       ),
     },
     {
+      // The date, with the start time underneath.
       accessorKey: 'entryDate',
       header: 'Date',
-      size: 105,
-      cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
-          {getValue<string>()?.slice(0, 10)}
-        </span>
+      size: 125,
+      cell: ({ row }) => (
+        <div className="whitespace-nowrap">
+          <p className="text-sm">{shortDate(row.original.entryDate)}</p>
+          {row.original.entryTime && (
+            <p className="text-xs tabular-nums text-muted-foreground">
+              {row.original.entryTime}
+            </p>
+          )}
+        </div>
       ),
     },
     {
-      accessorKey: 'entryTime',
-      header: 'Time',
-      size: 75,
-      cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
-          {getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'taskCategory',
-      header: 'Category',
-      size: 160,
-      cell: ({ getValue }) => (
-        <span className="text-xs px-2 py-0.5 rounded font-mono text-[10px] font-medium uppercase tracking-[0.08em] bg-white/[0.04] text-text-secondary whitespace-nowrap">
-          {getValue<string>()}
-        </span>
-      ),
-    },
-    {
+      // The task, with its category underneath. Long text stops at two lines;
+      // the full text is in the tooltip and in the detail drawer.
       accessorKey: 'taskDescription',
-      header: 'Description',
+      header: () => <span className="normal-case">Task</span>,
       enableSorting: false,
-      cell: ({ getValue }) => (
-        <span className="text-sm">{getValue<string>()}</span>
+      meta: {
+        fill: true,
+        thClassName: 'min-w-[16rem]',
+        cellClassName: 'min-w-[16rem]',
+      },
+      cell: ({ row }) => (
+        <div>
+          <p
+            className="line-clamp-2 text-sm leading-snug"
+            title={row.original.taskDescription}
+          >
+            {row.original.taskDescription}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {row.original.taskCategory}
+          </p>
+        </div>
       ),
     },
     {
       accessorKey: 'timeSpent',
-      header: 'Time Spent',
-      size: 95,
+      header: 'Time',
+      size: 90,
       cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
+        <span className="inline-block rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-sm tabular-nums whitespace-nowrap">
           {formatMinutes(getValue<number>())}
         </span>
       ),
@@ -70,17 +77,8 @@ export function buildWorkColumns(
     {
       accessorKey: 'status',
       header: 'Status',
-      size: 125,
-      cell: ({ getValue }) => {
-        const s = getValue<WorkEntryStatus>();
-        return (
-          <span
-            className={`text-xs px-2 py-0.5 rounded border whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[s]}`}
-          >
-            {s.replace('_', ' ')}
-          </span>
-        );
-      },
+      size: 120,
+      cell: ({ getValue }) => <StatusPill status={getValue<WorkEntryStatus>()} />,
     },
   ];
 }

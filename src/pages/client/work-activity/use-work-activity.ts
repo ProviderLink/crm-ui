@@ -7,6 +7,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import { addDaysToDateKey, todayString } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
 import { buildEodColumns } from './eod-columns';
@@ -37,6 +38,14 @@ export function useWorkActivity() {
     return m;
   }, [assignments]);
 
+  const clientMap = useMemo(() => {
+    const m = new Map<string, string>();
+    assignments.forEach(a => {
+      if (a.companyName) m.set(a.clientId, a.companyName);
+    });
+    return m;
+  }, [assignments]);
+
   const workColumns = useMemo(
     () => buildWorkColumns(vaMap, assignmentMap),
     [vaMap, assignmentMap]
@@ -46,9 +55,24 @@ export function useWorkActivity() {
     [vaMap, assignmentMap]
   );
 
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  // The default window is the last 30 days; "Clear" returns to it.
+  const [defaults] = useState(() => ({
+    from: addDaysToDateKey(todayString(), -30),
+    to: todayString(),
+  }));
+  const [dateFrom, setDateFrom] = useState(defaults.from);
+  const [dateTo, setDateTo] = useState(defaults.to);
   const [assignmentFilter, setAssignmentFilter] = useState('all');
+  const [search, setSearch] = useState('');
+
+  // Search matches the VA, the service, or the task text.
+  const query = search.trim().toLowerCase();
+  const matches = (assignmentId: string, candidateId: string, text: string) => {
+    if (!query) return true;
+    const va = vaMap.get(candidateId) ?? '';
+    const service = assignmentMap.get(assignmentId) ?? '';
+    return `${va} ${service} ${text}`.toLowerCase().includes(query);
+  };
 
   const filteredEntries = useMemo(
     () =>
@@ -57,9 +81,14 @@ export function useWorkActivity() {
           return false;
         if (dateFrom && e.entryDate < dateFrom) return false;
         if (dateTo && e.entryDate > dateTo) return false;
-        return true;
+        return matches(
+          e.assignmentId,
+          e.candidateId,
+          `${e.taskCategory} ${e.taskDescription}`
+        );
       }),
-    [allEntries, dateFrom, dateTo, assignmentFilter]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allEntries, dateFrom, dateTo, assignmentFilter, query, vaMap, assignmentMap]
   );
 
   const filteredEods = useMemo(
@@ -69,19 +98,28 @@ export function useWorkActivity() {
           return false;
         if (dateFrom && e.date < dateFrom) return false;
         if (dateTo && e.date > dateTo) return false;
-        return true;
+        const tasks =
+          e.workEntries && e.workEntries.length > 0
+            ? e.workEntries.map(w => w.task).join(' ')
+            : (e.summaryOfWork ?? '');
+        return matches(e.assignmentId, e.candidateId, tasks);
       }),
-    [allEods, dateFrom, dateTo, assignmentFilter]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allEods, dateFrom, dateTo, assignmentFilter, query, vaMap, assignmentMap]
   );
 
   function clearFilters() {
-    setDateFrom('');
-    setDateTo('');
+    setSearch('');
     setAssignmentFilter('all');
+    setDateFrom(defaults.from);
+    setDateTo(defaults.to);
   }
 
   const hasActiveFilters =
-    dateFrom !== '' || dateTo !== '' || assignmentFilter !== 'all';
+    search !== '' ||
+    assignmentFilter !== 'all' ||
+    dateFrom !== defaults.from ||
+    dateTo !== defaults.to;
   const multipleAssignments = assignments.length > 1;
 
   function assignmentLabel(a: IAssignment): string {
@@ -94,10 +132,15 @@ export function useWorkActivity() {
   return {
     assignments,
     isLoading,
+    vaMap,
+    assignmentMap,
+    clientMap,
     workColumns,
     eodColumns,
     filteredEntries,
     filteredEods,
+    search,
+    setSearch,
     dateFrom,
     setDateFrom,
     dateTo,

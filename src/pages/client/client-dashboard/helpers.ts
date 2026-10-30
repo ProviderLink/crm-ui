@@ -1,5 +1,4 @@
 import { formatDateKeyShort } from '@/lib/time';
-import type { IAssignment } from '@/types/assignment';
 
 export function tenureLabel(startDate: string) {
   const start = new Date(startDate);
@@ -27,21 +26,3 @@ export function initials(name: string) {
 }
 
 export const formatMonthDay = formatDateKeyShort;
-
-export const assignmentBadge: Record<
-  IAssignment['status'],
-  { className: string; label: string }
-> = {
-  active: {
-    className: 'border-green-500/40 text-green-400 bg-green-500/10',
-    label: 'Active',
-  },
-  on_hold: {
-    className: 'border-yellow-500/40 text-yellow-400 bg-yellow-500/10',
-    label: 'On Hold',
-  },
-  ended: {
-    className: 'border-muted text-muted-foreground bg-transparent',
-    label: 'Ended',
-  },
-};

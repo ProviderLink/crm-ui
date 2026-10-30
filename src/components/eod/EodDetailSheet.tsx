@@ -46,6 +46,8 @@ interface EodDetailSheetProps {
    * reflects the by-id response so server-side authorization is honored.
    */
   fallback?: IEodSubmission | null;
+  /** What the report is called in the UI; clients see "daily report". */
+  reportName?: string;
 }
 
 /** "Tuesday, Oct 27, 2026", built from the key's parts to avoid timezone drift. */
@@ -262,6 +264,7 @@ export function EodDetailSheet({
   eodId,
   onOpenChange,
   fallback,
+  reportName = 'EOD report',
 }: EodDetailSheetProps) {
   const { data, isLoading, isError, error } = useEodSubmissionQuery(
     eodId ?? undefined
@@ -296,7 +299,7 @@ export function EodDetailSheet({
             </div>
             <div className="min-w-0">
               <SheetTitle className="truncate text-xl">
-                {vaName || 'EOD report'}
+                {vaName || reportName.charAt(0).toUpperCase() + reportName.slice(1)}
               </SheetTitle>
               <SheetDescription className="mt-0.5 truncate">
                 {eod
@@ -310,7 +313,7 @@ export function EodDetailSheet({
             {isLoading && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
-                Loading EOD details…
+                Loading {reportName} details…
               </div>
             )}
 
@@ -319,7 +322,7 @@ export function EodDetailSheet({
                 <AlertCircle size={15} className="mt-0.5 shrink-0" />
                 {getApiError(
                   error,
-                  'Failed to load EOD details. You may not have permission to view this submission.'
+                  `Failed to load ${reportName} details. You may not have permission to view this submission.`
                 )}
               </div>
             )}

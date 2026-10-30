@@ -2,6 +2,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 import type { IEodSubmission } from '@/types/eod-submission';
 
+import { TaskSummary } from '../../admin/eod-reports/TaskSummary';
+import { shortDate } from '../../admin/work-entries/format';
 import { VaCell } from './VaCell';
 
 export function buildEodColumns(
@@ -12,88 +14,51 @@ export function buildEodColumns(
     {
       accessorKey: 'candidateId',
       header: 'VA',
-      size: 200,
+      size: 250,
       cell: ({ row }) => (
-        <VaCell name={vaMap.get(row.original.candidateId)} role={assignmentMap.get(row.original.assignmentId)} />
+        <VaCell
+          name={vaMap.get(row.original.candidateId)}
+          role={assignmentMap.get(row.original.assignmentId)}
+        />
       ),
     },
     {
       accessorKey: 'date',
       header: 'Date',
-      size: 105,
+      size: 125,
       cell: ({ getValue }) => (
-        <span className="text-xs text-muted-foreground">
-          {getValue<string>()?.slice(0, 10)}
+        <span className="text-sm whitespace-nowrap">
+          {shortDate(getValue<string>())}
         </span>
       ),
     },
     {
-      accessorKey: 'shiftStart',
-      header: 'Start',
-      size: 70,
-      cell: ({ getValue }) => (
-        <span className="text-sm">{getValue<string>()}</span>
-      ),
-    },
-    {
-      accessorKey: 'shiftEnd',
-      header: 'End',
-      size: 70,
-      cell: ({ getValue }) => (
-        <span className="text-sm">{getValue<string>()}</span>
-      ),
-    },
-    {
+      // Hours on top, the shift window underneath.
       accessorKey: 'hoursWorked',
       header: 'Hours',
-      size: 75,
-      cell: ({ getValue }) => (
-        <span className="text-sm font-medium text-foreground">
-          {getValue<number>()}h
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'summaryOfWork',
-      header: 'Summary',
-      enableSorting: false,
+      size: 130,
       cell: ({ row }) => {
-        const entries = row.original.workEntries;
-        if (entries && entries.length > 0) {
-          return (
-            <span className="text-sm">
-              {entries
-                .map(e => `${e.task}${e.quantity ? ` ×${e.quantity}` : ''}`)
-                .join(' · ')}
-            </span>
-          );
-        }
+        const { shiftStart, shiftEnd, hoursWorked } = row.original;
         return (
-          <span className="text-sm">{row.original.summaryOfWork || '—'}</span>
+          <div className="inline-block rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-1 whitespace-nowrap">
+            <p className="text-sm tabular-nums">{hoursWorked}h</p>
+            <p className="text-xs tabular-nums text-muted-foreground">
+              {shiftStart ?? '—'} – {shiftEnd ?? '—'}
+            </p>
+          </div>
         );
       },
     },
     {
-      accessorKey: 'pendingTasks',
-      header: 'Pending Tasks',
-      size: 200,
+      accessorKey: 'summaryOfWork',
+      header: () => <span className="normal-case">Summary</span>,
       enableSorting: false,
-      cell: ({ getValue }) => (
-        <span className="text-sm text-muted-foreground">
-          {getValue<string>()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'blockers',
-      header: 'Blockers',
-      size: 180,
-      enableSorting: false,
-      cell: ({ getValue }) => (
-        <span className="text-sm text-muted-foreground">
-          {getValue<string>() || '—'}
-        </span>
-      ),
+      meta: {
+        fill: true,
+        thClassName: 'min-w-[16rem]',
+        cellClassName: 'min-w-[16rem]',
+      },
+      cell: ({ row }) => <TaskSummary eod={row.original} />,
     },
   ];
 }
