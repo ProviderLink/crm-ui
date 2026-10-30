@@ -99,6 +99,7 @@ export function useEodSubmitForm() {
     error,
     register,
     control,
+    setValue,
     errors,
     isSubmitting,
     onFormSubmit: handleSubmit(onSubmit),

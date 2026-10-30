@@ -1,5 +1,7 @@
 import { CheckCircle2 } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
+
 export function AlreadySubmittedCard({
   dateLabel,
   onViewHistory,
@@ -8,25 +10,21 @@ export function AlreadySubmittedCard({
   onViewHistory: () => void;
 }) {
   return (
-        <div className="bg-card rounded-lg border border-border p-10 flex flex-col items-center gap-4 text-center">
-          <div className="h-14 w-14 rounded-full bg-white/[0.04] border border-[rgba(255,255,255,0.08)] flex items-center justify-center">
-            <CheckCircle2 size={28} className="text-text-secondary" />
-          </div>
-          <div>
-            <p className="text-base font-semibold text-foreground">
-              EOD already submitted for{' '}
-              {dateLabel}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              You're all done for the day. Great work!
-            </p>
-          </div>
-          <button
-            onClick={onViewHistory}
-            className="text-sm text-text-secondary hover:text-white underline-offset-4"
-          >
-            View EOD History →
-          </button>
-        </div>
+    <div className="flex flex-col items-center gap-4 rounded-lg border border-border bg-card p-10 text-center">
+      <div className="flex size-12 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04]">
+        <CheckCircle2 size={24} className="text-text-secondary" />
+      </div>
+      <div>
+        <p className="text-base font-semibold text-foreground">
+          EOD already submitted for {dateLabel}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          You're all done for the day. Great work!
+        </p>
+      </div>
+      <Button variant="outline" size="sm" onClick={onViewHistory}>
+        View EOD History
+      </Button>
+    </div>
   );
 }

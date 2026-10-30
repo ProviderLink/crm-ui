@@ -41,7 +41,7 @@ import { WorkEntryCard } from './eod-submit/WorkEntryCard';
 export default function EodSubmitPage() {
   const navigate = useNavigate();
   const f = useEodSubmitForm();
-  const { control, register, errors, assignments } = f;
+  const { control, register, setValue, errors, assignments } = f;
 
   if (f.loading) return <PageSkeleton />;
 
@@ -71,7 +71,6 @@ export default function EodSubmitPage() {
     );
   }
 
-
   if (f.alreadySubmitted) {
     return (
       <PageShell>
@@ -84,209 +83,244 @@ export default function EodSubmitPage() {
     );
   }
 
+  // Pending tasks and blockers are required; "None" is the usual answer.
+  const fillNone = (name: 'pendingTasks' | 'blockers') =>
+    setValue(name, 'None', { shouldDirty: true, shouldValidate: true });
+
   return (
     <PageShell>
       <PageHeader />
 
-      <form onSubmit={f.onFormSubmit} noValidate className="space-y-4">
-        {f.error && (
-          <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-            <AlertCircle size={15} className="mt-0.5 shrink-0" />
-            {f.error}
-          </div>
-        )}
-
-        {/* ── Section: Assignment ── */}
-        <Section icon={<Briefcase size={14} />} title="Assignment">
-          <Field label="Assigned Role" error={errors.assignmentId?.message}>
-            <Controller
-              control={control}
-              name="assignmentId"
-              render={({ field }) => (
-                <Select
-                  // A lone assignment is passed straight in: setting it after mount races
-                  // the Select registering its options, which resets the field to "".
-                  value={field.value || (assignments.length === 1 ? assignments[0]!._id : '')}
-                  onValueChange={field.onChange}
-                  disabled={assignments.length === 1}
-                >
-                  <SelectTrigger className="rounded-xl border-input h-10">
-                    <SelectValue placeholder="Select assignment" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assignments.map(a => (
-                      <SelectItem key={a._id} value={a._id}>
-                        <span className="flex flex-col">
-                          <span>{a.serviceType ?? a._id}</span>
-                          {a.companyName && (
-                            <span className="text-xs text-muted-foreground">
-                              {a.companyName}
-                            </span>
-                          )}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </Field>
-        </Section>
-
-
-        <ShiftSection
-          control={control}
-          errors={errors}
-          today={f.today}
-          companyTimezone={f.companyTimezone}
-          hoursWorked={f.hoursWorked}
-        />
-
-        {/* ── Section: Work Completed ── */}
-        <Section icon={<ClipboardList size={14} />} title="Work Completed">
-          {errors.workEntries?.message && (
-            <p className="text-xs text-destructive">
-              {errors.workEntries.message}
-            </p>
+      <form
+        onSubmit={f.onFormSubmit}
+        noValidate
+        className="rounded-lg border border-border bg-card"
+      >
+        <div className="space-y-5 p-6">
+          {f.error && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <AlertCircle size={15} className="mt-0.5 shrink-0" />
+              {f.error}
+            </div>
           )}
 
-          <div className="space-y-3">
-            {f.workFields.map((field, idx) => (
-              <WorkEntryCard
-                key={field.id}
-                idx={idx}
-                canRemove={f.workFields.length > 1}
-                onRemove={() => f.removeWork(idx)}
+          {/* ── Assignment ── */}
+          <Section icon={<Briefcase size={14} />} title="Assignment">
+            <Field label="Assigned role" error={errors.assignmentId?.message}>
+              <Controller
                 control={control}
-                register={register}
-                errors={errors}
+                name="assignmentId"
+                render={({ field }) => {
+                  // A lone assignment is passed straight in: setting it after mount races
+                  // the Select registering its options, which resets the field to "".
+                  const only = assignments.length === 1 ? assignments[0]! : null;
+                  if (only) {
+                    return (
+                      <div className="flex h-10 min-w-0 flex-col justify-center rounded-md border border-border bg-white/[0.03] px-3 sm:max-w-[calc(50%-0.5rem)]">
+                        <span className="truncate text-sm leading-tight">
+                          {only.serviceType ?? only._id}
+                        </span>
+                        {only.companyName && (
+                          <span className="truncate text-xs leading-tight text-muted-foreground">
+                            {only.companyName}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <Select
+                      value={field.value || ''}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select assignment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {assignments.map(a => (
+                          <SelectItem key={a._id} value={a._id}>
+                            <span className="flex flex-col">
+                              <span>{a.serviceType ?? a._id}</span>
+                              {a.companyName && (
+                                <span className="text-xs text-muted-foreground">
+                                  {a.companyName}
+                                </span>
+                              )}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  );
+                }}
               />
-            ))}
-          </div>
+            </Field>
+          </Section>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full rounded-xl h-10 gap-2"
-            onClick={() => f.appendWork({ ...DEFAULT_WORK_ENTRY })}
+          <ShiftSection
+            control={control}
+            errors={errors}
+            today={f.today}
+            companyTimezone={f.companyTimezone}
+            hoursWorked={f.hoursWorked}
+          />
+
+          {/* ── Work completed ── */}
+          <Section icon={<ClipboardList size={14} />} title="Work completed">
+            {errors.workEntries?.message && (
+              <p className="text-xs text-destructive">
+                {errors.workEntries.message}
+              </p>
+            )}
+
+            <div className="divide-y divide-white/[0.08] rounded-lg border border-white/[0.1] bg-white/[0.03]">
+              {f.workFields.map((field, idx) => (
+                <WorkEntryCard
+                  key={field.id}
+                  idx={idx}
+                  canRemove={f.workFields.length > 1}
+                  onRemove={() => f.removeWork(idx)}
+                  control={control}
+                  register={register}
+                  setValue={setValue}
+                  errors={errors}
+                />
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => f.appendWork({ ...DEFAULT_WORK_ENTRY })}
+            >
+              <PlusIcon className="size-4" />
+              Add work
+            </Button>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Pending tasks"
+                error={errors.pendingTasks?.message}
+                hint='Tasks carrying over to tomorrow. Write "None" if everything is resolved.'
+              >
+                <Textarea
+                  placeholder="e.g. Follow up on 2 insurance pre-auth requests. Or: None"
+                  className="resize-none"
+                  rows={3}
+                  {...register('pendingTasks')}
+                />
+                <NoneShortcut onClick={() => fillNone('pendingTasks')} />
+              </Field>
+
+              <Field
+                label="Blockers"
+                error={errors.blockers?.message}
+                hint='Anything preventing you from moving forward? Write "None" if clear.'
+              >
+                <Textarea
+                  placeholder="e.g. Waiting on client response for appointment confirmation. Or: None"
+                  className="resize-none"
+                  rows={3}
+                  {...register('blockers')}
+                />
+                <NoneShortcut onClick={() => fillNone('blockers')} />
+              </Field>
+            </div>
+          </Section>
+
+          {/* ── Client communication ── */}
+          <Section
+            icon={<MessageSquareIcon size={14} />}
+            title="Client communication"
           >
-            <PlusIcon className="size-4" />
-            Add Work
-          </Button>
+            <Field
+              label="Did you communicate with the client today?"
+              error={errors.communicatedWithClient?.message}
+            >
+              <Controller
+                control={control}
+                name="communicatedWithClient"
+                render={({ field }) => (
+                  <Select
+                    value={field.value ?? ''}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger className="sm:max-w-[calc(50%-0.5rem)]">
+                      <SelectValue placeholder="Select an answer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COMMUNICATED_WITH_CLIENT_OPTIONS.map(opt => (
+                        <SelectItem key={opt} value={opt}>
+                          {COMMUNICATED_WITH_CLIENT_LABELS[opt]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </Field>
 
-          <Field
-            label="Pending Tasks"
-            error={errors.pendingTasks?.message}
-            hint='Tasks carrying over to tomorrow. Write "None" if everything is resolved.'
-          >
-            <Textarea
-              placeholder="e.g. Follow up on 2 insurance pre-auth requests. Or: None"
-              className="rounded-xl border-input resize-none"
-              rows={3}
-              {...register('pendingTasks')}
-            />
-          </Field>
+            <Field
+              label="Additional notes or updates for the client"
+              error={errors.clientNote?.message}
+              hint="Optional — visible to the client in the EOD export."
+            >
+              <Textarea
+                placeholder="Any updates the client should know about today…"
+                className="resize-none"
+                rows={3}
+                {...register('clientNote')}
+              />
+            </Field>
+          </Section>
 
-          <Field
-            label="Blockers"
-            error={errors.blockers?.message}
-            hint='Anything preventing you from moving forward? Write "None" if clear.'
-          >
-            <Textarea
-              placeholder="e.g. Waiting on client response for appointment confirmation. Or: None"
-              className="rounded-xl border-input resize-none"
-              rows={2}
-              {...register('blockers')}
-            />
-          </Field>
-        </Section>
-
-        {/* ── Section: Client Communication ── */}
-        <Section
-          icon={<MessageSquareIcon size={14} />}
-          title="Client Communication"
-        >
-          <Field
-            label="Did you communicate with the client today?"
-            error={errors.communicatedWithClient?.message}
-          >
-            <Controller
-              control={control}
-              name="communicatedWithClient"
-              render={({ field }) => (
-                <Select
-                  value={field.value ?? ''}
-                  onValueChange={field.onChange}
-                >
-                  <SelectTrigger className="rounded-xl border-input h-10">
-                    <SelectValue placeholder="Select an answer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COMMUNICATED_WITH_CLIENT_OPTIONS.map(opt => (
-                      <SelectItem key={opt} value={opt}>
-                        {COMMUNICATED_WITH_CLIENT_LABELS[opt]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </Field>
-
-          <Field
-            label="Additional notes or updates for the client"
-            error={errors.clientNote?.message}
-            hint="Optional — visible to the client in the EOD export."
-          >
-            <Textarea
-              placeholder="Any updates the client should know about today…"
-              className="rounded-xl border-input resize-none"
-              rows={3}
-              {...register('clientNote')}
-            />
-          </Field>
-        </Section>
-
-        {/* ── Section: Notes (optional) ── */}
-        <Section icon={<StickyNote size={14} />} title="Notes" optional>
-          <Field label="" error={errors.notes?.message}>
-            <Textarea
-              placeholder="Additional context, links, or anything else worth noting…"
-              className="rounded-xl border-input resize-none"
-              rows={2}
-              {...register('notes')}
-            />
-          </Field>
-        </Section>
+          {/* ── Notes (optional) ── */}
+          <Section icon={<StickyNote size={14} />} title="Notes" optional>
+            <Field label="" error={errors.notes?.message}>
+              <Textarea
+                placeholder="Additional context, links, or anything else worth noting…"
+                className="resize-none"
+                rows={2}
+                {...register('notes')}
+              />
+            </Field>
+          </Section>
+        </div>
 
         {/* ── Actions ── */}
-        <div className="flex items-center gap-3 pt-1">
-          <Button
-            type="submit"
-            disabled={f.isSubmitting}
-            className="flex-1 rounded-xl h-10 font-medium gap-2"
-          >
+        <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
+          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={f.isSubmitting} className="gap-2">
             {f.isSubmitting ? (
               <>
-                <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                <span className="size-3.5 animate-spin rounded-full border-2 border-text-inverse/30 border-t-text-inverse" />
                 Submitting…
               </>
             ) : (
               <>
                 <CheckCircle2 size={15} />
-                Submit EOD Report
+                Submit EOD report
               </>
             )}
           </Button>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="px-4 h-10 rounded-xl text-sm text-muted-foreground hover:text-foreground border border-border hover:border-input transition-colors"
-          >
-            Cancel
-          </button>
         </div>
       </form>
     </PageShell>
+  );
+}
+
+/** A small link under a required free-text field that fills in "None". */
+function NoneShortcut({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="self-start text-xs text-muted-foreground transition-colors hover:text-foreground"
+    >
+      Use “None”
+    </button>
   );
 }

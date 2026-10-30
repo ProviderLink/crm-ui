@@ -1,4 +1,4 @@
-import { CalendarDays, Clock } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
 
 import { TimePickerField } from '@/components/ui/time-picker-field';
@@ -21,56 +21,53 @@ export function ShiftSection({
   hoursWorked: number;
 }) {
   return (
-        <Section icon={<CalendarDays size={14} />} title="Shift">
-          <div className="grid grid-cols-3 gap-4">
-            <Field
-              label="Date"
-              hint={
-                companyTimezone
-                  ? `Filed against the company's business day (${companyTimezone}), which may differ from your local date.`
-                  : undefined
-              }
-            >
-              <p className="flex h-9 items-center text-sm text-foreground">
-                {formatDateKeyLong(today)}
-              </p>
-            </Field>
-            <Field label="Shift Start" error={errors.shiftStart?.message}>
-              <Controller
-                name="shiftStart"
-                control={control}
-                render={({ field }) => (
-                  <TimePickerField
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </Field>
-            <Field label="Shift End" error={errors.shiftEnd?.message}>
-              <Controller
-                name="shiftEnd"
-                control={control}
-                render={({ field }) => (
-                  <TimePickerField
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </Field>
+    <Section icon={<CalendarDays size={14} />} title="Shift">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field label="Date">
+          <div className="flex h-10 items-center rounded-md border border-border bg-white/[0.03] px-3 text-sm">
+            {formatDateKeyLong(today)}
           </div>
+        </Field>
+        <Field label="Shift start" error={errors.shiftStart?.message}>
+          <Controller
+            name="shiftStart"
+            control={control}
+            render={({ field }) => (
+              <TimePickerField value={field.value} onChange={field.onChange} />
+            )}
+          />
+        </Field>
+        <Field label="Shift end" error={errors.shiftEnd?.message}>
+          <Controller
+            name="shiftEnd"
+            control={control}
+            render={({ field }) => (
+              <TimePickerField value={field.value} onChange={field.onChange} />
+            )}
+          />
+        </Field>
+      </div>
 
-          {/* Hours worked pill */}
+      {(companyTimezone || hoursWorked > 0) && (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          {companyTimezone ? (
+            <p className="text-xs text-muted-foreground">
+              Filed against the company’s business day ({companyTimezone}),
+              which may differ from your local date.
+            </p>
+          ) : (
+            <span />
+          )}
           {hoursWorked > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/60 border border-border/50 w-fit">
-              <Clock size={13} className="text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">
+            <p className="text-xs text-muted-foreground">
+              Total{' '}
+              <span className="text-sm font-medium tabular-nums text-foreground">
                 {hoursWorked}h
               </span>
-              <span className="text-xs text-muted-foreground">total hours</span>
-            </div>
+            </p>
           )}
-        </Section>
+        </div>
+      )}
+    </Section>
   );
 }
