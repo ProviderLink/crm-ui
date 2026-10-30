@@ -89,12 +89,7 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       { title: 'Activity', url: '/am/activity', icon: ListChecksIcon },
       { title: 'Accounts', url: '/am/accounts', icon: UsersIcon },
       { title: 'Check-ins', url: '/am/reminders', icon: BellIcon },
-      { title: 'Scorecards', url: '/am/scorecards', icon: BarChart3Icon },
-      {
-        title: 'Performance Reviews',
-        url: '/am/performance-reviews',
-        icon: ClipboardCheckIcon,
-      },
+      { title: 'Performance', url: '/am/performance', icon: BarChart3Icon },
     ],
   },
   client: {

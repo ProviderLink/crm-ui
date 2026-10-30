@@ -501,7 +501,7 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
                 <div className="flex items-baseline justify-between">
                   <h3 className="text-sm font-semibold">Reviews</h3>
                   <Link
-                    to="/am/performance-reviews"
+                    to="/am/performance"
                     className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Open reviews →

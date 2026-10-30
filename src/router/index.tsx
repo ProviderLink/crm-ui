@@ -54,6 +54,7 @@ const PerformanceReviewsPage = lazy(
 const AmDashboardPage = lazy(() => import('@/pages/am/AmDashboardPage'));
 const AmActivityPage = lazy(() => import('@/pages/am/AmActivityPage'));
 const AmCheckinsPage = lazy(() => import('@/pages/am/AmCheckinsPage'));
+const AmPerformancePage = lazy(() => import('@/pages/am/AmPerformancePage'));
 const AmAssignmentsPage = lazy(
   () => import('@/pages/am/AmAssignmentsPage')
 );
@@ -161,7 +162,11 @@ const router = createBrowserRouter([
                   { path: 'assignments', element: <AmAssignmentsPage /> },
                   { path: 'accounts', element: <AccountManagementPage /> },
                   { path: 'reminders', element: <AmCheckinsPage /> },
-                  { path: 'scorecards', element: <ScorecardsPage /> },
+                  { path: 'performance', element: <AmPerformancePage /> },
+                  {
+                    path: 'scorecards',
+                    element: <Navigate to="/am/performance?tab=scorecards" replace />,
+                  },
                   { path: 'activity', element: <AmActivityPage /> },
                   {
                     path: 'work-entries',
@@ -173,7 +178,7 @@ const router = createBrowserRouter([
                   },
                   {
                     path: 'performance-reviews',
-                    element: <PerformanceReviewsPage />,
+                    element: <Navigate to="/am/performance" replace />,
                   },
                 ],
               },
