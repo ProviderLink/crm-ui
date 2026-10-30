@@ -55,7 +55,7 @@ export default function AmDashboardPage() {
             icon={missing > 0 ? AlertTriangleIcon : CheckCircle2Icon}
             valueClassName={missing > 0 ? 'text-status-warning' : ''}
             isLoading={d.loadingStats}
-            to="/am/eod-reports"
+            to="/am/activity?tab=reports"
           >
             {missing > 0
               ? `${missing} still to report`
@@ -67,7 +67,7 @@ export default function AmDashboardPage() {
             value={`${d.stats?.weeklyWorkHours.totalHours ?? 0}h`}
             icon={ClockIcon}
             isLoading={d.loadingStats}
-            to="/am/work-entries"
+            to="/am/activity"
           >
             {d.stats?.weeklyWorkHours.entriesCount ?? 0} work entries logged
           </DashboardStatCard>
@@ -78,7 +78,7 @@ export default function AmDashboardPage() {
             icon={d.blockers.length > 0 ? MessageSquareWarningIcon : ClipboardCheckIcon}
             valueClassName={d.blockers.length > 0 ? 'text-status-warning' : ''}
             isLoading={d.loadingEods}
-            to="/am/eod-reports"
+            to="/am/activity?tab=reports"
           >
             Reported in the last 7 days
           </DashboardStatCard>

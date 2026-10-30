@@ -3,7 +3,12 @@ import { RoleGuard } from '@/components/shared/RoleGuard';
 import { RouteError } from '@/components/shared/RouteError';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  Navigate,
+  Outlet,
+  RouterProvider,
+} from 'react-router-dom';
 
 // Home (public)
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -47,6 +52,7 @@ const PerformanceReviewsPage = lazy(
 
 // Account manager portal
 const AmDashboardPage = lazy(() => import('@/pages/am/AmDashboardPage'));
+const AmActivityPage = lazy(() => import('@/pages/am/AmActivityPage'));
 const AmAssignmentsPage = lazy(
   () => import('@/pages/am/AmAssignmentsPage')
 );
@@ -155,8 +161,15 @@ const router = createBrowserRouter([
                   { path: 'accounts', element: <AccountManagementPage /> },
                   { path: 'reminders', element: <SurveyRemindersPage /> },
                   { path: 'scorecards', element: <ScorecardsPage /> },
-                  { path: 'work-entries', element: <WorkEntriesPage /> },
-                  { path: 'eod-reports', element: <EodReportsPage /> },
+                  { path: 'activity', element: <AmActivityPage /> },
+                  {
+                    path: 'work-entries',
+                    element: <Navigate to="/am/activity" replace />,
+                  },
+                  {
+                    path: 'eod-reports',
+                    element: <Navigate to="/am/activity?tab=reports" replace />,
+                  },
                   {
                     path: 'performance-reviews',
                     element: <PerformanceReviewsPage />,

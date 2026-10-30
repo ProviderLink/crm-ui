@@ -86,12 +86,7 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
         icon: LayoutDashboardIcon,
       },
       { title: 'Assignments', url: '/am/assignments', icon: LinkIcon },
-      {
-        title: 'Work Entries',
-        url: '/am/work-entries',
-        icon: ListChecksIcon,
-      },
-      { title: 'EOD Reports', url: '/am/eod-reports', icon: FileTextIcon },
+      { title: 'Activity', url: '/am/activity', icon: ListChecksIcon },
       { title: 'Accounts', url: '/am/accounts', icon: UsersIcon },
       { title: 'Reminders', url: '/am/reminders', icon: BellIcon },
       { title: 'Scorecards', url: '/am/scorecards', icon: BarChart3Icon },
