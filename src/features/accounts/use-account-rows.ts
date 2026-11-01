@@ -1,3 +1,4 @@
+import { useRole } from '@/hooks/use-role';
 import {
   useAccountManagersQuery,
   useAllAssignmentsQuery,
@@ -7,7 +8,6 @@ import {
   useCrmAdminUsersQuery,
   useVaProfilesQuery,
 } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
 import type { IAccountManager, ICrmUser } from '@/types/user';
 
 import type { UserRow } from './types';
@@ -38,9 +38,8 @@ export function useAccountRows() {
 
   // The AM and admin tabs are admin-only, and account managers cannot list
   // users, so skip those requests for them.
-  const canListUsers = useAppSelector(
-    s => s.auth.user?.role !== 'account_manager'
-  );
+  const { isAccountManager } = useRole();
+  const canListUsers = !isAccountManager;
   const { data: amUsers = [], isLoading: loadingAm } =
     useAccountManagersQuery(canListUsers);
   const { data: adminUsers = [], isLoading: loadingAdmin } =

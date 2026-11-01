@@ -1,3 +1,4 @@
+import { useRole } from '@/hooks/use-role';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -9,7 +10,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { QK, useNotesQuery } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
 import { useApiMutation } from '@/hooks/use-api-mutation';
 import { AlertCircle, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -37,12 +37,10 @@ export function NotesThread({
   subjectId,
   title = 'Internal notes',
 }: NotesThreadProps) {
-  const user = useAppSelector(s => s.auth.user);
-
   // Defense-in-depth: never fetch the thread for anyone but staff, even if the
   // component were mounted by mistake. The backend also enforces this, and
   // limits an account manager to the VAs and clients they manage.
-  const canUse = user?.role === 'admin' || user?.role === 'account_manager';
+  const { isStaff: canUse } = useRole();
 
   const {
     data: notes = [],
@@ -58,7 +56,8 @@ export function NotesThread({
     mutationFn: (note: { method: NoteMethod; content: string }) =>
       addNote(subjectType, subjectId!, note),
     invalidate: subjectId ? [QK.adminNotes(subjectType, subjectId)] : [],
-    errorMessage: err => getApiError(err, 'Failed to add note. Please try again.'),
+    errorMessage: err =>
+      getApiError(err, 'Failed to add note. Please try again.'),
   });
   const submitting = add.isPending;
   const submitError = add.error;
@@ -80,7 +79,7 @@ export function NotesThread({
   return (
     <div className="border-t border-border pt-4 space-y-3">
       <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-sm font-semibold text-foreground">{title}</p>
         <span className="ml-auto text-xs text-muted-foreground">
           {notes.length} {notes.length === 1 ? 'note' : 'notes'}
         </span>
@@ -99,12 +98,13 @@ export function NotesThread({
       ) : isError ? (
         <div className="flex items-start gap-2 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 text-xs text-destructive">
           <AlertCircle size={13} className="mt-0.5 shrink-0" />
-          {getApiError(error, 'Failed to load notes. You may not have permission.')}
+          {getApiError(
+            error,
+            'Failed to load notes. You may not have permission.'
+          )}
         </div>
       ) : notes.length === 0 ? (
-        <p className="text-xs text-muted-foreground italic">
-          No notes yet.
-        </p>
+        <p className="text-xs text-muted-foreground italic">No notes yet.</p>
       ) : (
         <ol className="space-y-2.5">
           {notes.map(note => (

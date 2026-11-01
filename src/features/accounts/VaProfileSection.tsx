@@ -1,6 +1,6 @@
+import { useRole } from '@/hooks/use-role';
 import { NotesThread } from '@/features/notes/NotesThread';
 import { QK, useVaAssignmentsQuery, useVaProfileQuery } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
 import { updateVaProfile } from '@/services/va-profiles.service';
 import type { UpdateVaProfilePayload } from '@/types/va-profile';
 
@@ -16,9 +16,7 @@ export function VaProfileSection({
 }: {
   vaId: string | null | undefined;
 }) {
-  const authUser = useAppSelector(s => s.auth.user);
-  const canEdit =
-    authUser?.role === 'admin' || authUser?.role === 'account_manager';
+  const { isStaff: canEdit } = useRole();
 
   const { data: profile, isLoading: profileLoading } = useVaProfileQuery(vaId);
   const { data: assignments = [], isLoading: assignmentsLoading } =

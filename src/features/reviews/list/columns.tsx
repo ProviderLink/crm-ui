@@ -6,6 +6,7 @@ import {
   Trash2Icon,
 } from 'lucide-react';
 
+import { RowActions } from '@/components/shared/RowActions';
 import { ReviewStatusBadge, Score } from '@/components/shared/badges';
 import { Button } from '@/components/ui/button';
 import {
@@ -123,7 +124,7 @@ export function buildReviewColumns({
         const r = row.original;
         const isExporting = exportingId === r.id;
         return (
-          <div className="flex justify-end" onClick={e => e.stopPropagation()}>
+          <RowActions>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -157,7 +158,7 @@ export function buildReviewColumns({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </RowActions>
         );
       },
     },

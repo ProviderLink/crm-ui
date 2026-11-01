@@ -1,5 +1,6 @@
 import { Edit3Icon } from 'lucide-react';
 
+import { useRole } from '@/hooks/use-role';
 import { Button } from '@/components/ui/button';
 import { NotesThread } from '@/features/notes/NotesThread';
 import {
@@ -8,7 +9,6 @@ import {
   useClientAssignmentsQuery,
   useHiredVasForClientQuery,
 } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
 import { updateClientAccount } from '@/services/client-accounts.service';
 import type { UpdateClientAccountPayload } from '@/types/client-account';
 
@@ -19,9 +19,8 @@ import { useProfileEditor } from './profile/use-profile-editor';
 
 /** A client's CRM profile in the account sheet: view, edit, and notes. */
 export function ClientProfileSection({ clientId }: { clientId: string }) {
-  const user = useAppSelector(s => s.auth.user);
   // Editing a client is admin-only; account managers can read it and add notes.
-  const canEdit = user?.role === 'admin';
+  const { isAdmin: canEdit } = useRole();
 
   const { data: account, isLoading } = useClientAccountQuery(clientId);
   const { data: hiredVas = [] } = useHiredVasForClientQuery(clientId);

@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { useRole } from '@/hooks/use-role';
 import {
   QK,
   useAllAssignmentsQuery,
@@ -24,7 +25,7 @@ import type {
 export function useReviewsList() {
   const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
-  const isAccountManager = user?.role === 'account_manager';
+  const { isAccountManager } = useRole();
 
   // AM scoping: only see reviews for their own assignments
   const { data: amAssignments = [] } = useAllAssignmentsQuery(

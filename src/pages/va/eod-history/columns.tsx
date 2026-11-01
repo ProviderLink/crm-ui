@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontalIcon, Trash2Icon } from 'lucide-react';
 
+import { RowActions } from '@/components/shared/RowActions';
 import { InitialsTile } from '@/components/shared/badges';
 import { Button } from '@/components/ui/button';
 import {
@@ -89,8 +90,7 @@ export function buildEodHistoryColumns({
       enableSorting: false,
       meta: { shrink: true },
       cell: ({ row }) => (
-        // Keep a click in the menu from also opening the row.
-        <div className="flex justify-end" onClick={e => e.stopPropagation()}>
+        <RowActions>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -112,7 +112,7 @@ export function buildEodHistoryColumns({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+        </RowActions>
       ),
     },
   ];

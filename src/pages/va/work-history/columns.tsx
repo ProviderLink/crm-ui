@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { PenLineIcon } from 'lucide-react';
 
+import { RowActions } from '@/components/shared/RowActions';
 import { InitialsTile, WorkStatusPill } from '@/components/shared/badges';
 import { Button } from '@/components/ui/button';
 import {
@@ -102,8 +103,7 @@ export function buildWorkHistoryColumns({
       enableSorting: false,
       meta: { shrink: true },
       cell: ({ row }) => (
-        // Keep a click on the button from also opening the row.
-        <div className="flex justify-end" onClick={e => e.stopPropagation()}>
+        <RowActions>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -118,7 +118,7 @@ export function buildWorkHistoryColumns({
             </TooltipTrigger>
             <TooltipContent side="top">Edit</TooltipContent>
           </Tooltip>
-        </div>
+        </RowActions>
       ),
     },
   ];

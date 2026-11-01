@@ -2,6 +2,7 @@ import { ArrowRightIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
+import { useRole } from '@/hooks/use-role';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -81,7 +82,7 @@ function Group({
  */
 export function NeedsAttentionCard({ prefix }: { prefix: '/admin' | '/am' }) {
   const user = useAppSelector(s => s.auth.user);
-  const isAccountManager = user?.role === 'account_manager';
+  const { isAccountManager } = useRole();
 
   const { data: eodContext } = useEodContextQuery();
   const today = eodContext?.dateKey ?? todayString();
@@ -165,9 +166,7 @@ export function NeedsAttentionCard({ prefix }: { prefix: '/admin' | '/am' }) {
             r.reviewStatus === 'AI Generated' ||
             r.reviewStatus === 'In Review'
         )
-        .filter(
-          r => !scoped || scoped.has(r.vaId) || scoped.has(r.clientId)
-        )
+        .filter(r => !scoped || scoped.has(r.vaId) || scoped.has(r.clientId))
         .map(r => ({
           key: r.id,
           title: r.candidateName ?? vaName[r.vaId] ?? 'VA',

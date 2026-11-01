@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontalIcon, PenLineIcon, XIcon } from 'lucide-react';
 
+import { RowActions } from '@/components/shared/RowActions';
 import { AssignmentStatusPill, InitialsTile } from '@/components/shared/badges';
 import { Button } from '@/components/ui/button';
 import {
@@ -121,8 +122,7 @@ export function buildColumns({
     enableSorting: false,
     meta: { shrink: true },
     cell: ({ row }) => (
-      // Keep a click in the menu from also opening the row.
-      <div className="flex justify-end" onClick={e => e.stopPropagation()}>
+      <RowActions>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -153,7 +153,7 @@ export function buildColumns({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </RowActions>
     ),
   });
 
