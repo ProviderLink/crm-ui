@@ -1,5 +1,3 @@
-
-
 export type UserRow = {
   id: string;
   name: string;
