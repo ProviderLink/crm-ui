@@ -1,60 +1,18 @@
 import { PlusIcon } from 'lucide-react';
-import { useState } from 'react';
 
-import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
-import { GenerateReviewModal } from '@/features/reviews/generate/GenerateReviewModal';
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
+import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
 import { Button } from '@/components/ui/button';
-
-import { ReviewDrawer } from '@/features/reviews/editor/ReviewDrawer';
-import { buildReviewColumns } from '@/features/reviews/list/columns';
 import { ReviewFilters } from '@/features/reviews/list/ReviewFilters';
+import { ReviewsOverlays } from '@/features/reviews/list/ReviewsOverlays';
 import { useReviewsList } from '@/features/reviews/list/use-reviews-list';
 
 export default function PerformanceReviewsPage() {
   const p = useReviewsList();
-  const [openReviewId, setOpenReviewId] = useState<string | null>(null);
-
-  const columns = buildReviewColumns({
-    vaMap: p.vaMap,
-    clientMap: p.clientMap,
-    exportingId: p.exportingId,
-    onExport: p.handleExportPdf,
-    onDelete: p.setDeleteTarget,
-  });
 
   return (
-    <Page
-      overlays={
-        <>
-          <GenerateReviewModal
-            open={p.generateOpen}
-            onOpenChange={p.setGenerateOpen}
-            onCreated={setOpenReviewId}
-          />
-
-          <ReviewDrawer
-            reviewId={openReviewId}
-            onClose={() => setOpenReviewId(null)}
-          />
-
-          <ConfirmDialog
-            open={!!p.deleteTarget}
-            onCancel={() => p.setDeleteTarget(null)}
-            title="Delete Review"
-            description="Are you sure you want to delete this performance review? This action cannot be undone."
-            confirmLabel="Delete"
-            onConfirm={async () => {
-              if (p.deleteTarget) await p.handleDelete(p.deleteTarget);
-            }}
-            variant="destructive"
-          />
-        </>
-      }
-    >
+    <Page overlays={<ReviewsOverlays list={p} />}>
       <PageSection>
-        {/* Header */}
         <PageHeader
           title="Performance Reviews"
           description="AI-generated performance reviews for VAs"
@@ -75,10 +33,10 @@ export default function PerformanceReviewsPage() {
         />
 
         <DataTable
-          columns={columns}
+          columns={p.columns}
           data={p.reviews}
           isLoading={p.isLoading}
-          onRowClick={r => setOpenReviewId(r.id)}
+          onRowClick={r => p.setOpenReviewId(r.id)}
         />
       </PageSection>
     </Page>

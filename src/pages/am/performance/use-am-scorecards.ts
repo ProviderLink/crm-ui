@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
-import { useGenerateScorecards } from '@/hooks/mutations';
+import { useScorecardGenerate } from '@/features/scorecards/use-scorecard-generate';
+import { useScorecardView } from '@/features/scorecards/use-scorecard-view';
 import { useAllAssignmentsQuery, useScorecardsQuery } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import type { IScorecard } from '@/types/scorecard';
@@ -22,30 +23,10 @@ export function useAmScorecards() {
   }, [assignments]);
   const nameOf = (s: IScorecard) => s.vaName || vaMap[s.vaId] || 'Unknown VA';
 
-  const [search, setSearch] = useState('');
-  // null = follow the latest week; 'all' = every week.
-  const [weekChoice, setWeekChoice] = useState<string | null>(null);
-  const generate = useGenerateScorecards();
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const view = useScorecardView(scorecards, nameOf);
+  const generate = useScorecardGenerate();
 
-  // Distinct weeks, newest first, keyed by their start date.
-  const weeks = useMemo(() => {
-    const map = new Map<string, IScorecard>();
-    for (const s of scorecards) {
-      const key = s.weekStart?.slice(0, 10);
-      if (key && !map.has(key)) map.set(key, s);
-    }
-    return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  }, [scorecards]);
-  const week = weekChoice ?? weeks[0]?.[0] ?? 'all';
-
-  const query = search.trim().toLowerCase();
-  const rows = scorecards.filter(s => {
-    if (week !== 'all' && s.weekStart?.slice(0, 10) !== week) return false;
-    if (!query) return true;
-    return `${nameOf(s)} ${s.companyName ?? ''}`.toLowerCase().includes(query);
-  });
-
+  const { rows } = view;
   const average = (pick: (s: IScorecard) => number) =>
     rows.length === 0
       ? null
@@ -55,27 +36,13 @@ export function useAmScorecards() {
     null
   );
 
-  async function handleGenerate() {
-    setConfirmOpen(false);
-    await generate.run();
-  }
-
   return {
-    rows,
-    weeks,
-    week,
-    setWeekChoice,
-    search,
-    setSearch,
+    ...view,
     isLoading,
     nameOf,
     avgScore: average(s => s.productivityScore),
     avgEod: average(s => s.eodComplianceRate),
     lowest,
-    generating: generate.isPending,
-    generateError: generate.error,
-    confirmOpen,
-    setConfirmOpen,
-    handleGenerate,
+    generate,
   };
 }

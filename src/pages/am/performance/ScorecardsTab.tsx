@@ -1,172 +1,45 @@
-import type { ColumnDef } from '@tanstack/react-table';
-import { RefreshCwIcon, StarIcon } from 'lucide-react';
+import { RefreshCwIcon } from 'lucide-react';
 
-import {
-  ClearFiltersButton,
-  SearchInput,
-} from '@/components/shared/FilterControls';
-import { StatTile } from '@/components/shared/StatTile';
-import { InitialsTile } from '@/components/shared/badges';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
+import { StatTile } from '@/components/shared/StatTile';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import type { IScorecard } from '@/types/scorecard';
+import { buildScorecardColumns } from '@/features/scorecards/scorecard-columns';
+import { ScorecardFilters } from '@/features/scorecards/ScorecardFilters';
+import { scoreColor } from '@/features/scorecards/score';
 
-import { formatDateKeyShort } from '@/lib/time';
 import { useAmScorecards } from './use-am-scorecards';
-
-// Three clear levels, colour on the text only (no coloured fills).
-const scoreColor = (score: number) => {
-  if (score >= 80) return 'text-status-success';
-  if (score >= 60) return 'text-status-warning';
-  return 'text-status-error';
-};
 
 export function ScorecardsTab() {
   const s = useAmScorecards();
-
-  const columns: ColumnDef<IScorecard>[] = [
-    {
-      id: 'va',
-      header: 'VA',
-      meta: { fill: true, cellClassName: 'max-w-0' },
-      accessorFn: r => s.nameOf(r),
-      cell: ({ row }) => {
-        const name = s.nameOf(row.original);
-        return (
-          <div className="flex min-w-0 items-center gap-3">
-            <InitialsTile name={name} />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium" title={name}>
-                {name}
-              </p>
-              {row.original.companyName && (
-                <p className="truncate text-xs text-muted-foreground">
-                  {row.original.companyName}
-                </p>
-              )}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'weekStart',
-      header: 'Week',
-      size: 130,
-      cell: ({ row }) => (
-        <span className="text-sm whitespace-nowrap text-muted-foreground">
-          {formatDateKeyShort(row.original.weekStart)} –{' '}
-          {formatDateKeyShort(row.original.weekEnd)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'totalHours',
-      header: 'Hours',
-      size: 80,
-      cell: ({ getValue }) => (
-        <span className="text-sm tabular-nums">
-          {getValue<number>().toFixed(1)}h
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'totalTasksCompleted',
-      header: 'Tasks',
-      size: 75,
-      cell: ({ getValue }) => (
-        <span className="text-sm tabular-nums">{getValue<number>()}</span>
-      ),
-    },
-    {
-      accessorKey: 'eodComplianceRate',
-      header: 'EOD rate',
-      size: 120,
-      cell: ({ getValue }) => {
-        const v = getValue<number>();
-        return (
-          <span className={`text-sm font-medium tabular-nums ${scoreColor(v)}`}>
-            {v.toFixed(0)}%
-          </span>
-        );
-      },
-    },
-    {
-      accessorKey: 'productivityScore',
-      header: 'Score',
-      size: 90,
-      cell: ({ getValue }) => {
-        const v = getValue<number>();
-        return (
-          <span className="inline-flex items-center gap-1.5 text-sm tabular-nums">
-            <StarIcon
-              className={`size-3.5 fill-current ${scoreColor(v)}`}
-              aria-hidden
-            />
-            <span className="font-medium">{v.toFixed(0)}</span>
-          </span>
-        );
-      },
-    },
-  ];
-
+  const { generate } = s;
   const none = s.rows.length === 0;
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <SearchInput
-          value={s.search}
-          onChange={s.setSearch}
-          placeholder="Search VA or company…"
-          label="Search by VA or company"
-        />
-        <Select value={s.week} onValueChange={s.setWeekChoice}>
-          <SelectTrigger
-            className="h-8 w-48 text-sm"
-            aria-label="Filter by week"
+      <ScorecardFilters
+        search={s.search}
+        onSearchChange={s.setSearch}
+        week={s.week}
+        weeks={s.weeks}
+        onWeekChange={s.setWeekChoice}
+        count={s.rows.length}
+        error={generate.error}
+        trailing={
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8"
+            onClick={() => generate.setConfirmOpen(true)}
+            disabled={generate.generating}
           >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All weeks</SelectItem>
-            {s.weeks.map(([key, sc], i) => (
-              <SelectItem key={key} value={key}>
-                {formatDateKeyShort(sc.weekStart)} –{' '}
-                {formatDateKeyShort(sc.weekEnd)}
-                {i === 0 && ' (latest)'}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {s.search && <ClearFiltersButton onClick={() => s.setSearch('')} />}
-        {s.generateError && (
-          <p className="text-xs text-destructive">{s.generateError}</p>
-        )}
-        <span className="ml-auto text-xs text-muted-foreground">
-          {s.rows.length} scorecard{s.rows.length !== 1 ? 's' : ''}
-        </span>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8"
-          onClick={() => s.setConfirmOpen(true)}
-          disabled={s.generating}
-        >
-          <RefreshCwIcon
-            className={`size-3.5 ${s.generating ? 'animate-spin' : ''}`}
-          />
-          {s.generating ? 'Generating…' : 'Generate scorecards'}
-        </Button>
-      </div>
+            <RefreshCwIcon
+              className={`size-3.5 ${generate.generating ? 'animate-spin' : ''}`}
+            />
+            {generate.generating ? 'Generating…' : 'Generate scorecards'}
+          </Button>
+        }
+      />
 
       {/* The selected week in numbers */}
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -207,15 +80,19 @@ export function ScorecardsTab() {
           this week’s.
         </div>
       ) : (
-        <DataTable columns={columns} data={s.rows} isLoading={s.isLoading} />
+        <DataTable
+          columns={buildScorecardColumns(s.nameOf)}
+          data={s.rows}
+          isLoading={s.isLoading}
+        />
       )}
 
       <ConfirmDialog
-        open={s.confirmOpen}
+        open={generate.confirmOpen}
         title="Generate Scorecards"
         description="Generate scorecards for your assigned VAs for the current week. This may take a moment."
-        onConfirm={s.handleGenerate}
-        onCancel={() => s.setConfirmOpen(false)}
+        onConfirm={generate.confirm}
+        onCancel={() => generate.setConfirmOpen(false)}
       />
     </>
   );

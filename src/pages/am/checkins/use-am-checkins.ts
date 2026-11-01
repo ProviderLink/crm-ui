@@ -7,15 +7,9 @@ import {
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import { daysUntil, todayString } from '@/lib/time';
+import type { RelatedInfo } from '@/features/reminders/reminder-cells';
 import { dueKey, isOpen } from '@/lib/survey';
 import type { ISurveyReminder } from '@/types/survey-reminder';
-
-
-export type RelatedInfo = {
-  title: string;
-  subtitle: string;
-  isCompany: boolean;
-};
 
 /**
  * The manager's check-ins. The backend already limits them to this manager's
@@ -41,10 +35,22 @@ export function useAmCheckins() {
     for (const a of assignments) {
       const va = a.candidateName || 'VA';
       const client = a.companyName || '';
-      info.set(a._id, { title: va, subtitle: client || 'Assignment', isCompany: false });
-      info.set(a.candidateId, { title: va, subtitle: 'Virtual Assistant', isCompany: false });
+      info.set(a._id, {
+        title: va,
+        subtitle: client || 'Assignment',
+        isCompany: false,
+      });
+      info.set(a.candidateId, {
+        title: va,
+        subtitle: 'Virtual Assistant',
+        isCompany: false,
+      });
       if (client)
-        info.set(a.clientId, { title: client, subtitle: 'Client', isCompany: true });
+        info.set(a.clientId, {
+          title: client,
+          subtitle: 'Client',
+          isCompany: true,
+        });
     }
     return info;
   }, [assignments]);

@@ -5,8 +5,6 @@ import {
   ClearFiltersButton,
   SearchInput,
 } from '@/components/shared/FilterControls';
-import { GenerateReviewModal } from '@/features/reviews/generate/GenerateReviewModal';
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import type {
@@ -14,8 +12,7 @@ import type {
   ReviewStatus,
 } from '@/types/performance-review';
 
-import { ReviewDrawer } from '@/features/reviews/editor/ReviewDrawer';
-import { buildReviewColumns } from '@/features/reviews/list/columns';
+import { ReviewsOverlays } from '@/features/reviews/list/ReviewsOverlays';
 import { useReviewsList } from '@/features/reviews/list/use-reviews-list';
 
 type View = 'todo' | 'done' | 'all';
@@ -35,16 +32,7 @@ const inView = (r: IPerformanceReview, view: View) =>
 
 export function ReviewsTab() {
   const p = useReviewsList();
-  const [openReviewId, setOpenReviewId] = useState<string | null>(null);
   const [view, setView] = useState<View>('todo');
-
-  const columns = buildReviewColumns({
-    vaMap: p.vaMap,
-    clientMap: p.clientMap,
-    exportingId: p.exportingId,
-    onExport: p.handleExportPdf,
-    onDelete: p.setDeleteTarget,
-  });
 
   const rows = p.reviews.filter(r => inView(r, view));
 
@@ -96,34 +84,13 @@ export function ReviewsTab() {
       </div>
 
       <DataTable
-        columns={columns}
+        columns={p.columns}
         data={rows}
         isLoading={p.isLoading}
-        onRowClick={r => setOpenReviewId(r.id)}
+        onRowClick={r => p.setOpenReviewId(r.id)}
       />
 
-      <GenerateReviewModal
-        open={p.generateOpen}
-        onOpenChange={p.setGenerateOpen}
-        onCreated={setOpenReviewId}
-      />
-
-      <ReviewDrawer
-        reviewId={openReviewId}
-        onClose={() => setOpenReviewId(null)}
-      />
-
-      <ConfirmDialog
-        open={!!p.deleteTarget}
-        onCancel={() => p.setDeleteTarget(null)}
-        title="Delete Review"
-        description="Are you sure you want to delete this performance review? This action cannot be undone."
-        confirmLabel="Delete"
-        onConfirm={async () => {
-          if (p.deleteTarget) await p.handleDelete(p.deleteTarget);
-        }}
-        variant="destructive"
-      />
+      <ReviewsOverlays list={p} />
     </>
   );
 }

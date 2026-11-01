@@ -9,6 +9,7 @@ import {
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import { useClientNames, useVaNames } from '@/hooks/use-name-maps';
+import { buildReviewColumns } from './columns';
 import {
   deleteReview,
   exportReviewPdf,
@@ -39,6 +40,7 @@ export function useReviewsList() {
   );
 
   const [generateOpen, setGenerateOpen] = useState(false);
+  const [openReviewId, setOpenReviewId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [exportingId, setExportingId] = useState<string | null>(null);
@@ -48,7 +50,9 @@ export function useReviewsList() {
 
   const filters: IReviewFilters = {
     status:
-      statusFilter !== 'all' ? STATUS_TO_BACKEND[statusFilter as ReviewStatus] : undefined,
+      statusFilter !== 'all'
+        ? STATUS_TO_BACKEND[statusFilter as ReviewStatus]
+        : undefined,
   };
 
   const { data: allReviews = [], isLoading } =
@@ -106,7 +110,16 @@ export function useReviewsList() {
     setStatusFilter('all');
   }
 
+  const columns = buildReviewColumns({
+    vaMap,
+    clientMap,
+    exportingId,
+    onExport: handleExportPdf,
+    onDelete: setDeleteTarget,
+  });
+
   return {
+    columns,
     isLoading,
     reviews,
     vaMap,
@@ -121,6 +134,8 @@ export function useReviewsList() {
     setDeleteTarget,
     generateOpen,
     setGenerateOpen,
+    openReviewId,
+    setOpenReviewId,
     handleExportPdf,
     handleDelete,
   };

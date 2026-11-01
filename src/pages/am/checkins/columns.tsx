@@ -1,18 +1,18 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { Building2Icon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { plural } from '@/lib/format';
-import { daysUntil, formatDateKeyLong } from '@/lib/time';
 import { SurveyStatusPill } from '@/components/shared/badges';
-import { dueKey, isOpen } from '@/lib/survey';
+import { isOpen } from '@/lib/survey';
 import {
   SURVEY_TYPE_LABELS,
   type ISurveyReminder,
 } from '@/types/survey-reminder';
 
-import { initialsOf } from '@/lib/format';
-import type { RelatedInfo } from './use-am-checkins';
+import {
+  ReminderDueCell,
+  ReminderForCell,
+  type RelatedInfo,
+} from '@/features/reminders/reminder-cells';
 
 export function buildCheckinColumns({
   relatedInfo,
@@ -34,36 +34,12 @@ export function buildCheckinColumns({
       // Takes all the spare width; long names truncate inside it.
       meta: { fill: true, cellClassName: 'max-w-0' },
       enableSorting: false,
-      cell: ({ row }) => {
-        const { relatedId, relatedType } = row.original;
-        const info = relatedInfo.get(relatedId);
-        const title = info?.title ?? `…${relatedId.slice(-8)}`;
-        const subtitle = info?.subtitle ?? relatedType;
-        return (
-          <div
-            className="flex min-w-0 items-center gap-3"
-            title={`${title} · ${subtitle}`}
-          >
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
-              {info && !info.isCompany ? (
-                initialsOf(info.title) || '?'
-              ) : (
-                <Building2Icon className="size-3.5" />
-              )}
-            </div>
-            <div className="min-w-0">
-              <p
-                className={`truncate text-sm font-medium ${info ? '' : 'font-mono'}`}
-              >
-                {title}
-              </p>
-              <p className="truncate text-xs text-muted-foreground capitalize">
-                {subtitle}
-              </p>
-            </div>
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <ReminderForCell
+          reminder={row.original}
+          info={relatedInfo.get(row.original.relatedId)}
+        />
+      ),
     },
     {
       accessorKey: 'surveyType',
@@ -81,30 +57,9 @@ export function buildCheckinColumns({
       accessorKey: 'dueDate',
       header: 'Due date',
       size: 160,
-      cell: ({ row }) => {
-        const v = dueKey(row.original);
-        if (!v) return <span className="text-muted-foreground/40">—</span>;
-        let note: string | null = null;
-        let noteClass = 'text-muted-foreground';
-        if (isOpen(row.original)) {
-          const d = daysUntil(v, today);
-          if (d < 0) {
-            note = `Overdue by ${plural(-d, 'day')}`;
-            noteClass = 'text-destructive';
-          } else if (d === 0) {
-            note = 'Due today';
-            noteClass = 'text-status-warning';
-          } else {
-            note = `In ${plural(d, 'day')}`;
-          }
-        }
-        return (
-          <div className="whitespace-nowrap">
-            <p className="text-sm">{formatDateKeyLong(v)}</p>
-            {note && <p className={`text-xs ${noteClass}`}>{note}</p>}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <ReminderDueCell reminder={row.original} today={today} />
+      ),
     },
     {
       accessorKey: 'status',
