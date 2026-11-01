@@ -14,11 +14,18 @@ cp .env.example .env   # set VITE_API_URL, e.g. http://localhost:4000/api/v1
 pnpm dev
 ```
 
-| Script       | Purpose                     |
-| ------------ | --------------------------- |
-| `pnpm dev`   | Start the dev server        |
-| `pnpm build` | Type-check and build `dist` |
-| `pnpm lint`  | Run ESLint                  |
+| Script              | Purpose                                      |
+| ------------------- | -------------------------------------------- |
+| `pnpm dev`          | Start the dev server                         |
+| `pnpm build`        | Type-check and build `dist`                  |
+| `pnpm typecheck`    | Type-check the app and the tests             |
+| `pnpm lint`         | Run ESLint                                   |
+| `pnpm test`         | Run the tests once (Vitest)                  |
+| `pnpm test:watch`   | Run the tests again on every change          |
+| `pnpm format`       | Format the code with Prettier                |
+| `pnpm format:check` | Check the formatting (fails if a file is off) |
+
+Tests sit next to the code they cover (`*.test.ts` / `*.test.tsx`) and are left out of the production build.
 
 ## Portals
 
