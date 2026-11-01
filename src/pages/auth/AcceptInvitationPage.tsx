@@ -1,15 +1,18 @@
-import { AppLogo } from '@/components/app-logo';
+import {
+  AuthErrorBanner,
+  AuthFieldError,
+  AuthLink,
+  AuthShell,
+} from '@/components/shared/AuthShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { acceptInvitation } from '@/services/auth.service';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
-import { PublicFooter } from '@/components/shared/PublicFooter';
 
 const schema = z
   .object({
@@ -41,7 +44,7 @@ export default function AcceptInvitationPage() {
         title="Invalid link"
         subtitle="This invitation link is missing or malformed."
       >
-        <BackToLogin />
+        <AuthLink to="/login">← Back to sign in</AuthLink>
       </AuthShell>
     );
   }
@@ -66,7 +69,7 @@ export default function AcceptInvitationPage() {
           <div className="rounded-md border border-[rgba(255,255,255,0.08)] bg-surface-raised px-4 py-3 text-sm text-text-secondary">
             Account activated. You can now sign in.
           </div>
-          <BackToLogin />
+          <AuthLink to="/login">← Back to sign in</AuthLink>
         </div>
       ) : (
         <form
@@ -74,7 +77,7 @@ export default function AcceptInvitationPage() {
           className="space-y-4"
           noValidate
         >
-          {error && <ErrorBanner message={error} />}
+          {error && <AuthErrorBanner message={error} />}
           <div className="space-y-1.5">
             <Label
               htmlFor="password"
@@ -91,7 +94,7 @@ export default function AcceptInvitationPage() {
               {...register('password')}
             />
             {errors.password && (
-              <FieldError message={errors.password.message!} />
+              <AuthFieldError message={errors.password.message!} />
             )}
           </div>
           <div className="space-y-1.5">
@@ -109,7 +112,9 @@ export default function AcceptInvitationPage() {
               className="h-10 rounded-md text-sm"
               {...register('confirm')}
             />
-            {errors.confirm && <FieldError message={errors.confirm.message!} />}
+            {errors.confirm && (
+              <AuthFieldError message={errors.confirm.message!} />
+            )}
           </div>
           <Button
             type="submit"
@@ -121,71 +126,5 @@ export default function AcceptInvitationPage() {
         </form>
       )}
     </AuthShell>
-  );
-}
-
-function AuthShell({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className="relative min-h-screen flex flex-col"
-      style={{
-        backgroundColor: 'var(--bg-canvas)',
-        backgroundImage:
-          "url('/assets/patterns/dark-square-four-triangle.svg')",
-        backgroundRepeat: 'repeat',
-        backgroundSize: '32px 32px',
-      }}
-    >
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4 min-h-0">
-        <div className="w-full max-w-[360px]">
-          <div className="mb-10">
-            <AppLogo size="md" className="text-white" />
-          </div>
-          <div className="mb-7">
-            <h1 className="text-2xl font-medium text-white tracking-[-0.02em] leading-tight">
-              {title}
-            </h1>
-            <p className="text-sm text-text-secondary mt-1">{subtitle}</p>
-          </div>
-          {children}
-        </div>
-      </div>
-
-      <PublicFooter />
-    </div>
-  );
-}
-
-function ErrorBanner({ message }: { message: string }) {
-  return (
-    <div className="mb-1 rounded-md border border-[rgba(255,255,255,0.08)] bg-surface-raised px-4 py-3 text-sm text-status-error flex items-start gap-2">
-      <span className="shrink-0 mt-0.5">⚠</span>
-      {message}
-    </div>
-  );
-}
-
-function FieldError({ message }: { message: string }) {
-  return <p className="text-xs text-status-error">{message}</p>;
-}
-
-function BackToLogin() {
-  return (
-    <p className="mt-5 text-center text-xs text-text-tertiary">
-      <Link
-        to="/login"
-        className="hover:text-text-secondary transition-colors duration-150"
-      >
-        ← Back to sign in
-      </Link>
-    </p>
   );
 }

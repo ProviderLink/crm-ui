@@ -1,16 +1,19 @@
-import { AppLogo } from '@/components/app-logo';
+import {
+  AuthErrorBanner,
+  AuthFieldError,
+  AuthLink,
+  AuthShell,
+} from '@/components/shared/AuthShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { forgotPassword, resetPassword } from '@/services/auth.service';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { PublicFooter } from '@/components/shared/PublicFooter';
 
 // ─── Schemas ────────────────────────────────────────────────
 
@@ -83,7 +86,7 @@ function RequestStep() {
           className="space-y-4"
           noValidate
         >
-          {error && <ErrorBanner message={error} />}
+          {error && <AuthErrorBanner message={error} />}
           <div className="space-y-1.5">
             <div className="flex items-center">
               <Label
@@ -101,7 +104,7 @@ function RequestStep() {
               className="h-10 rounded-md text-sm"
               {...register('email')}
             />
-            {errors.email && <FieldError message={errors.email.message!} />}
+            {errors.email && <AuthFieldError message={errors.email.message!} />}
           </div>
           <Button
             type="submit"
@@ -112,7 +115,7 @@ function RequestStep() {
           </Button>
         </form>
       )}
-      <BackToLogin />
+      <AuthLink to="/login">← Back to sign in</AuthLink>
     </AuthShell>
   );
 }
@@ -151,7 +154,7 @@ function ConfirmStep({ token }: { token: string }) {
           <div className="rounded-md border border-[rgba(255,255,255,0.08)] bg-surface-raised px-4 py-3 text-sm text-text-secondary">
             Password updated. You can now sign in.
           </div>
-          <BackToLogin />
+          <AuthLink to="/login">← Back to sign in</AuthLink>
         </div>
       ) : (
         <form
@@ -159,7 +162,7 @@ function ConfirmStep({ token }: { token: string }) {
           className="space-y-4"
           noValidate
         >
-          {error && <ErrorBanner message={error} />}
+          {error && <AuthErrorBanner message={error} />}
           <div className="space-y-1.5">
             <div className="flex items-center">
               <Label
@@ -178,7 +181,7 @@ function ConfirmStep({ token }: { token: string }) {
               {...register('password')}
             />
             {errors.password && (
-              <FieldError message={errors.password.message!} />
+              <AuthFieldError message={errors.password.message!} />
             )}
           </div>
           <div className="space-y-1.5">
@@ -198,7 +201,9 @@ function ConfirmStep({ token }: { token: string }) {
               className="h-10 rounded-md text-sm"
               {...register('confirm')}
             />
-            {errors.confirm && <FieldError message={errors.confirm.message!} />}
+            {errors.confirm && (
+              <AuthFieldError message={errors.confirm.message!} />
+            )}
           </div>
           <Button
             type="submit"
@@ -210,78 +215,5 @@ function ConfirmStep({ token }: { token: string }) {
         </form>
       )}
     </AuthShell>
-  );
-}
-
-// ─── Shared layout ────────────────────────────────────────────
-
-function AuthShell({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className="relative min-h-screen flex flex-col"
-      style={{
-        backgroundColor: 'var(--bg-canvas)',
-        backgroundImage:
-          "url('/assets/patterns/dark-square-four-triangle.svg')",
-        backgroundRepeat: 'repeat',
-        backgroundSize: '32px 32px',
-      }}
-    >
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4 min-h-0">
-        <div className="w-full max-w-[360px]">
-          {/* Logo */}
-          <div className="mb-10">
-            <AppLogo size="md" className="text-white" />
-          </div>
-
-          {/* Heading */}
-          <div className="mb-7">
-            <h1 className="text-2xl font-medium text-white tracking-[-0.02em] leading-tight">
-              {title}
-            </h1>
-            <p className="text-sm text-text-secondary mt-1">{subtitle}</p>
-          </div>
-
-          {children}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <PublicFooter />
-    </div>
-  );
-}
-
-function ErrorBanner({ message }: { message: string }) {
-  return (
-    <div className="mb-1 rounded-md border border-[rgba(255,255,255,0.08)] bg-surface-raised px-4 py-3 text-sm text-status-error flex items-start gap-2">
-      <span className="shrink-0 mt-0.5">⚠</span>
-      {message}
-    </div>
-  );
-}
-
-function FieldError({ message }: { message: string }) {
-  return <p className="text-xs text-status-error">{message}</p>;
-}
-
-function BackToLogin() {
-  return (
-    <p className="mt-5 text-center text-xs text-text-tertiary">
-      <Link
-        to="/login"
-        className="hover:text-text-secondary transition-colors duration-150"
-      >
-        ← Back to sign in
-      </Link>
-    </p>
   );
 }

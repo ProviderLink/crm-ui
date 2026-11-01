@@ -1,14 +1,24 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Briefcase, CalendarDays, CheckCircle2, StickyNote, Users2 } from 'lucide-react';
+import { Briefcase, CalendarDays, Users2 } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useHiredVasForClientQuery } from '@/hooks/queries';
+import {
+  AccountManagerField,
+  FormErrorBanner,
+  FormFooter,
+  NotesSection,
+  ServiceFields,
+} from '@/features/assignments/form-fields';
 import { getApiError } from '@/lib/api-error';
 import { type IAccountManager } from '@/types/user';
 import { createAssignment } from '@/services/assignments.service';
@@ -98,9 +108,9 @@ export function CreateAssignmentForm({
               No eligible clients
             </p>
             <p className="mt-1 text-xs text-muted-foreground/60">
-              A client appears here once an admin has provisioned its CRM
-              access in the ATS (Clients → open the client → CRM access). That
-              needs an active client with a hired VA.
+              A client appears here once an admin has provisioned its CRM access
+              in the ATS (Clients → open the client → CRM access). That needs an
+              active client with a hired VA.
             </p>
           </div>
         </div>
@@ -116,17 +126,8 @@ export function CreateAssignmentForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-      className="space-y-4"
-    >
-      {serverError && (
-        <div className="flex items-start gap-2.5 rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
-          <AlertCircle size={15} className="mt-0.5 shrink-0" />
-          {serverError}
-        </div>
-      )}
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      {serverError && <FormErrorBanner message={serverError} />}
 
       {/* ── People ── */}
       <Section icon={<Users2 size={14} />} title="People">
@@ -214,65 +215,26 @@ export function CreateAssignmentForm({
           />
         </Field>
 
-        <Field label="Account Manager" error={errors.accountManagerId?.message}>
-          <Controller
-            control={control}
-            name="accountManagerId"
-            render={({ field }) => (
-              <Select
-                value={field.value || undefined}
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger className="rounded-xl border-input h-10">
-                  <SelectValue placeholder="Select account manager" />
-                </SelectTrigger>
-                <SelectContent>
-                  {team.map(u => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.firstName} {u.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </Field>
+        <AccountManagerField
+          control={control}
+          team={team}
+          error={errors.accountManagerId?.message}
+        />
       </Section>
 
       {/* ── Service ── */}
       <Section icon={<Briefcase size={14} />} title="Service">
-        <div className="grid grid-cols-[3fr_2fr] gap-4 items-end">
-          <Field
-            label="Service Type"
-            error={errors.serviceType?.message}
-            hint="e.g. Medical VA, Admin Support"
-          >
-            <Input
-              {...register('serviceType')}
-              placeholder="Service type"
-              className="rounded-xl border-input h-10"
-              maxLength={100}
-            />
-          </Field>
-
-          <Field label="Status" error={errors.status?.message}>
-            <Controller
-              control={control}
-              name="status"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="rounded-xl border-input h-10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="on_hold">On Hold</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </Field>
-        </div>
+        <ServiceFields
+          control={control}
+          register={register}
+          serviceTypeError={errors.serviceType?.message}
+          statusError={errors.status?.message}
+          statuses={[
+            { value: 'active', label: 'Active' },
+            { value: 'on_hold', label: 'On Hold' },
+          ]}
+          maxLength={100}
+        />
       </Section>
 
       {/* ── Timeline ── */}
@@ -311,44 +273,15 @@ export function CreateAssignmentForm({
       </Section>
 
       {/* ── Notes ── */}
-      <Section icon={<StickyNote size={14} />} title="Notes" optional>
-        <Field label="" error={errors.notes?.message}>
-          <Textarea
-            {...register('notes')}
-            placeholder="Any additional notes…"
-            className="rounded-xl border-input resize-none"
-            rows={3}
-          />
-        </Field>
-      </Section>
+      <NotesSection register={register} error={errors.notes?.message} />
 
-      {/* ── Actions ── */}
-      <div className="flex items-center gap-3 pt-1">
-        <Button
-          type="submit"
-          disabled={isSubmitting || !isValid}
-          className="flex-1 rounded-xl h-10 font-medium gap-2"
-        >
-          {isSubmitting ? (
-            <>
-              <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-              Creating…
-            </>
-          ) : (
-            <>
-              <CheckCircle2 size={15} />
-              Create Assignment
-            </>
-          )}
-        </Button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-4 h-10 rounded-xl text-sm text-muted-foreground hover:text-foreground border border-border hover:border-input transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
+      <FormFooter
+        submitting={isSubmitting}
+        disabled={!isValid}
+        submitLabel="Create Assignment"
+        submittingLabel="Creating…"
+        onCancel={onClose}
+      />
     </form>
   );
 }

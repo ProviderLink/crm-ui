@@ -25,7 +25,7 @@ import {
 } from '@/types/eod-submission';
 
 import { DurationPresets } from '../duration-presets';
-import { Field } from './layout';
+import { Field } from '@/components/shared/form-layout';
 import type { FormData } from './schema';
 
 /** One work item of the report: a flat group inside the shared list. */

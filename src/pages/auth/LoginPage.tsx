@@ -1,4 +1,9 @@
-import { AppLogo } from '@/components/app-logo';
+import {
+  AuthErrorBanner,
+  AuthFieldError,
+  AuthLink,
+  AuthShell,
+} from '@/components/shared/AuthShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +18,6 @@ import { useForm } from 'react-hook-form';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { PublicFooter } from '@/components/shared/PublicFooter';
 
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
@@ -79,130 +83,83 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      className="relative min-h-screen flex flex-col"
-      style={{
-        backgroundColor: 'var(--bg-canvas)',
-        backgroundImage:
-          "url('/assets/patterns/dark-square-four-triangle.svg')",
-        backgroundRepeat: 'repeat',
-        backgroundSize: '32px 32px',
-      }}
+    <AuthShell
+      title="Sign in"
+      subtitle="Internal workspace — authorised access only."
     >
-      {/* ── Form area ── */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-4 min-h-0">
-        <div className="w-full max-w-[360px]">
-          {/* Logo */}
-          <div className="mb-10">
-            <AppLogo size="md" className="text-white" />
-          </div>
+      {error && <AuthErrorBanner message={error} className="mb-5" />}
 
-          {/* Heading */}
-          <div className="mb-7">
-            <h1 className="text-2xl font-medium text-white tracking-[-0.02em] leading-tight">
-              Sign in
-            </h1>
-            <p className="text-sm text-text-secondary mt-1">
-              Internal workspace — authorised access only.
-            </p>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="mb-5 rounded-md border border-[rgba(255,255,255,0.08)] bg-surface-raised px-4 py-3 text-sm text-status-error flex items-start gap-2">
-              <span className="shrink-0 mt-0.5">⚠</span>
-              {error}
-            </div>
-          )}
-
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4"
-            noValidate
-          >
-            <div className="space-y-1.5">
-              <div className="flex items-center">
-                <Label
-                  htmlFor="email"
-                  className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-text-tertiary"
-                >
-                  Email
-                </Label>
-              </div>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@company.com"
-                autoComplete="email"
-                className="h-10 rounded-md text-sm"
-                {...register('email')}
-              />
-              {errors.email && (
-                <p className="text-xs text-status-error">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label
-                  htmlFor="password"
-                  className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-text-tertiary"
-                >
-                  Password
-                </Label>
-                <Link
-                  to="/reset-password"
-                  className="text-xs text-text-tertiary hover:text-text-secondary transition-colors duration-150"
-                >
-                  Forgot?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="current-password"
-                className="h-10 rounded-md text-sm"
-                {...register('password')}
-              />
-              {errors.password && (
-                <p className="text-xs text-status-error">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-10 rounded-md font-medium text-sm bg-primary hover:bg-white text-text-inverse mt-1 transition-colors duration-150"
+      {/* Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <div className="space-y-1.5">
+          <div className="flex items-center">
+            <Label
+              htmlFor="email"
+              className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-text-tertiary"
             >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-3.5 w-3.5 rounded-full border-2 border-text-inverse/30 border-t-text-inverse animate-spin" />
-                  Signing in…
-                </span>
-              ) : (
-                'Sign in'
-              )}
-            </Button>
-          </form>
-
-          {/* Back to home */}
-          <p className="mt-6 text-center text-xs text-text-tertiary">
-            <Link
-              to="/"
-              className="hover:text-text-secondary transition-colors duration-150"
-            >
-              ← Back to home
-            </Link>
-          </p>
+              Email
+            </Label>
+          </div>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@company.com"
+            autoComplete="email"
+            className="h-10 rounded-md text-sm"
+            {...register('email')}
+          />
+          {errors.email && <AuthFieldError message={errors.email.message!} />}
         </div>
-      </div>
 
-      {/* ── Footer ── */}
-      <PublicFooter />
-    </div>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="password"
+              className="font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-text-tertiary"
+            >
+              Password
+            </Label>
+            <Link
+              to="/reset-password"
+              className="text-xs text-text-tertiary hover:text-text-secondary transition-colors duration-150"
+            >
+              Forgot?
+            </Link>
+          </div>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            autoComplete="current-password"
+            className="h-10 rounded-md text-sm"
+            {...register('password')}
+          />
+          {errors.password && (
+            <p className="text-xs text-status-error">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full h-10 rounded-md font-medium text-sm bg-primary hover:bg-white text-text-inverse mt-1 transition-colors duration-150"
+        >
+          {isSubmitting ? (
+            <span className="flex items-center gap-2">
+              <span className="h-3.5 w-3.5 rounded-full border-2 border-text-inverse/30 border-t-text-inverse animate-spin" />
+              Signing in…
+            </span>
+          ) : (
+            'Sign in'
+          )}
+        </Button>
+      </form>
+
+      <AuthLink to="/" className="mt-6">
+        ← Back to home
+      </AuthLink>
+    </AuthShell>
   );
 }

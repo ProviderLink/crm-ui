@@ -4,7 +4,7 @@ import { Controller, type Control, type FieldErrors } from 'react-hook-form';
 import { TimePickerField } from '@/components/ui/time-picker-field';
 import { formatDateKeyLong } from '@/lib/time';
 
-import { Field, Section } from './layout';
+import { Field, Section } from '@/components/shared/form-layout';
 import type { FormData } from './schema';
 
 export function ShiftSection({

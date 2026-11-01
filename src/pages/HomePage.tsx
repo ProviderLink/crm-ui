@@ -1,13 +1,7 @@
 import { AppLogo } from '@/components/app-logo';
-import {
-  BarChart2,
-  ChevronRight,
-  Eye,
-  Shield,
-  Zap,
-} from 'lucide-react';
+import { BarChart2, ChevronRight, Eye, Shield, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { PublicFooter } from '@/components/shared/PublicFooter';
+import { PublicPage } from '@/components/shared/AuthShell';
 
 const flow = [
   {
@@ -42,16 +36,7 @@ const flow = [
 
 export default function HomePage() {
   return (
-    <div
-      className="relative min-h-screen flex flex-col"
-      style={{
-        backgroundColor: 'var(--bg-canvas)',
-        backgroundImage:
-          "url('/assets/patterns/dark-square-four-triangle.svg')",
-        backgroundRepeat: 'repeat',
-        backgroundSize: '32px 32px',
-      }}
-    >
+    <PublicPage>
       {/* ── Nav ── */}
       <nav className="relative z-10 shrink-0 flex items-center justify-between px-6 py-5 sm:px-10">
         <div className="flex items-center gap-2.5">
@@ -169,7 +154,9 @@ export default function HomePage() {
                 <p className="text-xs font-medium text-text-secondary mt-1 mb-2">
                   {verb}
                 </p>
-                <p className="text-xs text-text-tertiary leading-snug">{desc}</p>
+                <p className="text-xs text-text-tertiary leading-snug">
+                  {desc}
+                </p>
               </div>
             ))}
           </div>
@@ -188,7 +175,6 @@ export default function HomePage() {
       </main>
 
       {/* ── Footer ── */}
-      <PublicFooter />
-    </div>
+    </PublicPage>
   );
 }

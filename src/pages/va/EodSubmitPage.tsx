@@ -1,7 +1,6 @@
 import {
   AlertCircle,
   Briefcase,
-  CheckCircle2,
   ClipboardList,
   MessageSquareIcon,
   PlusIcon,
@@ -25,14 +24,14 @@ import {
 } from '@/types/eod-submission';
 
 import { AlreadySubmittedCard } from './eod-submit/AlreadySubmittedCard';
+import { Field, Section } from '@/components/shared/form-layout';
 import {
-  EmptyCard,
-  Field,
-  PageHeader,
-  PageShell,
-  PageSkeleton,
-  Section,
-} from './eod-submit/layout';
+  AssignmentSelect,
+  FormActions,
+  FormMessageCard,
+  FormPage,
+  FormPageSkeleton,
+} from './form-page';
 import { DEFAULT_WORK_ENTRY } from './eod-submit/schema';
 import { ShiftSection } from './eod-submit/ShiftSection';
 import { useEodSubmitForm } from './eod-submit/use-eod-submit-form';
@@ -43,43 +42,40 @@ export default function EodSubmitPage() {
   const f = useEodSubmitForm();
   const { control, register, setValue, errors, assignments } = f;
 
-  if (f.loading) return <PageSkeleton />;
+  const title = 'End of Day Report';
+  const description =
+    'Submit your daily work summary to keep your team updated';
+
+  if (f.loading) return <FormPageSkeleton rows={4} />;
 
   if (f.assignmentsError) {
     return (
-      <PageShell>
-        <PageHeader />
-        <EmptyCard>
-          <p className="text-sm text-destructive">
-            Failed to load assignments. Please refresh the page.
-          </p>
-        </EmptyCard>
-      </PageShell>
+      <FormPage title={title} description={description}>
+        <FormMessageCard tone="error">
+          Failed to load assignments. Please refresh the page.
+        </FormMessageCard>
+      </FormPage>
     );
   }
 
   if (assignments.length === 0) {
     return (
-      <PageShell>
-        <PageHeader />
-        <EmptyCard>
-          <p className="text-sm text-muted-foreground">
-            No active assignments found. Contact your account manager.
-          </p>
-        </EmptyCard>
-      </PageShell>
+      <FormPage title={title} description={description}>
+        <FormMessageCard>
+          No active assignments found. Contact your account manager.
+        </FormMessageCard>
+      </FormPage>
     );
   }
 
   if (f.alreadySubmitted) {
     return (
-      <PageShell>
-        <PageHeader />
+      <FormPage title={title} description={description}>
         <AlreadySubmittedCard
           dateLabel="today"
           onViewHistory={() => navigate('/va/eod/history')}
         />
-      </PageShell>
+      </FormPage>
     );
   }
 
@@ -88,9 +84,7 @@ export default function EodSubmitPage() {
     setValue(name, 'None', { shouldDirty: true, shouldValidate: true });
 
   return (
-    <PageShell>
-      <PageHeader />
-
+    <FormPage title={title} description={description}>
       <form
         onSubmit={f.onFormSubmit}
         noValidate
@@ -107,52 +101,10 @@ export default function EodSubmitPage() {
           {/* ── Assignment ── */}
           <Section icon={<Briefcase size={14} />} title="Assignment">
             <Field label="Assigned role" error={errors.assignmentId?.message}>
-              <Controller
+              <AssignmentSelect
                 control={control}
-                name="assignmentId"
-                render={({ field }) => {
-                  // A lone assignment is passed straight in: setting it after mount races
-                  // the Select registering its options, which resets the field to "".
-                  const only = assignments.length === 1 ? assignments[0]! : null;
-                  if (only) {
-                    return (
-                      <div className="flex h-10 min-w-0 flex-col justify-center rounded-md border border-border bg-white/[0.03] px-3 sm:max-w-[calc(50%-0.5rem)]">
-                        <span className="truncate text-sm leading-tight">
-                          {only.serviceType ?? only._id}
-                        </span>
-                        {only.companyName && (
-                          <span className="truncate text-xs leading-tight text-muted-foreground">
-                            {only.companyName}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  }
-                  return (
-                    <Select
-                      value={field.value || ''}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select assignment" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {assignments.map(a => (
-                          <SelectItem key={a._id} value={a._id}>
-                            <span className="flex flex-col">
-                              <span>{a.serviceType ?? a._id}</span>
-                              {a.companyName && (
-                                <span className="text-xs text-muted-foreground">
-                                  {a.companyName}
-                                </span>
-                              )}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  );
-                }}
+                assignments={assignments}
+                narrow
               />
             </Field>
           </Section>
@@ -288,27 +240,14 @@ export default function EodSubmitPage() {
           </Section>
         </div>
 
-        {/* ── Actions ── */}
-        <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={f.isSubmitting} className="gap-2">
-            {f.isSubmitting ? (
-              <>
-                <span className="size-3.5 animate-spin rounded-full border-2 border-text-inverse/30 border-t-text-inverse" />
-                Submitting…
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={15} />
-                Submit EOD report
-              </>
-            )}
-          </Button>
-        </div>
+        <FormActions
+          submitting={f.isSubmitting}
+          submitLabel="Submit EOD report"
+          submittingLabel="Submitting…"
+          onCancel={() => navigate(-1)}
+        />
       </form>
-    </PageShell>
+    </FormPage>
   );
 }
 
