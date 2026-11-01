@@ -27,9 +27,12 @@ const isForbidden = (e: unknown) =>
 
 export async function getAtsClients(): Promise<IAtsClient[]> {
   try {
-    const { data } = await api.get<{ data: ApiDoc<IAtsClient>[] }>('/ats/clients', {
-      params: { limit: 1000 },
-    });
+    const { data } = await api.get<{ data: ApiDoc<IAtsClient>[] }>(
+      '/ats/clients',
+      {
+        params: { limit: 1000 },
+      }
+    );
     return data.data.map(c => withId<IAtsClient>(c));
   } catch (e) {
     if (!isForbidden(e)) throw e;
@@ -50,9 +53,12 @@ export async function getAtsVAs(): Promise<IAtsCandidate[]> {
   // Backend defaults to limit=20 when omitted, which truncates the VA name map
   // and causes assigned VAs to render as raw ids. Fetch a large page.
   try {
-    const { data } = await api.get<{ data: ApiDoc<IAtsCandidate>[] }>('/ats/candidates', {
-      params: { limit: 1000 },
-    });
+    const { data } = await api.get<{ data: ApiDoc<IAtsCandidate>[] }>(
+      '/ats/candidates',
+      {
+        params: { limit: 1000 },
+      }
+    );
     return data.data.map(v => withId<IAtsCandidate>(v));
   } catch (e) {
     if (!isForbidden(e)) throw e;

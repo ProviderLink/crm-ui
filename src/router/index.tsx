@@ -56,9 +56,7 @@ const AmActivityPage = lazy(() => import('@/pages/am/AmActivityPage'));
 const AmCheckinsPage = lazy(() => import('@/pages/am/AmCheckinsPage'));
 const AmPerformancePage = lazy(() => import('@/pages/am/AmPerformancePage'));
 const AmPeoplePage = lazy(() => import('@/pages/am/AmPeoplePage'));
-const AmAssignmentsPage = lazy(
-  () => import('@/pages/am/AmAssignmentsPage')
-);
+const AmAssignmentsPage = lazy(() => import('@/pages/am/AmAssignmentsPage'));
 
 // Client portal
 const ClientDashboardPage = lazy(
@@ -166,7 +164,9 @@ const router = createBrowserRouter([
                   { path: 'performance', element: <AmPerformancePage /> },
                   {
                     path: 'scorecards',
-                    element: <Navigate to="/am/performance?tab=scorecards" replace />,
+                    element: (
+                      <Navigate to="/am/performance?tab=scorecards" replace />
+                    ),
                   },
                   { path: 'activity', element: <AmActivityPage /> },
                   {

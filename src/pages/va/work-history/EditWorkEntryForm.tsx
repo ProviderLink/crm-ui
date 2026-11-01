@@ -204,11 +204,7 @@ export function EditWorkEntryForm({
 
         <Section icon={<StickyNote size={14} />} title="Notes" optional>
           <Field label="" error={errors.notes?.message}>
-            <Textarea
-              {...register('notes')}
-              rows={2}
-              className="resize-none"
-            />
+            <Textarea {...register('notes')} rows={2} className="resize-none" />
           </Field>
         </Section>
       </div>

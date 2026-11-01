@@ -21,7 +21,8 @@ export function useVaNames(): NameMap {
     for (const v of atsVAs) names[v.id] = `${v.firstName} ${v.lastName}`;
     for (const v of crmVAs) {
       const name = `${v.firstName} ${v.lastName}`;
-      if (v.candidateRef && !names[v.candidateRef]) names[v.candidateRef] = name;
+      if (v.candidateRef && !names[v.candidateRef])
+        names[v.candidateRef] = name;
       if (v._id && !names[v._id]) names[v._id] = name;
     }
     return names;

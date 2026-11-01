@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
 import {
   AlertDialog,
@@ -9,19 +9,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { cn } from '@/lib/utils'
+} from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
 
 interface ConfirmDialogProps {
-  open: boolean
-  title: string
-  description?: string
-  confirmLabel?: string
-  cancelLabel?: string
-  variant?: 'default' | 'destructive'
+  open: boolean;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'default' | 'destructive';
   /** May be async; the dialog stays open, with the button disabled, until it settles. */
-  onConfirm: () => void | Promise<void>
-  onCancel: () => void
+  onConfirm: () => void | Promise<void>;
+  onCancel: () => void;
 }
 
 export function ConfirmDialog({
@@ -34,17 +34,17 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  const [pending, setPending] = useState(false)
+  const [pending, setPending] = useState(false);
 
   async function handleConfirm(e: React.MouseEvent) {
     // Radix closes the dialog on click; keep it open while the work runs. The
     // caller closes it (open=false) when it is done.
-    e.preventDefault()
-    setPending(true)
+    e.preventDefault();
+    setPending(true);
     try {
-      await onConfirm()
+      await onConfirm();
     } finally {
-      setPending(false)
+      setPending(false);
     }
   }
 
@@ -52,7 +52,7 @@ export function ConfirmDialog({
     <AlertDialog
       open={open}
       onOpenChange={v => {
-        if (!v) onCancel()
+        if (!v) onCancel();
       }}
     >
       <AlertDialogContent>
@@ -79,5 +79,5 @@ export function ConfirmDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }

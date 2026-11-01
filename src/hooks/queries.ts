@@ -81,8 +81,7 @@ export const QK = {
   clientAccountsList: ['client-accounts-list'] as const,
   clientAssignments: (clientId?: string) =>
     ['client-assignments', clientId ?? 'none'] as const,
-  vaProfile: (vaId?: string | null) =>
-    ['va-profile', vaId ?? 'none'] as const,
+  vaProfile: (vaId?: string | null) => ['va-profile', vaId ?? 'none'] as const,
   vaProfilesList: ['va-profiles-list'] as const,
   vaAssignments: (vaId?: string | null) =>
     ['va-assignments', vaId ?? 'none'] as const,

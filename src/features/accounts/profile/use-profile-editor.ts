@@ -61,8 +61,7 @@ export function useProfileEditor<TPayload extends object>({
 
   function value<K extends keyof TPayload>(key: K): TPayload[K] | undefined {
     return (draft[key] !== undefined ? draft[key] : source?.[key]) as
-      | TPayload[K]
-      | undefined;
+      TPayload[K] | undefined;
   }
 
   function set<K extends keyof TPayload>(key: K, next: TPayload[K]) {

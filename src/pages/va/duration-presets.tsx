@@ -11,7 +11,8 @@ export function DurationPresets({
   value: number | undefined;
   onPick: (minutes: number) => void;
 }) {
-  const valid = typeof value === 'number' && Number.isFinite(value) && value > 0;
+  const valid =
+    typeof value === 'number' && Number.isFinite(value) && value > 0;
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <span className="mr-1 text-xs text-muted-foreground">Quick:</span>

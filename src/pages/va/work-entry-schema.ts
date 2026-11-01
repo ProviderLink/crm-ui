@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
-import {
-  WORK_ENTRY_CATEGORIES,
-  WORK_ENTRY_STATUSES,
-} from '@/types/work-entry';
+import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry';
 
 /** The fields of a work entry that a VA fills in, when adding or editing. */
 const workEntryFields = {

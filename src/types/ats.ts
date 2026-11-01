@@ -29,11 +29,5 @@ export interface IAtsCandidate {
   email?: string;
   clientIds?: string[];
   status:
-    | 'active'
-    | 'hired'
-    | 'interviewing'
-    | 'offered'
-    | 'rejected'
-    | 'withdrawn';
+    'active' | 'hired' | 'interviewing' | 'offered' | 'rejected' | 'withdrawn';
 }
-

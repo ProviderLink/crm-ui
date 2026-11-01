@@ -4,9 +4,7 @@ import { useEffect, useState } from 'react';
 import { config } from '@/lib/config';
 
 type Status =
-  | { kind: 'checking' }
-  | { kind: 'ok'; ms: number }
-  | { kind: 'down' };
+  { kind: 'checking' } | { kind: 'ok'; ms: number } | { kind: 'down' };
 
 const DEMO = import.meta.env.VITE_DEMO === 'true';
 const RECHECK_MS = 60_000;
@@ -56,7 +54,10 @@ function ServiceStatus() {
         }
       : status.kind === 'down'
         ? { dot: 'bg-status-error', text: 'Service unavailable' }
-        : { dot: 'bg-text-tertiary animate-pulse', text: 'Checking system status…' };
+        : {
+            dot: 'bg-text-tertiary animate-pulse',
+            text: 'Checking system status…',
+          };
 
   return (
     <p
