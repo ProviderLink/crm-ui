@@ -63,12 +63,15 @@ export function useWorkActivity() {
 
   // Search matches the VA, the service, or the task text.
   const query = search.trim().toLowerCase();
-  const matches = (assignmentId: string, candidateId: string, text: string) => {
-    if (!query) return true;
-    const va = vaMap.get(candidateId) ?? '';
-    const service = assignmentMap.get(assignmentId) ?? '';
-    return `${va} ${service} ${text}`.toLowerCase().includes(query);
-  };
+  const matches = useMemo(
+    () => (assignmentId: string, candidateId: string, text: string) => {
+      if (!query) return true;
+      const va = vaMap.get(candidateId) ?? '';
+      const service = assignmentMap.get(assignmentId) ?? '';
+      return `${va} ${service} ${text}`.toLowerCase().includes(query);
+    },
+    [query, vaMap, assignmentMap]
+  );
 
   const filteredEntries = useMemo(
     () =>
@@ -83,8 +86,7 @@ export function useWorkActivity() {
           `${e.taskCategory} ${e.taskDescription}`
         );
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allEntries, dateFrom, dateTo, assignmentFilter, query, vaMap, assignmentMap]
+    [allEntries, dateFrom, dateTo, assignmentFilter, matches]
   );
 
   const filteredEods = useMemo(
@@ -100,8 +102,7 @@ export function useWorkActivity() {
             : (e.summaryOfWork ?? '');
         return matches(e.assignmentId, e.candidateId, tasks);
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allEods, dateFrom, dateTo, assignmentFilter, query, vaMap, assignmentMap]
+    [allEods, dateFrom, dateTo, assignmentFilter, matches]
   );
 
   function clearFilters() {
@@ -111,9 +112,7 @@ export function useWorkActivity() {
   }
 
   const hasActiveFilters =
-    search !== '' ||
-    assignmentFilter !== 'all' ||
-    range.isChanged;
+    search !== '' || assignmentFilter !== 'all' || range.isChanged;
   const multipleAssignments = assignments.length > 1;
 
   function assignmentLabel(a: IAssignment): string {

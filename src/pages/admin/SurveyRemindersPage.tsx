@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, XIcon } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
 import {
@@ -46,7 +46,7 @@ import {
 
 export default function SurveyRemindersPage() {
   const { data: assignments = [] } = useAllAssignmentsQuery();
-  const { data: scoped = [], isLoading } = useSurveyRemindersQuery();
+  const { data: allReminders = [], isLoading } = useSurveyRemindersQuery();
   // Due dates are company business days, so judge "overdue" against the
   // company's current day, not the device clock.
   const { data: eodContext } = useEodContextQuery();
@@ -94,14 +94,17 @@ export default function SurveyRemindersPage() {
   );
   const updateError = update.error;
 
-  const isOverdue = (r: ISurveyReminder) =>
-    isOpen(r) && (r.dueDate?.slice(0, 10) ?? '') < today;
-  const overdueCount = scoped.filter(isOverdue).length;
+  const isOverdue = useCallback(
+    (r: ISurveyReminder) =>
+      isOpen(r) && (r.dueDate?.slice(0, 10) ?? '') < today,
+    [today]
+  );
+  const overdueCount = allReminders.filter(isOverdue).length;
 
   // Open reminders first (soonest due first, so overdue leads), finished ones last.
   const reminders = useMemo(() => {
     const query = search.trim().toLowerCase();
-    const list = scoped.filter(r => {
+    const list = allReminders.filter(r => {
       if (statusFilter === 'overdue') {
         if (!isOverdue(r)) return false;
       } else if (statusFilter !== 'all' && r.status !== statusFilter) {
@@ -118,14 +121,17 @@ export default function SurveyRemindersPage() {
       const cmp = (a.dueDate ?? '').localeCompare(b.dueDate ?? '');
       return isOpen(a) ? cmp : -cmp;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scoped, statusFilter, search, relatedInfo, today]);
+  }, [allReminders, statusFilter, search, relatedInfo, isOverdue]);
 
-  async function handleUpdateStatus(id: string, status: SurveyStatus) {
-    setUpdatingId(id);
-    await update.run({ id, status });
-    setUpdatingId(null);
-  }
+  const { run: runUpdate } = update;
+  const handleUpdateStatus = useCallback(
+    async (id: string, status: SurveyStatus) => {
+      setUpdatingId(id);
+      await runUpdate({ id, status });
+      setUpdatingId(null);
+    },
+    [runUpdate]
+  );
 
   const columns = useMemo<ColumnDef<ISurveyReminder>[]>(
     () => [
@@ -219,7 +225,7 @@ export default function SurveyRemindersPage() {
         },
       },
     ],
-    [updatingId, relatedInfo, today] // eslint-disable-line react-hooks/exhaustive-deps
+    [updatingId, relatedInfo, today, handleUpdateStatus]
   );
 
   return (

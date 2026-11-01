@@ -28,6 +28,7 @@ export function ClientVaSelectors({
   clients,
   vas,
   selectedClientId,
+  onClientChange,
   showClient,
   showVa,
 }: {
@@ -36,6 +37,8 @@ export function ClientVaSelectors({
   clients: ClientOption[];
   vas: VaOption[];
   selectedClientId: string;
+  /** Called after the client changes, so the VA choice can be cleared. */
+  onClientChange: () => void;
   showClient: boolean;
   showVa: boolean;
 }) {
@@ -48,7 +51,13 @@ export function ClientVaSelectors({
             control={control}
             name="clientId"
             render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select
+                value={field.value}
+                onValueChange={v => {
+                  field.onChange(v);
+                  onClientChange();
+                }}
+              >
                 <SelectTrigger
                   className={errors.clientId ? 'border-destructive' : ''}
                 >

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Briefcase, CalendarDays, Users2 } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import {
@@ -58,7 +58,6 @@ export function CreateAssignmentForm({
     register,
     handleSubmit,
     control,
-    watch,
     setValue,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateFormData>({
@@ -67,7 +66,7 @@ export function CreateAssignmentForm({
     defaultValues: { status: 'active' },
   });
 
-  const selectedClientId = watch('clientId');
+  const selectedClientId = useWatch({ control, name: 'clientId' });
   const { data: clientVas = [], isLoading: vasLoading } =
     useHiredVasForClientQuery(selectedClientId || undefined);
 

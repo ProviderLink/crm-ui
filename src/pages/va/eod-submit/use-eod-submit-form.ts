@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -41,7 +41,8 @@ export function useEodSubmitForm() {
   const submit = useApiMutation({
     mutationFn: createEodSubmission,
     invalidate: [QK.eodSubmissionsAll, QK.eodContext],
-    errorMessage: err => getApiError(err, 'Failed to submit EOD. Please try again.'),
+    errorMessage: err =>
+      getApiError(err, 'Failed to submit EOD. Please try again.'),
   });
 
   const {
@@ -49,7 +50,6 @@ export function useEodSubmitForm() {
     handleSubmit,
     control,
     setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -67,9 +67,10 @@ export function useEodSubmitForm() {
     remove: removeWork,
   } = useFieldArray({ control, name: 'workEntries' });
 
-  const selectedAssignmentId = watch('assignmentId') ?? '';
-  const shiftStart = watch('shiftStart') ?? '';
-  const shiftEnd = watch('shiftEnd') ?? '';
+  const selectedAssignmentId =
+    useWatch({ control, name: 'assignmentId' }) ?? '';
+  const shiftStart = useWatch({ control, name: 'shiftStart' }) ?? '';
+  const shiftEnd = useWatch({ control, name: 'shiftEnd' }) ?? '';
   // Preview only — the server recomputes this from the shift times.
   const hoursWorked = calcHours(shiftStart, shiftEnd);
   const alreadySubmitted = selectedAssignmentId

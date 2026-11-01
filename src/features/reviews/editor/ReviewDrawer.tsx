@@ -1,6 +1,8 @@
 import { DownloadIcon, Loader2Icon, LockIcon, SaveIcon } from 'lucide-react';
 
 import { DetailDrawer, DrawerHeader } from '@/components/shared/DetailDrawer';
+import { usePerformanceReviewQuery } from '@/hooks/queries';
+import type { IPerformanceReview } from '@/types/performance-review';
 import { ReviewStatusBadge } from '@/components/shared/badges';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
@@ -41,11 +43,11 @@ export function ReviewDrawer({
   );
 }
 
+/** Loads the review, then hands it to the editor that seeds its form from it. */
 function ReviewEditor({ reviewId }: { reviewId: string }) {
-  const e = useReviewEditor(reviewId);
-  const { review, isReadOnly } = e;
+  const { data: review, isLoading } = usePerformanceReviewQuery(reviewId);
 
-  if (e.isLoading) {
+  if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
@@ -60,6 +62,13 @@ function ReviewEditor({ reviewId }: { reviewId: string }) {
       </div>
     );
   }
+
+  return <ReviewEditorForm review={review} />;
+}
+
+function ReviewEditorForm({ review }: { review: IPerformanceReview }) {
+  const e = useReviewEditor(review);
+  const { isReadOnly } = e;
 
   return (
     <>

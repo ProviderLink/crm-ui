@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import {
   useMutation,
   useQueryClient,
@@ -50,13 +51,18 @@ export function useApiMutation<TData = unknown, TVars = void>({
     },
   });
 
-  async function run(vars: TVars): Promise<TData | undefined> {
-    try {
-      return await mutation.mutateAsync(vars);
-    } catch {
-      return undefined;
-    }
-  }
+  // Stable between renders, so callers can list it as a dependency.
+  const { mutateAsync } = mutation;
+  const run = useCallback(
+    async (vars: TVars): Promise<TData | undefined> => {
+      try {
+        return await mutateAsync(vars);
+      } catch {
+        return undefined;
+      }
+    },
+    [mutateAsync]
+  );
 
   return {
     run,

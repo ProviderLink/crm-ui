@@ -94,6 +94,7 @@ export function GenerateReviewModal({
               clients={f.filteredClients}
               vas={f.clientVas}
               selectedClientId={f.selectedClientId}
+              onClientChange={f.handleClientChange}
               showClient={!propClientId}
               showVa={!propVaId}
             />

@@ -36,7 +36,6 @@ export function useGenerateReviewForm({
   propClientId?: string;
   jobId?: string;
 }) {
-
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: crmClients = [] } = useCrmClientUsersQuery();
@@ -100,7 +99,8 @@ export function useGenerateReviewForm({
     return matchingTypes.length > 0 ? [...new Set(matchingTypes)] : ROLE_TYPES;
   }, [selectedVaId, selectedClientId, assignments]);
 
-  // Auto-select role type when VA+client combo has exactly one assignment serviceType
+  // Keeps the form's role type in step with the choices above: when the VA and
+  // client have exactly one service type between them, that is the role type.
   useEffect(() => {
     if (
       availableRoleTypes.length === 1 &&
@@ -110,10 +110,11 @@ export function useGenerateReviewForm({
     }
   }, [availableRoleTypes, setValue]);
 
-  // Reset VA when client changes (unless pre-populated)
-  useEffect(() => {
+  // A VA belongs to a client, so choosing another client clears the VA (unless
+  // the VA was given to the dialog).
+  function handleClientChange() {
     if (!propVaId) setValue('vaId', '');
-  }, [selectedClientId, propVaId, setValue]);
+  }
 
   async function onSubmit(values: FormValues) {
     try {
@@ -151,6 +152,7 @@ export function useGenerateReviewForm({
     isSubmitting,
     onSubmit,
     handleClose,
+    handleClientChange,
     isPreFilled,
     filteredClients,
     clientVas,

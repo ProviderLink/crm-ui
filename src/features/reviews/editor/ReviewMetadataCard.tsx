@@ -15,9 +15,7 @@ export function ReviewMetadataCard({ review }: { review: IPerformanceReview }) {
       {items.map(i => (
         <div key={i.label} className="min-w-0">
           <dt className="text-xs text-muted-foreground">{i.label}</dt>
-          <dd className="mt-0.5 text-sm font-medium break-words">
-            {i.value}
-          </dd>
+          <dd className="mt-0.5 text-sm font-medium break-words">{i.value}</dd>
         </div>
       ))}
     </dl>

@@ -59,14 +59,24 @@ export default function AssignmentManagementPage() {
     if (!open) setSheetMode(null);
   }
 
-  const clientMap: Record<string, string> = {};
-  for (const c of crmClients) clientMap[c.clientId] = c.companyName;
-
-  const vaMap: Record<string, string> = {};
-  for (const v of atsVas) vaMap[v.id] = `${v.firstName} ${v.lastName}`;
-
-  const amMap: Record<string, string> = {};
-  for (const u of accountManagers) amMap[u.id] = `${u.firstName} ${u.lastName}`;
+  const clientMap = useMemo(
+    () => Object.fromEntries(crmClients.map(c => [c.clientId, c.companyName])),
+    [crmClients]
+  );
+  const vaMap = useMemo(
+    () =>
+      Object.fromEntries(
+        atsVas.map(v => [v.id, `${v.firstName} ${v.lastName}`])
+      ),
+    [atsVas]
+  );
+  const amMap = useMemo(
+    () =>
+      Object.fromEntries(
+        accountManagers.map(u => [u.id, `${u.firstName} ${u.lastName}`])
+      ),
+    [accountManagers]
+  );
 
   // Search matches the VA, the client or the service type.
   const query = search.trim().toLowerCase();
@@ -83,8 +93,7 @@ export default function AssignmentManagementPage() {
           .toLowerCase()
           .includes(query);
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [assignments, statusFilter, managerFilter, query, atsVas, crmClients]
+    [assignments, statusFilter, managerFilter, query, vaMap, clientMap]
   );
 
   const columns = buildColumns({

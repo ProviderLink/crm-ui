@@ -8,11 +8,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import {
-  addDaysToDateKey,
-  todayString,
-  weekStartOfDateKey,
-} from '@/lib/time';
+import { addDaysToDateKey, todayString, weekStartOfDateKey } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
 import { hasBlocker } from '../dashboard/use-am-dashboard';
@@ -49,7 +45,9 @@ export function useAmAssignments() {
   const { data: clientAccounts = [] } = useClientAccountsQuery();
 
   const rows = useMemo<AssignmentRow[]>(() => {
-    const health = new Map(clientAccounts.map(c => [c.clientId, c.healthStatus]));
+    const health = new Map(
+      clientAccounts.map(c => [c.clientId, c.healthStatus])
+    );
     const blockerFrom = addDaysToDateKey(today, -BLOCKER_DAYS);
     return assignments.map(a => {
       const own = eods.filter(e => e.assignmentId === a._id);

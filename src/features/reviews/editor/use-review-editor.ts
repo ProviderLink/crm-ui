@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { QK, usePerformanceReviewQuery } from '@/hooks/queries';
+import { QK } from '@/hooks/queries';
 import {
   completeReview,
   exportReviewPdf,
@@ -14,28 +14,45 @@ import {
 import type {
   FinalRecommendation,
   IPerformanceCategory,
+  IPerformanceReview,
 } from '@/types/performance-review';
 
-export function useReviewEditor(id: string) {
+/**
+ * Edit state of one performance review. The form is seeded from the review
+ * the first time this runs (the drawer mounts it once per review), so a
+ * refetch after a save, or after regenerating one section, never overwrites
+ * edits made elsewhere in the form; the AI handlers below update their own
+ * section from the response. `review` itself stays live for status and name.
+ */
+export function useReviewEditor(review: IPerformanceReview) {
   const queryClient = useQueryClient();
-
-  const { data: review, isLoading } = usePerformanceReviewQuery(id);
-  const isReadOnly = review?.reviewStatus === 'Completed';
+  const id = review.id;
+  const isReadOnly = review.reviewStatus === 'Completed';
 
   // Form state
-  const [roleSummary, setRoleSummary] = useState('');
+  const [roleSummary, setRoleSummary] = useState(review.roleSummary ?? '');
   const [coreResponsibilities, setCoreResponsibilities] = useState<string[]>(
-    []
+    review.coreResponsibilities ?? []
   );
-  const [categories, setCategories] = useState<IPerformanceCategory[]>([]);
-  const [strengths, setStrengths] = useState('');
-  const [areasForImprovement, setAreasForImprovement] = useState('');
-  const [goalsNextPeriod, setGoalsNextPeriod] = useState<string[]>([]);
+  const [categories, setCategories] = useState<IPerformanceCategory[]>(
+    review.categories ?? []
+  );
+  const [strengths, setStrengths] = useState(review.strengths ?? '');
+  const [areasForImprovement, setAreasForImprovement] = useState(
+    review.areasForImprovement ?? ''
+  );
+  const [goalsNextPeriod, setGoalsNextPeriod] = useState<string[]>(
+    review.goalsNextPeriod ?? []
+  );
   const [finalRecommendation, setFinalRecommendation] = useState<
     FinalRecommendation | ''
-  >('');
-  const [overallRating, setOverallRating] = useState<string>('');
-  const [finalManagerSummary, setFinalManagerSummary] = useState('');
+  >(review.finalRecommendation ?? '');
+  const [overallRating, setOverallRating] = useState<string>(
+    review.overallRating ? String(review.overallRating) : ''
+  );
+  const [finalManagerSummary, setFinalManagerSummary] = useState(
+    review.finalManagerSummary ?? ''
+  );
 
   // AI loading states
   const [regenCatLoading, setRegenCatLoading] = useState(false);
@@ -46,32 +63,12 @@ export function useReviewEditor(id: string) {
   const [completeOpen, setCompleteOpen] = useState(false);
   const [completing, setCompleting] = useState(false);
 
-  // Seed the form once per review. Refetches (after save, or after
-  // regenerating one section) must not overwrite edits made elsewhere in the
-  // form; the AI handlers below update their own section from the response.
-  const seededReviewId = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!review || seededReviewId.current === review.id) return;
-    seededReviewId.current = review.id;
-    setRoleSummary(review.roleSummary ?? '');
-    setCoreResponsibilities(review.coreResponsibilities ?? []);
-    setCategories(review.categories ?? []);
-    setStrengths(review.strengths ?? '');
-    setAreasForImprovement(review.areasForImprovement ?? '');
-    setGoalsNextPeriod(review.goalsNextPeriod ?? []);
-    setFinalRecommendation(review.finalRecommendation ?? '');
-    setOverallRating(review.overallRating ? String(review.overallRating) : '');
-    setFinalManagerSummary(review.finalManagerSummary ?? '');
-  }, [review]);
-
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: QK.performanceReview(id!) });
+    queryClient.invalidateQueries({ queryKey: QK.performanceReview(id) });
     queryClient.invalidateQueries({ queryKey: QK.performanceReviews() });
   }
 
   async function handleSaveDraft() {
-    if (!id) return;
     setSaving(true);
     try {
       await updateReview(id, {
@@ -85,10 +82,10 @@ export function useReviewEditor(id: string) {
         finalManagerSummary,
         categories,
         reviewStatus:
-          review?.reviewStatus === 'Draft' ||
-          review?.reviewStatus === 'AI Generated'
+          review.reviewStatus === 'Draft' ||
+          review.reviewStatus === 'AI Generated'
             ? 'In Review'
-            : review?.reviewStatus,
+            : review.reviewStatus,
       });
       invalidate();
       toast.success('Saved');
@@ -100,7 +97,6 @@ export function useReviewEditor(id: string) {
   }
 
   async function handleRegenCategories() {
-    if (!id) return;
     setRegenCatLoading(true);
     try {
       const updated = await regenerateCategories(id);
@@ -115,7 +111,6 @@ export function useReviewEditor(id: string) {
   }
 
   async function handleRegenGoals() {
-    if (!id) return;
     setRegenGoalsLoading(true);
     try {
       const updated = await regenerateGoals(id);
@@ -130,7 +125,6 @@ export function useReviewEditor(id: string) {
   }
 
   async function handleImproveManagerSummary() {
-    if (!id) return;
     setImproveLoading(true);
     try {
       const updated = await improveManagerSummary(id);
@@ -145,10 +139,9 @@ export function useReviewEditor(id: string) {
   }
 
   async function handleExportPdf() {
-    if (!id) return;
     setExporting(true);
     try {
-      const name = review?.candidateName ?? 'review';
+      const name = review.candidateName ?? 'review';
       await exportReviewPdf(
         id,
         `performance-review-${name.replace(/\s+/g, '-').toLowerCase()}.pdf`
@@ -161,7 +154,6 @@ export function useReviewEditor(id: string) {
   }
 
   async function handleMarkCompleted() {
-    if (!id) return;
     setCompleting(true);
     try {
       // Save all current form state before completing so no selections are lost
@@ -199,7 +191,6 @@ export function useReviewEditor(id: string) {
 
   return {
     review,
-    isLoading,
     isReadOnly,
     roleSummary,
     setRoleSummary,

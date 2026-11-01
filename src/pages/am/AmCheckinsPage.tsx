@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
 import {
@@ -66,11 +66,15 @@ export default function AmCheckinsPage() {
   const updateError = update.error;
   const [skipTarget, setSkipTarget] = useState<ISurveyReminder | null>(null);
 
-  async function handleUpdateStatus(id: string, status: SurveyStatus) {
-    setBusyId(id);
-    await update.run({ id, status });
-    setBusyId(null);
-  }
+  const { run: runUpdate } = update;
+  const handleUpdateStatus = useCallback(
+    async (id: string, status: SurveyStatus) => {
+      setBusyId(id);
+      await runUpdate({ id, status });
+      setBusyId(null);
+    },
+    [runUpdate]
+  );
 
   const columns = useMemo(
     () =>
@@ -81,8 +85,7 @@ export default function AmCheckinsPage() {
         onDone: r => handleUpdateStatus(r._id, 'completed'),
         onSkip: setSkipTarget,
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [c.relatedInfo, c.today, busyId]
+    [c.relatedInfo, c.today, busyId, handleUpdateStatus]
   );
 
   // Search matches the VA, the client or the kind of check-in.

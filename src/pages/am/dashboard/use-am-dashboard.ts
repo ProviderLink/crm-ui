@@ -8,11 +8,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import {
-  addDaysToDateKey,
-  todayString,
-  weekStartOfDateKey,
-} from '@/lib/time';
+import { addDaysToDateKey, todayString, weekStartOfDateKey } from '@/lib/time';
 import type { IEodSubmission } from '@/types/eod-submission';
 
 export type TeamRow = {

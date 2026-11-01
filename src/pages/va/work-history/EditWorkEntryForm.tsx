@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarDays, FileText, StickyNote } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -58,7 +58,6 @@ export function EditWorkEntryForm({
     register,
     handleSubmit,
     control,
-    reset,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<EditFormData>({
@@ -68,10 +67,6 @@ export function EditWorkEntryForm({
 
   const timeSpent = useWatch({ control, name: 'timeSpent' });
   const [serverError, setServerError] = useState('');
-
-  useEffect(() => {
-    reset(toFormValues(entry));
-  }, [entry, reset]);
 
   async function onSubmit(data: EditFormData) {
     setServerError('');

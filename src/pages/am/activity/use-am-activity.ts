@@ -47,12 +47,14 @@ export function useAmActivity() {
 
   const vaMap = useMemo(() => {
     const m: Record<string, string> = {};
-    for (const a of assignments) if (a.candidateName) m[a.candidateId] = a.candidateName;
+    for (const a of assignments)
+      if (a.candidateName) m[a.candidateId] = a.candidateName;
     return m;
   }, [assignments]);
   const clientMap = useMemo(() => {
     const m: Record<string, string> = {};
-    for (const a of assignments) if (a.companyName) m[a.clientId] = a.companyName;
+    for (const a of assignments)
+      if (a.companyName) m[a.clientId] = a.companyName;
     return m;
   }, [assignments]);
   const assignmentMap = useMemo(() => {
@@ -63,16 +65,20 @@ export function useAmActivity() {
 
   // Search matches the VA, the client, the service or the task text.
   const query = search.trim().toLowerCase();
-  const matches = (
-    candidateId: string,
-    clientId: string,
-    assignment: string,
-    text: string
-  ) =>
-    !query ||
-    `${vaMap[candidateId] ?? ''} ${clientMap[clientId] ?? ''} ${assignmentMap[assignment] ?? ''} ${text}`
-      .toLowerCase()
-      .includes(query);
+  const matches = useMemo(
+    () =>
+      (
+        candidateId: string,
+        clientId: string,
+        assignment: string,
+        text: string
+      ) =>
+        !query ||
+        `${vaMap[candidateId] ?? ''} ${clientMap[clientId] ?? ''} ${assignmentMap[assignment] ?? ''} ${text}`
+          .toLowerCase()
+          .includes(query),
+    [query, vaMap, clientMap, assignmentMap]
+  );
 
   const entries = useMemo(
     () =>
@@ -88,8 +94,7 @@ export function useAmActivity() {
           `${e.candidateName ?? ''} ${e.companyName ?? ''} ${e.taskDescription}`
         );
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allEntries, assignmentId, status, category, query, vaMap, clientMap, assignmentMap]
+    [allEntries, assignmentId, status, category, matches]
   );
 
   const eods = useMemo(
@@ -109,8 +114,7 @@ export function useAmActivity() {
           `${e.candidateName ?? ''} ${e.companyName ?? ''} ${tasks}`
         );
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allEods, assignmentId, blockersOnly, query, vaMap, clientMap, assignmentMap]
+    [allEods, assignmentId, blockersOnly, matches]
   );
 
   function clearFilters() {

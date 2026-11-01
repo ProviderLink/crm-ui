@@ -1,34 +1,34 @@
-import { ClockIcon } from 'lucide-react'
-import * as React from 'react'
+import { ClockIcon } from 'lucide-react';
+import * as React from 'react';
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface TimePickerFieldProps {
-  value: string // HH:mm
-  onChange: (value: string) => void
-  placeholder?: string
-  className?: string
+  value: string; // HH:mm
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
 }
 
 function formatDisplay(value: string): string {
-  if (!value) return ''
-  const [h, m] = value.split(':')
-  const hour = parseInt(h ?? '0', 10)
-  const min = m ?? '00'
-  const ampm = hour >= 12 ? 'PM' : 'AM'
-  const h12 = hour % 12 === 0 ? 12 : hour % 12
-  return `${h12}:${min} ${ampm}`
+  if (!value) return '';
+  const [h, m] = value.split(':');
+  const hour = parseInt(h ?? '0', 10);
+  const min = m ?? '00';
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h12}:${min} ${ampm}`;
 }
 
-const QUICK_MINUTES = ['00', '15', '30', '45']
-const HOURS = Array.from({ length: 24 }, (_, i) => i)
+const QUICK_MINUTES = ['00', '15', '30', '45'];
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 export function TimePickerField({
   value,
@@ -36,65 +36,64 @@ export function TimePickerField({
   placeholder = 'Pick a time',
   className,
 }: TimePickerFieldProps) {
-  const [open, setOpen] = React.useState(false)
-  const [minuteInput, setMinuteInput] = React.useState('')
+  const [open, setOpen] = React.useState(false);
+  // What the user is typing in the minute box; null shows the chosen minute.
+  const [minuteDraft, setMinuteDraft] = React.useState<string | null>(null);
 
-  const selectedHour = value ? parseInt(value.split(':')[0] ?? '0', 10) : null
-  const selectedMinute = value ? (value.split(':')[1] ?? null) : null
+  const selectedHour = value ? parseInt(value.split(':')[0] ?? '0', 10) : null;
+  const selectedMinute = value ? (value.split(':')[1] ?? null) : null;
 
-  // Sync minute input box when value changes externally
-  React.useEffect(() => {
-    setMinuteInput(selectedMinute ?? '')
-  }, [selectedMinute])
+  const minuteInput = minuteDraft ?? selectedMinute ?? '';
 
   function applyTime(h: number, m: string) {
-    const hh = String(h).padStart(2, '0')
-    const mm = String(parseInt(m, 10)).padStart(2, '0')
-    onChange(`${hh}:${mm}`)
+    setMinuteDraft(null);
+    const hh = String(h).padStart(2, '0');
+    const mm = String(parseInt(m, 10)).padStart(2, '0');
+    onChange(`${hh}:${mm}`);
   }
 
   // A minute typed or tapped before any hour is chosen is held back, not
   // committed: guessing hour 0 would silently set 12 AM.
   function pendingMinute(): string | null {
-    const num = parseInt(minuteInput, 10)
+    const num = parseInt(minuteInput, 10);
     return !isNaN(num) && num >= 0 && num <= 59
       ? String(num).padStart(2, '0')
-      : null
+      : null;
   }
 
   function handleHourClick(h: number) {
-    applyTime(h, selectedMinute ?? pendingMinute() ?? '00')
+    applyTime(h, selectedMinute ?? pendingMinute() ?? '00');
   }
 
   function handleQuickMinute(m: string) {
     if (selectedHour === null) {
-      setMinuteInput(m)
-      return
+      setMinuteDraft(m);
+      return;
     }
-    applyTime(selectedHour, m)
-    setOpen(false)
+    applyTime(selectedHour, m);
+    setOpen(false);
   }
 
   function handleMinuteInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.replace(/\D/g, '').slice(0, 2)
-    setMinuteInput(raw)
-    const num = parseInt(raw, 10)
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 2);
+    setMinuteDraft(raw);
+    const num = parseInt(raw, 10);
     if (selectedHour !== null && raw.length === 2 && num >= 0 && num <= 59) {
-      applyTime(selectedHour, raw)
+      applyTime(selectedHour, raw);
     }
   }
 
   function handleMinuteBlur() {
-    const num = parseInt(minuteInput, 10)
+    const num = parseInt(minuteInput, 10);
     if (!isNaN(num) && num >= 0 && num <= 59) {
-      const mm = String(num).padStart(2, '0')
-      setMinuteInput(mm)
+      const mm = String(num).padStart(2, '0');
+      setMinuteDraft(mm);
       if (selectedHour !== null) {
-        applyTime(selectedHour, mm)
-        setOpen(false)
+        applyTime(selectedHour, mm);
+        setOpen(false);
       }
     } else {
-      setMinuteInput(selectedMinute ?? '')
+      setMinuteDraft(null);
     }
   }
 
@@ -122,9 +121,9 @@ export function TimePickerField({
           {/* Hours column */}
           <div className="flex-1 overflow-y-auto max-h-52 space-y-0.5 pr-1">
             {HOURS.map(h => {
-              const ampm = h >= 12 ? 'PM' : 'AM'
-              const h12 = h % 12 === 0 ? 12 : h % 12
-              const isSelected = selectedHour === h
+              const ampm = h >= 12 ? 'PM' : 'AM';
+              const h12 = h % 12 === 0 ? 12 : h % 12;
+              const isSelected = selectedHour === h;
               return (
                 <button
                   key={h}
@@ -139,7 +138,7 @@ export function TimePickerField({
                 >
                   {h12} {ampm}
                 </button>
-              )
+              );
             })}
           </div>
 
@@ -163,7 +162,7 @@ export function TimePickerField({
             <div className="w-full h-px bg-border my-0.5" />
             {/* Quick presets */}
             {QUICK_MINUTES.map(m => {
-              const isSelected = selectedMinute === m
+              const isSelected = selectedMinute === m;
               return (
                 <button
                   key={m}
@@ -178,11 +177,11 @@ export function TimePickerField({
                 >
                   :{m}
                 </button>
-              )
+              );
             })}
           </div>
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

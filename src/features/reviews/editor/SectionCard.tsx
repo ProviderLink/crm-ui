@@ -19,7 +19,9 @@ export function SectionCard({
             <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
           )}
         </div>
-        {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
+        {action && (
+          <div className="flex shrink-0 items-center gap-2">{action}</div>
+        )}
       </div>
       {children}
     </section>
