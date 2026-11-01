@@ -1,9 +1,9 @@
+import { InitialsTile } from '@/components/shared/badges';
+import { Pill } from '@/components/shared/Pill';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateKeyShort } from '@/lib/time';
 
-import { Pill } from '../../admin/accounts/badges';
-import { initialsOf } from '@/lib/format';
 import type { TeamRow } from './use-am-dashboard';
 
 /** Each VA the manager looks after, and whether today's report is in. */
@@ -38,9 +38,7 @@ export function TeamTodayCard({
                 key={r.id}
                 className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
               >
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
-                  {initialsOf(r.vaName) || '?'}
-                </div>
+                <InitialsTile name={r.vaName} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{r.vaName}</p>
                   <p className="truncate text-xs text-muted-foreground">

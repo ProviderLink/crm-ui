@@ -6,6 +6,7 @@ import {
   Trash2Icon,
 } from 'lucide-react';
 
+import { ReviewStatusBadge, Score } from '@/components/shared/badges';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,8 +17,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { initialsOf } from '@/lib/format';
 import type { IPerformanceReview } from '@/types/performance-review';
-
-import { RatingDisplay, StatusBadge } from './badges';
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, {
@@ -87,14 +86,16 @@ export function buildReviewColumns({
       accessorKey: 'reviewStatus',
       header: 'Status',
       size: 130,
-      cell: ({ row }) => <StatusBadge status={row.original.reviewStatus} />,
+      cell: ({ row }) => (
+        <ReviewStatusBadge status={row.original.reviewStatus} />
+      ),
     },
     {
       accessorKey: 'overallRating',
       header: 'Rating',
       size: 100,
       cell: ({ getValue }) => (
-        <RatingDisplay rating={getValue<number | null>()} />
+        <Score value={getValue<number | null>()} withLabel />
       ),
     },
     {

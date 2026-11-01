@@ -1,15 +1,14 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import {
-  Building2Icon,
-  CheckIcon,
-  SearchIcon,
-  XIcon,
-} from 'lucide-react';
+import { Building2Icon, CheckIcon, XIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
+import {
+  ClearFiltersButton,
+  SearchInput,
+} from '@/components/shared/FilterControls';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -40,7 +39,7 @@ import {
   type ISurveyReminder,
   type SurveyStatus,
 } from '@/types/survey-reminder';
-import { SURVEY_STATUS_STYLES } from '@/lib/status-styles';
+import { SurveyStatusPill } from '@/components/shared/badges';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -246,13 +245,7 @@ export default function SurveyRemindersPage() {
         size: 110,
         cell: ({ getValue }) => {
           const s = getValue<SurveyStatus>();
-          return (
-            <span
-              className={`text-xs px-2 py-0.5 rounded border capitalize whitespace-nowrap ${SURVEY_STATUS_STYLES[s]}`}
-            >
-              {s}
-            </span>
-          );
+          return <SurveyStatusPill status={s} />;
         },
       },
       {
@@ -271,7 +264,8 @@ export default function SurveyRemindersPage() {
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon" aria-label="Mark reminder as completed"
+                      size="icon"
+                      aria-label="Mark reminder as completed"
                       className="size-8 text-muted-foreground hover:bg-status-success/10 hover:text-status-success"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(_id, 'completed')}
@@ -286,7 +280,8 @@ export default function SurveyRemindersPage() {
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon" aria-label="Skip reminder"
+                      size="icon"
+                      aria-label="Skip reminder"
                       className="size-8 text-muted-foreground hover:bg-status-error/10 hover:text-status-error"
                       disabled={busy}
                       onClick={() => handleUpdateStatus(_id, 'skipped')}
@@ -306,83 +301,68 @@ export default function SurveyRemindersPage() {
   );
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground">
-              Survey Reminders
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Track and action scheduled check-in reminders
-            </p>
-          </div>
+    <Page>
+      <PageSection>
+        <PageHeader
+          title="Survey Reminders"
+          description="Track and action scheduled check-in reminders"
+        />
 
-          {/* Search + filter */}
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <div className="relative w-full sm:w-72">
-              <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search VA or client…"
-                aria-label="Search by VA or client"
-                className="h-8 pl-8 text-sm"
-              />
-            </div>
-            <Select
-              value={statusFilter}
-              onValueChange={v =>
-                setStatusFilter(v as SurveyStatus | 'overdue' | 'all')
-              }
+        {/* Search + filter */}
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search VA or client…"
+            label="Search by VA or client"
+          />
+          <Select
+            value={statusFilter}
+            onValueChange={v =>
+              setStatusFilter(v as SurveyStatus | 'overdue' | 'all')
+            }
+          >
+            <SelectTrigger
+              className="h-8 w-40 text-sm"
+              aria-label="Filter by status"
             >
-              <SelectTrigger
-                className="h-8 w-40 text-sm"
-                aria-label="Filter by status"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="overdue">
-                  Overdue{overdueCount > 0 && ` (${overdueCount})`}
-                </SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="skipped">Skipped</SelectItem>
-              </SelectContent>
-            </Select>
-            {(search || statusFilter !== 'all') && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch('');
-                  setStatusFilter('all');
-                }}
-                className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <XIcon className="size-3.5" />
-                Clear
-              </button>
-            )}
-            <span className="ml-auto text-xs text-muted-foreground">
-              {reminders.length} reminder{reminders.length !== 1 ? 's' : ''}
-              {overdueCount > 0 && statusFilter !== 'overdue' && (
-                <span className="text-destructive">
-                  {' '}
-                  · {overdueCount} overdue
-                </span>
-              )}
-            </span>
-          </div>
-
-          {updateError && (
-            <p className="mb-2 text-sm text-destructive">{updateError}</p>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="overdue">
+                Overdue{overdueCount > 0 && ` (${overdueCount})`}
+              </SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="skipped">Skipped</SelectItem>
+            </SelectContent>
+          </Select>
+          {(search || statusFilter !== 'all') && (
+            <ClearFiltersButton
+              onClick={() => {
+                setSearch('');
+                setStatusFilter('all');
+              }}
+            />
           )}
-          <DataTable columns={columns} data={reminders} isLoading={isLoading} />
+          <span className="ml-auto text-xs text-muted-foreground">
+            {reminders.length} reminder{reminders.length !== 1 ? 's' : ''}
+            {overdueCount > 0 && statusFilter !== 'overdue' && (
+              <span className="text-destructive">
+                {' '}
+                · {overdueCount} overdue
+              </span>
+            )}
+          </span>
         </div>
-      </div>
-    </div>
+
+        {updateError && (
+          <p className="mb-2 text-sm text-destructive">{updateError}</p>
+        )}
+        <DataTable columns={columns} data={reminders} isLoading={isLoading} />
+      </PageSection>
+    </Page>
   );
 }

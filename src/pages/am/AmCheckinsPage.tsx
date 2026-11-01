@@ -1,11 +1,19 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { SearchIcon, XIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
+import {
+  ClearFiltersButton,
+  SearchInput,
+} from '@/components/shared/FilterControls';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  TabCount,
+  UnderlineTab,
+  UnderlineTabsList,
+} from '@/components/shared/UnderlineTabs';
+import { Tabs } from '@/components/ui/tabs';
 import { useUpdateSurveyReminder } from '@/hooks/mutations';
 import { formatDateKeyLong } from '@/lib/time';
 import { dueKey } from '@/lib/survey';
@@ -17,12 +25,6 @@ import {
 
 import { buildCheckinColumns } from './checkins/columns';
 import { useAmCheckins } from './checkins/use-am-checkins';
-
-// Underline tabs: a flat bar with a line under the active tab.
-const TAB_LIST =
-  'h-auto w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0';
-const TAB =
-  '-mb-px gap-2 rounded-none border-b-2 border-transparent px-0 pt-1 pb-3 text-muted-foreground hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground';
 
 type View = 'todo' | 'done' | 'all';
 
@@ -102,130 +104,107 @@ export default function AmCheckinsPage() {
   const open = [...overdue, ...thisWeek, ...later];
   const all = [...open, ...done];
 
-  const shown = view === 'todo' ? open.length : view === 'done' ? done.length : all.length;
+  const shown =
+    view === 'todo' ? open.length : view === 'done' ? done.length : all.length;
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground">Check-ins</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Scheduled follow-ups with your VAs and clients
-            </p>
-          </div>
+    <Page
+      overlays={
+        <>
+          <ConfirmDialog
+            open={skipTarget !== null}
+            title="Skip this check-in?"
+            description={
+              skipTarget
+                ? `Skip the ${SURVEY_TYPE_LABELS[skipTarget.surveyType] ?? ''} check-in due ${formatDateKeyLong(dueKey(skipTarget))}? It will move to Done as skipped.`
+                : ''
+            }
+            confirmLabel="Skip check-in"
+            variant="default"
+            onConfirm={async () => {
+              if (skipTarget)
+                await handleUpdateStatus(skipTarget._id, 'skipped');
+              setSkipTarget(null);
+            }}
+            onCancel={() => setSkipTarget(null)}
+          />
+        </>
+      }
+    >
+      <PageSection>
+        <PageHeader
+          title="Check-ins"
+          description="Scheduled follow-ups with your VAs and clients"
+        />
 
-          <Tabs value={view} onValueChange={v => setView(v as View)}>
-            <TabsList className={TAB_LIST}>
-              <TabsTrigger value="todo" className={TAB}>
-                To do
-                {!c.isLoading && (
-                  <span
-                    className={`text-xs font-normal tabular-nums ${c.groups.overdue.length > 0 ? 'text-destructive' : 'text-muted-foreground'}`}
-                  >
-                    {c.groups.openCount}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="done" className={TAB}>
-                Done
-                {!c.isLoading && (
-                  <span className="text-xs font-normal tabular-nums text-muted-foreground">
-                    {c.groups.done.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="all" className={TAB}>
-                All
-                {!c.isLoading && (
-                  <span className="text-xs font-normal tabular-nums text-muted-foreground">
-                    {c.reminders.length}
-                  </span>
-                )}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <div className="my-4 flex flex-wrap items-center gap-2">
-            <div className="relative w-full sm:w-72">
-              <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search VA or client…"
-                aria-label="Search check-ins"
-                className="h-8 pl-8 text-sm"
-              />
-            </div>
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <XIcon className="size-3.5" />
-                Clear
-              </button>
-            )}
-            <span className="ml-auto text-xs text-muted-foreground">
-              {c.isLoading
-                ? ''
-                : `${shown} check-in${shown !== 1 ? 's' : ''}`}
-              {!c.isLoading && c.groups.overdue.length > 0 && view !== 'done' && (
-                <span className="text-destructive">
-                  {' '}
-                  · {c.groups.overdue.length} overdue
-                </span>
+        <Tabs value={view} onValueChange={v => setView(v as View)}>
+          <UnderlineTabsList>
+            <UnderlineTab value="todo">
+              To do
+              {!c.isLoading && (
+                <TabCount alert={c.groups.overdue.length > 0}>
+                  {c.groups.openCount}
+                </TabCount>
               )}
-            </span>
-          </div>
+            </UnderlineTab>
+            <UnderlineTab value="done">
+              Done
+              {!c.isLoading && <TabCount>{c.groups.done.length}</TabCount>}
+            </UnderlineTab>
+            <UnderlineTab value="all">
+              All
+              {!c.isLoading && <TabCount>{c.reminders.length}</TabCount>}
+            </UnderlineTab>
+          </UnderlineTabsList>
+        </Tabs>
 
-          {updateError && (
-            <p className="mb-2 text-sm text-destructive">{updateError}</p>
-          )}
-
-          {c.isLoading ? (
-            <DataTable columns={columns} data={[]} isLoading />
-          ) : view === 'todo' ? (
-            open.length === 0 ? (
-              <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-                {search
-                  ? 'No check-ins match your search.'
-                  : 'You’re all caught up — no check-ins to do.'}
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <Group title="Overdue" rows={overdue} alert columns={columns} />
-                <Group title="Due this week" rows={thisWeek} columns={columns} />
-                <Group title="Later" rows={later} columns={columns} />
-              </div>
-            )
-          ) : (
-            <DataTable
-              columns={columns}
-              data={view === 'done' ? done : all}
-              isLoading={false}
-            />
-          )}
+        <div className="my-4 flex flex-wrap items-center gap-2">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search VA or client…"
+            label="Search check-ins"
+          />
+          {search && <ClearFiltersButton onClick={() => setSearch('')} />}
+          <span className="ml-auto text-xs text-muted-foreground">
+            {c.isLoading ? '' : `${shown} check-in${shown !== 1 ? 's' : ''}`}
+            {!c.isLoading && c.groups.overdue.length > 0 && view !== 'done' && (
+              <span className="text-destructive">
+                {' '}
+                · {c.groups.overdue.length} overdue
+              </span>
+            )}
+          </span>
         </div>
-      </div>
 
-      <ConfirmDialog
-        open={skipTarget !== null}
-        title="Skip this check-in?"
-        description={
-          skipTarget
-            ? `Skip the ${SURVEY_TYPE_LABELS[skipTarget.surveyType] ?? ''} check-in due ${formatDateKeyLong(dueKey(skipTarget))}? It will move to Done as skipped.`
-            : ''
-        }
-        confirmLabel="Skip check-in"
-        variant="default"
-        onConfirm={async () => {
-          if (skipTarget) await handleUpdateStatus(skipTarget._id, 'skipped');
-          setSkipTarget(null);
-        }}
-        onCancel={() => setSkipTarget(null)}
-      />
-    </div>
+        {updateError && (
+          <p className="mb-2 text-sm text-destructive">{updateError}</p>
+        )}
+
+        {c.isLoading ? (
+          <DataTable columns={columns} data={[]} isLoading />
+        ) : view === 'todo' ? (
+          open.length === 0 ? (
+            <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
+              {search
+                ? 'No check-ins match your search.'
+                : 'You’re all caught up — no check-ins to do.'}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <Group title="Overdue" rows={overdue} alert columns={columns} />
+              <Group title="Due this week" rows={thisWeek} columns={columns} />
+              <Group title="Later" rows={later} columns={columns} />
+            </div>
+          )
+        ) : (
+          <DataTable
+            columns={columns}
+            data={view === 'done' ? done : all}
+            isLoading={false}
+          />
+        )}
+      </PageSection>
+    </Page>
   );
 }

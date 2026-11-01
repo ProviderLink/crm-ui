@@ -1,14 +1,14 @@
 import { type ColumnDef } from '@tanstack/react-table';
-import { BriefcaseIcon } from 'lucide-react';
-
 import {
   ActiveBadge,
-  Avatar,
   HealthBadge,
-  Pill,
+  InitialsTile,
   Score,
   WorkloadBadge,
-} from './badges';
+} from '@/components/shared/badges';
+import { Pill } from '@/components/shared/Pill';
+import { BriefcaseIcon } from 'lucide-react';
+
 import { type UserRow } from './types';
 
 const dash = <span className="text-xs text-muted-foreground/50">—</span>;
@@ -17,7 +17,7 @@ const dash = <span className="text-xs text-muted-foreground/50">—</span>;
 function identity(name: string, sub?: string | null) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <Avatar name={name} />
+      <InitialsTile name={name} />
       <div className="min-w-0">
         <p className="truncate text-sm font-medium" title={name}>
           {name}

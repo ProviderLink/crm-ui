@@ -1,11 +1,12 @@
 import { MailIcon } from 'lucide-react';
 
+import { AssignmentStatusPill, InitialsTile } from '@/components/shared/badges';
+import { StatTile } from '@/components/shared/StatTile';
 import { Card } from '@/components/ui/card';
-import { initialsOf } from '@/lib/format';
+
 import { formatDateKeyLong } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
-import { AssignmentStatus } from '../../admin/assignments/AssignmentStatus';
 import { formatMonthDay, tenureLabel } from './helpers';
 
 export function VaTeamCard({
@@ -27,9 +28,7 @@ export function VaTeamCard({
     <Card className="flex flex-col gap-4 p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-sm font-medium text-text-secondary">
-            {initialsOf(displayName) || '?'}
-          </div>
+          <InitialsTile name={displayName} size="md" />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{displayName}</p>
             <p className="truncate text-xs text-muted-foreground">
@@ -37,22 +36,18 @@ export function VaTeamCard({
             </p>
           </div>
         </div>
-        <AssignmentStatus status={a.status} />
+        <AssignmentStatusPill status={a.status} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-2.5">
-          <p className="text-xs text-muted-foreground">Hours this week</p>
-          <p className="mt-0.5 text-base font-semibold tabular-nums">
-            {loadingWork ? '…' : `${weekHours.toFixed(1)}h`}
-          </p>
-        </div>
-        <div className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-2.5">
-          <p className="text-xs text-muted-foreground">Last daily report</p>
-          <p className="mt-0.5 text-base font-semibold">
-            {loadingEods ? '…' : lastEod ? formatMonthDay(lastEod) : 'None'}
-          </p>
-        </div>
+        <StatTile
+          label="Hours this week"
+          value={loadingWork ? '…' : `${weekHours.toFixed(1)}h`}
+        />
+        <StatTile
+          label="Last daily report"
+          value={loadingEods ? '…' : lastEod ? formatMonthDay(lastEod) : 'None'}
+        />
       </div>
 
       <dl className="space-y-2 border-t border-border pt-4 text-xs">

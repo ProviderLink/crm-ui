@@ -1,20 +1,28 @@
-import { XIcon } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { DetailDrawer, DrawerHeader } from '@/components/shared/DetailDrawer';
+import { ClearFiltersButton } from '@/components/shared/FilterControls';
+import { StatTile } from '@/components/shared/StatTile';
+import {
+  AssignmentStatusPill,
+  HealthBadge,
+  InitialsTile,
+  ReviewStatusBadge,
+  Score,
+  SurveyStatusPill,
+  WorkloadBadge,
+} from '@/components/shared/badges';
 import { NotesThread } from '@/components/notes/NotesThread';
 import { DataTable } from '@/components/shared/DataTable';
-import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  TabCount,
+  UnderlineTab,
+  UnderlineTabsList,
+} from '@/components/shared/UnderlineTabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import {
   useAssignmentQuery,
   useClientAccountQuery,
@@ -31,51 +39,15 @@ import {
   formatDateKeyLong,
   weekStartOfDateKey,
 } from '@/lib/time';
-import { SURVEY_STATUS_STYLES } from '@/lib/status-styles';
 import { isOpen } from '@/lib/survey';
 import { SURVEY_TYPE_LABELS } from '@/types/survey-reminder';
 
 import {
-  Avatar,
-  HealthBadge,
-  Score,
-  WorkloadBadge,
-} from '../../admin/accounts/badges';
-import {
   buildEodColumns,
   buildWorkColumns,
-  TAB,
-  TAB_LIST,
 } from '../../admin/assignments/drawer-columns';
-import { Party, Row, Stat } from '../../admin/assignments/drawer-parts';
-import { AssignmentStatus } from '../../admin/assignments/AssignmentStatus';
-import {
-  RatingDisplay,
-  StatusBadge,
-} from '../../admin/performance-reviews-list/badges';
+import { Party, Row } from '../../admin/assignments/drawer-parts';
 import { hasBlocker } from '../dashboard/use-am-dashboard';
-
-/** One tile of the strip at the top: what needs the manager's attention. */
-function Attention({
-  label,
-  value,
-  alert,
-}: {
-  label: string;
-  value: ReactNode;
-  alert?: boolean;
-}) {
-  return (
-    <div className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-2.5">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p
-        className={`mt-0.5 text-base font-semibold tabular-nums ${alert ? 'text-status-warning' : ''}`}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
 
 /**
  * An assignment opened in a floating drawer over the list. The detail only
@@ -91,38 +63,21 @@ export function AmAssignmentDrawer({
   onClose: () => void;
 }) {
   return (
-    <Sheet open={!!assignmentId} onOpenChange={open => !open && onClose()}>
-      <SheetContent
-        side="right"
-        // Floats with a gap to the viewport; the built-in close button is
-        // hidden in favour of the one below, outside the drawer's top-left.
-        className="flex w-[calc(100vw-2rem)] flex-col gap-0 overflow-visible border-white/[0.14] bg-surface-raised p-0 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.9)] sm:max-w-3xl [&>button:last-child]:hidden"
-      >
-        <SheetTitle className="sr-only">Assignment details</SheetTitle>
-        <SheetDescription className="sr-only">
-          The VA, client, activity, notes and follow-ups for this assignment.
-        </SheetDescription>
-        <SheetClose asChild>
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label="Close"
-            className="absolute right-3 top-3 z-10 size-8 rounded-md border-white/[0.14] bg-surface-raised min-[800px]:-left-11 min-[800px]:right-auto min-[800px]:top-0"
-          >
-            <XIcon className="size-4" />
-          </Button>
-        </SheetClose>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
-          {assignmentId && (
-            <AmAssignmentDetail
-              key={assignmentId}
-              id={assignmentId}
-              today={today}
-            />
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
+    <DetailDrawer
+      open={!!assignmentId}
+      onOpenChange={open => !open && onClose()}
+      width="3xl"
+      srTitle="Assignment details"
+      srDescription="The VA, client, activity, notes and follow-ups for this assignment."
+    >
+      {assignmentId && (
+        <AmAssignmentDetail
+          key={assignmentId}
+          id={assignmentId}
+          today={today}
+        />
+      )}
+    </DetailDrawer>
   );
 }
 
@@ -195,8 +150,7 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
     return remindersAll
       .filter(r => related.has(r.relatedId))
       .sort((a, b) => {
-        if (isOpen(a) !== isOpen(b))
-          return isOpen(a) ? -1 : 1;
+        if (isOpen(a) !== isOpen(b)) return isOpen(a) ? -1 : 1;
         return a.dueDate.localeCompare(b.dueDate);
       });
   }, [remindersAll, assignment, id]);
@@ -246,14 +200,14 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-6 py-4 pr-14 min-[800px]:pr-6">
-        <Avatar name={vaName} />
+      <DrawerHeader>
+        <InitialsTile name={vaName} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="truncate text-xl font-semibold">
               {vaName} — {clientName}
             </h2>
-            <AssignmentStatus status={assignment.status} />
+            <AssignmentStatusPill status={assignment.status} />
           </div>
           <p className="mt-0.5 truncate text-sm text-muted-foreground">
             {assignment.serviceType ? `${assignment.serviceType} · ` : ''}
@@ -263,23 +217,23 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
               : ' · Ongoing'}
           </p>
         </div>
-      </header>
+      </DrawerHeader>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <div className="space-y-5">
           {/* What needs attention */}
           <div className="grid grid-cols-3 gap-3">
-            <Attention
+            <StatTile
               label="Report today"
               value={todayLabel}
               alert={todayLabel === 'Missing'}
             />
-            <Attention
+            <StatTile
               label="Blockers, last 7 days"
               value={blockers.length}
               alert={blockers.length > 0}
             />
-            <Attention
+            <StatTile
               label="Overdue check-ins"
               value={overdue.length}
               alert={overdue.length > 0}
@@ -330,10 +284,13 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
 
           {/* This week */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Hours this week" value={`${weekHours.toFixed(1)}h`} />
-            <Stat label="Entries this week" value={weekEntries.length} />
-            <Stat label="Reports this week" value={weekReports} />
-            <Stat label="Reviews" value={reviews.length} />
+            <StatTile
+              label="Hours this week"
+              value={`${weekHours.toFixed(1)}h`}
+            />
+            <StatTile label="Entries this week" value={weekEntries.length} />
+            <StatTile label="Reports this week" value={weekReports} />
+            <StatTile label="Reviews" value={reviews.length} />
           </div>
 
           {assignment.notes && (
@@ -346,26 +303,20 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
           )}
 
           <Tabs defaultValue="work" className="border-t border-border pt-5">
-            <TabsList className={TAB_LIST}>
-              <TabsTrigger value="work" className={TAB}>
+            <UnderlineTabsList>
+              <UnderlineTab value="work">
                 Work entries
-                <span className="text-xs font-normal tabular-nums text-muted-foreground">
-                  {filteredEntries.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="eod" className={TAB}>
+                <TabCount>{filteredEntries.length}</TabCount>
+              </UnderlineTab>
+              <UnderlineTab value="eod">
                 Reports
-                <span className="text-xs font-normal tabular-nums text-muted-foreground">
-                  {filteredEods.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="notes" className={TAB}>
-                Notes
-              </TabsTrigger>
-              <TabsTrigger value="followups" className={TAB}>
+                <TabCount>{filteredEods.length}</TabCount>
+              </UnderlineTab>
+              <UnderlineTab value="notes">Notes</UnderlineTab>
+              <UnderlineTab value="followups">
                 Reviews &amp; check-ins
-              </TabsTrigger>
-            </TabsList>
+              </UnderlineTab>
+            </UnderlineTabsList>
 
             <TabsContent value="work" className="mt-0">
               <DateRange
@@ -455,11 +406,7 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
                               {late && ' · overdue'}
                             </p>
                           </div>
-                          <span
-                            className={`rounded border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap capitalize ${SURVEY_STATUS_STYLES[r.status]}`}
-                          >
-                            {r.status}
-                          </span>
+                          <SurveyStatusPill status={r.status} />
                         </li>
                       );
                     })}
@@ -495,8 +442,8 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-3">
-                          <RatingDisplay rating={r.overallRating} />
-                          <StatusBadge status={r.reviewStatus} />
+                          <Score value={r.overallRating} withLabel />
+                          <ReviewStatusBadge status={r.reviewStatus} />
                         </div>
                       </li>
                     ))}
@@ -535,16 +482,7 @@ function DateRange({
       <div className="w-48">
         <DatePickerField value={to} onChange={onTo} />
       </div>
-      {active && (
-        <button
-          type="button"
-          onClick={onClear}
-          className="ml-1 inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <XIcon className="size-3.5" />
-          Clear
-        </button>
-      )}
+      {active && <ClearFiltersButton onClick={onClear} className="ml-1" />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontalIcon, Trash2Icon } from 'lucide-react';
 
+import { InitialsTile } from '@/components/shared/badges';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,7 +12,7 @@ import {
 import type { IEodSubmission } from '@/types/eod-submission';
 
 import { TaskSummary } from '../../admin/eod-reports/TaskSummary';
-import { formatDate, initialsOf } from '@/lib/format';
+import { formatDate } from '@/lib/format';
 
 export function buildEodHistoryColumns({
   clientMap,
@@ -32,9 +33,7 @@ export function buildEodHistoryColumns({
         const service = assignmentMap.get(row.original.assignmentId) ?? '—';
         return (
           <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
-              {initialsOf(client) || '?'}
-            </div>
+            <InitialsTile name={client} />
             <div>
               <p className="text-sm font-medium whitespace-nowrap">{client}</p>
               <p className="text-xs whitespace-nowrap text-muted-foreground">

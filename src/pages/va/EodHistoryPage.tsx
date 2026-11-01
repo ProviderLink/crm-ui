@@ -2,6 +2,7 @@ import { PlusIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
 import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
@@ -114,73 +115,71 @@ export default function EodHistoryPage() {
     search !== '' || dateFrom !== defaultFrom || dateTo !== defaultTo;
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">
-                EOD History
-              </h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Your end-of-day submissions
-              </p>
-            </div>
+    <Page
+      overlays={
+        <>
+          <EodDetailSheet
+            eodId={selected?._id ?? null}
+            fallback={selected}
+            onOpenChange={open => !open && setSelected(null)}
+          />
+
+          <ConfirmDialog
+            open={deleteTarget !== null}
+            title="Delete EOD Submission"
+            description={
+              deleteTarget
+                ? `Delete the EOD submission for ${deleteTarget.date?.slice(0, 10)}? This cannot be undone.`
+                : ''
+            }
+            confirmLabel="Delete"
+            onConfirm={handleDelete}
+            onCancel={() => setDeleteTarget(null)}
+          />
+        </>
+      }
+    >
+      <PageSection>
+        <PageHeader
+          title="EOD History"
+          description="Your end-of-day submissions"
+          actions={
             <Button asChild size="sm">
               <Link to="/va/eod/new">
                 <PlusIcon className="size-4" />
                 Submit EOD
               </Link>
             </Button>
-          </div>
+          }
+        />
 
-          <EodHistoryFilters
-            search={search}
-            onSearchChange={setSearch}
-            dateFrom={dateFrom}
-            onDateFromChange={setDateFrom}
-            dateTo={dateTo}
-            onDateToChange={setDateTo}
-            hasFilter={hasFilter}
-            onClear={clearFilters}
-            recordCount={filtered.length}
-          />
+        <EodHistoryFilters
+          search={search}
+          onSearchChange={setSearch}
+          dateFrom={dateFrom}
+          onDateFromChange={setDateFrom}
+          dateTo={dateTo}
+          onDateToChange={setDateTo}
+          hasFilter={hasFilter}
+          onClear={clearFilters}
+          recordCount={filtered.length}
+        />
 
-          {deleteError && (
-            <p className="mb-2 text-sm text-destructive" role="alert">
-              {deleteError}
-            </p>
-          )}
+        {deleteError && (
+          <p className="mb-2 text-sm text-destructive" role="alert">
+            {deleteError}
+          </p>
+        )}
 
-          <DataTable
-            columns={columns}
-            data={filtered}
-            isLoading={isLoading}
-            isError={isError}
-            error={error}
-            onRowClick={setSelected}
-          />
-        </div>
-      </div>
-
-      <EodDetailSheet
-        eodId={selected?._id ?? null}
-        fallback={selected}
-        onOpenChange={open => !open && setSelected(null)}
-      />
-
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        title="Delete EOD Submission"
-        description={
-          deleteTarget
-            ? `Delete the EOD submission for ${deleteTarget.date?.slice(0, 10)}? This cannot be undone.`
-            : ''
-        }
-        confirmLabel="Delete"
-        onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
-      />
-    </div>
+        <DataTable
+          columns={columns}
+          data={filtered}
+          isLoading={isLoading}
+          isError={isError}
+          error={error}
+          onRowClick={setSelected}
+        />
+      </PageSection>
+    </Page>
   );
 }

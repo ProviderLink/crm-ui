@@ -1,18 +1,26 @@
-import { PenLineIcon, XIcon } from 'lucide-react';
+import { PenLineIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { DetailDrawer, DrawerHeader } from '@/components/shared/DetailDrawer';
+import { ClearFiltersButton } from '@/components/shared/FilterControls';
+import { StatTile } from '@/components/shared/StatTile';
+import {
+  AssignmentStatusPill,
+  HealthBadge,
+  InitialsTile,
+  Score,
+  WorkloadBadge,
+} from '@/components/shared/badges';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  TabCount,
+  UnderlineTab,
+  UnderlineTabsList,
+} from '@/components/shared/UnderlineTabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import {
   useActiveAccountManagersQuery,
   useAssignmentQuery,
@@ -28,20 +36,8 @@ import { formatDate } from '@/lib/format';
 import { todayString, weekStartOfDateKey } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
-import {
-  Avatar,
-  HealthBadge,
-  Score,
-  WorkloadBadge,
-} from '../accounts/badges';
-import { AssignmentStatus } from './AssignmentStatus';
-import {
-  buildEodColumns,
-  buildWorkColumns,
-  TAB,
-  TAB_LIST,
-} from './drawer-columns';
-import { Party, Row, Stat } from './drawer-parts';
+import { buildEodColumns, buildWorkColumns } from './drawer-columns';
+import { Party, Row } from './drawer-parts';
 
 // ─── Drawer ───────────────────────────────────────────────────────────────────
 
@@ -61,39 +57,22 @@ export function AssignmentDrawer({
   onClose: () => void;
 }) {
   return (
-    <Sheet open={!!assignmentId} onOpenChange={open => !open && onClose()}>
-      <SheetContent
-        side="right"
-        // Floats with a gap to the viewport; the built-in close button is
-        // hidden in favour of the one below, outside the drawer's top-left.
-        className="flex w-[calc(100vw-2rem)] flex-col gap-0 overflow-visible border-white/[0.14] bg-surface-raised p-0 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.9)] sm:max-w-3xl [&>button:last-child]:hidden"
-      >
-        <SheetTitle className="sr-only">Assignment details</SheetTitle>
-        <SheetDescription className="sr-only">
-          The VA, client, activity and reports for this assignment.
-        </SheetDescription>
-        <SheetClose asChild>
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label="Close"
-            className="absolute right-3 top-3 z-10 size-8 rounded-md border-white/[0.14] bg-surface-raised min-[800px]:-left-11 min-[800px]:right-auto min-[800px]:top-0"
-          >
-            <XIcon className="size-4" />
-          </Button>
-        </SheetClose>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
-          {assignmentId && (
-            <AssignmentDetail
-              key={assignmentId}
-              id={assignmentId}
-              canManage={canManage}
-              onEdit={onEdit}
-            />
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
+    <DetailDrawer
+      open={!!assignmentId}
+      onOpenChange={open => !open && onClose()}
+      width="3xl"
+      srTitle="Assignment details"
+      srDescription="The VA, client, activity and reports for this assignment."
+    >
+      {assignmentId && (
+        <AssignmentDetail
+          key={assignmentId}
+          id={assignmentId}
+          canManage={canManage}
+          onEdit={onEdit}
+        />
+      )}
+    </DetailDrawer>
   );
 }
 
@@ -212,14 +191,14 @@ function AssignmentDetail({
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-border px-6 py-4 pr-14 min-[800px]:pr-6">
-        <Avatar name={vaName} />
+      <DrawerHeader>
+        <InitialsTile name={vaName} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="truncate text-xl font-semibold">
               {vaName} — {clientName}
             </h2>
-            <AssignmentStatus status={assignment.status} />
+            <AssignmentStatusPill status={assignment.status} />
           </div>
           <p className="mt-0.5 truncate text-sm text-muted-foreground">
             {assignment.serviceType ? `${assignment.serviceType} · ` : ''}
@@ -240,7 +219,7 @@ function AssignmentDetail({
             <span className="hidden sm:inline">Edit</span>
           </Button>
         )}
-      </header>
+      </DrawerHeader>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <div className="space-y-5">
@@ -288,10 +267,13 @@ function AssignmentDetail({
 
           {/* This week */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Hours this week" value={`${weekHours.toFixed(1)}h`} />
-            <Stat label="Entries this week" value={weekEntries.length} />
-            <Stat label="EODs this week" value={weekEods} />
-            <Stat label="Reviews" value={reviewCount} />
+            <StatTile
+              label="Hours this week"
+              value={`${weekHours.toFixed(1)}h`}
+            />
+            <StatTile label="Entries this week" value={weekEntries.length} />
+            <StatTile label="EODs this week" value={weekEods} />
+            <StatTile label="Reviews" value={reviewCount} />
           </div>
 
           {assignment.notes && (
@@ -305,20 +287,16 @@ function AssignmentDetail({
 
           {/* Activity */}
           <Tabs defaultValue="work" className="border-t border-border pt-5">
-            <TabsList className={TAB_LIST}>
-              <TabsTrigger value="work" className={TAB}>
+            <UnderlineTabsList>
+              <UnderlineTab value="work">
                 Work entries
-                <span className="text-xs font-normal tabular-nums text-muted-foreground">
-                  {filteredEntries.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="eod" className={TAB}>
+                <TabCount>{filteredEntries.length}</TabCount>
+              </UnderlineTab>
+              <UnderlineTab value="eod">
                 EOD reports
-                <span className="text-xs font-normal tabular-nums text-muted-foreground">
-                  {filteredEods.length}
-                </span>
-              </TabsTrigger>
-            </TabsList>
+                <TabCount>{filteredEods.length}</TabCount>
+              </UnderlineTab>
+            </UnderlineTabsList>
 
             <div className="my-4 flex flex-wrap items-center gap-1.5">
               <div className="w-48">
@@ -329,14 +307,7 @@ function AssignmentDetail({
                 <DatePickerField value={dateTo} onChange={setDateTo} />
               </div>
               {hasActiveFilters && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="ml-1 inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <XIcon className="size-3.5" />
-                  Clear
-                </button>
+                <ClearFiltersButton onClick={clearFilters} className="ml-1" />
               )}
             </div>
 

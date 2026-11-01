@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
 import { DataTable } from '@/components/shared/DataTable';
 import { useAllAssignmentsQuery, useWorkEntriesQuery } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
@@ -97,72 +98,71 @@ export default function WorkEntriesPage() {
   }
 
   const hasFilter =
-    search !== '' ||
-    status !== 'all' ||
-    category !== 'all' ||
-    range.isChanged;
+    search !== '' || status !== 'all' || category !== 'all' || range.isChanged;
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground">
-              Work Entries
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {isAccountManager
-                ? 'Work entries for your assigned VAs and clients'
-                : 'All VA work entries across clients'}
-            </p>
-          </div>
-
-          <WorkEntryFilters
-            search={search}
-            onSearchChange={setSearch}
-            status={status}
-            onStatusChange={setStatus}
-            category={category}
-            onCategoryChange={setCategory}
-            dateFrom={dateFrom}
-            onDateFromChange={setDateFrom}
-            dateTo={dateTo}
-            onDateToChange={setDateTo}
-            hasFilter={hasFilter}
-            onClear={clearFilters}
-            recordCount={entries.length}
+    <Page
+      overlays={
+        <>
+          <WorkEntryDrawer
+            entry={selected}
+            vaName={
+              selected
+                ? selected.candidateName ||
+                  vaMap[selected.candidateId] ||
+                  selected.candidateId
+                : ''
+            }
+            clientName={
+              selected
+                ? selected.companyName ||
+                  clientMap[selected.clientId] ||
+                  selected.clientId
+                : ''
+            }
+            service={
+              selected ? assignmentMap[selected.assignmentId] : undefined
+            }
+            onClose={() => setSelected(null)}
           />
+        </>
+      }
+    >
+      <PageSection>
+        <PageHeader
+          title="Work Entries"
+          description={
+            isAccountManager
+              ? 'Work entries for your assigned VAs and clients'
+              : 'All VA work entries across clients'
+          }
+        />
 
-          <DataTable
-            columns={columns}
-            data={entries}
-            isLoading={isLoading}
-            isError={isError}
-            error={error}
-            onRowClick={setSelected}
-          />
-        </div>
-      </div>
+        <WorkEntryFilters
+          search={search}
+          onSearchChange={setSearch}
+          status={status}
+          onStatusChange={setStatus}
+          category={category}
+          onCategoryChange={setCategory}
+          dateFrom={dateFrom}
+          onDateFromChange={setDateFrom}
+          dateTo={dateTo}
+          onDateToChange={setDateTo}
+          hasFilter={hasFilter}
+          onClear={clearFilters}
+          recordCount={entries.length}
+        />
 
-      <WorkEntryDrawer
-        entry={selected}
-        vaName={
-          selected
-            ? selected.candidateName ||
-              vaMap[selected.candidateId] ||
-              selected.candidateId
-            : ''
-        }
-        clientName={
-          selected
-            ? selected.companyName ||
-              clientMap[selected.clientId] ||
-              selected.clientId
-            : ''
-        }
-        service={selected ? assignmentMap[selected.assignmentId] : undefined}
-        onClose={() => setSelected(null)}
-      />
-    </div>
+        <DataTable
+          columns={columns}
+          data={entries}
+          isLoading={isLoading}
+          isError={isError}
+          error={error}
+          onRowClick={setSelected}
+        />
+      </PageSection>
+    </Page>
   );
 }

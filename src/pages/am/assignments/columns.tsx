@@ -1,10 +1,12 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
+import {
+  AssignmentStatusPill,
+  HealthBadge,
+  InitialsTile,
+} from '@/components/shared/badges';
 import { formatDateKeyShort } from '@/lib/time';
 
-import { HealthBadge } from '../../admin/accounts/badges';
-import { AssignmentStatus } from '../../admin/assignments/AssignmentStatus';
-import { initialsOf } from '@/lib/format';
 import { TodayPill } from './TodayPill';
 import type { AssignmentRow } from './use-am-assignments';
 
@@ -23,9 +25,7 @@ export function buildAmAssignmentColumns(): ColumnDef<AssignmentRow>[] {
         const sub = [r.clientName, r.service].filter(Boolean).join(' · ');
         return (
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
-              {initialsOf(r.vaName) || '?'}
-            </div>
+            <InitialsTile name={r.vaName} />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium" title={r.vaName}>
                 {r.vaName}
@@ -81,14 +81,20 @@ export function buildAmAssignmentColumns(): ColumnDef<AssignmentRow>[] {
       size: 120,
       accessorFn: r => r.health ?? '',
       cell: ({ row }) =>
-        row.original.health ? <HealthBadge value={row.original.health} /> : dash,
+        row.original.health ? (
+          <HealthBadge value={row.original.health} />
+        ) : (
+          dash
+        ),
     },
     {
       id: 'status',
       header: 'Status',
       size: 110,
       accessorFn: r => r.assignment.status,
-      cell: ({ row }) => <AssignmentStatus status={row.original.assignment.status} />,
+      cell: ({ row }) => (
+        <AssignmentStatusPill status={row.original.assignment.status} />
+      ),
     },
   ];
 }

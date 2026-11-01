@@ -1,3 +1,4 @@
+import { Page, PageSection } from '@/components/shared/PageLayout';
 import type { ReactNode } from 'react';
 
 // The same section and field wrappers as the other forms.
@@ -5,13 +6,11 @@ export { Field, Section } from '../../admin/assignments/form-layout';
 
 export function PageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <div className="max-w-3xl">{children}</div>
-        </div>
-      </div>
-    </div>
+    <Page>
+      <PageSection>
+        <div className="max-w-3xl">{children}</div>
+      </PageSection>
+    </Page>
   );
 }
 

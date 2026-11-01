@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { PenLineIcon } from 'lucide-react';
 
+import { InitialsTile, WorkStatusPill } from '@/components/shared/badges';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -10,8 +11,7 @@ import {
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
-import { formatDate, initialsOf } from '@/lib/format';
-import { StatusPill } from '../../admin/work-entries/StatusPill';
+import { formatDate } from '@/lib/format';
 
 export function buildWorkHistoryColumns({
   clientMap,
@@ -32,9 +32,7 @@ export function buildWorkHistoryColumns({
         const service = assignmentMap.get(row.original.assignmentId) ?? '—';
         return (
           <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
-              {initialsOf(client) || '?'}
-            </div>
+            <InitialsTile name={client} />
             <div>
               <p className="text-sm font-medium whitespace-nowrap">{client}</p>
               <p className="text-xs whitespace-nowrap text-muted-foreground">
@@ -94,7 +92,9 @@ export function buildWorkHistoryColumns({
       accessorKey: 'status',
       header: 'Status',
       size: 120,
-      cell: ({ getValue }) => <StatusPill status={getValue<WorkEntryStatus>()} />,
+      cell: ({ getValue }) => (
+        <WorkStatusPill status={getValue<WorkEntryStatus>()} />
+      ),
     },
     {
       id: 'actions',

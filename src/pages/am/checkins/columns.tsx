@@ -4,9 +4,12 @@ import { Building2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { plural } from '@/lib/format';
 import { daysUntil, formatDateKeyLong } from '@/lib/time';
-import { SURVEY_STATUS_STYLES } from '@/lib/status-styles';
+import { SurveyStatusPill } from '@/components/shared/badges';
 import { dueKey, isOpen } from '@/lib/survey';
-import { SURVEY_TYPE_LABELS, type ISurveyReminder } from '@/types/survey-reminder';
+import {
+  SURVEY_TYPE_LABELS,
+  type ISurveyReminder,
+} from '@/types/survey-reminder';
 
 import { initialsOf } from '@/lib/format';
 import type { RelatedInfo } from './use-am-checkins';
@@ -37,7 +40,10 @@ export function buildCheckinColumns({
         const title = info?.title ?? `…${relatedId.slice(-8)}`;
         const subtitle = info?.subtitle ?? relatedType;
         return (
-          <div className="flex min-w-0 items-center gap-3" title={`${title} · ${subtitle}`}>
+          <div
+            className="flex min-w-0 items-center gap-3"
+            title={`${title} · ${subtitle}`}
+          >
             <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
               {info && !info.isCompany ? (
                 initialsOf(info.title) || '?'
@@ -46,7 +52,9 @@ export function buildCheckinColumns({
               )}
             </div>
             <div className="min-w-0">
-              <p className={`truncate text-sm font-medium ${info ? '' : 'font-mono'}`}>
+              <p
+                className={`truncate text-sm font-medium ${info ? '' : 'font-mono'}`}
+              >
                 {title}
               </p>
               <p className="truncate text-xs text-muted-foreground capitalize">
@@ -104,13 +112,7 @@ export function buildCheckinColumns({
       size: 110,
       cell: ({ getValue }) => {
         const s = getValue<ISurveyReminder['status']>();
-        return (
-          <span
-            className={`rounded border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap capitalize ${SURVEY_STATUS_STYLES[s]}`}
-          >
-            {s}
-          </span>
-        );
+        return <SurveyStatusPill status={s} />;
       },
     },
     {

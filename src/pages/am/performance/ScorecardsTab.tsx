@@ -1,11 +1,15 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { RefreshCwIcon, SearchIcon, StarIcon, XIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { RefreshCwIcon, StarIcon } from 'lucide-react';
 
+import {
+  ClearFiltersButton,
+  SearchInput,
+} from '@/components/shared/FilterControls';
+import { StatTile } from '@/components/shared/StatTile';
+import { InitialsTile } from '@/components/shared/badges';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -15,7 +19,6 @@ import {
 } from '@/components/ui/select';
 import type { IScorecard } from '@/types/scorecard';
 
-import { initialsOf } from '@/lib/format';
 import { formatDateKeyShort } from '@/lib/time';
 import { useAmScorecards } from './use-am-scorecards';
 
@@ -25,28 +28,6 @@ const scoreColor = (score: number) => {
   if (score >= 60) return 'text-status-warning';
   return 'text-status-error';
 };
-
-function Stat({
-  label,
-  value,
-  sub,
-  valueClass = '',
-}: {
-  label: string;
-  value: ReactNode;
-  sub?: string;
-  valueClass?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-4 py-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className={`mt-0.5 text-xl font-semibold tabular-nums ${valueClass}`}>
-        {value}
-      </p>
-      {sub && <p className="mt-0.5 truncate text-xs text-muted-foreground">{sub}</p>}
-    </div>
-  );
-}
 
 export function ScorecardsTab() {
   const s = useAmScorecards();
@@ -61,9 +42,7 @@ export function ScorecardsTab() {
         const name = s.nameOf(row.original);
         return (
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
-              {initialsOf(name) || '?'}
-            </div>
+            <InitialsTile name={name} />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium" title={name}>
                 {name}
@@ -84,7 +63,8 @@ export function ScorecardsTab() {
       size: 130,
       cell: ({ row }) => (
         <span className="text-sm whitespace-nowrap text-muted-foreground">
-          {formatDateKeyShort(row.original.weekStart)} – {formatDateKeyShort(row.original.weekEnd)}
+          {formatDateKeyShort(row.original.weekStart)} –{' '}
+          {formatDateKeyShort(row.original.weekEnd)}
         </span>
       ),
     },
@@ -93,7 +73,9 @@ export function ScorecardsTab() {
       header: 'Hours',
       size: 80,
       cell: ({ getValue }) => (
-        <span className="text-sm tabular-nums">{getValue<number>().toFixed(1)}h</span>
+        <span className="text-sm tabular-nums">
+          {getValue<number>().toFixed(1)}h
+        </span>
       ),
     },
     {
@@ -141,40 +123,31 @@ export function ScorecardsTab() {
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative w-full sm:w-72">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={s.search}
-            onChange={e => s.setSearch(e.target.value)}
-            placeholder="Search VA or company…"
-            aria-label="Search by VA or company"
-            className="h-8 pl-8 text-sm"
-          />
-        </div>
+        <SearchInput
+          value={s.search}
+          onChange={s.setSearch}
+          placeholder="Search VA or company…"
+          label="Search by VA or company"
+        />
         <Select value={s.week} onValueChange={s.setWeekChoice}>
-          <SelectTrigger className="h-8 w-48 text-sm" aria-label="Filter by week">
+          <SelectTrigger
+            className="h-8 w-48 text-sm"
+            aria-label="Filter by week"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All weeks</SelectItem>
             {s.weeks.map(([key, sc], i) => (
               <SelectItem key={key} value={key}>
-                {formatDateKeyShort(sc.weekStart)} – {formatDateKeyShort(sc.weekEnd)}
+                {formatDateKeyShort(sc.weekStart)} –{' '}
+                {formatDateKeyShort(sc.weekEnd)}
                 {i === 0 && ' (latest)'}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {s.search && (
-          <button
-            type="button"
-            onClick={() => s.setSearch('')}
-            className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <XIcon className="size-3.5" />
-            Clear
-          </button>
-        )}
+        {s.search && <ClearFiltersButton onClick={() => s.setSearch('')} />}
         {s.generateError && (
           <p className="text-xs text-destructive">{s.generateError}</p>
         )}
@@ -197,28 +170,41 @@ export function ScorecardsTab() {
 
       {/* The selected week in numbers */}
       <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Stat
+        <StatTile
+          size="md"
           label="Average score"
-          value={s.isLoading || s.avgScore === null ? '—' : s.avgScore.toFixed(0)}
-          valueClass={s.avgScore === null ? '' : scoreColor(s.avgScore)}
+          value={
+            s.isLoading || s.avgScore === null ? '—' : s.avgScore.toFixed(0)
+          }
+          valueClassName={s.avgScore === null ? '' : scoreColor(s.avgScore)}
         />
-        <Stat
+        <StatTile
+          size="md"
           label="Lowest score"
-          value={s.isLoading || !s.lowest ? '—' : s.lowest.productivityScore.toFixed(0)}
+          value={
+            s.isLoading || !s.lowest
+              ? '—'
+              : s.lowest.productivityScore.toFixed(0)
+          }
           sub={s.lowest ? s.nameOf(s.lowest) : undefined}
-          valueClass={s.lowest ? scoreColor(s.lowest.productivityScore) : ''}
+          valueClassName={
+            s.lowest ? scoreColor(s.lowest.productivityScore) : ''
+          }
         />
-        <Stat
+        <StatTile
+          size="md"
           label="Average EOD rate"
-          value={s.isLoading || s.avgEod === null ? '—' : `${s.avgEod.toFixed(0)}%`}
-          valueClass={s.avgEod === null ? '' : scoreColor(s.avgEod)}
+          value={
+            s.isLoading || s.avgEod === null ? '—' : `${s.avgEod.toFixed(0)}%`
+          }
+          valueClassName={s.avgEod === null ? '' : scoreColor(s.avgEod)}
         />
       </div>
 
       {!s.isLoading && none && !s.search ? (
         <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-          No scorecards for this period yet. Use “Generate scorecards” to
-          create this week’s.
+          No scorecards for this period yet. Use “Generate scorecards” to create
+          this week’s.
         </div>
       ) : (
         <DataTable columns={columns} data={s.rows} isLoading={s.isLoading} />

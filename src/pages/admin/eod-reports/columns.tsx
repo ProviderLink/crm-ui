@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { formatDate, initialsOf } from '@/lib/format';
+import { InitialsTile } from '@/components/shared/badges';
+import { formatDate } from '@/lib/format';
 import type { IEodSubmission } from '@/types/eod-submission';
 
 import { TaskSummary } from './TaskSummary';
@@ -28,9 +29,7 @@ export function buildEodColumns({
         const sub = service ? `${client} · ${service}` : client;
         return (
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
-              {initialsOf(name) || '?'}
-            </div>
+            <InitialsTile name={name} />
             <div className="min-w-0">
               <p className="text-sm font-medium whitespace-nowrap">{name}</p>
               <p className="text-xs whitespace-nowrap text-muted-foreground">

@@ -1,10 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
+import { InitialsTile, WorkStatusPill } from '@/components/shared/badges';
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
-import { formatDate, initialsOf } from '@/lib/format';
-import { StatusPill } from './StatusPill';
+import { formatDate } from '@/lib/format';
 
 export function buildWorkEntryColumns({
   vaMap,
@@ -28,9 +28,7 @@ export function buildWorkEntryColumns({
         const service = assignmentMap[e.assignmentId];
         return (
           <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
-              {initialsOf(name) || '?'}
-            </div>
+            <InitialsTile name={name} />
             <div>
               <p className="text-sm font-medium whitespace-nowrap">{name}</p>
               <p className="text-xs whitespace-nowrap text-muted-foreground">
@@ -68,9 +66,7 @@ export function buildWorkEntryColumns({
       },
       cell: ({ row }) => (
         <div>
-          <p className="text-sm leading-snug">
-            {row.original.taskDescription}
-          </p>
+          <p className="text-sm leading-snug">{row.original.taskDescription}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {row.original.taskCategory}
           </p>
@@ -91,7 +87,9 @@ export function buildWorkEntryColumns({
       accessorKey: 'status',
       header: 'Status',
       size: 120,
-      cell: ({ getValue }) => <StatusPill status={getValue<WorkEntryStatus>()} />,
+      cell: ({ getValue }) => (
+        <WorkStatusPill status={getValue<WorkEntryStatus>()} />
+      ),
     },
   ];
 }

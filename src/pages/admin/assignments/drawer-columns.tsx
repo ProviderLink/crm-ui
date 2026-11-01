@@ -1,17 +1,11 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
+import { WorkStatusPill } from '@/components/shared/badges';
 import { formatMinutes } from '@/lib/time';
 import type { IEodSubmission } from '@/types/eod-submission';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
 import { formatDate } from '@/lib/format';
-import { StatusPill } from '../work-entries/StatusPill';
-
-// Underline tabs: a flat bar with a line under the active tab.
-export const TAB_LIST =
-  'h-auto w-full justify-start gap-6 rounded-none border-b border-border bg-transparent p-0';
-export const TAB =
-  '-mb-px gap-2 rounded-none border-b-2 border-transparent px-0 pt-1 pb-3 text-muted-foreground hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground';
 
 // ─── Table columns ────────────────────────────────────────────────────────────
 
@@ -34,7 +28,11 @@ export function buildWorkColumns(): ColumnDef<IWorkEntry>[] {
       accessorKey: 'taskDescription',
       header: () => <span className="normal-case">Task</span>,
       enableSorting: false,
-      meta: { fill: true, thClassName: 'min-w-[12rem]', cellClassName: 'min-w-[12rem]' },
+      meta: {
+        fill: true,
+        thClassName: 'min-w-[12rem]',
+        cellClassName: 'min-w-[12rem]',
+      },
       cell: ({ row }) => (
         <div>
           <p className="text-sm leading-snug">{row.original.taskDescription}</p>
@@ -58,7 +56,9 @@ export function buildWorkColumns(): ColumnDef<IWorkEntry>[] {
       accessorKey: 'status',
       header: 'Status',
       size: 120,
-      cell: ({ getValue }) => <StatusPill status={getValue<WorkEntryStatus>()} />,
+      cell: ({ getValue }) => (
+        <WorkStatusPill status={getValue<WorkEntryStatus>()} />
+      ),
     },
   ];
 }
@@ -92,7 +92,11 @@ export function buildEodColumns(): ColumnDef<IEodSubmission>[] {
       accessorKey: 'summaryOfWork',
       header: () => <span className="normal-case">Summary</span>,
       enableSorting: false,
-      meta: { fill: true, thClassName: 'min-w-[12rem]', cellClassName: 'min-w-[12rem]' },
+      meta: {
+        fill: true,
+        thClassName: 'min-w-[12rem]',
+        cellClassName: 'min-w-[12rem]',
+      },
       cell: ({ row }) => {
         const entries = row.original.workEntries;
         const text =

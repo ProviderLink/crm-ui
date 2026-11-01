@@ -1,7 +1,11 @@
+import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
+import {
+  ClearFiltersButton,
+  SearchInput,
+} from '@/components/shared/FilterControls';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -15,7 +19,7 @@ import { useAppSelector } from '@/hooks/store';
 import { useVaNames } from '@/hooks/use-name-maps';
 import type { IScorecard } from '@/types/scorecard';
 import type { ColumnDef } from '@tanstack/react-table';
-import { RefreshCwIcon, SearchIcon, StarIcon, XIcon } from 'lucide-react';
+import { RefreshCwIcon, StarIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { initialsOf } from '@/lib/format';
@@ -58,8 +62,7 @@ export default function ScorecardsPage() {
 
   const vaMap = useVaNames();
 
-  const nameOf = (s: IScorecard) =>
-    s.vaName || vaMap[s.vaId] || 'Unknown VA';
+  const nameOf = (s: IScorecard) => s.vaName || vaMap[s.vaId] || 'Unknown VA';
 
   // Distinct weeks, newest first, keyed by their start date.
   const weeks = useMemo(() => {
@@ -174,20 +177,16 @@ export default function ScorecardsPage() {
   ];
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">
-                Productivity Scorecards
-              </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {isAccountManager
-                  ? 'Weekly scores for your assigned VAs'
-                  : 'Weekly performance scores'}
-              </p>
-            </div>
+    <Page>
+      <PageSection>
+        <PageHeader
+          title="Productivity Scorecards"
+          description={
+            isAccountManager
+              ? 'Weekly scores for your assigned VAs'
+              : 'Weekly performance scores'
+          }
+          actions={
             <Button
               size="sm"
               variant="outline"
@@ -199,74 +198,58 @@ export default function ScorecardsPage() {
               />
               {generating ? 'Generating…' : 'Generate scorecards'}
             </Button>
-          </div>
+          }
+        />
 
-          {/* Search + count */}
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <div className="relative w-full sm:w-72">
-              <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search VA or company…"
-                aria-label="Search by VA or company"
-                className="h-8 pl-8 text-sm"
-              />
-            </div>
-            <Select value={week} onValueChange={setWeekChoice}>
-              <SelectTrigger
-                className="h-8 w-48 text-sm"
-                aria-label="Filter by week"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All weeks</SelectItem>
-                {weeks.map(([key, sc], i) => (
-                  <SelectItem key={key} value={key}>
-                    {formatDateKeyShort(sc.weekStart)} – {formatDateKeyShort(sc.weekEnd)}
-                    {i === 0 && ' (latest)'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch('')}
-                className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <XIcon className="size-3.5" />
-                Clear
-              </button>
-            )}
-            {generateError && (
-              <p className="text-xs text-destructive">{generateError}</p>
-            )}
-            <span className="ml-auto text-xs text-muted-foreground">
-              {scorecards.length} scorecard{scorecards.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-
-          <DataTable
-            columns={columns}
-            data={scorecards}
-            isLoading={isLoading}
+        {/* Search + count */}
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search VA or company…"
+            label="Search by VA or company"
           />
-
-          <ConfirmDialog
-            open={confirmOpen}
-            title="Generate Scorecards"
-            description={
-              isAccountManager
-                ? 'Generate scorecards for your assigned VAs for the current week. This may take a moment.'
-                : 'Generate scorecards for ALL VAs for the current week. This may take a moment.'
-            }
-            onConfirm={handleGenerate}
-            onCancel={() => setConfirmOpen(false)}
-          />
+          <Select value={week} onValueChange={setWeekChoice}>
+            <SelectTrigger
+              className="h-8 w-48 text-sm"
+              aria-label="Filter by week"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All weeks</SelectItem>
+              {weeks.map(([key, sc], i) => (
+                <SelectItem key={key} value={key}>
+                  {formatDateKeyShort(sc.weekStart)} –{' '}
+                  {formatDateKeyShort(sc.weekEnd)}
+                  {i === 0 && ' (latest)'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {search && <ClearFiltersButton onClick={() => setSearch('')} />}
+          {generateError && (
+            <p className="text-xs text-destructive">{generateError}</p>
+          )}
+          <span className="ml-auto text-xs text-muted-foreground">
+            {scorecards.length} scorecard{scorecards.length !== 1 ? 's' : ''}
+          </span>
         </div>
-      </div>
-    </div>
+
+        <DataTable columns={columns} data={scorecards} isLoading={isLoading} />
+
+        <ConfirmDialog
+          open={confirmOpen}
+          title="Generate Scorecards"
+          description={
+            isAccountManager
+              ? 'Generate scorecards for your assigned VAs for the current week. This may take a moment.'
+              : 'Generate scorecards for ALL VAs for the current week. This may take a moment.'
+          }
+          onConfirm={handleGenerate}
+          onCancel={() => setConfirmOpen(false)}
+        />
+      </PageSection>
+    </Page>
   );
 }

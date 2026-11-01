@@ -1,22 +1,14 @@
-import { AlertCircle, ClockIcon, XIcon } from 'lucide-react';
+import { AlertCircle, ClockIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { DetailDrawer, DrawerHeader } from '@/components/shared/DetailDrawer';
+import { StatTile } from '@/components/shared/StatTile';
+import { Pill, type PillTone } from '@/components/shared/Pill';
+import { SheetDescription, SheetTitle } from '@/components/ui/sheet';
 import { useEodSubmissionQuery } from '@/hooks/queries';
 import { getApiError } from '@/lib/api-error';
-import { WORK_ENTRY_STATUS_STYLES } from '@/lib/status-styles';
-import {
-  formatDateTime,
-  formatDateWeekday,
-  initialsOf,
-} from '@/lib/format';
+import { formatDateTime, formatDateWeekday, initialsOf } from '@/lib/format';
+import { WORK_STATUS_TONE } from '@/lib/status-styles';
 import { formatMinutes } from '@/lib/time';
 import {
   COMMUNICATED_WITH_CLIENT_LABELS,
@@ -25,10 +17,10 @@ import {
   type IEodSubmission,
 } from '@/types/eod-submission';
 
-const COMMUNICATED_STYLES: Record<CommunicatedWithClient, string> = {
-  yes: 'bg-white/[0.04] text-status-success border-status-success/20',
-  no: 'bg-white/[0.04] text-text-secondary border-white/[0.08]',
-  other: 'bg-white/[0.04] text-status-info border-status-info/20',
+const COMMUNICATED_TONE: Record<CommunicatedWithClient, PillTone> = {
+  yes: 'success',
+  no: 'neutral',
+  other: 'info',
 };
 
 interface EodDetailSheetProps {
@@ -42,17 +34,6 @@ interface EodDetailSheetProps {
   fallback?: IEodSubmission | null;
   /** What the report is called in the UI; clients see "daily report". */
   reportName?: string;
-}
-
-function Stat({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-2.5">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-        {value}
-      </p>
-    </div>
-  );
 }
 
 function Section({
@@ -116,11 +97,9 @@ function WorkList({ eod }: { eod: IEodSubmission }) {
               )}
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1.5">
-              <span
-                className={`rounded border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[e.status]}`}
-              >
+              <Pill tone={WORK_STATUS_TONE[e.status]}>
                 {EOD_WORK_STATUS_LABELS[e.status] ?? e.status}
-              </span>
+              </Pill>
               <span className="text-xs tabular-nums text-muted-foreground">
                 {formatMinutes(e.timeSpent)}
               </span>
@@ -148,13 +127,13 @@ function EodBody({ eod }: { eod: IEodSubmission }) {
       <div
         className={`grid gap-3 ${entries.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}
       >
-        <Stat
+        <StatTile
           label="Shift"
           value={`${eod.shiftStart || '—'} – ${eod.shiftEnd || '—'}`}
         />
-        <Stat label="Hours worked" value={`${eod.hoursWorked}h`} />
+        <StatTile label="Hours worked" value={`${eod.hoursWorked}h`} />
         {entries.length > 0 && (
-          <Stat label="Tasks done" value={`${done} of ${entries.length}`} />
+          <StatTile label="Tasks done" value={`${done} of ${entries.length}`} />
         )}
       </div>
 
@@ -172,15 +151,11 @@ function EodBody({ eod }: { eod: IEodSubmission }) {
       </Section>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <Section
-          title="Still pending"
-        >
+        <Section title="Still pending">
           <TextBlock value={eod.pendingTasks} empty="Nothing pending." />
         </Section>
 
-        <Section
-            title="Blockers"
-        >
+        <Section title="Blockers">
           {hasBlockers ? (
             <p className="rounded-lg border border-status-warning/20 bg-status-warning/5 px-3 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words text-foreground">
               {eod.blockers}
@@ -195,12 +170,10 @@ function EodBody({ eod }: { eod: IEodSubmission }) {
         title="Client communication"
         aside={
           eod.communicatedWithClient ? (
-            <span
-              className={`rounded border px-2 py-0.5 text-[11px] font-medium ${COMMUNICATED_STYLES[eod.communicatedWithClient]}`}
-            >
+            <Pill tone={COMMUNICATED_TONE[eod.communicatedWithClient]}>
               {COMMUNICATED_WITH_CLIENT_LABELS[eod.communicatedWithClient] ??
                 eod.communicatedWithClient}
-            </span>
+            </Pill>
           ) : undefined
         }
       >
@@ -235,70 +208,50 @@ export function EodDetailSheet({
   const vaName = eod ? eod.candidateName || eod.candidateId : '';
 
   return (
-    <Sheet open={eodId !== null} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        // Floats with a gap to the viewport; the built-in close button is
-        // hidden in favour of the one below, outside the drawer's top-left.
-        className="flex w-[calc(100vw-2rem)] flex-col gap-0 overflow-visible border-white/[0.14] bg-surface-raised p-0 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.9)] sm:max-w-xl [&>button:last-child]:hidden"
-      >
-        <SheetClose asChild>
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label="Close"
-            className="absolute right-3 top-3 z-10 size-8 rounded-md border-white/[0.14] bg-surface-raised min-[700px]:-left-11 min-[700px]:right-auto min-[700px]:top-0"
-          >
-            <XIcon className="size-4" />
-          </Button>
-        </SheetClose>
-
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
-          <header className="flex items-center gap-3 border-b border-border px-6 py-4 pr-14 min-[700px]:pr-6">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-sm font-medium text-text-secondary">
-              {vaName ? initialsOf(vaName) || '?' : '…'}
-            </div>
-            <div className="min-w-0">
-              <SheetTitle className="truncate text-xl">
-                {vaName || reportName.charAt(0).toUpperCase() + reportName.slice(1)}
-              </SheetTitle>
-              <SheetDescription className="mt-0.5 truncate">
-                {eod
-                  ? `${eod.companyName || eod.clientId} · ${formatDateWeekday(eod.date)}`
-                  : 'Loading…'}
-              </SheetDescription>
-            </div>
-          </header>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-            {isLoading && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
-                Loading {reportName} details…
-              </div>
-            )}
-
-            {isError && (
-              <div className="flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                <AlertCircle size={15} className="mt-0.5 shrink-0" />
-                {getApiError(
-                  error,
-                  `Failed to load ${reportName} details. You may not have permission to view this submission.`
-                )}
-              </div>
-            )}
-
-            {!isLoading && !isError && eod && <EodBody eod={eod} />}
-          </div>
-
-          {!isLoading && !isError && eod && (
-            <div className="flex items-center gap-2 border-t border-border px-6 py-3 text-xs text-muted-foreground">
-              <ClockIcon className="size-3.5" />
-              Submitted {formatDateTime(eod.createdAt)}
-            </div>
-          )}
+    <DetailDrawer open={eodId !== null} onOpenChange={onOpenChange} width="xl">
+      <DrawerHeader>
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-sm font-medium text-text-secondary">
+          {vaName ? initialsOf(vaName) || '?' : '…'}
         </div>
-      </SheetContent>
-    </Sheet>
+        <div className="min-w-0">
+          <SheetTitle className="truncate text-xl">
+            {vaName || reportName.charAt(0).toUpperCase() + reportName.slice(1)}
+          </SheetTitle>
+          <SheetDescription className="mt-0.5 truncate">
+            {eod
+              ? `${eod.companyName || eod.clientId} · ${formatDateWeekday(eod.date)}`
+              : 'Loading…'}
+          </SheetDescription>
+        </div>
+      </DrawerHeader>
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        {isLoading && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground" />
+            Loading {reportName} details…
+          </div>
+        )}
+
+        {isError && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertCircle size={15} className="mt-0.5 shrink-0" />
+            {getApiError(
+              error,
+              `Failed to load ${reportName} details. You may not have permission to view this submission.`
+            )}
+          </div>
+        )}
+
+        {!isLoading && !isError && eod && <EodBody eod={eod} />}
+      </div>
+
+      {!isLoading && !isError && eod && (
+        <div className="flex items-center gap-2 border-t border-border px-6 py-3 text-xs text-muted-foreground">
+          <ClockIcon className="size-3.5" />
+          Submitted {formatDateTime(eod.createdAt)}
+        </div>
+      )}
+    </DetailDrawer>
   );
 }

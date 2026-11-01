@@ -1,10 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
+import { WorkStatusPill } from '@/components/shared/badges';
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
 import { formatDate } from '@/lib/format';
-import { StatusPill } from '../../admin/work-entries/StatusPill';
 import { VaCell } from './VaCell';
 
 export function buildWorkColumns(
@@ -78,7 +78,9 @@ export function buildWorkColumns(
       accessorKey: 'status',
       header: 'Status',
       size: 120,
-      cell: ({ getValue }) => <StatusPill status={getValue<WorkEntryStatus>()} />,
+      cell: ({ getValue }) => (
+        <WorkStatusPill status={getValue<WorkEntryStatus>()} />
+      ),
     },
   ];
 }

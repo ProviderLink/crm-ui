@@ -1,16 +1,12 @@
-import { PlusIcon, XIcon } from 'lucide-react';
+import { PlusIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { Page, PageSection } from '@/components/shared/PageLayout';
+import { DetailDrawer, DrawerHeader } from '@/components/shared/DetailDrawer';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { SheetDescription, SheetTitle } from '@/components/ui/sheet';
 import {
   QK,
   useActiveAccountManagersQuery,
@@ -113,83 +109,26 @@ export default function AssignmentManagementPage() {
   });
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 px-4 lg:px-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">
-              Assignments
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Manage VA–client assignments
-            </p>
-          </div>
-          {canManageAssignments && (
-            <Button size="sm" onClick={() => setSheetMode('create')}>
-              <PlusIcon className="size-4" />
-              New Assignment
-            </Button>
-          )}
-        </div>
-
-        {/* Filters + table */}
-        <div className="px-4 lg:px-6">
-          <AssignmentFilters
-            search={search}
-            onSearchChange={setSearch}
-            status={statusFilter}
-            onStatusChange={setStatusFilter}
-            manager={isAccountManager ? null : managerFilter}
-            onManagerChange={setManagerFilter}
-            managers={accountManagers.map(u => ({
-              id: u.id,
-              name: `${u.firstName} ${u.lastName}`,
-            }))}
-            recordCount={visible.length}
+    <Page
+      overlays={
+        <>
+          <AssignmentDrawer
+            assignmentId={openAssignmentId}
+            canManage={canManageAssignments}
+            onEdit={a => {
+              setOpenAssignmentId(null);
+              setEditTarget(a);
+              setSheetMode('edit');
+            }}
+            onClose={() => setOpenAssignmentId(null)}
           />
-          {deactivateError && (
-            <p className="mb-2 text-sm text-destructive">{deactivateError}</p>
-          )}
-          <DataTable
-            columns={columns}
-            data={visible}
-            isLoading={isLoading}
-            onRowClick={a => setOpenAssignmentId(a._id)}
-          />
-        </div>
-      </div>
 
-      <AssignmentDrawer
-        assignmentId={openAssignmentId}
-        canManage={canManageAssignments}
-        onEdit={a => {
-          setOpenAssignmentId(null);
-          setEditTarget(a);
-          setSheetMode('edit');
-        }}
-        onClose={() => setOpenAssignmentId(null)}
-      />
-
-      {/* Create / edit — the same floating drawer as the detail view */}
-      <Sheet open={sheetMode !== null} onOpenChange={handleSheetClose}>
-        <SheetContent
-          side="right"
-          className="flex w-[calc(100vw-2rem)] flex-col gap-0 overflow-visible border-white/[0.14] bg-surface-raised p-0 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.9)] sm:max-w-lg [&>button:last-child]:hidden"
-        >
-          <SheetClose asChild>
-            <Button
-              size="icon"
-              variant="outline"
-              aria-label="Close"
-              className="absolute right-3 top-3 z-10 size-8 rounded-md border-white/[0.14] bg-surface-raised min-[600px]:-left-11 min-[600px]:right-auto min-[600px]:top-0"
-            >
-              <XIcon className="size-4" />
-            </Button>
-          </SheetClose>
-
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
-            <header className="border-b border-border px-6 py-4 pr-14 min-[600px]:pr-6">
+          {/* Create / edit — the same floating drawer as the detail view */}
+          <DetailDrawer
+            open={sheetMode !== null}
+            onOpenChange={handleSheetClose}
+          >
+            <DrawerHeader className="block">
               <SheetTitle className="text-xl">
                 {sheetMode === 'create' ? 'New Assignment' : 'Edit Assignment'}
               </SheetTitle>
@@ -198,7 +137,7 @@ export default function AssignmentManagementPage() {
                   ? 'Link a VA to a client account.'
                   : 'Update the assignment details below.'}
               </SheetDescription>
-            </header>
+            </DrawerHeader>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
               {sheetMode === 'create' && (
@@ -231,23 +170,67 @@ export default function AssignmentManagementPage() {
                 />
               )}
             </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          </DetailDrawer>
 
-      {/* End Assignment confirmation */}
-      <ConfirmDialog
-        open={deactivateTarget !== null}
-        title="End Assignment"
-        description={
-          deactivateTarget
-            ? `End the assignment for "${deactivateTarget.serviceType ?? deactivateTarget._id}"? This will end the active VA–client relationship.`
-            : ''
-        }
-        confirmLabel="End Assignment"
-        onConfirm={confirmDeactivate}
-        onCancel={() => setDeactivateTarget(null)}
-      />
-    </div>
+          {/* End Assignment confirmation */}
+          <ConfirmDialog
+            open={deactivateTarget !== null}
+            title="End Assignment"
+            description={
+              deactivateTarget
+                ? `End the assignment for "${deactivateTarget.serviceType ?? deactivateTarget._id}"? This will end the active VA–client relationship.`
+                : ''
+            }
+            confirmLabel="End Assignment"
+            onConfirm={confirmDeactivate}
+            onCancel={() => setDeactivateTarget(null)}
+          />
+        </>
+      }
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 px-4 lg:px-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Assignments
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Manage VA–client assignments
+          </p>
+        </div>
+        {canManageAssignments && (
+          <Button size="sm" onClick={() => setSheetMode('create')}>
+            <PlusIcon className="size-4" />
+            New Assignment
+          </Button>
+        )}
+      </div>
+
+      {/* Filters + table */}
+      <PageSection>
+        <AssignmentFilters
+          search={search}
+          onSearchChange={setSearch}
+          status={statusFilter}
+          onStatusChange={setStatusFilter}
+          manager={isAccountManager ? null : managerFilter}
+          onManagerChange={setManagerFilter}
+          managers={accountManagers.map(u => ({
+            id: u.id,
+            name: `${u.firstName} ${u.lastName}`,
+          }))}
+          recordCount={visible.length}
+        />
+        {deactivateError && (
+          <p className="mb-2 text-sm text-destructive">{deactivateError}</p>
+        )}
+        <DataTable
+          columns={columns}
+          data={visible}
+          isLoading={isLoading}
+          onRowClick={a => setOpenAssignmentId(a._id)}
+        />
+      </PageSection>
+    </Page>
   );
 }

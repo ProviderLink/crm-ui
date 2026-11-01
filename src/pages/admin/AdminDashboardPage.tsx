@@ -5,6 +5,7 @@ import {
   ClipboardCheckIcon,
   UsersIcon,
 } from 'lucide-react';
+import { Page, PageSection } from '@/components/shared/PageLayout';
 import {
   useAtsClientsQuery,
   useAtsVAsQuery,
@@ -43,95 +44,91 @@ export default function AdminDashboardPage() {
   }));
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-6 py-4 md:py-6">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 lg:px-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">
-              Dashboard
-            </h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {isAccountManager
-                ? 'How your VAs are doing today'
-                : 'How every VA is doing today'}
-            </p>
-          </div>
-        </div>
-
-        {/* Today at a glance */}
-        <div className="grid grid-cols-1 gap-4 px-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 lg:px-6">
-          <DashboardStatCard
-            label="Active assignments"
-            value={overview?.activeAssignments ?? 0}
-            icon={UsersIcon}
-            isLoading={loadingStats}
-            to={`${prefix}/assignments`}
-          >
-            {overview?.onHoldAssignments ?? 0} on hold ·{' '}
-            {overview?.endedAssignments ?? 0} ended
-          </DashboardStatCard>
-
-          <DashboardStatCard
-            label="Entries today"
-            value={overview?.totalWorkEntriesToday ?? 0}
-            icon={ClockIcon}
-            isLoading={loadingStats}
-            to={`${prefix}/work-entries`}
-          >
-            {stats?.weeklyWorkHours.totalHours ?? 0}h logged this week
-          </DashboardStatCard>
-
-          <DashboardStatCard
-            label="EODs submitted today"
-            value={overview?.totalEodSubmissionsToday ?? 0}
-            icon={ClipboardCheckIcon}
-            isLoading={loadingStats}
-            to={`${prefix}/eod-reports`}
-          >
-            {compliance?.submittedToday ?? 0} of {compliance?.totalActive ?? 0}{' '}
-            active assignments
-          </DashboardStatCard>
-
-          <DashboardStatCard
-            label="Missing EODs today"
-            value={missing}
-            icon={missing > 0 ? AlertTriangleIcon : CheckCircle2Icon}
-            valueClassName={missing > 0 ? 'text-status-error' : ''}
-            isLoading={loadingStats}
-            to={`${prefix}/eod-reports`}
-          >
-            {missing > 0
-              ? 'Active assignments with no EOD yet'
-              : 'Everyone has reported today'}
-          </DashboardStatCard>
-        </div>
-
-        {/* What to act on */}
-        <div className="px-4 lg:px-6">
-          <NeedsAttentionCard prefix={prefix} />
-        </div>
-
-        {/* VA activity */}
-        <div className="px-4 lg:px-6">
-          {!loading && breakdown.length > 0 ? (
-            <VaActivityCard
-              breakdown={breakdown}
-              scorecardsPath={`${prefix}/scorecards`}
-            />
-          ) : (
-            !loading && (
-              <div className="flex min-h-40 items-center justify-center rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
-                No work has been logged in the last 7 days.
-              </div>
-            )
-          )}
-        </div>
-
-        <div className="px-4 lg:px-6">
-          <ExportDataCard />
+    <Page variant="dashboard">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 lg:px-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {isAccountManager
+              ? 'How your VAs are doing today'
+              : 'How every VA is doing today'}
+          </p>
         </div>
       </div>
-    </div>
+
+      {/* Today at a glance */}
+      <div className="grid grid-cols-1 gap-4 px-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 lg:px-6">
+        <DashboardStatCard
+          label="Active assignments"
+          value={overview?.activeAssignments ?? 0}
+          icon={UsersIcon}
+          isLoading={loadingStats}
+          to={`${prefix}/assignments`}
+        >
+          {overview?.onHoldAssignments ?? 0} on hold ·{' '}
+          {overview?.endedAssignments ?? 0} ended
+        </DashboardStatCard>
+
+        <DashboardStatCard
+          label="Entries today"
+          value={overview?.totalWorkEntriesToday ?? 0}
+          icon={ClockIcon}
+          isLoading={loadingStats}
+          to={`${prefix}/work-entries`}
+        >
+          {stats?.weeklyWorkHours.totalHours ?? 0}h logged this week
+        </DashboardStatCard>
+
+        <DashboardStatCard
+          label="EODs submitted today"
+          value={overview?.totalEodSubmissionsToday ?? 0}
+          icon={ClipboardCheckIcon}
+          isLoading={loadingStats}
+          to={`${prefix}/eod-reports`}
+        >
+          {compliance?.submittedToday ?? 0} of {compliance?.totalActive ?? 0}{' '}
+          active assignments
+        </DashboardStatCard>
+
+        <DashboardStatCard
+          label="Missing EODs today"
+          value={missing}
+          icon={missing > 0 ? AlertTriangleIcon : CheckCircle2Icon}
+          valueClassName={missing > 0 ? 'text-status-error' : ''}
+          isLoading={loadingStats}
+          to={`${prefix}/eod-reports`}
+        >
+          {missing > 0
+            ? 'Active assignments with no EOD yet'
+            : 'Everyone has reported today'}
+        </DashboardStatCard>
+      </div>
+
+      {/* What to act on */}
+      <PageSection>
+        <NeedsAttentionCard prefix={prefix} />
+      </PageSection>
+
+      {/* VA activity */}
+      <PageSection>
+        {!loading && breakdown.length > 0 ? (
+          <VaActivityCard
+            breakdown={breakdown}
+            scorecardsPath={`${prefix}/scorecards`}
+          />
+        ) : (
+          !loading && (
+            <div className="flex min-h-40 items-center justify-center rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
+              No work has been logged in the last 7 days.
+            </div>
+          )
+        )}
+      </PageSection>
+
+      <PageSection>
+        <ExportDataCard />
+      </PageSection>
+    </Page>
   );
 }

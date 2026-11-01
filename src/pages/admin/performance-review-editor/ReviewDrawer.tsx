@@ -1,23 +1,11 @@
-import {
-  DownloadIcon,
-  Loader2Icon,
-  LockIcon,
-  SaveIcon,
-  XIcon,
-} from 'lucide-react';
+import { DownloadIcon, Loader2Icon, LockIcon, SaveIcon } from 'lucide-react';
 
+import { DetailDrawer, DrawerHeader } from '@/components/shared/DetailDrawer';
+import { ReviewStatusBadge } from '@/components/shared/badges';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 
-import { StatusBadge } from '../performance-reviews-list/badges';
 import { AddItemButton } from './AddItemButton';
 import { AiButton } from './AiButton';
 import { CategoriesList } from './CategoriesList';
@@ -39,37 +27,17 @@ export function ReviewDrawer({
   onClose: () => void;
 }) {
   return (
-    <Sheet open={!!reviewId} onOpenChange={open => !open && onClose()}>
-      <SheetContent
-        side="right"
-        // Floats with a gap to the viewport; the built-in close button is
-        // hidden in favour of the one below, outside the drawer's top-left.
-        className="flex w-[calc(100vw-2rem)] flex-col gap-0 overflow-visible border-white/[0.14] bg-surface-raised p-0 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.9)] sm:max-w-2xl [&>button:last-child]:hidden"
-        // Clicking the backdrop must not throw away unsaved edits; the close
-        // button and Escape still close it.
-        onInteractOutside={e => e.preventDefault()}
-      >
-        <SheetTitle className="sr-only">Performance review</SheetTitle>
-        <SheetDescription className="sr-only">
-          View and edit this performance review.
-        </SheetDescription>
-        {/* Beside the drawer's top-left corner when there is room; inside
-            its top-right corner on narrow screens. */}
-        <SheetClose asChild>
-          <Button
-            size="icon"
-            variant="outline"
-            aria-label="Close review"
-            className="absolute right-3 top-3 z-10 size-8 rounded-md border-white/[0.14] bg-surface-raised min-[800px]:-left-11 min-[800px]:right-auto min-[800px]:top-0"
-          >
-            <XIcon className="size-4" />
-          </Button>
-        </SheetClose>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
-          {reviewId && <ReviewEditor key={reviewId} reviewId={reviewId} />}
-        </div>
-      </SheetContent>
-    </Sheet>
+    <DetailDrawer
+      open={!!reviewId}
+      onOpenChange={open => !open && onClose()}
+      width="2xl"
+      closeLabel="Close review"
+      srTitle="Performance review"
+      srDescription="View and edit this performance review."
+      keepOpenOnOutsideClick
+    >
+      {reviewId && <ReviewEditor key={reviewId} reviewId={reviewId} />}
+    </DetailDrawer>
   );
 }
 
@@ -96,13 +64,13 @@ function ReviewEditor({ reviewId }: { reviewId: string }) {
   return (
     <>
       {/* Header — right padding keeps clear of the drawer's close button. */}
-      <header className="flex items-start gap-3 border-b border-border px-6 py-4 pr-14 min-[800px]:pr-6">
+      <DrawerHeader className="items-start">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="truncate text-xl font-semibold">
               {review.candidateName ?? 'Performance review'}
             </h2>
-            <StatusBadge status={review.reviewStatus} />
+            <ReviewStatusBadge status={review.reviewStatus} />
           </div>
           <p className="mt-0.5 truncate text-sm text-muted-foreground">
             {review.reviewType} review
@@ -123,7 +91,7 @@ function ReviewEditor({ reviewId }: { reviewId: string }) {
           )}
           <span className="hidden sm:inline">Export PDF</span>
         </Button>
-      </header>
+      </DrawerHeader>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
         <div className="mb-5 space-y-3">

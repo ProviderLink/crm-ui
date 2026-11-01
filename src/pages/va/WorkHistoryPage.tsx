@@ -3,6 +3,7 @@ import { PlusIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import {
@@ -86,10 +87,7 @@ export default function WorkHistoryPage() {
   }
 
   const hasFilter =
-    search !== '' ||
-    status !== 'all' ||
-    category !== 'all' ||
-    range.isChanged;
+    search !== '' || status !== 'all' || category !== 'all' || range.isChanged;
 
   const columns = useMemo(
     () =>
@@ -102,66 +100,68 @@ export default function WorkHistoryPage() {
   );
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">
-                Work History
-              </h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                All your logged work entries
-              </p>
-            </div>
+    <Page
+      overlays={
+        <>
+          <EditWorkEntryDrawer
+            entry={editEntry}
+            clientName={
+              editEntry
+                ? (clientMap.get(editEntry.clientId) ?? 'Work entry')
+                : ''
+            }
+            service={
+              editEntry ? assignmentMap.get(editEntry.assignmentId) : undefined
+            }
+            onClose={() => setEditEntry(null)}
+            onSaved={() => {
+              queryClient.invalidateQueries({ queryKey: QK.workEntriesAll });
+              setEditEntry(null);
+            }}
+          />
+        </>
+      }
+    >
+      <PageSection>
+        <PageHeader
+          title="Work History"
+          description="All your logged work entries"
+          actions={
             <Button asChild size="sm">
               <Link to="/va/work/new">
                 <PlusIcon className="size-4" />
                 Add Entry
               </Link>
             </Button>
-          </div>
+          }
+        />
 
-          <WorkEntryFilters
-            search={search}
-            onSearchChange={setSearch}
-            status={status}
-            onStatusChange={setStatus}
-            category={category}
-            onCategoryChange={setCategory}
-            dateFrom={dateFrom}
-            onDateFromChange={setDateFrom}
-            dateTo={dateTo}
-            onDateToChange={setDateTo}
-            hasFilter={hasFilter}
-            onClear={clearFilters}
-            recordCount={filtered.length}
-            searchPlaceholder="Search client or task…"
-          />
+        <WorkEntryFilters
+          search={search}
+          onSearchChange={setSearch}
+          status={status}
+          onStatusChange={setStatus}
+          category={category}
+          onCategoryChange={setCategory}
+          dateFrom={dateFrom}
+          onDateFromChange={setDateFrom}
+          dateTo={dateTo}
+          onDateToChange={setDateTo}
+          hasFilter={hasFilter}
+          onClear={clearFilters}
+          recordCount={filtered.length}
+          searchPlaceholder="Search client or task…"
+        />
 
-          <DataTable
-            columns={columns}
-            data={filtered}
-            isLoading={isLoading}
-            isError={isError}
-            error={error}
-            onRowClick={setEditEntry}
-          />
-        </div>
-      </div>
-
-      <EditWorkEntryDrawer
-        entry={editEntry}
-        clientName={
-          editEntry ? (clientMap.get(editEntry.clientId) ?? 'Work entry') : ''
-        }
-        service={editEntry ? assignmentMap.get(editEntry.assignmentId) : undefined}
-        onClose={() => setEditEntry(null)}
-        onSaved={() => {
-          queryClient.invalidateQueries({ queryKey: QK.workEntriesAll });
-          setEditEntry(null);
-        }}
-      />
-    </div>
+        <DataTable
+          columns={columns}
+          data={filtered}
+          isLoading={isLoading}
+          isError={isError}
+          error={error}
+          onRowClick={setEditEntry}
+        />
+      </PageSection>
+    </Page>
   );
 }

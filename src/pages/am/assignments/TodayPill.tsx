@@ -1,5 +1,5 @@
-import { Pill } from '../../admin/accounts/badges';
 import type { AssignmentRow } from './use-am-assignments';
+import { Pill } from '@/components/shared/Pill';
 
 const dash = <span className="text-xs text-muted-foreground/50">—</span>;
 

@@ -1,8 +1,11 @@
-import { DownloadIcon, SearchIcon, XIcon } from 'lucide-react';
+import { DownloadIcon } from 'lucide-react';
 
+import {
+  ClearFiltersButton,
+  DateRangeFilter,
+  SearchInput,
+} from '@/components/shared/FilterControls';
 import { Button } from '@/components/ui/button';
-import { DatePickerField } from '@/components/ui/date-picker-field';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -48,16 +51,13 @@ type Props = {
 export function ActivityFilters(p: Props) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
-      <div className="relative w-full sm:w-64">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={p.search}
-          onChange={e => p.onSearch(e.target.value)}
-          placeholder="Search VA, client or task…"
-          aria-label="Search activity"
-          className="h-8 pl-8 text-sm"
-        />
-      </div>
+      <SearchInput
+        value={p.search}
+        onChange={p.onSearch}
+        placeholder="Search VA, client or task…"
+        label="Search activity"
+        className="sm:w-64"
+      />
 
       <Select value={p.assignmentId} onValueChange={p.onAssignment}>
         <SelectTrigger className="h-8 w-56 text-sm" aria-label="Filter by VA">
@@ -123,22 +123,14 @@ export function ActivityFilters(p: Props) {
         </Button>
       )}
 
-      <div className="flex items-center gap-1.5">
-        <DatePickerField value={p.dateFrom} onChange={p.onDateFrom} />
-        <span className="text-xs text-muted-foreground">to</span>
-        <DatePickerField value={p.dateTo} onChange={p.onDateTo} />
-      </div>
+      <DateRangeFilter
+        from={p.dateFrom}
+        to={p.dateTo}
+        onFromChange={p.onDateFrom}
+        onToChange={p.onDateTo}
+      />
 
-      {p.hasFilter && (
-        <button
-          type="button"
-          onClick={p.onClear}
-          className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <XIcon className="size-3.5" />
-          Clear
-        </button>
-      )}
+      {p.hasFilter && <ClearFiltersButton onClick={p.onClear} />}
 
       <div className="ml-auto flex items-center gap-2">
         <span className="mr-1 text-xs text-muted-foreground">
@@ -148,7 +140,10 @@ export function ActivityFilters(p: Props) {
           value={p.exportFormat}
           onValueChange={v => p.onExportFormat(v as ExportFormat)}
         >
-          <SelectTrigger className="h-8 w-24 text-sm" aria-label="Export format">
+          <SelectTrigger
+            className="h-8 w-24 text-sm"
+            aria-label="Export format"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

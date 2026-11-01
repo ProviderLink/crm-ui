@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontalIcon, PenLineIcon, XIcon } from 'lucide-react';
 
+import { AssignmentStatusPill, InitialsTile } from '@/components/shared/badges';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,9 +12,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { formatDateKeyLong } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
-
-import { Avatar } from '../accounts/badges';
-import { AssignmentStatus } from './AssignmentStatus';
 
 export function buildColumns({
   clientMap,
@@ -43,7 +41,7 @@ export function buildColumns({
         const client = a.companyName || clientMap[a.clientId] || a.clientId;
         return (
           <div className="flex min-w-0 items-center gap-3">
-            <Avatar name={va} />
+            <InitialsTile name={va} />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium" title={va}>
                 {va}
@@ -113,7 +111,7 @@ export function buildColumns({
       header: 'Status',
       size: 110,
       cell: ({ getValue }) => (
-        <AssignmentStatus status={getValue<IAssignment['status']>()} />
+        <AssignmentStatusPill status={getValue<IAssignment['status']>()} />
       ),
     },
   ];

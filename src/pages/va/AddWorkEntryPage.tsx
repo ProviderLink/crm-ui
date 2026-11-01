@@ -1,3 +1,4 @@
+import { Page, PageSection } from '@/components/shared/PageLayout';
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Input } from '@/components/ui/input';
@@ -137,7 +138,8 @@ export default function AddWorkEntryPage() {
                   render={({ field }) => {
                     // A lone assignment is passed straight in: setting it after mount races
                     // the Select registering its options, which resets the field to "".
-                    const only = assignments.length === 1 ? assignments[0]! : null;
+                    const only =
+                      assignments.length === 1 ? assignments[0]! : null;
                     if (only) {
                       return (
                         <div className="flex h-10 min-w-0 flex-col justify-center rounded-md border border-border bg-white/[0.03] px-3">
@@ -343,13 +345,11 @@ export default function AddWorkEntryPage() {
 
 function PageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="@container/main flex flex-1 flex-col gap-2">
-      <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="px-4 lg:px-6">
-          <div className="max-w-3xl">{children}</div>
-        </div>
-      </div>
-    </div>
+    <Page>
+      <PageSection>
+        <div className="max-w-3xl">{children}</div>
+      </PageSection>
+    </Page>
   );
 }
 
