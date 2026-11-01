@@ -1,13 +1,5 @@
+import { formatDate } from '@/lib/format';
 import type { IPerformanceReview } from '@/types/performance-review';
-
-const fmt = (iso?: string) =>
-  iso
-    ? new Date(iso).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : '—';
 
 export function ReviewMetadataCard({ review }: { review: IPerformanceReview }) {
   const items = [
@@ -15,7 +7,7 @@ export function ReviewMetadataCard({ review }: { review: IPerformanceReview }) {
     { label: 'Client', value: review.clientName ?? '—' },
     {
       label: 'Review period',
-      value: `${fmt(review.reviewPeriodStart)} – ${fmt(review.reviewPeriodEnd)}`,
+      value: `${formatDate(review.reviewPeriodStart)} – ${formatDate(review.reviewPeriodEnd)}`,
     },
   ];
   return (

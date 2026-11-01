@@ -1,27 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
 
+import { formatDate, initialsOf } from '@/lib/format';
 import type { IEodSubmission } from '@/types/eod-submission';
 
 import { TaskSummary } from './TaskSummary';
-
-const initialsOf = (name: string) =>
-  name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
-// "2026-10-27" -> "Oct 27, 2026", built from parts so the day never shifts.
-function shortDate(raw?: string) {
-  const [y, m, d] = (raw ?? '').slice(0, 10).split('-').map(Number);
-  if (!y || !m || !d) return '—';
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 export function buildEodColumns({
   vaMap,
@@ -65,7 +47,7 @@ export function buildEodColumns({
       size: 125,
       cell: ({ getValue }) => (
         <span className="text-sm whitespace-nowrap">
-          {shortDate(getValue<string>())}
+          {formatDate(getValue<string>())}
         </span>
       ),
     },

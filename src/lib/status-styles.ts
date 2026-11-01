@@ -20,3 +20,10 @@ export const SURVEY_STATUS_STYLES: Record<SurveyStatus, string> = {
   completed: `${PILL} text-status-success border-status-success/20`,
   skipped: `${PILL} text-text-tertiary border-white/[0.08]`,
 };
+
+/** The small status dot shown beside a work status in selects. */
+export const WORK_STATUS_DOT: Record<WorkEntryStatus, string> = {
+  completed: 'bg-status-success',
+  in_progress: 'bg-status-info',
+  pending: 'bg-status-warning',
+};

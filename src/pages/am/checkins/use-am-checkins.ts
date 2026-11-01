@@ -6,10 +6,10 @@ import {
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { todayString } from '@/lib/time';
+import { daysUntil, todayString } from '@/lib/time';
+import { dueKey, isOpen } from '@/lib/survey';
 import type { ISurveyReminder } from '@/types/survey-reminder';
 
-import { dueKey, daysUntil, isOpen } from './helpers';
 
 export type RelatedInfo = {
   title: string;

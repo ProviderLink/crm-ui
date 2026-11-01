@@ -24,6 +24,7 @@ import {
   useVaProfileQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
+import { formatDate } from '@/lib/format';
 import { todayString, weekStartOfDateKey } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
@@ -37,7 +38,6 @@ import { AssignmentStatus } from './AssignmentStatus';
 import {
   buildEodColumns,
   buildWorkColumns,
-  fmtDate,
   TAB,
   TAB_LIST,
 } from './drawer-columns';
@@ -223,9 +223,9 @@ function AssignmentDetail({
           </div>
           <p className="mt-0.5 truncate text-sm text-muted-foreground">
             {assignment.serviceType ? `${assignment.serviceType} · ` : ''}
-            {fmtDate(assignment.startDate)}
+            {formatDate(assignment.startDate)}
             {assignment.endDate
-              ? ` → ${fmtDate(assignment.endDate)}`
+              ? ` → ${formatDate(assignment.endDate)}`
               : ' · Ongoing'}
           </p>
         </div>

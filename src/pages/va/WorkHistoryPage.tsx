@@ -10,7 +10,7 @@ import {
   useMyAssignmentsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
-import { addDaysToDateKey, todayString } from '@/lib/time';
+import { useDateRange } from '@/hooks/use-date-range';
 import type { IWorkEntry } from '@/types/work-entry';
 
 import { WorkEntryFilters } from '../admin/work-entries/WorkEntryFilters';
@@ -42,12 +42,8 @@ export default function WorkHistoryPage() {
   }, [myAssignments]);
 
   // The default window is the last 30 days; "Clear" returns to it.
-  const [defaults] = useState(() => ({
-    from: addDaysToDateKey(todayString(), -30),
-    to: todayString(),
-  }));
-  const [dateFrom, setDateFrom] = useState(defaults.from);
-  const [dateTo, setDateTo] = useState(defaults.to);
+  const range = useDateRange();
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [category, setCategory] = useState('all');
@@ -86,16 +82,14 @@ export default function WorkHistoryPage() {
     setSearch('');
     setStatus('all');
     setCategory('all');
-    setDateFrom(defaults.from);
-    setDateTo(defaults.to);
+    range.reset();
   }
 
   const hasFilter =
     search !== '' ||
     status !== 'all' ||
     category !== 'all' ||
-    dateFrom !== defaults.from ||
-    dateTo !== defaults.to;
+    range.isChanged;
 
   const columns = useMemo(
     () =>

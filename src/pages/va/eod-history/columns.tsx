@@ -11,7 +11,7 @@ import {
 import type { IEodSubmission } from '@/types/eod-submission';
 
 import { TaskSummary } from '../../admin/eod-reports/TaskSummary';
-import { initialsOf, shortDate } from '../../admin/work-entries/format';
+import { formatDate, initialsOf } from '@/lib/format';
 
 export function buildEodHistoryColumns({
   clientMap,
@@ -51,7 +51,7 @@ export function buildEodHistoryColumns({
       size: 125,
       cell: ({ getValue }) => (
         <span className="text-sm whitespace-nowrap">
-          {shortDate(getValue<string>())}
+          {formatDate(getValue<string>())}
         </span>
       ),
     },

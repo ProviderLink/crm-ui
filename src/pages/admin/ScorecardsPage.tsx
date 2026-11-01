@@ -10,17 +10,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useGenerateScorecards } from '@/hooks/mutations';
-import {
-  useAllAssignmentsQuery,
-  useAtsVAsQuery,
-  useCrmVaUsersQuery,
-  useScorecardsQuery,
-} from '@/hooks/queries';
+import { useAllAssignmentsQuery, useScorecardsQuery } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import { useVaNames } from '@/hooks/use-name-maps';
 import type { IScorecard } from '@/types/scorecard';
 import type { ColumnDef } from '@tanstack/react-table';
 import { RefreshCwIcon, SearchIcon, StarIcon, XIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+
+import { initialsOf } from '@/lib/format';
+import { formatDateKeyShort } from '@/lib/time';
 
 // Three clear levels, colour on the text only (no coloured fills).
 const scoreColor = (score: number) => {
@@ -28,16 +27,6 @@ const scoreColor = (score: number) => {
   if (score >= 60) return 'text-status-warning';
   return 'text-status-error';
 };
-
-// "2026-10-26" -> "Oct 26", built from parts so the day never shifts by timezone.
-function shortDate(iso?: string) {
-  if (!iso) return '';
-  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
-  return new Date(y!, m! - 1, d).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  });
-}
 
 export default function ScorecardsPage() {
   const user = useAppSelector(s => s.auth.user);
@@ -60,8 +49,6 @@ export default function ScorecardsPage() {
   const generateError = generate.error;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { data: allScorecards = [], isLoading } = useScorecardsQuery();
-  const { data: crmVAs = [] } = useCrmVaUsersQuery();
-  const { data: atsVAs = [] } = useAtsVAsQuery();
 
   // For AM, client-side filter by their assignments' candidateIds
   const scopedScorecards = useMemo(() => {
@@ -69,17 +56,7 @@ export default function ScorecardsPage() {
     return allScorecards.filter(s => amCandidateIds.has(s.vaId));
   }, [allScorecards, isAccountManager, amCandidateIds]);
 
-  // Build VA name map: primary source = ATS candidates (vaId matches ATS _id),
-  // fallback = CRM VA users by candidateRef or _id
-  const vaMap: Record<string, string> = {};
-  for (const v of atsVAs) {
-    vaMap[v.id] = `${v.firstName} ${v.lastName}`;
-  }
-  for (const v of crmVAs) {
-    const name = `${v.firstName} ${v.lastName}`;
-    if (v.candidateRef && !vaMap[v.candidateRef]) vaMap[v.candidateRef] = name;
-    if (v._id && !vaMap[v._id]) vaMap[v._id] = name;
-  }
+  const vaMap = useVaNames();
 
   const nameOf = (s: IScorecard) =>
     s.vaName || vaMap[s.vaId] || 'Unknown VA';
@@ -115,12 +92,7 @@ export default function ScorecardsPage() {
       accessorFn: s => nameOf(s),
       cell: ({ row }) => {
         const name = nameOf(row.original);
-        const initials = name
-          .split(' ')
-          .map(n => n[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2);
+        const initials = initialsOf(name);
         return (
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
@@ -146,8 +118,8 @@ export default function ScorecardsPage() {
       size: 130,
       cell: ({ row }) => (
         <span className="text-sm whitespace-nowrap text-muted-foreground">
-          {shortDate(row.original.weekStart)} –{' '}
-          {shortDate(row.original.weekEnd)}
+          {formatDateKeyShort(row.original.weekStart)} –{' '}
+          {formatDateKeyShort(row.original.weekEnd)}
         </span>
       ),
     },
@@ -252,7 +224,7 @@ export default function ScorecardsPage() {
                 <SelectItem value="all">All weeks</SelectItem>
                 {weeks.map(([key, sc], i) => (
                   <SelectItem key={key} value={key}>
-                    {shortDate(sc.weekStart)} – {shortDate(sc.weekEnd)}
+                    {formatDateKeyShort(sc.weekStart)} – {formatDateKeyShort(sc.weekEnd)}
                     {i === 0 && ' (latest)'}
                   </SelectItem>
                 ))}

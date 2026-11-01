@@ -9,14 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAppSelector } from '@/hooks/store';
 import { getApiError } from '@/lib/api-error';
+import { initialsOf } from '@/lib/format';
 import { changePassword } from '@/services/auth.service';
-
-const roleLabel: Record<string, string> = {
-  admin: 'Admin',
-  account_manager: 'Account Manager',
-  va: 'Virtual Assistant',
-  client: 'Client',
-};
+import { ROLE_LABELS } from '@/types/auth';
 
 const pwSchema = z
   .object({
@@ -54,12 +49,7 @@ export default function ProfilePage() {
   }
 
   const name = user?.name ?? '—';
-  const initials = name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = initialsOf(name);
 
   const fields: {
     id: 'currentPassword' | 'newPassword' | 'confirmPassword';
@@ -96,7 +86,7 @@ export default function ProfilePage() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="truncate text-xl font-semibold">{name}</h1>
               <span className="inline-flex items-center rounded border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[11px] font-medium text-text-secondary">
-                {user?.role ? (roleLabel[user.role] ?? user.role) : '—'}
+                {user?.role ? ROLE_LABELS[user.role] : '—'}
               </span>
             </div>
             <p className="mt-0.5 truncate text-sm text-muted-foreground">

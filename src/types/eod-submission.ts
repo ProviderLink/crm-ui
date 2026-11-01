@@ -23,6 +23,12 @@ export const EOD_WORK_STATUSES: EodWorkStatus[] = [
   'pending',
 ];
 
+export const EOD_WORK_STATUS_LABELS: Record<EodWorkStatus, string> = {
+  completed: 'Completed',
+  in_progress: 'In Progress',
+  pending: 'Pending Client Input',
+};
+
 export interface IEodWorkEntry {
   task: string;
   description: string;

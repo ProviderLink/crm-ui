@@ -7,7 +7,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { addDaysToDateKey, todayString } from '@/lib/time';
+import { useDateRange } from '@/hooks/use-date-range';
 import type { IAssignment } from '@/types/assignment';
 
 import { buildEodColumns } from './eod-columns';
@@ -56,12 +56,8 @@ export function useWorkActivity() {
   );
 
   // The default window is the last 30 days; "Clear" returns to it.
-  const [defaults] = useState(() => ({
-    from: addDaysToDateKey(todayString(), -30),
-    to: todayString(),
-  }));
-  const [dateFrom, setDateFrom] = useState(defaults.from);
-  const [dateTo, setDateTo] = useState(defaults.to);
+  const range = useDateRange();
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [assignmentFilter, setAssignmentFilter] = useState('all');
   const [search, setSearch] = useState('');
 
@@ -111,15 +107,13 @@ export function useWorkActivity() {
   function clearFilters() {
     setSearch('');
     setAssignmentFilter('all');
-    setDateFrom(defaults.from);
-    setDateTo(defaults.to);
+    range.reset();
   }
 
   const hasActiveFilters =
     search !== '' ||
     assignmentFilter !== 'all' ||
-    dateFrom !== defaults.from ||
-    dateTo !== defaults.to;
+    range.isChanged;
   const multipleAssignments = assignments.length > 1;
 
   function assignmentLabel(a: IAssignment): string {

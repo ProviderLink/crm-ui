@@ -1,7 +1,7 @@
+import { initialsOf } from '@/lib/format';
 import { formatDateKeyShort } from '@/lib/time';
 import type { IEodSubmission } from '@/types/eod-submission';
 
-import { initials } from './helpers';
 
 /** One recent daily report; opens its full detail when clicked. */
 export function RecentEodItem({
@@ -27,7 +27,7 @@ export function RecentEodItem({
         className="-mx-3 flex w-[calc(100%+1.5rem)] items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
         <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
-          {initials(displayName) || '?'}
+          {initialsOf(displayName) || '?'}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-3">

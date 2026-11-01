@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { initialsOf } from '@/lib/format';
 import type { IPerformanceReview } from '@/types/performance-review';
 
 import { RatingDisplay, StatusBadge } from './badges';
@@ -48,12 +49,7 @@ export function buildReviewColumns({
         const r = row.original;
         const name = r.candidateName ?? vaMap[r.vaId] ?? '—';
         const client = r.clientName ?? clientMap[r.clientId] ?? '—';
-        const initials = name
-          .split(' ')
-          .map(n => n[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2);
+        const initials = initialsOf(name);
         return (
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">

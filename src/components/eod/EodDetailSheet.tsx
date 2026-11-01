@@ -12,29 +12,23 @@ import {
 import { useEodSubmissionQuery } from '@/hooks/queries';
 import { getApiError } from '@/lib/api-error';
 import { WORK_ENTRY_STATUS_STYLES } from '@/lib/status-styles';
+import {
+  formatDateTime,
+  formatDateWeekday,
+  initialsOf,
+} from '@/lib/format';
 import { formatMinutes } from '@/lib/time';
-import type {
-  CommunicatedWithClient,
-  EodWorkStatus,
-  IEodSubmission,
+import {
+  COMMUNICATED_WITH_CLIENT_LABELS,
+  EOD_WORK_STATUS_LABELS,
+  type CommunicatedWithClient,
+  type IEodSubmission,
 } from '@/types/eod-submission';
-
-const STATUS_LABELS: Record<EodWorkStatus, string> = {
-  completed: 'Completed',
-  in_progress: 'In Progress',
-  pending: 'Pending Client Input',
-};
 
 const COMMUNICATED_STYLES: Record<CommunicatedWithClient, string> = {
   yes: 'bg-white/[0.04] text-status-success border-status-success/20',
   no: 'bg-white/[0.04] text-text-secondary border-white/[0.08]',
   other: 'bg-white/[0.04] text-status-info border-status-info/20',
-};
-
-const COMMUNICATED_LABELS: Record<CommunicatedWithClient, string> = {
-  yes: 'Yes',
-  no: 'No',
-  other: 'Other',
 };
 
 interface EodDetailSheetProps {
@@ -49,39 +43,6 @@ interface EodDetailSheetProps {
   /** What the report is called in the UI; clients see "daily report". */
   reportName?: string;
 }
-
-/** "Tuesday, Oct 27, 2026", built from the key's parts to avoid timezone drift. */
-function formatDay(raw?: string): string {
-  const [y, m, d] = (raw ?? '').slice(0, 10).split('-').map(Number);
-  if (!y || !m || !d) return raw ?? '—';
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function formatSubmitted(raw?: string): string {
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
-const initialsOf = (name: string) =>
-  name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 
 function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -158,7 +119,7 @@ function WorkList({ eod }: { eod: IEodSubmission }) {
               <span
                 className={`rounded border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap ${WORK_ENTRY_STATUS_STYLES[e.status]}`}
               >
-                {STATUS_LABELS[e.status] ?? e.status}
+                {EOD_WORK_STATUS_LABELS[e.status] ?? e.status}
               </span>
               <span className="text-xs tabular-nums text-muted-foreground">
                 {formatMinutes(e.timeSpent)}
@@ -237,7 +198,7 @@ function EodBody({ eod }: { eod: IEodSubmission }) {
             <span
               className={`rounded border px-2 py-0.5 text-[11px] font-medium ${COMMUNICATED_STYLES[eod.communicatedWithClient]}`}
             >
-              {COMMUNICATED_LABELS[eod.communicatedWithClient] ??
+              {COMMUNICATED_WITH_CLIENT_LABELS[eod.communicatedWithClient] ??
                 eod.communicatedWithClient}
             </span>
           ) : undefined
@@ -303,7 +264,7 @@ export function EodDetailSheet({
               </SheetTitle>
               <SheetDescription className="mt-0.5 truncate">
                 {eod
-                  ? `${eod.companyName || eod.clientId} · ${formatDay(eod.date)}`
+                  ? `${eod.companyName || eod.clientId} · ${formatDateWeekday(eod.date)}`
                   : 'Loading…'}
               </SheetDescription>
             </div>
@@ -333,7 +294,7 @@ export function EodDetailSheet({
           {!isLoading && !isError && eod && (
             <div className="flex items-center gap-2 border-t border-border px-6 py-3 text-xs text-muted-foreground">
               <ClockIcon className="size-3.5" />
-              Submitted {formatSubmitted(eod.createdAt)}
+              Submitted {formatDateTime(eod.createdAt)}
             </div>
           )}
         </div>

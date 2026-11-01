@@ -18,18 +18,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { EOD_WORK_STATUSES } from '@/types/eod-submission';
+import { WORK_STATUS_DOT } from '@/lib/status-styles';
+import {
+  EOD_WORK_STATUS_LABELS,
+  EOD_WORK_STATUSES,
+} from '@/types/eod-submission';
 
 import { DurationPresets } from '../duration-presets';
 import { Field } from './layout';
-import { STATUS_LABELS, type FormData } from './schema';
-
-// Status colour is a small dot only, like the pills elsewhere in the CRM.
-const STATUS_DOT: Record<string, string> = {
-  completed: 'bg-status-success',
-  in_progress: 'bg-status-info',
-  pending: 'bg-status-warning',
-};
+import type { FormData } from './schema';
 
 /** One work item of the report: a flat group inside the shared list. */
 export function WorkEntryCard({
@@ -133,9 +130,9 @@ export function WorkEntryCard({
                     <SelectItem key={s} value={s}>
                       <span className="flex items-center gap-2">
                         <span
-                          className={`size-1.5 rounded-full ${STATUS_DOT[s] ?? 'bg-text-tertiary'}`}
+                          className={`size-1.5 rounded-full ${WORK_STATUS_DOT[s]}`}
                         />
-                        {STATUS_LABELS[s]}
+                        {EOD_WORK_STATUS_LABELS[s]}
                       </span>
                     </SelectItem>
                   ))}

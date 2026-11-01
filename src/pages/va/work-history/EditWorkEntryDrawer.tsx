@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sheet';
 import type { IWorkEntry } from '@/types/work-entry';
 
-import { initialsOf, shortDate } from '../../admin/work-entries/format';
+import { formatDate, initialsOf } from '@/lib/format';
 import { StatusPill } from '../../admin/work-entries/StatusPill';
 import { EditWorkEntryForm } from './EditWorkEntryForm';
 
@@ -63,7 +63,7 @@ export function EditWorkEntryDrawer({
                 {entry && <StatusPill status={entry.status} />}
               </div>
               <SheetDescription className="mt-0.5 truncate">
-                {[clientName, service, entry && shortDate(entry.entryDate)]
+                {[clientName, service, entry && formatDate(entry.entryDate)]
                   .filter(Boolean)
                   .join(' · ')}
               </SheetDescription>

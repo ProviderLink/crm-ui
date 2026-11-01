@@ -17,6 +17,12 @@ export const WORK_ENTRY_STATUSES = [
 ] as const;
 export type WorkEntryStatus = (typeof WORK_ENTRY_STATUSES)[number];
 
+export const WORK_ENTRY_STATUS_LABELS: Record<WorkEntryStatus, string> = {
+  completed: 'Completed',
+  in_progress: 'In Progress',
+  pending: 'Pending',
+};
+
 export interface IWorkEntry {
   _id: string;
   assignmentId: string;

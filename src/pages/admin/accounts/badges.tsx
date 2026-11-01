@@ -1,5 +1,6 @@
 import { StarIcon } from 'lucide-react';
 
+import { initialsOf } from '@/lib/format';
 // Same pill language as the rest of the CRM: status colour on the text and a
 // faint border only, never a coloured fill (see lib/status-styles.ts).
 const PILL =
@@ -83,12 +84,7 @@ export function Score({ value }: { value: number | null | undefined }) {
 }
 
 export function Avatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = initialsOf(name);
   return (
     <div className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-xs font-medium text-text-secondary">
       {initials || '?'}

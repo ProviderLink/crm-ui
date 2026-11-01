@@ -32,55 +32,23 @@ import {
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { todayString } from '@/lib/time';
-import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder';
+import { initialsOf, plural } from '@/lib/format';
+import { daysUntil, formatDateKeyLong, todayString } from '@/lib/time';
+import { isOpen } from '@/lib/survey';
+import {
+  SURVEY_TYPE_LABELS,
+  type ISurveyReminder,
+  type SurveyStatus,
+} from '@/types/survey-reminder';
 import { SURVEY_STATUS_STYLES } from '@/lib/status-styles';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const SURVEY_TYPE_LABELS: Record<ISurveyReminder['surveyType'], string> = {
-  '3_day': '3-Day',
-  '1_week': '1-Week',
-  '30_day': '30-Day',
-  monthly: 'Monthly',
-};
 
 interface RelatedInfo {
   title: string;
   subtitle: string;
   isCompany: boolean;
 }
-
-const isOpen = (r: ISurveyReminder) =>
-  r.status === 'pending' || r.status === 'sent';
-
-// Whole days from `today` to `due` (both YYYY-MM-DD); negative when past.
-function daysUntil(due: string, today: string) {
-  const [dy, dm, dd] = due.split('-').map(Number);
-  const [ty, tm, td] = today.split('-').map(Number);
-  return Math.round(
-    (Date.UTC(dy!, dm! - 1, dd) - Date.UTC(ty!, tm! - 1, td)) / 86_400_000
-  );
-}
-
-function shortDate(iso: string) {
-  const [y, m, d] = iso.split('-').map(Number);
-  return new Date(y!, m! - 1, d).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
-
-const initialsOf = (name: string) =>
-  name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -266,7 +234,7 @@ export default function SurveyRemindersPage() {
           }
           return (
             <div className="whitespace-nowrap">
-              <p className="text-sm">{shortDate(v)}</p>
+              <p className="text-sm">{formatDateKeyLong(v)}</p>
               {note && <p className={`text-xs ${noteClass}`}>{note}</p>}
             </div>
           );

@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/select';
 import type { IScorecard } from '@/types/scorecard';
 
-import { initialsOf } from '../../admin/work-entries/format';
+import { initialsOf } from '@/lib/format';
+import { formatDateKeyShort } from '@/lib/time';
 import { useAmScorecards } from './use-am-scorecards';
 
 // Three clear levels, colour on the text only (no coloured fills).
@@ -24,16 +25,6 @@ const scoreColor = (score: number) => {
   if (score >= 60) return 'text-status-warning';
   return 'text-status-error';
 };
-
-// "2026-10-26" -> "Oct 26", built from parts so the day never shifts by timezone.
-function shortDate(iso?: string) {
-  if (!iso) return '';
-  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
-  return new Date(y!, m! - 1, d).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  });
-}
 
 function Stat({
   label,
@@ -93,7 +84,7 @@ export function ScorecardsTab() {
       size: 130,
       cell: ({ row }) => (
         <span className="text-sm whitespace-nowrap text-muted-foreground">
-          {shortDate(row.original.weekStart)} – {shortDate(row.original.weekEnd)}
+          {formatDateKeyShort(row.original.weekStart)} – {formatDateKeyShort(row.original.weekEnd)}
         </span>
       ),
     },
@@ -168,7 +159,7 @@ export function ScorecardsTab() {
             <SelectItem value="all">All weeks</SelectItem>
             {s.weeks.map(([key, sc], i) => (
               <SelectItem key={key} value={key}>
-                {shortDate(sc.weekStart)} – {shortDate(sc.weekEnd)}
+                {formatDateKeyShort(sc.weekStart)} – {formatDateKeyShort(sc.weekEnd)}
                 {i === 0 && ' (latest)'}
               </SelectItem>
             ))}

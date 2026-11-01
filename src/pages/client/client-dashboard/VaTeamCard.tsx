@@ -1,11 +1,12 @@
 import { MailIcon } from 'lucide-react';
 
 import { Card } from '@/components/ui/card';
+import { initialsOf } from '@/lib/format';
 import { formatDateKeyLong } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
 import { AssignmentStatus } from '../../admin/assignments/AssignmentStatus';
-import { formatMonthDay, initials, tenureLabel } from './helpers';
+import { formatMonthDay, tenureLabel } from './helpers';
 
 export function VaTeamCard({
   assignment: a,
@@ -27,7 +28,7 @@ export function VaTeamCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white/[0.06] text-sm font-medium text-text-secondary">
-            {initials(displayName) || '?'}
+            {initialsOf(displayName) || '?'}
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{displayName}</p>

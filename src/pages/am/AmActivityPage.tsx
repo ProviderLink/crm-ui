@@ -5,7 +5,7 @@ import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
 import { DataTable } from '@/components/shared/DataTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatMinutes } from '@/lib/time';
-import { exportReport, type ExportFormat } from '@/services/reports.service';
+import { useReportExport } from '@/hooks/use-report-export';
 import type { IEodSubmission } from '@/types/eod-submission';
 import type { IWorkEntry } from '@/types/work-entry';
 
@@ -49,29 +49,12 @@ export default function AmActivityPage() {
   const [openEntry, setOpenEntry] = useState<IWorkEntry | null>(null);
   const [openEod, setOpenEod] = useState<IEodSubmission | null>(null);
 
-  const [exportFormat, setExportFormat] = useState<ExportFormat>('csv');
-  const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
-  const exportRangeValid =
-    a.dateFrom !== '' && a.dateTo !== '' && a.dateFrom <= a.dateTo;
-
-  async function handleExport() {
-    if (!exportRangeValid) return;
-    setExporting(true);
-    setExportError(null);
-    try {
-      await exportReport(
-        tab === 'work' ? 'work_entries' : 'eod',
-        a.dateFrom,
-        a.dateTo,
-        exportFormat
-      );
-    } catch {
-      setExportError('Export failed. Please try again.');
-    } finally {
-      setExporting(false);
-    }
-  }
+  const reportExport = useReportExport({
+    dateFrom: a.dateFrom,
+    dateTo: a.dateTo,
+  });
+  const exportRangeValid = reportExport.rangeValid;
+  const exportError = reportExport.error;
 
   const workColumns = buildWorkEntryColumns({
     vaMap: a.vaMap,
@@ -121,10 +104,10 @@ export default function AmActivityPage() {
             hasFilter={a.hasFilter}
             onClear={a.clearFilters}
             countLabel={a.isLoading ? '' : count}
-            exportFormat={exportFormat}
-            onExportFormat={setExportFormat}
-            onExport={handleExport}
-            exporting={exporting}
+            exportFormat={reportExport.format}
+            onExportFormat={reportExport.setFormat}
+            onExport={() => reportExport.run(tab === 'work' ? 'work_entries' : 'eod')}
+            exporting={reportExport.exporting}
             exportRangeValid={exportRangeValid}
           />
           {exportError && (

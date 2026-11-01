@@ -8,10 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUpdateSurveyReminder } from '@/hooks/mutations';
 import { formatDateKeyLong } from '@/lib/time';
-import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder';
+import { dueKey } from '@/lib/survey';
+import {
+  SURVEY_TYPE_LABELS,
+  type ISurveyReminder,
+  type SurveyStatus,
+} from '@/types/survey-reminder';
 
 import { buildCheckinColumns } from './checkins/columns';
-import { dueKey, SURVEY_TYPE_LABELS } from './checkins/helpers';
 import { useAmCheckins } from './checkins/use-am-checkins';
 
 // Underline tabs: a flat bar with a line under the active tab.

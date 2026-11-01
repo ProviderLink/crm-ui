@@ -18,3 +18,10 @@ export interface UpdateSurveyReminderPayload {
   status: SurveyStatus;
   completedDate?: string;
 }
+
+export const SURVEY_TYPE_LABELS: Record<SurveyType, string> = {
+  '3_day': '3-Day',
+  '1_week': '1-Week',
+  '30_day': '30-Day',
+  monthly: 'Monthly',
+};

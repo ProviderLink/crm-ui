@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateKeyShort } from '@/lib/time';
 
 import { Pill } from '../../admin/accounts/badges';
-import { initialsOf } from '../../admin/work-entries/format';
+import { initialsOf } from '@/lib/format';
 import type { TeamRow } from './use-am-dashboard';
 
 /** Each VA the manager looks after, and whether today's report is in. */

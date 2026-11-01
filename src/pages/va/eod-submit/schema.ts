@@ -30,12 +30,6 @@ export const schema = z.object({
 
 export type FormData = z.infer<typeof schema>;
 
-export const STATUS_LABELS: Record<EodWorkStatus, string> = {
-  completed: 'Completed',
-  in_progress: 'In Progress',
-  pending: 'Pending Client Input',
-};
-
 export const DEFAULT_WORK_ENTRY = {
   task: '',
   description: '',

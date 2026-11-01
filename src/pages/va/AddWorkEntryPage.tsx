@@ -13,9 +13,14 @@ import { TimePickerField } from '@/components/ui/time-picker-field';
 import { QK } from '@/hooks/queries';
 import { useApiMutation } from '@/hooks/use-api-mutation';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
+import { WORK_STATUS_DOT } from '@/lib/status-styles';
 import { nowTimeString, todayString } from '@/lib/time';
 import { createWorkEntry } from '@/services/work-entries.service';
-import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry';
+import {
+  WORK_ENTRY_CATEGORIES,
+  WORK_ENTRY_STATUS_LABELS,
+  WORK_ENTRY_STATUSES,
+} from '@/types/work-entry';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Briefcase,
@@ -28,45 +33,12 @@ import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { z } from 'zod';
 
 import { Field, Section } from '../admin/assignments/form-layout';
 import { DurationPresets } from './duration-presets';
+import { addWorkEntrySchema, type AddWorkEntryForm } from './work-entry-schema';
 
-const schema = z.object({
-  assignmentId: z.string().min(1, 'Assignment is required'),
-  entryDate: z.string().min(1, 'Date is required'),
-  entryTime: z.string().min(1, 'Time is required'),
-  taskCategory: z.enum(
-    [
-      'Administrative',
-      'Clinical Coordination',
-      'Data Entry',
-      'Communication',
-      'Research',
-      'Scheduling',
-      'Other',
-    ],
-    { error: 'Category is required' }
-  ),
-  taskDescription: z.string().min(1, 'Description is required'),
-  timeSpent: z
-    .number({ error: 'Duration is required' })
-    .int('Enter whole minutes')
-    .min(1, 'Enter at least 1 minute')
-    .max(480, 'Maximum is 480 minutes (8 hours) per entry'),
-  status: z.enum(['completed', 'in_progress', 'pending']),
-  notes: z.string().optional(),
-});
-
-type FormData = z.infer<typeof schema>;
-
-// Status colour is a small dot only, like the pills elsewhere in the CRM.
-const STATUS_CONFIG: Record<string, { label: string; dot: string }> = {
-  completed: { label: 'Completed', dot: 'bg-status-success' },
-  in_progress: { label: 'In Progress', dot: 'bg-status-info' },
-  pending: { label: 'Pending', dot: 'bg-status-warning' },
-};
+type FormData = AddWorkEntryForm;
 
 export default function AddWorkEntryPage() {
   const navigate = useNavigate();
@@ -91,7 +63,7 @@ export default function AddWorkEntryPage() {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(addWorkEntrySchema),
     defaultValues: {
       entryDate: todayString(),
       entryTime: nowTimeString(),
@@ -316,9 +288,9 @@ export default function AddWorkEntryPage() {
                           <SelectItem key={s} value={s}>
                             <span className="flex items-center gap-2">
                               <span
-                                className={`size-1.5 rounded-full ${STATUS_CONFIG[s]?.dot ?? 'bg-text-tertiary'}`}
+                                className={`size-1.5 rounded-full ${WORK_STATUS_DOT[s]}`}
                               />
-                              {STATUS_CONFIG[s]?.label ?? s}
+                              {WORK_ENTRY_STATUS_LABELS[s]}
                             </span>
                           </SelectItem>
                         ))}

@@ -1,10 +1,4 @@
-const initialsOf = (name: string) =>
-  name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+import { initialsOf } from '@/lib/format';
 
 /** The VA with their role underneath, behind an initials tile. */
 export function VaCell({ name, role }: { name?: string; role?: string }) {

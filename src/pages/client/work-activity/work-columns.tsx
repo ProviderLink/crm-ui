@@ -3,7 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
-import { shortDate } from '../../admin/work-entries/format';
+import { formatDate } from '@/lib/format';
 import { StatusPill } from '../../admin/work-entries/StatusPill';
 import { VaCell } from './VaCell';
 
@@ -30,7 +30,7 @@ export function buildWorkColumns(
       size: 125,
       cell: ({ row }) => (
         <div className="whitespace-nowrap">
-          <p className="text-sm">{shortDate(row.original.entryDate)}</p>
+          <p className="text-sm">{formatDate(row.original.entryDate)}</p>
           {row.original.entryTime && (
             <p className="text-xs tabular-nums text-muted-foreground">
               {row.original.entryTime}

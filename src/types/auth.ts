@@ -14,3 +14,10 @@ export interface AuthState {
   isAuthenticated: boolean;
   isHydrated: boolean;
 }
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  admin: 'Admin',
+  account_manager: 'Account Manager',
+  va: 'Virtual Assistant',
+  client: 'Client',
+};

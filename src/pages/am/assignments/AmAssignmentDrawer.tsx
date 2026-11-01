@@ -25,13 +25,15 @@ import {
   useVaProfileQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
+import { formatDate } from '@/lib/format';
 import {
   addDaysToDateKey,
   formatDateKeyLong,
   weekStartOfDateKey,
 } from '@/lib/time';
 import { SURVEY_STATUS_STYLES } from '@/lib/status-styles';
-import type { ISurveyReminder } from '@/types/survey-reminder';
+import { isOpen } from '@/lib/survey';
+import { SURVEY_TYPE_LABELS } from '@/types/survey-reminder';
 
 import {
   Avatar,
@@ -42,7 +44,6 @@ import {
 import {
   buildEodColumns,
   buildWorkColumns,
-  fmtDate,
   TAB,
   TAB_LIST,
 } from '../../admin/assignments/drawer-columns';
@@ -53,16 +54,6 @@ import {
   StatusBadge,
 } from '../../admin/performance-reviews-list/badges';
 import { hasBlocker } from '../dashboard/use-am-dashboard';
-
-const SURVEY_LABELS: Record<ISurveyReminder['surveyType'], string> = {
-  '3_day': '3-Day',
-  '1_week': '1-Week',
-  '30_day': '30-Day',
-  monthly: 'Monthly',
-};
-
-const isOpenReminder = (r: ISurveyReminder) =>
-  r.status === 'pending' || r.status === 'sent';
 
 /** One tile of the strip at the top: what needs the manager's attention. */
 function Attention({
@@ -204,8 +195,8 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
     return remindersAll
       .filter(r => related.has(r.relatedId))
       .sort((a, b) => {
-        if (isOpenReminder(a) !== isOpenReminder(b))
-          return isOpenReminder(a) ? -1 : 1;
+        if (isOpen(a) !== isOpen(b))
+          return isOpen(a) ? -1 : 1;
         return a.dueDate.localeCompare(b.dueDate);
       });
   }, [remindersAll, assignment, id]);
@@ -234,7 +225,7 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
   const blockerFrom = addDaysToDateKey(today, -7);
   const blockers = allEods.filter(e => e.date >= blockerFrom && hasBlocker(e));
   const overdue = reminders.filter(
-    r => isOpenReminder(r) && (r.dueDate?.slice(0, 10) ?? '') < today
+    r => isOpen(r) && (r.dueDate?.slice(0, 10) ?? '') < today
   );
   const todayLabel =
     assignment.status === 'active'
@@ -266,9 +257,9 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
           </div>
           <p className="mt-0.5 truncate text-sm text-muted-foreground">
             {assignment.serviceType ? `${assignment.serviceType} · ` : ''}
-            {fmtDate(assignment.startDate)}
+            {formatDate(assignment.startDate)}
             {assignment.endDate
-              ? ` → ${fmtDate(assignment.endDate)}`
+              ? ` → ${formatDate(assignment.endDate)}`
               : ' · Ongoing'}
           </p>
         </div>
@@ -446,7 +437,7 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
                   <ul className="divide-y divide-border rounded-lg border border-white/[0.1] bg-white/[0.03]">
                     {reminders.map(r => {
                       const due = r.dueDate?.slice(0, 10) ?? '';
-                      const late = isOpenReminder(r) && due < today;
+                      const late = isOpen(r) && due < today;
                       return (
                         <li
                           key={r._id}
@@ -454,7 +445,7 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
                         >
                           <div className="min-w-0">
                             <p className="text-sm">
-                              {SURVEY_LABELS[r.surveyType] ?? r.surveyType}{' '}
+                              {SURVEY_TYPE_LABELS[r.surveyType] ?? r.surveyType}{' '}
                               check-in
                             </p>
                             <p
@@ -500,7 +491,7 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
                         <div className="min-w-0">
                           <p className="text-sm">{r.reviewType} review</p>
                           <p className="text-xs text-muted-foreground">
-                            {fmtDate(r.createdAt)}
+                            {formatDate(r.createdAt)}
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-3">

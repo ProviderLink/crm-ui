@@ -3,7 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { IEodSubmission } from '@/types/eod-submission';
 
 import { TaskSummary } from '../../admin/eod-reports/TaskSummary';
-import { shortDate } from '../../admin/work-entries/format';
+import { formatDate } from '@/lib/format';
 import { VaCell } from './VaCell';
 
 export function buildEodColumns(
@@ -28,7 +28,7 @@ export function buildEodColumns(
       size: 125,
       cell: ({ getValue }) => (
         <span className="text-sm whitespace-nowrap">
-          {shortDate(getValue<string>())}
+          {formatDate(getValue<string>())}
         </span>
       ),
     },

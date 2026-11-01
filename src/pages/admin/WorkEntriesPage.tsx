@@ -1,15 +1,14 @@
 import { useMemo, useState } from 'react';
 
 import { DataTable } from '@/components/shared/DataTable';
-import {
-  useAllAssignmentsQuery,
-  useAtsClientsQuery,
-  useAtsVAsQuery,
-  useCrmVaUsersQuery,
-  useWorkEntriesQuery,
-} from '@/hooks/queries';
+import { useAllAssignmentsQuery, useWorkEntriesQuery } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { addDaysToDateKey, todayString } from '@/lib/time';
+import { useDateRange } from '@/hooks/use-date-range';
+import {
+  useClientNames,
+  useServiceNames,
+  useVaNames,
+} from '@/hooks/use-name-maps';
 
 import type { IWorkEntry } from '@/types/work-entry';
 
@@ -22,12 +21,8 @@ export default function WorkEntriesPage() {
   const isAccountManager = user?.role === 'account_manager';
 
   // The default window is the last 30 days; "Clear" returns to it.
-  const [defaults] = useState(() => ({
-    from: addDaysToDateKey(todayString(), -30),
-    to: todayString(),
-  }));
-  const [dateFrom, setDateFrom] = useState(defaults.from);
-  const [dateTo, setDateTo] = useState(defaults.to);
+  const range = useDateRange();
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [category, setCategory] = useState('all');
@@ -64,39 +59,12 @@ export default function WorkEntriesPage() {
     );
   }, [allEntries, isAccountManager, amCandidateIds, amClientIds]);
 
-  const { data: crmVAs = [] } = useCrmVaUsersQuery();
-  const { data: atsVAs = [] } = useAtsVAsQuery();
-  const { data: atsClients = [] } = useAtsClientsQuery();
   const { data: assignments = [] } = useAllAssignmentsQuery(
     isAccountManager ? user?.id : undefined
   );
-
-  // Build VA name map: primary source = ATS candidates (candidateId matches ATS _id),
-  // fallback = CRM VA users by candidateRef or _id
-  const vaMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const v of atsVAs) {
-      m[v.id] = `${v.firstName} ${v.lastName}`;
-    }
-    for (const v of crmVAs) {
-      const name = `${v.firstName} ${v.lastName}`;
-      if (v.candidateRef && !m[v.candidateRef]) m[v.candidateRef] = name;
-      if (v._id && !m[v._id]) m[v._id] = name;
-    }
-    return m;
-  }, [atsVAs, crmVAs]);
-
-  const clientMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const c of atsClients) m[c.id] = c.companyName;
-    return m;
-  }, [atsClients]);
-
-  const assignmentMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const a of assignments) m[a._id] = a.serviceType ?? 'VA Service';
-    return m;
-  }, [assignments]);
+  const vaMap = useVaNames();
+  const clientMap = useClientNames();
+  const assignmentMap = useServiceNames(assignments);
 
   const columns = useMemo(
     () => buildWorkEntryColumns({ vaMap, clientMap, assignmentMap }),
@@ -125,16 +93,14 @@ export default function WorkEntriesPage() {
     setSearch('');
     setStatus('all');
     setCategory('all');
-    setDateFrom(defaults.from);
-    setDateTo(defaults.to);
+    range.reset();
   }
 
   const hasFilter =
     search !== '' ||
     status !== 'all' ||
     category !== 'all' ||
-    dateFrom !== defaults.from ||
-    dateTo !== defaults.to;
+    range.isChanged;
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">

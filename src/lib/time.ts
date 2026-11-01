@@ -102,3 +102,12 @@ export function dateKeyToLocalDate(value: string): Date | null {
 export function nowTimeString(): string {
   return new Date().toTimeString().slice(0, 5);
 }
+
+/** Whole days from `today` to `due` (both `YYYY-MM-DD`); negative when past. */
+export function daysUntil(due: string, today: string): number {
+  const [dy, dm, dd] = due.split('-').map(Number);
+  const [ty, tm, td] = today.split('-').map(Number);
+  return Math.round(
+    (Date.UTC(dy!, dm! - 1, dd) - Date.UTC(ty!, tm! - 1, td)) / 86_400_000
+  );
+}

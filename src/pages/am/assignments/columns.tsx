@@ -4,7 +4,7 @@ import { formatDateKeyShort } from '@/lib/time';
 
 import { HealthBadge } from '../../admin/accounts/badges';
 import { AssignmentStatus } from '../../admin/assignments/AssignmentStatus';
-import { initialsOf } from '../../admin/work-entries/format';
+import { initialsOf } from '@/lib/format';
 import { TodayPill } from './TodayPill';
 import type { AssignmentRow } from './use-am-assignments';
 

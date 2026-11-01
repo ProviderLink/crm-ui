@@ -5,18 +5,20 @@ import { toast } from 'sonner';
 import {
   QK,
   useAllAssignmentsQuery,
-  useAtsClientsQuery,
-  useAtsVAsQuery,
-  useCrmVaUsersQuery,
   usePerformanceReviewsQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import { useClientNames, useVaNames } from '@/hooks/use-name-maps';
 import {
   deleteReview,
   exportReviewPdf,
+  STATUS_TO_BACKEND,
   type IReviewFilters,
 } from '@/services/performance-reviews.service';
-import type { IPerformanceReview } from '@/types/performance-review';
+import type {
+  IPerformanceReview,
+  ReviewStatus,
+} from '@/types/performance-review';
 
 export function useReviewsList() {
   const queryClient = useQueryClient();
@@ -45,25 +47,15 @@ export function useReviewsList() {
     null
   );
 
-  const STATUS_TO_BACKEND: Record<string, string> = {
-    Draft: 'draft',
-    'AI Generated': 'ai_generated',
-    'In Review': 'in_review',
-    Completed: 'completed',
-    'Sent to Client': 'sent_to_client',
-    Archived: 'archived',
-  };
-
   const filters: IReviewFilters = {
     status:
-      statusFilter !== 'all' ? STATUS_TO_BACKEND[statusFilter] : undefined,
+      statusFilter !== 'all' ? STATUS_TO_BACKEND[statusFilter as ReviewStatus] : undefined,
   };
 
   const { data: allReviews = [], isLoading } =
     usePerformanceReviewsQuery(filters);
-  const { data: crmVAs = [] } = useCrmVaUsersQuery();
-  const { data: atsVAs = [] } = useAtsVAsQuery();
-  const { data: clientList = [] } = useAtsClientsQuery();
+  const vaMap = useVaNames();
+  const clientMap = useClientNames();
 
   // For AM, client-side filter by their assignments' candidateIds/clientIds
   const scopedReviews = useMemo(() => {
@@ -72,21 +64,6 @@ export function useReviewsList() {
       r => amCandidateIds.has(r.vaId) || amClientIds.has(r.clientId)
     );
   }, [allReviews, isAccountManager, amCandidateIds, amClientIds]);
-
-  // Build VA name map: primary source = ATS candidates (vaId matches ATS _id),
-  // fallback = CRM VA users by candidateRef or _id
-  const vaMap: Record<string, string> = {};
-  for (const v of atsVAs) {
-    vaMap[v.id] = `${v.firstName} ${v.lastName}`;
-  }
-  for (const v of crmVAs) {
-    const name = `${v.firstName} ${v.lastName}`;
-    if (v.candidateRef && !vaMap[v.candidateRef]) vaMap[v.candidateRef] = name;
-    if (v._id && !vaMap[v._id]) vaMap[v._id] = name;
-  }
-
-  const clientMap: Record<string, string> = {};
-  for (const c of clientList) clientMap[c.id] = c.companyName;
 
   // Search matches the VA or the client name, case-insensitively.
   const query = search.trim().toLowerCase();

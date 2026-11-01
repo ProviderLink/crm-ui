@@ -17,27 +17,28 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { initialsOf } from '@/lib/format';
 import { useAppDispatch } from '@/hooks/store';
 import { logout } from '@/services/auth.service';
 import { clearAuth } from '@/store/slices/authSlice';
-import type { UserRole } from '@/types/auth';
+import { ROLE_LABELS, type UserRole } from '@/types/auth';
 
 const roleConfig: Record<UserRole, { label: string; className: string }> = {
   admin: {
-    label: 'Admin',
+    label: ROLE_LABELS.admin,
     className:
       'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary',
   },
   account_manager: {
-    label: 'Account Manager',
+    label: ROLE_LABELS.account_manager,
     className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
   },
   va: {
-    label: 'Virtual Assistant',
+    label: ROLE_LABELS.va,
     className: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
   },
   client: {
-    label: 'Client',
+    label: ROLE_LABELS.client,
     className: 'bg-green-500/10 text-green-600 dark:text-green-400',
   },
 };
@@ -57,12 +58,7 @@ export function NavUser({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const initials = user.name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = initialsOf(user.name);
 
   const role = roleConfig[user.role];
 

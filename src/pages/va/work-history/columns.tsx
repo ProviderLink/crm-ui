@@ -10,7 +10,7 @@ import {
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry, WorkEntryStatus } from '@/types/work-entry';
 
-import { initialsOf, shortDate } from '../../admin/work-entries/format';
+import { formatDate, initialsOf } from '@/lib/format';
 import { StatusPill } from '../../admin/work-entries/StatusPill';
 
 export function buildWorkHistoryColumns({
@@ -52,7 +52,7 @@ export function buildWorkHistoryColumns({
       size: 125,
       cell: ({ row }) => (
         <div className="whitespace-nowrap">
-          <p className="text-sm">{shortDate(row.original.entryDate)}</p>
+          <p className="text-sm">{formatDate(row.original.entryDate)}</p>
           {row.original.entryTime && (
             <p className="text-xs tabular-nums text-muted-foreground">
               {row.original.entryTime}

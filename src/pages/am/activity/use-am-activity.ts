@@ -6,7 +6,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { addDaysToDateKey, todayString } from '@/lib/time';
+import { useDateRange } from '@/hooks/use-date-range';
 
 import { hasBlocker } from '../dashboard/use-am-dashboard';
 
@@ -20,12 +20,8 @@ export function useAmActivity() {
   const { data: assignments = [] } = useAllAssignmentsQuery(user?.id);
 
   // The default window is the last 30 days; "Clear" returns to it.
-  const [defaults] = useState(() => ({
-    from: addDaysToDateKey(todayString(), -30),
-    to: todayString(),
-  }));
-  const [dateFrom, setDateFrom] = useState(defaults.from);
-  const [dateTo, setDateTo] = useState(defaults.to);
+  const dates = useDateRange();
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = dates;
   const [search, setSearch] = useState('');
   const [assignmentId, setAssignmentId] = useState('all');
   const [status, setStatus] = useState('all');
@@ -123,8 +119,7 @@ export function useAmActivity() {
     setStatus('all');
     setCategory('all');
     setBlockersOnly(false);
-    setDateFrom(defaults.from);
-    setDateTo(defaults.to);
+    dates.reset();
   }
 
   const hasFilter =
@@ -133,8 +128,7 @@ export function useAmActivity() {
     status !== 'all' ||
     category !== 'all' ||
     blockersOnly ||
-    dateFrom !== defaults.from ||
-    dateTo !== defaults.to;
+    dates.isChanged;
 
   return {
     assignments,

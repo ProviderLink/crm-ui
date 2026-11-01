@@ -43,7 +43,7 @@ const STATUS_FROM_BACKEND: Record<string, ReviewStatus> = {
   archived: 'Archived',
 };
 
-const STATUS_TO_BACKEND: Record<ReviewStatus, string> = {
+export const STATUS_TO_BACKEND: Record<ReviewStatus, string> = {
   Draft: 'draft',
   'AI Generated': 'ai_generated',
   'In Review': 'in_review',

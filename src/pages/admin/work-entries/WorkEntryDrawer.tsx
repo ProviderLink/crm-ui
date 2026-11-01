@@ -12,7 +12,7 @@ import {
 import { formatMinutes } from '@/lib/time';
 import type { IWorkEntry } from '@/types/work-entry';
 
-import { initialsOf, shortDate } from './format';
+import { formatDate, formatDateTime, initialsOf } from '@/lib/format';
 import { StatusPill } from './StatusPill';
 
 function Stat({ label, value }: { label: string; value: ReactNode }) {
@@ -31,19 +31,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       {children}
     </section>
   );
-}
-
-function formatLogged(raw?: string) {
-  if (!raw) return '—';
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
 }
 
 /** One work entry in a floating drawer; the row already carries every field. */
@@ -101,7 +88,7 @@ export function WorkEntryDrawer({
             <>
               <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
                 <div className="grid grid-cols-3 gap-3">
-                  <Stat label="Date" value={shortDate(entry.entryDate)} />
+                  <Stat label="Date" value={formatDate(entry.entryDate)} />
                   <Stat label="Started" value={entry.entryTime || '—'} />
                   <Stat label="Time spent" value={formatMinutes(entry.timeSpent)} />
                 </div>
@@ -130,7 +117,7 @@ export function WorkEntryDrawer({
 
               <div className="flex items-center gap-2 border-t border-border px-6 py-3 text-xs text-muted-foreground">
                 <ClockIcon className="size-3.5" />
-                Logged {formatLogged(entry.createdAt)}
+                Logged {formatDateTime(entry.createdAt)}
               </div>
             </>
           )}

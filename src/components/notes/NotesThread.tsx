@@ -15,6 +15,7 @@ import { AlertCircle, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { getApiError } from '@/lib/api-error';
+import { formatDateTime } from '@/lib/format';
 import { addNote } from '@/services/notes.service';
 import {
   NOTE_METHODS,
@@ -29,18 +30,6 @@ interface NotesThreadProps {
   subjectId: string | null | undefined;
   /** Heading of the thread; defaults to "Internal notes". */
   title?: string;
-}
-
-function formatTimestamp(raw: string): string {
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 export function NotesThread({
@@ -128,7 +117,7 @@ export function NotesThread({
                   {note.authorName || 'Team member'}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  {formatTimestamp(note.createdAt)}
+                  {formatDateTime(note.createdAt)}
                 </span>
                 <span className="ml-auto text-[11px] rounded px-2 py-0.5 bg-white/[0.04] text-text-secondary ring-1 ring-[rgba(255,255,255,0.08)]">
                   {NOTE_METHOD_LABELS[note.method] ?? note.method}
