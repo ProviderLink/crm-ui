@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 
-import { useAllAssignmentsQuery, useEodSubmissionsQuery } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
+import {
+  useAllAssignmentsQuery,
+  useEodSubmissionsQuery,
+} from '@/hooks/queries';
 import { useDateRange } from '@/hooks/use-date-range';
 import { useReportExport } from '@/hooks/use-report-export';
 import {
@@ -12,9 +14,6 @@ import {
 import type { IEodSubmission } from '@/types/eod-submission';
 
 export function useEodReports() {
-  const user = useAppSelector(s => s.auth.user);
-  const isAccountManager = user?.role === 'account_manager';
-
   // The default window is the last 30 days; "Clear" returns to it.
   const range = useDateRange();
   const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
@@ -25,21 +24,8 @@ export function useEodReports() {
 
   const reportExport = useReportExport({ dateFrom, dateTo });
 
-  // AM scoping: only see EODs for their own assignments
-  const { data: amAssignments = [] } = useAllAssignmentsQuery(
-    isAccountManager ? user?.id : undefined
-  );
-  const amCandidateIds = useMemo(
-    () => new Set(amAssignments.map(a => a.candidateId).filter(Boolean)),
-    [amAssignments]
-  );
-  const amClientIds = useMemo(
-    () => new Set(amAssignments.map(a => a.clientId).filter(Boolean)),
-    [amAssignments]
-  );
-
   const {
-    data: allEods = [],
+    data: eodsInRange = [],
     isLoading,
     isError,
     error,
@@ -48,17 +34,7 @@ export function useEodReports() {
     dateTo: dateTo || undefined,
   });
 
-  // For AM, client-side filter by their assignments' candidateIds/clientIds
-  const scopedEods = useMemo(() => {
-    if (!isAccountManager) return allEods;
-    return allEods.filter(
-      e => amCandidateIds.has(e.candidateId) || amClientIds.has(e.clientId)
-    );
-  }, [allEods, isAccountManager, amCandidateIds, amClientIds]);
-
-  const { data: assignments = [] } = useAllAssignmentsQuery(
-    isAccountManager ? user?.id : undefined
-  );
+  const { data: assignments = [] } = useAllAssignmentsQuery();
   const vaMap = useVaNames();
   const clientMap = useClientNames();
   const assignmentMap = useServiceNames(assignments);
@@ -66,25 +42,23 @@ export function useEodReports() {
   // Search matches the VA, the client or the service type, case-insensitively.
   const query = search.trim().toLowerCase();
   const eods = useMemo(() => {
-    if (!query) return scopedEods;
-    return scopedEods.filter(e => {
+    if (!query) return eodsInRange;
+    return eodsInRange.filter(e => {
       const va = e.candidateName || vaMap[e.candidateId] || '';
       const client = e.companyName || clientMap[e.clientId] || '';
       const service = assignmentMap[e.assignmentId] ?? '';
       return `${va} ${client} ${service}`.toLowerCase().includes(query);
     });
-  }, [scopedEods, query, vaMap, clientMap, assignmentMap]);
+  }, [eodsInRange, query, vaMap, clientMap, assignmentMap]);
 
   function clearFilters() {
     setSearch('');
     range.reset();
   }
 
-  const hasFilter =
-    search !== '' || range.isChanged;
+  const hasFilter = search !== '' || range.isChanged;
 
   return {
-    isAccountManager,
     eods,
     isLoading,
     isError,

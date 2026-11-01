@@ -11,7 +11,6 @@ import {
   useAtsVAsQuery,
   useDashboardStatsQuery,
 } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
 
 import { DashboardStatCard } from './admin-dashboard/DashboardStatCard';
 import { ExportDataCard } from './admin-dashboard/ExportDataCard';
@@ -22,9 +21,7 @@ import {
 } from './admin-dashboard/VaActivityCard';
 
 export default function AdminDashboardPage() {
-  const user = useAppSelector(s => s.auth.user);
-  const isAccountManager = user?.role === 'account_manager';
-  const prefix = isAccountManager ? '/am' : '/admin';
+  const prefix = '/admin';
 
   const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery();
   const { isLoading: loadingVAs } = useAtsVAsQuery();
@@ -50,9 +47,7 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {isAccountManager
-              ? 'How your VAs are doing today'
-              : 'How every VA is doing today'}
+            How every VA is doing today
           </p>
         </div>
       </div>

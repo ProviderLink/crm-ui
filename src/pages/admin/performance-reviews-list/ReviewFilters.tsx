@@ -17,14 +17,12 @@ export function ReviewFilters({
   statusFilter,
   onStatusChange,
   recordCount,
-  isAccountManager,
 }: {
   search: string;
   onSearchChange: (v: string) => void;
   statusFilter: string;
   onStatusChange: (v: string) => void;
   recordCount: number;
-  isAccountManager: boolean;
 }) {
   const filtered = search !== '' || statusFilter !== 'all';
 
@@ -65,7 +63,6 @@ export function ReviewFilters({
 
       <span className="ml-auto text-xs text-muted-foreground">
         {recordCount} review{recordCount !== 1 ? 's' : ''}
-        {isAccountManager && ' · your assignments'}
       </span>
     </div>
   );

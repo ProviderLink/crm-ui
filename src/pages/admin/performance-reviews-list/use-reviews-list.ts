@@ -23,7 +23,6 @@ import type {
 export function useReviewsList() {
   const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
-  const rolePrefix = user?.role === 'admin' ? '/admin' : '/am';
   const isAccountManager = user?.role === 'account_manager';
 
   // AM scoping: only see reviews for their own assignments
@@ -108,9 +107,6 @@ export function useReviewsList() {
   }
 
   return {
-    user,
-    rolePrefix,
-    isAccountManager,
     isLoading,
     reviews,
     vaMap,

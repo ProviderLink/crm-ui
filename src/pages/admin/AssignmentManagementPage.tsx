@@ -14,7 +14,6 @@ import {
   useAtsVAsQuery,
   useProvisionedClientsQuery,
 } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
 import { useApiMutation } from '@/hooks/use-api-mutation';
 import { updateAssignment } from '@/services/assignments.service';
 import type { IAssignment } from '@/types/assignment';
@@ -28,19 +27,11 @@ import { EditAssignmentForm } from './assignments/EditAssignmentForm';
 
 export default function AssignmentManagementPage() {
   const queryClient = useQueryClient();
-  const user = useAppSelector(s => s.auth.user);
-  const isAccountManager = user?.role === 'account_manager';
-  // AMs can only view their own assignments; only admins can create/edit/delete
-  const canManageAssignments = user?.role === 'admin';
-  const { data: assignments = [], isLoading } = useAllAssignmentsQuery(
-    isAccountManager ? user?.id : undefined
-  );
+  const { data: assignments = [], isLoading } = useAllAssignmentsQuery();
   // Clients provisioned with CRM access — from the dedicated CRM endpoint
   const { data: crmClients = [] } = useProvisionedClientsQuery();
   const { data: atsVas = [] } = useAtsVAsQuery();
-  const { data: accountManagers = [] } = useActiveAccountManagersQuery(
-    user?.role !== 'account_manager'
-  );
+  const { data: accountManagers = [] } = useActiveAccountManagersQuery();
 
   const [openAssignmentId, setOpenAssignmentId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -105,7 +96,6 @@ export default function AssignmentManagementPage() {
       setSheetMode('edit');
     },
     onDeactivate: a => setDeactivateTarget(a),
-    canManage: canManageAssignments,
   });
 
   return (
@@ -114,7 +104,6 @@ export default function AssignmentManagementPage() {
         <>
           <AssignmentDrawer
             assignmentId={openAssignmentId}
-            canManage={canManageAssignments}
             onEdit={a => {
               setOpenAssignmentId(null);
               setEditTarget(a);
@@ -198,12 +187,10 @@ export default function AssignmentManagementPage() {
             Manage VA–client assignments
           </p>
         </div>
-        {canManageAssignments && (
-          <Button size="sm" onClick={() => setSheetMode('create')}>
-            <PlusIcon className="size-4" />
-            New Assignment
-          </Button>
-        )}
+        <Button size="sm" onClick={() => setSheetMode('create')}>
+          <PlusIcon className="size-4" />
+          New Assignment
+        </Button>
       </div>
 
       {/* Filters + table */}
@@ -213,7 +200,7 @@ export default function AssignmentManagementPage() {
           onSearchChange={setSearch}
           status={statusFilter}
           onStatusChange={setStatusFilter}
-          manager={isAccountManager ? null : managerFilter}
+          manager={managerFilter}
           onManagerChange={setManagerFilter}
           managers={accountManagers.map(u => ({
             id: u.id,

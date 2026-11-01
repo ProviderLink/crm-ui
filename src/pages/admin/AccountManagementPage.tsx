@@ -19,7 +19,6 @@ import {
   UnderlineTabsList,
 } from '@/components/shared/UnderlineTabs';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { useAppSelector } from '@/hooks/store';
 
 import {
   buildAdminColumns,
@@ -37,8 +36,6 @@ const rowText = (r: UserRow) =>
   `${r.name} ${r.email} ${r.companyName ?? ''} ${r.primaryContactName ?? ''}`.toLowerCase();
 
 export default function AccountManagementPage() {
-  const authUser = useAppSelector(s => s.auth.user);
-  const isAccountManager = authUser?.role === 'account_manager';
   const [detailUser, setDetailUser] = useState<UserRow | null>(null);
   const [tab, setTab] = useState<TabKey>('clients');
   const [search, setSearch] = useState('');
@@ -63,16 +60,8 @@ export default function AccountManagementPage() {
   const tabs: { key: TabKey; label: string; count: number }[] = [
     { key: 'clients', label: 'Clients', count: clientRows.length },
     { key: 'vas', label: 'Virtual Assistants', count: vaRows.length },
-    ...(isAccountManager
-      ? []
-      : [
-          {
-            key: 'ams' as const,
-            label: 'Account Managers',
-            count: amRows.length,
-          },
-          { key: 'admins' as const, label: 'Admins', count: adminRows.length },
-        ]),
+    { key: 'ams', label: 'Account Managers', count: amRows.length },
+    { key: 'admins', label: 'Admins', count: adminRows.length },
   ];
 
   return (
@@ -90,9 +79,7 @@ export default function AccountManagementPage() {
       <PageSection>
         <h1 className="text-2xl font-semibold text-foreground">Accounts</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          {isAccountManager
-            ? 'View your assigned clients and virtual assistants'
-            : 'View who has CRM access. Manage roles and access from the ATS.'}
+          View who has CRM access. Manage roles and access from the ATS.
         </p>
       </PageSection>
 
@@ -160,24 +147,20 @@ export default function AccountManagementPage() {
               onRowClick={setDetailUser}
             />
           </TabsContent>
-          {!isAccountManager && (
-            <>
-              <TabsContent value="ams" className="mt-0">
-                <DataTable
-                  columns={buildAmColumns()}
-                  data={ams}
-                  isLoading={isLoading}
-                />
-              </TabsContent>
-              <TabsContent value="admins" className="mt-0">
-                <DataTable
-                  columns={buildAdminColumns()}
-                  data={admins}
-                  isLoading={isLoading}
-                />
-              </TabsContent>
-            </>
-          )}
+          <TabsContent value="ams" className="mt-0">
+            <DataTable
+              columns={buildAmColumns()}
+              data={ams}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+          <TabsContent value="admins" className="mt-0">
+            <DataTable
+              columns={buildAdminColumns()}
+              data={admins}
+              isLoading={isLoading}
+            />
+          </TabsContent>
         </Tabs>
       </PageSection>
     </Page>

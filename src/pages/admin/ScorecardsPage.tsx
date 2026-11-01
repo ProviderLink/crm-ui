@@ -14,8 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useGenerateScorecards } from '@/hooks/mutations';
-import { useAllAssignmentsQuery, useScorecardsQuery } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
+import { useScorecardsQuery } from '@/hooks/queries';
 import { useVaNames } from '@/hooks/use-name-maps';
 import type { IScorecard } from '@/types/scorecard';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -33,18 +32,6 @@ const scoreColor = (score: number) => {
 };
 
 export default function ScorecardsPage() {
-  const user = useAppSelector(s => s.auth.user);
-  const isAccountManager = user?.role === 'account_manager';
-
-  // AM scoping: only see scorecards for their own assignments' VAs
-  const { data: amAssignments = [] } = useAllAssignmentsQuery(
-    isAccountManager ? user?.id : undefined
-  );
-  const amCandidateIds = useMemo(
-    () => new Set(amAssignments.map(a => a.candidateId).filter(Boolean)),
-    [amAssignments]
-  );
-
   const [search, setSearch] = useState('');
   // null = follow the latest week; 'all' = every week.
   const [weekChoice, setWeekChoice] = useState<string | null>(null);
@@ -54,12 +41,6 @@ export default function ScorecardsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { data: allScorecards = [], isLoading } = useScorecardsQuery();
 
-  // For AM, client-side filter by their assignments' candidateIds
-  const scopedScorecards = useMemo(() => {
-    if (!isAccountManager) return allScorecards;
-    return allScorecards.filter(s => amCandidateIds.has(s.vaId));
-  }, [allScorecards, isAccountManager, amCandidateIds]);
-
   const vaMap = useVaNames();
 
   const nameOf = (s: IScorecard) => s.vaName || vaMap[s.vaId] || 'Unknown VA';
@@ -67,16 +48,16 @@ export default function ScorecardsPage() {
   // Distinct weeks, newest first, keyed by their start date.
   const weeks = useMemo(() => {
     const map = new Map<string, IScorecard>();
-    for (const s of scopedScorecards) {
+    for (const s of allScorecards) {
       const key = s.weekStart?.slice(0, 10);
       if (key && !map.has(key)) map.set(key, s);
     }
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  }, [scopedScorecards]);
+  }, [allScorecards]);
   const week = weekChoice ?? weeks[0]?.[0] ?? 'all';
 
   const query = search.trim().toLowerCase();
-  const scorecards = scopedScorecards.filter(s => {
+  const scorecards = allScorecards.filter(s => {
     if (week !== 'all' && s.weekStart?.slice(0, 10) !== week) return false;
     if (!query) return true;
     return `${nameOf(s)} ${s.companyName ?? ''}`.toLowerCase().includes(query);
@@ -181,11 +162,7 @@ export default function ScorecardsPage() {
       <PageSection>
         <PageHeader
           title="Productivity Scorecards"
-          description={
-            isAccountManager
-              ? 'Weekly scores for your assigned VAs'
-              : 'Weekly performance scores'
-          }
+          description="Weekly performance scores"
           actions={
             <Button
               size="sm"
@@ -241,11 +218,7 @@ export default function ScorecardsPage() {
         <ConfirmDialog
           open={confirmOpen}
           title="Generate Scorecards"
-          description={
-            isAccountManager
-              ? 'Generate scorecards for your assigned VAs for the current week. This may take a moment.'
-              : 'Generate scorecards for ALL VAs for the current week. This may take a moment.'
-          }
+          description="Generate scorecards for ALL VAs for the current week. This may take a moment."
           onConfirm={handleGenerate}
           onCancel={() => setConfirmOpen(false)}
         />

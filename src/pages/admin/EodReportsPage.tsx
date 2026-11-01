@@ -35,11 +35,7 @@ export default function EodReportsPage() {
       <PageSection>
         <PageHeader
           title="EOD Reports"
-          description={
-            r.isAccountManager
-              ? 'EOD submissions for your assigned VAs'
-              : 'All VA EOD submissions across clients'
-          }
+          description="All VA EOD submissions across clients"
         />
 
         <EodFilters

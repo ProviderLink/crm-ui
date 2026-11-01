@@ -19,14 +19,12 @@ export function buildColumns({
   amMap,
   onEdit,
   onDeactivate,
-  canManage,
 }: {
   clientMap: Record<string, string>;
   vaMap: Record<string, string>;
   amMap: Record<string, string>;
   onEdit: (a: IAssignment) => void;
   onDeactivate: (a: IAssignment) => void;
-  canManage: boolean;
 }): ColumnDef<IAssignment>[] {
   const columns: ColumnDef<IAssignment>[] = [
     {
@@ -116,50 +114,48 @@ export function buildColumns({
     },
   ];
 
-  // Opening an assignment is the row click; admins also get a quiet menu.
-  if (canManage) {
-    columns.push({
-      id: 'actions',
-      header: () => <span className="sr-only">Actions</span>,
-      enableSorting: false,
-      meta: { shrink: true },
-      cell: ({ row }) => (
-        // Keep a click in the menu from also opening the row.
-        <div className="flex justify-end" onClick={e => e.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="size-8 text-muted-foreground"
-                aria-label="Assignment actions"
-              >
-                <MoreHorizontalIcon className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => onEdit(row.original)}>
-                <PenLineIcon className="size-4" />
-                Edit
-              </DropdownMenuItem>
-              {row.original.status !== 'ended' && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onSelect={() => onDeactivate(row.original)}
-                  >
-                    <XIcon className="size-4" />
-                    End assignment
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-    });
-  }
+  // Opening an assignment is the row click; the menu holds the rest.
+  columns.push({
+    id: 'actions',
+    header: () => <span className="sr-only">Actions</span>,
+    enableSorting: false,
+    meta: { shrink: true },
+    cell: ({ row }) => (
+      // Keep a click in the menu from also opening the row.
+      <div className="flex justify-end" onClick={e => e.stopPropagation()}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-8 text-muted-foreground"
+              aria-label="Assignment actions"
+            >
+              <MoreHorizontalIcon className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => onEdit(row.original)}>
+              <PenLineIcon className="size-4" />
+              Edit
+            </DropdownMenuItem>
+            {row.original.status !== 'ended' && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => onDeactivate(row.original)}
+                >
+                  <XIcon className="size-4" />
+                  End assignment
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    ),
+  });
 
   return columns;
 }

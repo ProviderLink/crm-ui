@@ -30,7 +30,6 @@ import {
   useEodContextQuery,
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
-import { useAppSelector } from '@/hooks/store';
 import { initialsOf, plural } from '@/lib/format';
 import { daysUntil, formatDateKeyLong, todayString } from '@/lib/time';
 import { isOpen } from '@/lib/survey';
@@ -52,25 +51,8 @@ interface RelatedInfo {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SurveyRemindersPage() {
-  const user = useAppSelector(s => s.auth.user);
-  const isAccountManager = user?.role === 'account_manager';
-
-  // AM scoping: only see reminders for their own assignments' clients/VAs/assignments
-  const { data: amAssignments = [] } = useAllAssignmentsQuery(
-    isAccountManager ? user?.id : undefined
-  );
-  const amScopedIds = useMemo(() => {
-    if (!isAccountManager) return null;
-    const ids = new Set<string>();
-    for (const a of amAssignments) {
-      ids.add(a._id); // assignment IDs
-      if (a.candidateId) ids.add(a.candidateId); // VA IDs
-      if (a.clientId) ids.add(a.clientId); // client IDs
-    }
-    return ids;
-  }, [isAccountManager, amAssignments]);
-
-  const { data: allReminders = [], isLoading } = useSurveyRemindersQuery();
+  const { data: assignments = [] } = useAllAssignmentsQuery();
+  const { data: scoped = [], isLoading } = useSurveyRemindersQuery();
   // Due dates are company business days, so judge "overdue" against the
   // company's current day, not the device clock.
   const { data: eodContext } = useEodContextQuery();
@@ -95,7 +77,7 @@ export default function SurveyRemindersPage() {
         isCompany: true,
       });
     // An assignment is shown by its VA, with the client underneath.
-    for (const a of amAssignments) {
+    for (const a of assignments) {
       const va = info.get(a.candidateId);
       const client = info.get(a.clientId);
       if (va || client) {
@@ -107,7 +89,7 @@ export default function SurveyRemindersPage() {
       }
     }
     return info;
-  }, [atsVAs, atsClients, amAssignments]);
+  }, [atsVAs, atsClients, assignments]);
   const [statusFilter, setStatusFilter] = useState<
     SurveyStatus | 'overdue' | 'all'
   >('all');
@@ -117,15 +99,6 @@ export default function SurveyRemindersPage() {
     'Failed to update status. Please try again.'
   );
   const updateError = update.error;
-
-  // For AM, client-side filter by related IDs
-  const scoped = useMemo(
-    () =>
-      isAccountManager && amScopedIds
-        ? allReminders.filter(r => amScopedIds.has(r.relatedId))
-        : allReminders,
-    [allReminders, isAccountManager, amScopedIds]
-  );
 
   const isOverdue = (r: ISurveyReminder) =>
     isOpen(r) && (r.dueDate?.slice(0, 10) ?? '') < today;

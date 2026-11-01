@@ -24,16 +24,12 @@ export function AssignmentFilters({
   onSearchChange: (v: string) => void;
   status: string;
   onStatusChange: (v: string) => void;
-  /** Hidden for account managers, who only ever see their own assignments. */
-  manager: string | null;
+  manager: string;
   onManagerChange: (v: string) => void;
   managers: { id: string; name: string }[];
   recordCount: number;
 }) {
-  const filtered =
-    search !== '' ||
-    status !== 'all' ||
-    (manager !== null && manager !== 'all');
+  const filtered = search !== '' || status !== 'all' || manager !== 'all';
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -59,31 +55,29 @@ export function AssignmentFilters({
         </SelectContent>
       </Select>
 
-      {manager !== null && (
-        <Select value={manager} onValueChange={onManagerChange}>
-          <SelectTrigger
-            className="h-8 w-48 text-sm"
-            aria-label="Filter by account manager"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All account managers</SelectItem>
-            {managers.map(m => (
-              <SelectItem key={m.id} value={m.id}>
-                {m.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+      <Select value={manager} onValueChange={onManagerChange}>
+        <SelectTrigger
+          className="h-8 w-48 text-sm"
+          aria-label="Filter by account manager"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All account managers</SelectItem>
+          {managers.map(m => (
+            <SelectItem key={m.id} value={m.id}>
+              {m.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {filtered && (
         <ClearFiltersButton
           onClick={() => {
             onSearchChange('');
             onStatusChange('all');
-            if (manager !== null) onManagerChange('all');
+            onManagerChange('all');
           }}
         />
       )}

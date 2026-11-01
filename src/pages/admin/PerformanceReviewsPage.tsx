@@ -15,7 +15,6 @@ import { useReviewsList } from './performance-reviews-list/use-reviews-list';
 export default function PerformanceReviewsPage() {
   const p = useReviewsList();
   const [openReviewId, setOpenReviewId] = useState<string | null>(null);
-  const { isAccountManager } = p;
 
   const columns = buildReviewColumns({
     vaMap: p.vaMap,
@@ -58,11 +57,7 @@ export default function PerformanceReviewsPage() {
         {/* Header */}
         <PageHeader
           title="Performance Reviews"
-          description={
-            isAccountManager
-              ? 'AI-generated performance reviews for your assigned VAs'
-              : 'AI-generated performance reviews for VAs'
-          }
+          description="AI-generated performance reviews for VAs"
           actions={
             <Button size="sm" onClick={() => p.setGenerateOpen(true)}>
               <PlusIcon className="size-4" />
@@ -77,7 +72,6 @@ export default function PerformanceReviewsPage() {
           statusFilter={p.statusFilter}
           onStatusChange={p.setStatusFilter}
           recordCount={p.reviews.length}
-          isAccountManager={isAccountManager}
         />
 
         <DataTable

@@ -47,12 +47,10 @@ import { Party, Row } from './drawer-parts';
  */
 export function AssignmentDrawer({
   assignmentId,
-  canManage,
   onEdit,
   onClose,
 }: {
   assignmentId: string | null;
-  canManage: boolean;
   onEdit: (a: IAssignment) => void;
   onClose: () => void;
 }) {
@@ -68,7 +66,6 @@ export function AssignmentDrawer({
         <AssignmentDetail
           key={assignmentId}
           id={assignmentId}
-          canManage={canManage}
           onEdit={onEdit}
         />
       )}
@@ -79,11 +76,9 @@ export function AssignmentDrawer({
 function AssignmentDetail({
   id,
   onEdit,
-  canManage,
 }: {
   id: string;
-  onEdit?: (a: IAssignment) => void;
-  canManage: boolean;
+  onEdit: (a: IAssignment) => void;
 }) {
   const { data: assignmentData, isLoading: loadingAssignment } =
     useAssignmentQuery(id);
@@ -208,17 +203,15 @@ function AssignmentDetail({
               : ' · Ongoing'}
           </p>
         </div>
-        {canManage && onEdit && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 shrink-0"
-            onClick={() => onEdit(assignment)}
-          >
-            <PenLineIcon className="size-3.5" />
-            <span className="hidden sm:inline">Edit</span>
-          </Button>
-        )}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 shrink-0"
+          onClick={() => onEdit(assignment)}
+        >
+          <PenLineIcon className="size-3.5" />
+          <span className="hidden sm:inline">Edit</span>
+        </Button>
       </DrawerHeader>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
