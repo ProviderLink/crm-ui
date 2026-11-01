@@ -1,6 +1,6 @@
 import { useAppDispatch, useAppSelector } from '@/hooks/store';
 import { hydrate } from '@/services/auth.service';
-import { clearAuth, setUser } from '@/store/slices/authSlice';
+import { clearAuth, setAuth } from '@/store/slices/authSlice';
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 
@@ -24,7 +24,7 @@ export function AuthInitializer({ children }: Props) {
 
     hydrate()
       .then(({ user, accessToken }) => {
-        dispatch(setUser({ user, accessToken }));
+        dispatch(setAuth({ user, accessToken }));
       })
       .catch(() => {
         dispatch(clearAuth());

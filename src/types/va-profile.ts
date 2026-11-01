@@ -21,3 +21,14 @@ export interface UpdateVaProfilePayload {
   lastVaCheckin?: string
   notes?: string
 }
+
+export interface IVaAssignment {
+  _id: string;
+  clientId: string;
+  companyName: string;
+  status: 'active' | 'on_hold' | 'ended';
+  serviceType: string;
+  startDate: string;
+  endDate: string | null;
+  notes: string | null;
+}

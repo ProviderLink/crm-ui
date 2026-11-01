@@ -12,12 +12,14 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import {
+  QK,
   useActiveAccountManagersQuery,
   useAllAssignmentsQuery,
   useAtsVAsQuery,
   useProvisionedClientsQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import { useApiMutation } from '@/hooks/use-api-mutation';
 import { updateAssignment } from '@/services/assignments.service';
 import type { IAssignment } from '@/types/assignment';
 import { useQueryClient } from '@tanstack/react-query';
@@ -53,19 +55,17 @@ export default function AssignmentManagementPage() {
   const [deactivateTarget, setDeactivateTarget] = useState<IAssignment | null>(
     null
   );
-  const [deactivateError, setDeactivateError] = useState<string | null>(null);
+  const deactivate = useApiMutation({
+    mutationFn: (id: string) => updateAssignment(id, { status: 'ended' }),
+    invalidate: [QK.assignmentLists],
+    errorMessage: 'Failed to deactivate assignment. Please try again.',
+  });
+  const deactivateError = deactivate.error;
 
   async function confirmDeactivate() {
     if (!deactivateTarget) return;
-    setDeactivateError(null);
-    try {
-      await updateAssignment(deactivateTarget._id, { status: 'ended' });
-      queryClient.invalidateQueries({ queryKey: ['assignments', 'all'] });
-    } catch {
-      setDeactivateError('Failed to deactivate assignment. Please try again.');
-    } finally {
-      setDeactivateTarget(null);
-    }
+    await deactivate.run(deactivateTarget._id);
+    setDeactivateTarget(null);
   }
 
   function handleSheetClose(open: boolean) {
@@ -209,7 +209,7 @@ export default function AssignmentManagementPage() {
                   onSuccess={() => {
                     setSheetMode(null);
                     queryClient.invalidateQueries({
-                      queryKey: ['assignments', 'all'],
+                      queryKey: QK.assignmentLists,
                     });
                   }}
                   onClose={() => setSheetMode(null)}
@@ -224,7 +224,7 @@ export default function AssignmentManagementPage() {
                   onSuccess={() => {
                     setSheetMode(null);
                     queryClient.invalidateQueries({
-                      queryKey: ['assignments', 'all'],
+                      queryKey: QK.assignmentLists,
                     });
                   }}
                   onClose={() => setSheetMode(null)}

@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useGenerateScorecards } from '@/hooks/mutations';
 import {
   useAllAssignmentsQuery,
   useAtsVAsQuery,
@@ -16,9 +17,7 @@ import {
   useScorecardsQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { generateScorecards } from '@/services/scorecards.service';
 import type { IScorecard } from '@/types/scorecard';
-import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { RefreshCwIcon, SearchIcon, StarIcon, XIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -41,7 +40,6 @@ function shortDate(iso?: string) {
 }
 
 export default function ScorecardsPage() {
-  const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
   const isAccountManager = user?.role === 'account_manager';
 
@@ -57,8 +55,9 @@ export default function ScorecardsPage() {
   const [search, setSearch] = useState('');
   // null = follow the latest week; 'all' = every week.
   const [weekChoice, setWeekChoice] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState<string | null>(null);
+  const generate = useGenerateScorecards();
+  const generating = generate.isPending;
+  const generateError = generate.error;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { data: allScorecards = [], isLoading } = useScorecardsQuery();
   const { data: crmVAs = [] } = useCrmVaUsersQuery();
@@ -104,17 +103,8 @@ export default function ScorecardsPage() {
   });
 
   async function handleGenerate() {
-    setGenerateError(null);
     setConfirmOpen(false);
-    setGenerating(true);
-    try {
-      await generateScorecards();
-      queryClient.invalidateQueries({ queryKey: ['scorecards'] });
-    } catch {
-      setGenerateError('Failed to generate scorecards. Please try again.');
-    } finally {
-      setGenerating(false);
-    }
+    await generate.run();
   }
 
   const columns: ColumnDef<IScorecard>[] = [

@@ -1,7 +1,11 @@
 import api from '@/lib/api';
 import { withId, type ApiDoc } from '@/lib/with-id';
 import type { IAssignment } from '@/types/assignment';
-import type { IVaProfile, UpdateVaProfilePayload } from '@/types/va-profile';
+import type {
+  IVaAssignment,
+  IVaProfile,
+  UpdateVaProfilePayload,
+} from '@/types/va-profile';
 
 export async function getVaProfiles(): Promise<IVaProfile[]> {
   // Backend defaults to limit=20 when omitted, which silently truncates the list;
@@ -29,17 +33,6 @@ export async function updateVaProfile(
     payload
   );
   return data.data;
-}
-
-export interface IVaAssignment {
-  _id: string;
-  clientId: string;
-  companyName: string;
-  status: 'active' | 'on_hold' | 'ended';
-  serviceType: string;
-  startDate: string;
-  endDate: string | null;
-  notes: string | null;
 }
 
 export async function getVaAssignments(

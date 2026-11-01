@@ -7,11 +7,16 @@ import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  QK,
+  useClientAccountQuery,
+  useClientAssignmentsQuery,
+  useHiredVasForClientQuery,
+} from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import api from '@/lib/api';
+import { useApiMutation } from '@/hooks/use-api-mutation';
 import type { UpdateClientAccountPayload } from '@/types/client-account';
-import { getHiredVasForClient, updateClientAccount } from '@/services/client-accounts.service';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { updateClientAccount } from '@/services/client-accounts.service';
 import { toISO, toYMD, fmtDate } from './date-utils';
 import { Field } from './field';
 
@@ -19,45 +24,27 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
   const user = useAppSelector(s => s.auth.user);
   // Editing a client is admin-only; account managers can read it and add notes.
   const canEdit = user?.role === 'admin';
-  const queryClient = useQueryClient();
 
-  const { data: account, isLoading } = useQuery({
-    queryKey: ['client-account', clientId],
-    queryFn: async () => {
-      const { data } = await api.get<{
-        data: import('@/types/client-account').IClientAccount;
-      }>(`/crm/client-accounts/${clientId}`);
-      return data.data;
-    },
-    enabled: !!clientId,
-  });
-
-  const { data: hiredVas = [] } = useQuery({
-    queryKey: ['client-hired-vas', clientId],
-    queryFn: () => getHiredVasForClient(clientId),
-    enabled: !!clientId,
-  });
-
-  const { data: assignmentsData } = useQuery({
-    queryKey: ['client-assignments', clientId],
-    queryFn: async () => {
-      const { data } = await api.get<{
-        data: { status: string }[];
-        meta: { total: number };
-      }>(`/crm/assignments?clientId=${clientId}&limit=200`);
-      return data.data;
-    },
-    enabled: !!clientId,
-  });
+  const { data: account, isLoading } = useClientAccountQuery(clientId);
+  const { data: hiredVas = [] } = useHiredVasForClientQuery(clientId);
+  const { data: assignmentsData } = useClientAssignmentsQuery(clientId);
 
   const totalAssignments = assignmentsData?.length ?? 0;
   const activeAssignments =
     assignmentsData?.filter(a => a.status === 'active').length ?? 0;
 
   const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Record<string, unknown>>({});
-  const [error, setError] = useState('');
+  const save = useApiMutation({
+    mutationFn: (payload: UpdateClientAccountPayload) =>
+      updateClientAccount(clientId, payload),
+    // The Accounts table enriches its rows from the list too.
+    invalidate: [QK.clientAccount(clientId), QK.clientAccountsList],
+    awaitInvalidate: true,
+    errorMessage: 'Failed to save. Please try again.',
+  });
+  const saving = save.isPending;
+  const error = save.error ?? '';
   const [success, setSuccess] = useState(false);
 
   if (isLoading) {
@@ -104,27 +91,14 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
   }
 
   async function handleSave() {
-    setSaving(true);
-    setError('');
     setSuccess(false);
-    try {
-      await updateClientAccount(clientId, form as UpdateClientAccountPayload);
-      await queryClient.invalidateQueries({
-        queryKey: ['client-account', clientId],
-      });
-      // The Accounts table enriches rows from this list.
-      queryClient.invalidateQueries({ queryKey: ['client-accounts-list'] });
-      setSuccess(true);
-      setTimeout(() => {
-        setEditing(false);
-        setForm({});
-        setSuccess(false);
-      }, 1200);
-    } catch {
-      setError('Failed to save. Please try again.');
-    } finally {
-      setSaving(false);
-    }
+    if (!(await save.run(form as UpdateClientAccountPayload))) return;
+    setSuccess(true);
+    setTimeout(() => {
+      setEditing(false);
+      setForm({});
+      setSuccess(false);
+    }, 1200);
   }
 
   function startEdit() {
@@ -322,7 +296,7 @@ export function ClientProfileSection({ clientId }: { clientId: string }) {
                 className="rounded-xl"
                 onClick={() => {
                   setEditing(false);
-                  setError('');
+                  save.reset();
                   setSuccess(false);
                 }}
               >

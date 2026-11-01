@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
 import type {
   CreateAssignmentPayload,
   IAssignment,
@@ -21,15 +22,14 @@ export async function getMyAllAssignments(): Promise<IAssignment[]> {
 
 // Admin/AM — all assignments with optional filters
 export async function getAllAssignments(
-  query: { status?: string; accountManagerId?: string } = {}
+  query: {
+    status?: string;
+    accountManagerId?: string;
+    clientId?: string;
+  } = {}
 ): Promise<IAssignment[]> {
-  const params = new URLSearchParams();
-  if (query.status) params.set('status', query.status);
-  if (query.accountManagerId)
-    params.set('accountManagerId', query.accountManagerId);
-  params.set('limit', '1000');
   const { data } = await api.get<{ data: IAssignment[] }>(
-    `/crm/assignments?${params.toString()}`
+    `/crm/assignments?${toQueryString({ ...query, limit: LIST_LIMIT })}`
   );
   return data.data;
 }

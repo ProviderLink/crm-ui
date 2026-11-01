@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { downloadBlob } from '@/lib/download';
 
 export type ReportType = 'work_entries' | 'eod' | 'performance';
 export type ExportFormat = 'csv' | 'xlsx';
@@ -27,12 +28,5 @@ export async function exportReport(
 
   const ext = format === 'xlsx' ? 'xlsx' : 'csv';
   const fileName = `${type}_${dateFrom}_${dateTo}.${ext}`;
-  const url = URL.createObjectURL(response.data as Blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 100);
+  downloadBlob(response.data as Blob, fileName);
 }

@@ -1,14 +1,14 @@
 import api from '@/lib/api';
+import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
 import type {
   ISurveyReminder,
   UpdateSurveyReminderPayload,
 } from '@/types/survey-reminder';
 
 export async function getSurveyReminders(): Promise<ISurveyReminder[]> {
-  // Backend defaults to limit=20 when omitted, which silently truncates the list;
-  // fetch a large page so every row is returned.
+  // A large page: without a limit the backend silently returns 20 rows.
   const { data } = await api.get<{ data: ISurveyReminder[] }>(
-    '/crm/survey-reminders?limit=1000'
+    `/crm/survey-reminders?${toQueryString({ limit: LIST_LIMIT })}`
   );
   return data.data;
 }

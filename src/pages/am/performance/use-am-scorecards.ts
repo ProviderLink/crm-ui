@@ -1,9 +1,8 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
+import { useGenerateScorecards } from '@/hooks/mutations';
 import { useAllAssignmentsQuery, useScorecardsQuery } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { generateScorecards } from '@/services/scorecards.service';
 import type { IScorecard } from '@/types/scorecard';
 
 /**
@@ -11,7 +10,6 @@ import type { IScorecard } from '@/types/scorecard';
  * manager's own VAs; names fall back to the manager's assignments.
  */
 export function useAmScorecards() {
-  const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
   const { data: scorecards = [], isLoading } = useScorecardsQuery();
   const { data: assignments = [] } = useAllAssignmentsQuery(user?.id);
@@ -27,8 +25,7 @@ export function useAmScorecards() {
   const [search, setSearch] = useState('');
   // null = follow the latest week; 'all' = every week.
   const [weekChoice, setWeekChoice] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState<string | null>(null);
+  const generate = useGenerateScorecards();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Distinct weeks, newest first, keyed by their start date.
@@ -59,17 +56,8 @@ export function useAmScorecards() {
   );
 
   async function handleGenerate() {
-    setGenerateError(null);
     setConfirmOpen(false);
-    setGenerating(true);
-    try {
-      await generateScorecards();
-      queryClient.invalidateQueries({ queryKey: ['scorecards'] });
-    } catch {
-      setGenerateError('Failed to generate scorecards. Please try again.');
-    } finally {
-      setGenerating(false);
-    }
+    await generate.run();
   }
 
   return {
@@ -84,8 +72,8 @@ export function useAmScorecards() {
     avgScore: average(s => s.productivityScore),
     avgEod: average(s => s.eodComplianceRate),
     lowest,
-    generating,
-    generateError,
+    generating: generate.isPending,
+    generateError: generate.error,
     confirmOpen,
     setConfirmOpen,
     handleGenerate,

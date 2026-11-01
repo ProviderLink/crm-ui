@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Building2Icon,
@@ -24,8 +23,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useUpdateSurveyReminder } from '@/hooks/mutations';
 import {
-  QK,
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
@@ -34,7 +33,6 @@ import {
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import { todayString } from '@/lib/time';
-import { updateSurveyReminder } from '@/services/survey-reminders.service';
 import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder';
 import { SURVEY_STATUS_STYLES } from '@/lib/status-styles';
 
@@ -87,7 +85,6 @@ const initialsOf = (name: string) =>
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SurveyRemindersPage() {
-  const queryClient = useQueryClient();
   const user = useAppSelector(s => s.auth.user);
   const isAccountManager = user?.role === 'account_manager';
 
@@ -149,7 +146,10 @@ export default function SurveyRemindersPage() {
   >('all');
   const [search, setSearch] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [updateError, setUpdateError] = useState<string | null>(null);
+  const update = useUpdateSurveyReminder(
+    'Failed to update status. Please try again.'
+  );
+  const updateError = update.error;
 
   // For AM, client-side filter by related IDs
   const scoped = useMemo(
@@ -189,20 +189,8 @@ export default function SurveyRemindersPage() {
 
   async function handleUpdateStatus(id: string, status: SurveyStatus) {
     setUpdatingId(id);
-    setUpdateError(null);
-    try {
-      await updateSurveyReminder(id, {
-        status,
-        ...(status === 'completed'
-          ? { completedDate: new Date().toISOString() }
-          : {}),
-      });
-      queryClient.invalidateQueries({ queryKey: QK.surveyReminders });
-    } catch {
-      setUpdateError('Failed to update status. Please try again.');
-    } finally {
-      setUpdatingId(null);
-    }
+    await update.run({ id, status });
+    setUpdatingId(null);
   }
 
   const columns = useMemo<ColumnDef<ISurveyReminder>[]>(

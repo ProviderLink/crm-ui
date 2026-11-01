@@ -1,10 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
-import { useEodContextQuery, useEodSubmissionsQuery } from '@/hooks/queries';
+import {
+  QK,
+  useEodContextQuery,
+  useEodSubmissionsQuery,
+} from '@/hooks/queries';
+import { useApiMutation } from '@/hooks/use-api-mutation';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { getApiError } from '@/lib/api-error';
 import { calcHours, todayString } from '@/lib/time';
@@ -30,12 +34,15 @@ export function useEodSubmitForm() {
     isLoading: loadingAssignments,
     isError: assignmentsError,
   } = useMyAssignments();
-  const queryClient = useQueryClient();
   const { data: eods = [], isLoading: checkingEod } = useEodSubmissionsQuery({
     date: today,
   });
   const submittedKeys = new Set(eods.map(e => `${e.assignmentId}::${e.date}`));
-  const [error, setError] = useState<string | null>(null);
+  const submit = useApiMutation({
+    mutationFn: createEodSubmission,
+    invalidate: [QK.eodSubmissionsAll, QK.eodContext],
+    errorMessage: err => getApiError(err, 'Failed to submit EOD. Please try again.'),
+  });
 
   const {
     register,
@@ -76,18 +83,10 @@ export function useEodSubmitForm() {
   }, [assignments, setValue]);
 
   async function onSubmit(data: FormData) {
-    setError(null);
-    try {
-      // `date` is omitted so the server uses the company's current day, and
-      // `hoursWorked` is derived server-side so overnight shifts are not
-      // under-counted.
-      await createEodSubmission(data);
-      queryClient.invalidateQueries({ queryKey: ['eod-submissions'] });
-      queryClient.invalidateQueries({ queryKey: ['eod-context'] });
-      navigate('/va/eod/history');
-    } catch (err) {
-      setError(getApiError(err, 'Failed to submit EOD. Please try again.'));
-    }
+    // `date` is omitted so the server uses the company's current day, and
+    // `hoursWorked` is derived server-side so overnight shifts are not
+    // under-counted.
+    if (await submit.run(data)) navigate('/va/eod/history');
   }
 
   return {
@@ -96,7 +95,7 @@ export function useEodSubmitForm() {
     assignments,
     loading: loadingAssignments || checkingEod || loadingContext,
     assignmentsError,
-    error,
+    error: submit.error,
     register,
     control,
     setValue,

@@ -5,11 +5,15 @@ import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  QK,
+  useVaAssignmentsQuery,
+  useVaProfileQuery,
+} from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import api from '@/lib/api';
+import { useApiMutation } from '@/hooks/use-api-mutation';
 import type { UpdateVaProfilePayload } from '@/types/va-profile';
-import { getVaAssignments, updateVaProfile } from '@/services/va-profiles.service';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { updateVaProfile } from '@/services/va-profiles.service';
 import { toISO, toYMD, fmtDate, durationLabel } from './date-utils';
 import { Field } from './field';
 
@@ -17,29 +21,24 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
   const authUser = useAppSelector(s => s.auth.user);
   const canEdit =
     authUser?.role === 'admin' || authUser?.role === 'account_manager';
-  const queryClient = useQueryClient();
 
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['va-profile', vaId],
-    queryFn: async () => {
-      const { data } = await api.get<{
-        data: import('@/types/va-profile').IVaProfile;
-      }>(`/crm/va-profiles/${vaId}`);
-      return data.data;
-    },
-    enabled: !!vaId,
-  });
-
-  const { data: assignments = [], isLoading: assignmentsLoading } = useQuery({
-    queryKey: ['va-assignments', vaId],
-    queryFn: () => getVaAssignments(vaId!),
-    enabled: !!vaId,
-  });
+  const { data: profile, isLoading: profileLoading } =
+    useVaProfileQuery(vaId);
+  const { data: assignments = [], isLoading: assignmentsLoading } =
+    useVaAssignmentsQuery(vaId);
 
   const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Record<string, unknown>>({});
-  const [error, setError] = useState('');
+  const save = useApiMutation({
+    mutationFn: (payload: UpdateVaProfilePayload) =>
+      updateVaProfile(vaId!, payload),
+    // The Accounts table enriches its rows from the list too.
+    invalidate: [QK.vaProfile(vaId), QK.vaProfilesList],
+    awaitInvalidate: true,
+    errorMessage: 'Failed to save. Please try again.',
+  });
+  const saving = save.isPending;
+  const error = save.error ?? '';
   const [success, setSuccess] = useState(false);
 
   if (!vaId) {
@@ -72,25 +71,14 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
   }
 
   async function handleSave() {
-    setSaving(true);
-    setError('');
     setSuccess(false);
-    try {
-      await updateVaProfile(vaId!, form as UpdateVaProfilePayload);
-      await queryClient.invalidateQueries({ queryKey: ['va-profile', vaId] });
-      // The Accounts table enriches rows from this list.
-      queryClient.invalidateQueries({ queryKey: ['va-profiles-list'] });
-      setSuccess(true);
-      setTimeout(() => {
-        setEditing(false);
-        setForm({});
-        setSuccess(false);
-      }, 1200);
-    } catch {
-      setError('Failed to save. Please try again.');
-    } finally {
-      setSaving(false);
-    }
+    if (!(await save.run(form as UpdateVaProfilePayload))) return;
+    setSuccess(true);
+    setTimeout(() => {
+      setEditing(false);
+      setForm({});
+      setSuccess(false);
+    }, 1200);
   }
 
   const activeCount = assignments.filter(a => a.status === 'active').length;
@@ -285,7 +273,7 @@ export function VaProfileSection({ vaId }: { vaId: string | null | undefined }) 
                 className="rounded-xl"
                 onClick={() => {
                   setEditing(false);
-                  setError('');
+                  save.reset();
                   setSuccess(false);
                 }}
               >

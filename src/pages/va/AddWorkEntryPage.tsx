@@ -10,12 +10,13 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { TimePickerField } from '@/components/ui/time-picker-field';
+import { QK } from '@/hooks/queries';
+import { useApiMutation } from '@/hooks/use-api-mutation';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { nowTimeString, todayString } from '@/lib/time';
 import { createWorkEntry } from '@/services/work-entries.service';
 import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   Briefcase,
   CalendarDays,
@@ -24,10 +25,9 @@ import {
   StickyNote,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { Field, Section } from '../admin/assignments/form-layout';
@@ -70,13 +70,19 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string }> = {
 
 export default function AddWorkEntryPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const {
     assignments,
     isLoading: loadingAssignments,
     isError: assignmentsError,
   } = useMyAssignments();
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const save = useApiMutation({
+    mutationFn: createWorkEntry,
+    invalidate: [QK.workEntriesAll],
+    successMessage: 'Work entry saved.',
+    errorMessage: 'Failed to save work entry. Please try again.',
+    toastError: true,
+  });
+  const submitError = save.error;
 
   const {
     register,
@@ -102,16 +108,7 @@ export default function AddWorkEntryPage() {
   }, [assignments, setValue]);
 
   async function onSubmit(data: FormData) {
-    setSubmitError(null);
-    try {
-      await createWorkEntry(data);
-      queryClient.invalidateQueries({ queryKey: ['work-entries'] });
-      toast.success('Work entry saved.');
-      navigate('/va/work/history');
-    } catch {
-      setSubmitError('Failed to save work entry. Please try again.');
-      toast.error('Failed to save work entry. Please try again.');
-    }
+    if (await save.run(data)) navigate('/va/work/history');
   }
 
   if (loadingAssignments) return <PageSkeleton />;

@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { SearchIcon, XIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -7,9 +6,8 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { QK } from '@/hooks/queries';
+import { useUpdateSurveyReminder } from '@/hooks/mutations';
 import { formatDateKeyLong } from '@/lib/time';
-import { updateSurveyReminder } from '@/services/survey-reminders.service';
 import type { ISurveyReminder, SurveyStatus } from '@/types/survey-reminder';
 
 import { buildCheckinColumns } from './checkins/columns';
@@ -52,30 +50,20 @@ function Group({
 }
 
 export default function AmCheckinsPage() {
-  const queryClient = useQueryClient();
   const c = useAmCheckins();
   const [view, setView] = useState<View>('todo');
   const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [updateError, setUpdateError] = useState<string | null>(null);
+  const update = useUpdateSurveyReminder(
+    'Failed to update the check-in. Please try again.'
+  );
+  const updateError = update.error;
   const [skipTarget, setSkipTarget] = useState<ISurveyReminder | null>(null);
 
   async function handleUpdateStatus(id: string, status: SurveyStatus) {
     setBusyId(id);
-    setUpdateError(null);
-    try {
-      await updateSurveyReminder(id, {
-        status,
-        ...(status === 'completed'
-          ? { completedDate: new Date().toISOString() }
-          : {}),
-      });
-      queryClient.invalidateQueries({ queryKey: QK.surveyReminders });
-    } catch {
-      setUpdateError('Failed to update the check-in. Please try again.');
-    } finally {
-      setBusyId(null);
-    }
+    await update.run({ id, status });
+    setBusyId(null);
   }
 
   const columns = useMemo(

@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
 import type {
   CreateWorkEntryPayload,
   IWorkEntry,
@@ -16,17 +17,9 @@ interface WorkEntriesQuery {
 export async function getWorkEntries(
   query: WorkEntriesQuery = {}
 ): Promise<IWorkEntry[]> {
-  const params = new URLSearchParams();
-  if (query.assignmentId) params.set('assignmentId', query.assignmentId);
-  if (query.candidateId) params.set('candidateId', query.candidateId);
-  if (query.clientId) params.set('clientId', query.clientId);
-  if (query.dateFrom) params.set('dateFrom', query.dateFrom);
-  if (query.dateTo) params.set('dateTo', query.dateTo);
-  // Backend defaults to limit=20 when omitted; fetch a large page so the
-  // VA/Client name joins are populated for all rows in the requested range.
-  params.set('limit', '1000');
+  // A large page, so the VA/client name joins cover the whole range.
   const { data } = await api.get<{ data: IWorkEntry[] }>(
-    `/crm/work-entries?${params.toString()}`
+    `/crm/work-entries?${toQueryString({ ...query, limit: LIST_LIMIT })}`
   );
   return data.data;
 }

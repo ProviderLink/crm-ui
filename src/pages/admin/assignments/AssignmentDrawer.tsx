@@ -15,18 +15,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useActiveAccountManagersQuery,
+  useAssignmentQuery,
   useAtsVAsQuery,
+  useClientAccountQuery,
   useEodSubmissionsQuery,
   usePerformanceReviewsQuery,
   useProvisionedClientsQuery,
+  useVaProfileQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { todayString, weekStartOfDateKey } from '@/lib/time';
-import { getAssignment } from '@/services/assignments.service';
-import { getClientAccount } from '@/services/client-accounts.service';
-import { getVaProfile } from '@/services/va-profiles.service';
 import type { IAssignment } from '@/types/assignment';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   Avatar,
@@ -107,18 +106,8 @@ function AssignmentDetail({
   onEdit?: (a: IAssignment) => void;
   canManage: boolean;
 }) {
-  const queryClient = useQueryClient();
-
-  const { data: assignmentData, isLoading: loadingAssignment } = useQuery({
-    queryKey: ['assignments', 'detail', id],
-    queryFn: () => getAssignment(id),
-    // The list already holds this assignment, so show it straight away.
-    placeholderData: () =>
-      queryClient
-        .getQueriesData<IAssignment[]>({ queryKey: ['assignments'] })
-        .flatMap(([, rows]) => (Array.isArray(rows) ? rows : []))
-        .find(r => r._id === id),
-  });
+  const { data: assignmentData, isLoading: loadingAssignment } =
+    useAssignmentQuery(id);
 
   const assignment = assignmentData ?? null;
 
@@ -132,17 +121,10 @@ function AssignmentDetail({
     { assignmentId: id }
   );
 
-  const { data: clientAccount = null } = useQuery({
-    queryKey: ['client-account', assignment?.clientId],
-    queryFn: () => getClientAccount(assignment!.clientId),
-    enabled: !!assignment,
-  });
-
-  const { data: vaProfile = null } = useQuery({
-    queryKey: ['va-profile', assignment?.candidateId],
-    queryFn: () => getVaProfile(assignment!.candidateId),
-    enabled: !!assignment,
-  });
+  const { data: clientAccount = null } = useClientAccountQuery(
+    assignment?.clientId
+  );
+  const { data: vaProfile = null } = useVaProfileQuery(assignment?.candidateId);
 
   const { data: reviews = [] } = usePerformanceReviewsQuery(
     assignment ? { candidateId: assignment.candidateId } : undefined

@@ -5,7 +5,11 @@ import { Link } from 'react-router-dom';
 
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { useMyAssignmentsQuery, useWorkEntriesQuery } from '@/hooks/queries';
+import {
+  QK,
+  useMyAssignmentsQuery,
+  useWorkEntriesQuery,
+} from '@/hooks/queries';
 import { addDaysToDateKey, todayString } from '@/lib/time';
 import type { IWorkEntry } from '@/types/work-entry';
 
@@ -160,7 +164,7 @@ export default function WorkHistoryPage() {
         service={editEntry ? assignmentMap.get(editEntry.assignmentId) : undefined}
         onClose={() => setEditEntry(null)}
         onSaved={() => {
-          queryClient.invalidateQueries({ queryKey: ['work-entries'] });
+          queryClient.invalidateQueries({ queryKey: QK.workEntriesAll });
           setEditEntry(null);
         }}
       />

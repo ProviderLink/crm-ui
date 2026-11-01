@@ -1,20 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
-
 import {
   useAccountManagersQuery,
+  useAllAssignmentsQuery,
   useAtsClientsQuery,
+  useClientAccountsQuery,
+  useCrmAccountsListQuery,
   useCrmAdminUsersQuery,
+  useVaProfilesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import api from '@/lib/api';
-import type { IAssignment } from '@/types/assignment';
-import {
-  type IAccountManager,
-  type ICrmUser,
-  getCrmAccountsList,
-} from '@/services/account-managers.service';
-import { getClientAccounts } from '@/services/client-accounts.service';
-import { getVaProfiles } from '@/services/va-profiles.service';
+import type { IAccountManager, ICrmUser } from '@/types/user';
 
 import type { UserRow } from './types';
 
@@ -37,10 +31,8 @@ export function useAccountRows() {
   // (so AMs don't need the team.read permission just to see their accounts).
   // AM users and admin users are still fetched from /shared/users (admins only,
   // gated by team.read server-side, but AM-tabs aren't shown to AMs anyway).
-  const { data: crmAccounts, isLoading: loadingCrmAccounts } = useQuery({
-    queryKey: ['crm-accounts-list'],
-    queryFn: getCrmAccountsList,
-  });
+  const { data: crmAccounts, isLoading: loadingCrmAccounts } =
+    useCrmAccountsListQuery();
   const vaUsers = crmAccounts?.vas ?? [];
   const clientUsers = crmAccounts?.clients ?? [];
 
@@ -56,19 +48,10 @@ export function useAccountRows() {
 
   const adminRows: UserRow[] = adminUsers.map(toRow);
 
-  const { data: vaProfiles = [] } = useQuery({
-    queryKey: ['va-profiles-list'],
-    queryFn: getVaProfiles,
-  });
+  const { data: vaProfiles = [] } = useVaProfilesQuery();
 
-  // Fetch all assignments (high limit) so we can count per VA without N+1 requests
-  const { data: allAssignmentsData } = useQuery({
-    queryKey: ['all-assignments-list'],
-    queryFn: () =>
-      api
-        .get<{ data: IAssignment[] }>('/crm/assignments?limit=1000')
-        .then(r => r.data.data ?? []),
-  });
+  // All assignments in one request, so VAs can be counted without N+1 calls.
+  const { data: allAssignmentsData } = useAllAssignmentsQuery();
 
   const vaProfileByVaId = Object.fromEntries(vaProfiles.map(p => [p.vaId, p]));
 
@@ -121,10 +104,7 @@ export function useAccountRows() {
     return { ...row, amAssignmentCount: activeByAm[row.id] ?? 0 };
   });
 
-  const { data: clientAccounts = [] } = useQuery({
-    queryKey: ['client-accounts-list'],
-    queryFn: getClientAccounts,
-  });
+  const { data: clientAccounts = [] } = useClientAccountsQuery();
 
   const accountByClientId = Object.fromEntries(
     clientAccounts.map(a => [a.clientId, a])

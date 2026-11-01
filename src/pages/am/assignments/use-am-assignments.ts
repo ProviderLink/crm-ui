@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import {
   useAllAssignmentsQuery,
+  useClientAccountsQuery,
   useEodContextQuery,
   useEodSubmissionsQuery,
   useWorkEntriesQuery,
@@ -13,7 +13,6 @@ import {
   todayString,
   weekStartOfDateKey,
 } from '@/lib/time';
-import { getClientAccounts } from '@/services/client-accounts.service';
 import type { IAssignment } from '@/types/assignment';
 
 import { hasBlocker } from '../dashboard/use-am-dashboard';
@@ -47,10 +46,7 @@ export function useAmAssignments() {
   const { data: work = [], isLoading: loadingWork } = useWorkEntriesQuery({
     dateFrom: weekStart,
   });
-  const { data: clientAccounts = [] } = useQuery({
-    queryKey: ['client-accounts-list'],
-    queryFn: getClientAccounts,
-  });
+  const { data: clientAccounts = [] } = useClientAccountsQuery();
 
   const rows = useMemo<AssignmentRow[]>(() => {
     const health = new Map(clientAccounts.map(c => [c.clientId, c.healthStatus]));

@@ -8,20 +8,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { QK, useNotesQuery } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { useQueryClient } from '@tanstack/react-query';
+import { useApiMutation } from '@/hooks/use-api-mutation';
 import { AlertCircle, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { getApiError } from '@/lib/api-error';
-import { addNote, listNotes } from '@/services/notes.service';
+import { addNote } from '@/services/notes.service';
 import {
   NOTE_METHODS,
   NOTE_METHOD_LABELS,
-  type INote,
   type NoteMethod,
 } from '@/types/note';
-import { useQuery } from '@tanstack/react-query';
 
 interface NotesThreadProps {
   /** 'client' or 'va' — selects which backend sub-resource to call. */
@@ -30,10 +29,6 @@ interface NotesThreadProps {
   subjectId: string | null | undefined;
   /** Heading of the thread; defaults to "Internal notes". */
   title?: string;
-}
-
-function queryKey(subjectType: 'client' | 'va', subjectId: string) {
-  return ['admin-notes', subjectType, subjectId] as const;
 }
 
 function formatTimestamp(raw: string): string {
@@ -54,7 +49,6 @@ export function NotesThread({
   title = 'Internal notes',
 }: NotesThreadProps) {
   const user = useAppSelector(s => s.auth.user);
-  const queryClient = useQueryClient();
 
   // Defense-in-depth: never fetch the thread for anyone but staff, even if the
   // component were mounted by mistake. The backend also enforces this, and
@@ -66,17 +60,19 @@ export function NotesThread({
     isLoading,
     isError,
     error,
-  } = useQuery<INote[], Error>({
-    queryKey: queryKey(subjectType, subjectId ?? 'none'),
-    queryFn: () => listNotes(subjectType, subjectId!),
-    enabled: !!subjectId && canUse,
-  });
+  } = useNotesQuery(subjectType, subjectId, canUse);
 
   const [method, setMethod] = useState<NoteMethod>('other');
   const [content, setContent] = useState('');
   const [adding, setAdding] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const add = useApiMutation({
+    mutationFn: (note: { method: NoteMethod; content: string }) =>
+      addNote(subjectType, subjectId!, note),
+    invalidate: subjectId ? [QK.adminNotes(subjectType, subjectId)] : [],
+    errorMessage: err => getApiError(err, 'Failed to add note. Please try again.'),
+  });
+  const submitting = add.isPending;
+  const submitError = add.error;
 
   // Hidden entirely from everyone else — they cannot see the thread or the form.
   if (!canUse) return null;
@@ -85,20 +81,10 @@ export function NotesThread({
     if (!subjectId) return;
     const trimmed = content.trim();
     if (!trimmed) return;
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      await addNote(subjectType, subjectId, { method, content: trimmed });
+    if (await add.run({ method, content: trimmed })) {
       setContent('');
       setMethod('other');
       setAdding(false);
-      queryClient.invalidateQueries({
-        queryKey: queryKey(subjectType, subjectId),
-      });
-    } catch (err: unknown) {
-      setSubmitError(getApiError(err, 'Failed to add note. Please try again.'));
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -218,7 +204,7 @@ export function NotesThread({
               onClick={() => {
                 setAdding(false);
                 setContent('');
-                setSubmitError(null);
+                add.reset();
               }}
             >
               Cancel

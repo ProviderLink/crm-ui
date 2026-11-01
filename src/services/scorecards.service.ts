@@ -1,13 +1,11 @@
 import api from '@/lib/api';
+import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
 import type { IScorecard } from '@/types/scorecard';
 
 export async function getScorecards(vaId?: string): Promise<IScorecard[]> {
-  const params = new URLSearchParams();
-  if (vaId) params.set('vaId', vaId); // Backend defaults to limit=20; fetch a large page so all scorecards are
-  // returned and VA names can be joined backend-side.
-  params.set('limit', '1000');
+  // A large page, so every scorecard comes back with its VA name.
   const { data } = await api.get<{ data: IScorecard[] }>(
-    `/crm/scorecards?${params.toString()}`
+    `/crm/scorecards?${toQueryString({ vaId, limit: LIST_LIMIT })}`
   );
   return data.data;
 }

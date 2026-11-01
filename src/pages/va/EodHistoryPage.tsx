@@ -1,6 +1,5 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { PlusIcon } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
@@ -8,10 +7,12 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import {
+  QK,
   useEodContextQuery,
   useEodSubmissionsQuery,
   useMyAssignmentsQuery,
 } from '@/hooks/queries';
+import { useApiMutation } from '@/hooks/use-api-mutation';
 import { addDaysToDateKey } from '@/lib/time';
 import { deleteEodSubmission } from '@/services/eod-submissions.service';
 import type { IAssignment } from '@/types/assignment';
@@ -21,7 +22,6 @@ import { buildEodHistoryColumns } from './eod-history/columns';
 import { EodHistoryFilters } from './eod-history/EodHistoryFilters';
 
 export default function EodHistoryPage() {
-  const queryClient = useQueryClient();
   const {
     data: eods = [],
     isLoading,
@@ -31,7 +31,12 @@ export default function EodHistoryPage() {
   const { data: myAssignments = [] } = useMyAssignmentsQuery();
 
   const [deleteTarget, setDeleteTarget] = useState<IEodSubmission | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const remove = useApiMutation({
+    mutationFn: deleteEodSubmission,
+    invalidate: [QK.eodSubmissionsAll],
+    errorMessage: 'Failed to delete EOD submission. Please try again.',
+  });
+  const deleteError = remove.error;
   const [selected, setSelected] = useState<IEodSubmission | null>(null);
 
   const clientMap = useMemo(() => {
@@ -52,15 +57,8 @@ export default function EodHistoryPage() {
 
   async function handleDelete() {
     if (!deleteTarget) return;
-    setDeleteError(null);
-    try {
-      await deleteEodSubmission(deleteTarget._id);
-      queryClient.invalidateQueries({ queryKey: ['eod-submissions'] });
-    } catch {
-      setDeleteError('Failed to delete EOD submission. Please try again.');
-    } finally {
-      setDeleteTarget(null);
-    }
+    await remove.run(deleteTarget._id);
+    setDeleteTarget(null);
   }
 
   const columns = useMemo(
@@ -80,15 +78,12 @@ export default function EodHistoryPage() {
   const defaultFrom = eodContext
     ? addDaysToDateKey(eodContext.dateKey, -30)
     : '';
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  // `null` follows the default window; a value (even '') is the user's choice.
+  const [fromChoice, setDateFrom] = useState<string | null>(null);
+  const [toChoice, setDateTo] = useState<string | null>(null);
+  const dateFrom = fromChoice ?? defaultFrom;
+  const dateTo = toChoice ?? defaultTo;
   const [search, setSearch] = useState('');
-
-  useEffect(() => {
-    if (!eodContext) return;
-    setDateTo(prev => prev || eodContext.dateKey);
-    setDateFrom(prev => prev || addDaysToDateKey(eodContext.dateKey, -30));
-  }, [eodContext]);
 
   // Search matches the client, the service or the task names.
   const query = search.trim().toLowerCase();
@@ -111,8 +106,8 @@ export default function EodHistoryPage() {
 
   function clearFilters() {
     setSearch('');
-    setDateFrom(defaultFrom);
-    setDateTo(defaultTo);
+    setDateFrom(null);
+    setDateTo(null);
   }
 
   const hasFilter =

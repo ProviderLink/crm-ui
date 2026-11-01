@@ -1,37 +1,6 @@
 import api from '@/lib/api';
 import { withId, type ApiDoc } from '@/lib/with-id';
-
-export interface IAccountManager {
-  id: string;
-  _id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  roles: string[];
-  isActive: boolean;
-  phone?: string;
-  atsId?: string;
-  lastLogin?: string;
-  createdAt?: string;
-}
-
-export interface ICrmUser {
-  id: string;
-  _id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  roles: string[];
-  isActive: boolean;
-  emailVerified: boolean;
-  phone?: string;
-  atsId?: string;
-  clientRef?: string | null;
-  candidateRef?: string | null;
-  isInviteAccepted?: boolean;
-  lastLogin?: string;
-  createdAt?: string;
-}
+import type { IAccountManager, ICrmUser } from '@/types/user';
 
 // ── Read-only (users are provisioned in ATS) ──────────────────────────────────
 

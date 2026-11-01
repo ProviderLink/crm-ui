@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { getApiError } from '@/lib/api-error';
-import { type IAccountManager } from '@/services/account-managers.service';
+import { type IAccountManager } from '@/types/user';
 import { updateAssignment } from '@/services/assignments.service';
 import { type IAssignment } from '@/types/assignment';
 import { Section } from './form-layout';

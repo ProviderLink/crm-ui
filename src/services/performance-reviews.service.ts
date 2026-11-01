@@ -1,6 +1,9 @@
 import api from '@/lib/api';
+import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
+import { downloadBlob } from '@/lib/download';
 import type {
   IGenerateReviewPayload,
+  IPerformanceCategory,
   IPerformanceReview,
   IUpdateReviewPayload,
   ReviewStatus,
@@ -49,11 +52,39 @@ const STATUS_TO_BACKEND: Record<ReviewStatus, string> = {
   Archived: 'archived',
 };
 
+/**
+ * A review as the backend stores it. Loosely shaped (legacy fields, optional
+ * blocks), so only the fields `mapReview` reads are typed; the rest passes
+ * through untouched.
+ */
+interface BackendCategory extends Omit<IPerformanceCategory, 'id'> {
+  _id?: string;
+  id?: string;
+}
+
+interface BackendReview {
+  _id?: string;
+  id?: string;
+  candidateId: string;
+  reviewType: string;
+  status?: string;
+  reviewStatus?: string;
+  aiGenerated?: {
+    roleSummary?: string;
+    coreResponsibilities?: string | string[];
+    strengths?: string;
+    areasForImprovement?: string;
+    goals?: string[];
+  };
+  finalManagerSummary?: string;
+  categories?: BackendCategory[];
+  reviewPeriodStart?: string;
+  reviewPeriodEnd?: string;
+  [field: string]: unknown;
+}
+
 /** Normalize a backend review document to frontend IPerformanceReview shape */
-// The backend document is loosely shaped (legacy fields, optional blocks), so
-// it is read untyped here and typed on the way out.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapReview(r: any): IPerformanceReview {
+function mapReview(r: BackendReview): IPerformanceReview {
   const aiGen = r.aiGenerated ?? {};
   return {
     ...r,
@@ -61,8 +92,8 @@ function mapReview(r: any): IPerformanceReview {
     vaId: r.candidateId,
     reviewType: (REVIEW_TYPE_FROM_BACKEND[r.reviewType] ??
       r.reviewType) as ReviewType,
-    reviewStatus: (STATUS_FROM_BACKEND[r.status] ??
-      r.reviewStatus ??
+    reviewStatus: ((r.status && STATUS_FROM_BACKEND[r.status]) ||
+      r.reviewStatus ||
       r.status) as ReviewStatus,
     // Flatten aiGenerated fields to top level
     roleSummary: aiGen.roleSummary ?? '',
@@ -76,10 +107,9 @@ function mapReview(r: any): IPerformanceReview {
     goalsNextPeriod: aiGen.goals ?? [],
     finalManagerSummary: r.finalManagerSummary ?? '',
     // Normalize category IDs so cat.id works in the editor
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    categories: (r.categories ?? []).map((c: any) => ({
+    categories: (r.categories ?? []).map(c => ({
       ...c,
-      id: c._id ?? c.id,
+      id: c._id ?? c.id ?? '',
     })),
     reviewPeriodStart: r.reviewPeriodStart
       ? String(r.reviewPeriodStart).slice(0, 10)
@@ -87,7 +117,7 @@ function mapReview(r: any): IPerformanceReview {
     reviewPeriodEnd: r.reviewPeriodEnd
       ? String(r.reviewPeriodEnd).slice(0, 10)
       : '',
-  };
+  } as IPerformanceReview;
 }
 
 /** POST /crm/performance-reviews — AI-generate a new review */
@@ -100,7 +130,7 @@ export async function generateReview(
     reviewType:
       REVIEW_TYPE_TO_BACKEND[payload.reviewType] ?? payload.reviewType,
   };
-  const { data } = await api.post<{ data: IPerformanceReview }>(
+  const { data } = await api.post<{ data: BackendReview }>(
     '/crm/performance-reviews',
     backendPayload
   );
@@ -110,23 +140,15 @@ export async function generateReview(
 export async function getReviews(
   filters?: IReviewFilters
 ): Promise<IPerformanceReview[]> {
-  const params = new URLSearchParams();
-  if (filters) {
-    for (const [k, v] of Object.entries(filters)) {
-      if (v !== undefined) params.set(k, v);
-    }
-  }
-  // Backend defaults to limit=20; fetch a large page so all reviews are returned
-  // with backend-side candidateName/clientName populated.
-  params.set('limit', '1000');
-  const { data } = await api.get<{ data: IPerformanceReview[] }>(
-    `/crm/performance-reviews?${params.toString()}`
+  // A large page, so every review comes back with its VA and client name.
+  const { data } = await api.get<{ data: BackendReview[] }>(
+    `/crm/performance-reviews?${toQueryString({ ...filters, limit: LIST_LIMIT })}`
   );
   return (data.data || []).map(mapReview);
 }
 
 export async function getReview(id: string): Promise<IPerformanceReview> {
-  const { data } = await api.get<{ data: IPerformanceReview }>(
+  const { data } = await api.get<{ data: BackendReview }>(
     `/crm/performance-reviews/${id}`
   );
   return mapReview(data.data);
@@ -178,7 +200,7 @@ export async function updateReview(
     }));
   }
 
-  const { data } = await api.patch<{ data: IPerformanceReview }>(
+  const { data } = await api.patch<{ data: BackendReview }>(
     `/crm/performance-reviews/${id}`,
     backendPayload
   );
@@ -186,7 +208,7 @@ export async function updateReview(
 }
 
 export async function completeReview(id: string): Promise<IPerformanceReview> {
-  const { data } = await api.patch<{ data: IPerformanceReview }>(
+  const { data } = await api.patch<{ data: BackendReview }>(
     `/crm/performance-reviews/${id}/complete`
   );
   return mapReview(data.data);
@@ -202,7 +224,7 @@ async function _regenerateSection(
   id: string,
   section: 'categories' | 'goals' | 'summary'
 ): Promise<IPerformanceReview> {
-  const { data } = await api.post<{ data: IPerformanceReview }>(
+  const { data } = await api.post<{ data: BackendReview }>(
     `/crm/performance-reviews/${id}/regenerate`,
     { section }
   );
@@ -223,10 +245,5 @@ export async function exportReviewPdf(
   const response = await api.get(`/crm/performance-reviews/${id}/export-pdf`, {
     responseType: 'blob',
   });
-  const url = URL.createObjectURL(response.data);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadBlob(response.data as Blob, filename);
 }

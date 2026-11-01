@@ -1,4 +1,3 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { XIcon } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -17,9 +16,13 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  useAssignmentQuery,
+  useClientAccountQuery,
+  useCrmAccountsListQuery,
   useEodSubmissionsQuery,
   usePerformanceReviewsQuery,
   useSurveyRemindersQuery,
+  useVaProfileQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import {
@@ -28,11 +31,6 @@ import {
   weekStartOfDateKey,
 } from '@/lib/time';
 import { SURVEY_STATUS_STYLES } from '@/lib/status-styles';
-import { getCrmAccountsList } from '@/services/account-managers.service';
-import { getAssignment } from '@/services/assignments.service';
-import { getClientAccount } from '@/services/client-accounts.service';
-import { getVaProfile } from '@/services/va-profiles.service';
-import type { IAssignment } from '@/types/assignment';
 import type { ISurveyReminder } from '@/types/survey-reminder';
 
 import {
@@ -138,18 +136,8 @@ export function AmAssignmentDrawer({
 }
 
 function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
-  const queryClient = useQueryClient();
-
-  const { data: assignmentData, isLoading: loadingAssignment } = useQuery({
-    queryKey: ['assignments', 'detail', id],
-    queryFn: () => getAssignment(id),
-    // The list already holds this assignment, so show it straight away.
-    placeholderData: () =>
-      queryClient
-        .getQueriesData<IAssignment[]>({ queryKey: ['assignments'] })
-        .flatMap(([, rows]) => (Array.isArray(rows) ? rows : []))
-        .find(r => r._id === id),
-  });
+  const { data: assignmentData, isLoading: loadingAssignment } =
+    useAssignmentQuery(id);
   const assignment = assignmentData ?? null;
 
   // Only this assignment's rows, filtered by the server.
@@ -159,21 +147,12 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
     { assignmentId: id }
   );
 
-  const { data: clientAccount = null } = useQuery({
-    queryKey: ['client-account', assignment?.clientId],
-    queryFn: () => getClientAccount(assignment!.clientId),
-    enabled: !!assignment,
-  });
-  const { data: vaProfile = null } = useQuery({
-    queryKey: ['va-profile', assignment?.candidateId],
-    queryFn: () => getVaProfile(assignment!.candidateId),
-    enabled: !!assignment,
-  });
+  const { data: clientAccount = null } = useClientAccountQuery(
+    assignment?.clientId
+  );
+  const { data: vaProfile = null } = useVaProfileQuery(assignment?.candidateId);
   // The VA's email comes from the manager's own (scoped) account list.
-  const { data: crmAccounts } = useQuery({
-    queryKey: ['crm-accounts-list'],
-    queryFn: getCrmAccountsList,
-  });
+  const { data: crmAccounts } = useCrmAccountsListQuery();
   const vaEmail =
     crmAccounts?.vas.find(v => v.candidateRef === assignment?.candidateId)
       ?.email ?? null;

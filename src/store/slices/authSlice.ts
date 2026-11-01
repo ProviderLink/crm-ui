@@ -14,18 +14,8 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // Full login — sets user + token (called after successful /auth/login)
+    // Sets user + token (after /auth/login, and after the startup refresh)
     setAuth(
-      state,
-      action: PayloadAction<{ user: IUser; accessToken: string }>
-    ) {
-      state.user = action.payload.user
-      state.accessToken = action.payload.accessToken
-      state.isAuthenticated = true
-      state.isHydrated = true
-    },
-    // Hydration only — sets user + token after startup refresh
-    setUser(
       state,
       action: PayloadAction<{ user: IUser; accessToken: string }>
     ) {
@@ -52,6 +42,6 @@ const authSlice = createSlice({
   },
 })
 
-export const { setAuth, setUser, setAccessToken, setHydrated, clearAuth } =
+export const { setAuth, setAccessToken, setHydrated, clearAuth } =
   authSlice.actions
 export default authSlice.reducer

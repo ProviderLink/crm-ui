@@ -1,16 +1,20 @@
 import { useAppSelector } from '@/hooks/store';
 import {
   getAccountManagers,
+  getCrmAccountsList,
   getCrmUsersByRole,
 } from '@/services/account-managers.service';
 import { getDashboardStats } from '@/services/admin.service';
 import {
   getAllAssignments,
+  getAssignment,
   getMyAllAssignments,
   getMyAssignments,
 } from '@/services/assignments.service';
 import { getAtsClients, getAtsVAs } from '@/services/ats.service';
 import {
+  getClientAccount,
+  getClientAccounts,
   getHiredVasForClient,
   getProvisionedClients,
 } from '@/services/client-accounts.service';
@@ -24,9 +28,16 @@ import {
   getReviews,
   type IReviewFilters,
 } from '@/services/performance-reviews.service';
+import { listNotes } from '@/services/notes.service';
 import { getScorecards } from '@/services/scorecards.service';
 import { getSurveyReminders } from '@/services/survey-reminders.service';
+import {
+  getVaAssignments,
+  getVaProfile,
+  getVaProfiles,
+} from '@/services/va-profiles.service';
 import { getWorkEntries } from '@/services/work-entries.service';
+import type { IAssignment } from '@/types/assignment';
 import type { IPerformanceReview } from '@/types/performance-review';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -58,6 +69,26 @@ export const QK = {
   hiredVasForClient: (clientId?: string) =>
     ['hired-vas', clientId ?? 'none'] as const,
   eodSubmission: (id: string) => ['eod-submission', id] as const,
+  // Prefixes, for invalidating every query of a kind at once.
+  workEntriesAll: ['work-entries'] as const,
+  eodSubmissionsAll: ['eod-submissions'] as const,
+  assignmentsAll: ['assignments'] as const,
+  assignmentLists: ['assignments', 'all'] as const,
+  scorecardsAll: ['scorecards'] as const,
+  assignmentDetail: (id: string) => ['assignments', 'detail', id] as const,
+  clientAccount: (clientId?: string) =>
+    ['client-account', clientId ?? 'none'] as const,
+  clientAccountsList: ['client-accounts-list'] as const,
+  clientAssignments: (clientId?: string) =>
+    ['client-assignments', clientId ?? 'none'] as const,
+  vaProfile: (vaId?: string | null) =>
+    ['va-profile', vaId ?? 'none'] as const,
+  vaProfilesList: ['va-profiles-list'] as const,
+  vaAssignments: (vaId?: string | null) =>
+    ['va-assignments', vaId ?? 'none'] as const,
+  crmAccountsList: ['crm-accounts-list'] as const,
+  adminNotes: (subject: 'client' | 'va', id: string) =>
+    ['admin-notes', subject, id] as const,
   eodContext: ['eod-context'] as const,
   performanceReviews: (filters?: IReviewFilters) =>
     ['performance-reviews', filters ?? {}] as const,
@@ -254,5 +285,88 @@ export function usePerformanceReviewQuery(id: string) {
         })
         .flatMap(([, rows]) => (Array.isArray(rows) ? rows : []))
         .find(r => r.id === id),
+  });
+}
+
+/** Every assignment of one client (for the client profile counts). */
+export function useClientAssignmentsQuery(clientId?: string) {
+  return useQuery({
+    queryKey: QK.clientAssignments(clientId),
+    queryFn: () => getAllAssignments({ clientId }),
+    enabled: !!clientId,
+  });
+}
+
+/**
+ * One assignment. The lists already hold it, so a copy found there is shown
+ * straight away while the full fetch runs.
+ */
+export function useAssignmentQuery(id: string) {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: QK.assignmentDetail(id),
+    queryFn: () => getAssignment(id),
+    placeholderData: () =>
+      queryClient
+        .getQueriesData<IAssignment[]>({ queryKey: QK.assignmentsAll })
+        .flatMap(([, rows]) => (Array.isArray(rows) ? rows : []))
+        .find(r => r._id === id),
+  });
+}
+
+/** A client's CRM profile; `null` when it has none yet. */
+export function useClientAccountQuery(clientId?: string) {
+  return useQuery({
+    queryKey: QK.clientAccount(clientId),
+    queryFn: () => getClientAccount(clientId!),
+    enabled: !!clientId,
+  });
+}
+
+export function useClientAccountsQuery() {
+  return useQuery({
+    queryKey: QK.clientAccountsList,
+    queryFn: getClientAccounts,
+  });
+}
+
+export function useVaProfileQuery(vaId?: string | null) {
+  return useQuery({
+    queryKey: QK.vaProfile(vaId),
+    queryFn: () => getVaProfile(vaId!),
+    enabled: !!vaId,
+  });
+}
+
+export function useVaProfilesQuery() {
+  return useQuery({ queryKey: QK.vaProfilesList, queryFn: getVaProfiles });
+}
+
+export function useVaAssignmentsQuery(vaId?: string | null) {
+  return useQuery({
+    queryKey: QK.vaAssignments(vaId),
+    queryFn: () => getVaAssignments(vaId!),
+    enabled: !!vaId,
+  });
+}
+
+/** Clients and VAs the caller may see (all for admins, own for managers). */
+export function useCrmAccountsListQuery() {
+  return useQuery({
+    queryKey: QK.crmAccountsList,
+    queryFn: getCrmAccountsList,
+  });
+}
+
+/** Internal notes thread of a client or VA (staff only). */
+export function useNotesQuery(
+  subject: 'client' | 'va',
+  subjectId: string | null | undefined,
+  enabled: boolean
+) {
+  return useQuery({
+    queryKey: QK.adminNotes(subject, subjectId ?? 'none'),
+    queryFn: () => listNotes(subject, subjectId!),
+    enabled: !!subjectId && enabled,
   });
 }
