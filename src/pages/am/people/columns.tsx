@@ -5,8 +5,8 @@ import { dateKeyToLocalDate, formatDateKeyShort } from '@/lib/time';
 import {
   buildClientColumns,
   buildVaColumns,
-} from '../../admin/accounts/columns';
-import type { UserRow } from '../../admin/accounts/types';
+} from '@/features/accounts/columns';
+import type { UserRow } from '@/features/accounts/types';
 
 const MS_PER_DAY = 86_400_000;
 const STALE_DAYS = 30;

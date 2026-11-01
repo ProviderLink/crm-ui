@@ -21,9 +21,9 @@ import {
 } from '@/components/shared/UnderlineTabs';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 
-import type { UserRow } from '../admin/accounts/types';
-import { UserDetailSheet } from '../admin/accounts/UserDetailSheet';
-import { useAccountRows } from '../admin/accounts/use-account-rows';
+import type { UserRow } from '@/features/accounts/types';
+import { UserDetailSheet } from '@/features/accounts/UserDetailSheet';
+import { useAccountRows } from '@/features/accounts/use-account-rows';
 import {
   attentionScore,
   buildAmClientColumns,

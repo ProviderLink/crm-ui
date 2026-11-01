@@ -1,8 +1,8 @@
 import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
-import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
+import { EodDetailSheet } from '@/features/eod/EodDetailSheet';
 import { DataTable } from '@/components/shared/DataTable';
 
-import { buildEodColumns } from './eod-reports/columns';
+import { buildEodColumns } from '@/features/eod/eod-columns';
 import { EodFilters } from './eod-reports/EodFilters';
 import { useEodReports } from './eod-reports/use-eod-reports';
 

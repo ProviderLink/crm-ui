@@ -24,7 +24,7 @@ import {
   type IWorkEntry,
 } from '@/types/work-entry';
 
-import { Field, Section } from '../../admin/assignments/form-layout';
+import { Field, Section } from '@/components/shared/form-layout';
 import { DurationPresets } from '../duration-presets';
 import {
   editWorkEntrySchema,

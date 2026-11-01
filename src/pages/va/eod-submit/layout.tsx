@@ -2,7 +2,7 @@ import { Page, PageSection } from '@/components/shared/PageLayout';
 import type { ReactNode } from 'react';
 
 // The same section and field wrappers as the other forms.
-export { Field, Section } from '../../admin/assignments/form-layout';
+export { Field, Section } from '@/components/shared/form-layout';
 
 export function PageShell({ children }: { children: ReactNode }) {
   return (

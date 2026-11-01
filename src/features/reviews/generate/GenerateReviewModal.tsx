@@ -21,10 +21,10 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { REVIEW_TYPES } from '@/types/performance-review';
 
-import { ClientVaSelectors } from './generate-review/ClientVaSelectors';
-import { FormField } from './generate-review/FormField';
-import { PrefilledContext } from './generate-review/PrefilledContext';
-import { useGenerateReviewForm } from './generate-review/use-generate-review-form';
+import { ClientVaSelectors } from './ClientVaSelectors';
+import { FormField } from './FormField';
+import { PrefilledContext } from './PrefilledContext';
+import { useGenerateReviewForm } from './use-generate-review-form';
 
 export interface GenerateReviewModalProps {
   open: boolean;

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { IEodSubmission } from '@/types/eod-submission';
 
-import { TaskSummary } from '../../admin/eod-reports/TaskSummary';
+import { TaskSummary } from '@/features/eod/TaskSummary';
 import { formatDate } from '@/lib/format';
 
 export function buildEodHistoryColumns({

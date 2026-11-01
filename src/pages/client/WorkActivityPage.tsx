@@ -7,7 +7,7 @@ import {
   SearchInput,
 } from '@/components/shared/FilterControls';
 import { StatTile } from '@/components/shared/StatTile';
-import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
+import { EodDetailSheet } from '@/features/eod/EodDetailSheet';
 import { DataTable } from '@/components/shared/DataTable';
 import {
   Select,
@@ -26,7 +26,7 @@ import { formatMinutes } from '@/lib/time';
 import type { IEodSubmission } from '@/types/eod-submission';
 import type { IWorkEntry } from '@/types/work-entry';
 
-import { WorkEntryDrawer } from '../admin/work-entries/WorkEntryDrawer';
+import { WorkEntryDrawer } from '@/features/work-entries/WorkEntryDrawer';
 import { useWorkActivity } from './work-activity/use-work-activity';
 
 type TabKey = 'work' | 'eod';

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
 import { StatTile } from '@/components/shared/StatTile';
-import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
+import { EodDetailSheet } from '@/features/eod/EodDetailSheet';
 import { DataTable } from '@/components/shared/DataTable';
 import {
   TabCount,
@@ -16,9 +16,9 @@ import { useReportExport } from '@/hooks/use-report-export';
 import type { IEodSubmission } from '@/types/eod-submission';
 import type { IWorkEntry } from '@/types/work-entry';
 
-import { buildEodColumns } from '../admin/eod-reports/columns';
-import { buildWorkEntryColumns } from '../admin/work-entries/columns';
-import { WorkEntryDrawer } from '../admin/work-entries/WorkEntryDrawer';
+import { buildEodColumns } from '@/features/eod/eod-columns';
+import { buildWorkEntryColumns } from '@/features/work-entries/columns';
+import { WorkEntryDrawer } from '@/features/work-entries/WorkEntryDrawer';
 import { ActivityFilters, type ActivityTab } from './activity/ActivityFilters';
 import { useAmActivity } from './activity/use-am-activity';
 

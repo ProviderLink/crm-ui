@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
-import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
+import { EodDetailSheet } from '@/features/eod/EodDetailSheet';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';

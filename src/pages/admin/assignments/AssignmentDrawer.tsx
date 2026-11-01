@@ -36,8 +36,8 @@ import { formatDate } from '@/lib/format';
 import { todayString, weekStartOfDateKey } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
-import { buildEodColumns, buildWorkColumns } from './drawer-columns';
-import { Party, Row } from './drawer-parts';
+import { buildEodColumns, buildWorkColumns } from '@/features/assignments/drawer-columns';
+import { Party, Row } from '@/features/assignments/drawer-parts';
 
 // ─── Drawer ───────────────────────────────────────────────────────────────────
 

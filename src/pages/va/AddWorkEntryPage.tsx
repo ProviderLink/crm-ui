@@ -35,7 +35,7 @@ import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
-import { Field, Section } from '../admin/assignments/form-layout';
+import { Field, Section } from '@/components/shared/form-layout';
 import { DurationPresets } from './duration-presets';
 import { addWorkEntrySchema, type AddWorkEntryForm } from './work-entry-schema';
 

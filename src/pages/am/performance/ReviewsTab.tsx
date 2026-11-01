@@ -5,7 +5,7 @@ import {
   ClearFiltersButton,
   SearchInput,
 } from '@/components/shared/FilterControls';
-import { GenerateReviewModal } from '@/components/performance-reviews/GenerateReviewModal';
+import { GenerateReviewModal } from '@/features/reviews/generate/GenerateReviewModal';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,9 @@ import type {
   ReviewStatus,
 } from '@/types/performance-review';
 
-import { ReviewDrawer } from '../../admin/performance-review-editor/ReviewDrawer';
-import { buildReviewColumns } from '../../admin/performance-reviews-list/columns';
-import { useReviewsList } from '../../admin/performance-reviews-list/use-reviews-list';
+import { ReviewDrawer } from '@/features/reviews/editor/ReviewDrawer';
+import { buildReviewColumns } from '@/features/reviews/list/columns';
+import { useReviewsList } from '@/features/reviews/list/use-reviews-list';
 
 type View = 'todo' | 'done' | 'all';
 

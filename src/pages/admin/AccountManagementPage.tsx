@@ -25,10 +25,10 @@ import {
   buildAmColumns,
   buildClientColumns,
   buildVaColumns,
-} from './accounts/columns';
-import { UserDetailSheet } from './accounts/UserDetailSheet';
-import type { UserRow } from './accounts/types';
-import { useAccountRows } from './accounts/use-account-rows';
+} from '@/features/accounts/columns';
+import { UserDetailSheet } from '@/features/accounts/UserDetailSheet';
+import type { UserRow } from '@/features/accounts/types';
+import { useAccountRows } from '@/features/accounts/use-account-rows';
 
 type TabKey = 'clients' | 'vas' | 'ams' | 'admins';
 

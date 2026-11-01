@@ -12,8 +12,8 @@ import { getApiError } from '@/lib/api-error';
 import { type IAccountManager } from '@/types/user';
 import { updateAssignment } from '@/services/assignments.service';
 import { type IAssignment } from '@/types/assignment';
-import { Section } from './form-layout';
-import { Field } from './form-layout';
+import { Section } from '@/components/shared/form-layout';
+import { Field } from '@/components/shared/form-layout';
 
 const editSchema = z.object({
   accountManagerId: z.string().min(1, 'Required'),

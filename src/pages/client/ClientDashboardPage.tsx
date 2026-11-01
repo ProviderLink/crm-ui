@@ -10,13 +10,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Page, PageSection } from '@/components/shared/PageLayout';
-import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
+import { EodDetailSheet } from '@/features/eod/EodDetailSheet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { IEodSubmission } from '@/types/eod-submission';
 
-import { DashboardStatCard } from '../admin/admin-dashboard/DashboardStatCard';
+import { DashboardStatCard } from '@/components/shared/DashboardStatCard';
 import { formatMonthDay } from './client-dashboard/helpers';
 import { PastEngagementCard } from './client-dashboard/PastEngagementCard';
 import { RecentEodItem } from './client-dashboard/RecentEodItem';

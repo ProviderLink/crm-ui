@@ -14,7 +14,7 @@ import {
 import { useDateRange } from '@/hooks/use-date-range';
 import type { IWorkEntry } from '@/types/work-entry';
 
-import { WorkEntryFilters } from '../admin/work-entries/WorkEntryFilters';
+import { WorkEntryFilters } from '@/features/work-entries/WorkEntryFilters';
 import { buildWorkHistoryColumns } from './work-history/columns';
 import { EditWorkEntryDrawer } from './work-history/EditWorkEntryDrawer';
 

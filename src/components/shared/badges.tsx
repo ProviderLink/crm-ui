@@ -3,7 +3,7 @@ import { StarIcon } from 'lucide-react';
 import { Pill, type PillTone } from '@/components/shared/Pill';
 import { initialsOf } from '@/lib/format';
 import { WORK_STATUS_TONE } from '@/lib/status-styles';
-import { statusLabel } from '@/pages/admin/work-entries/format';
+import { statusLabel } from '@/features/work-entries/format';
 import type { IAssignment } from '@/types/assignment';
 import { RATING_LABELS, type ReviewStatus } from '@/types/performance-review';
 import type { SurveyStatus } from '@/types/survey-reminder';

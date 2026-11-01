@@ -13,7 +13,7 @@ import {
   SurveyStatusPill,
   WorkloadBadge,
 } from '@/components/shared/badges';
-import { NotesThread } from '@/components/notes/NotesThread';
+import { NotesThread } from '@/features/notes/NotesThread';
 import { DataTable } from '@/components/shared/DataTable';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -45,8 +45,8 @@ import { SURVEY_TYPE_LABELS } from '@/types/survey-reminder';
 import {
   buildEodColumns,
   buildWorkColumns,
-} from '../../admin/assignments/drawer-columns';
-import { Party, Row } from '../../admin/assignments/drawer-parts';
+} from '@/features/assignments/drawer-columns';
+import { Party, Row } from '@/features/assignments/drawer-parts';
 import { hasBlocker } from '../dashboard/use-am-dashboard';
 
 /**

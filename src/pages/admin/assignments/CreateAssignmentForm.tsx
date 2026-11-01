@@ -13,8 +13,8 @@ import { getApiError } from '@/lib/api-error';
 import { type IAccountManager } from '@/types/user';
 import { createAssignment } from '@/services/assignments.service';
 import { type IAssignment } from '@/types/assignment';
-import { Section } from './form-layout';
-import { Field } from './form-layout';
+import { Section } from '@/components/shared/form-layout';
+import { Field } from '@/components/shared/form-layout';
 
 const createSchema = z.object({
   clientId: z.string().min(1, 'Client is required'),

@@ -12,9 +12,9 @@ import {
 
 import type { IWorkEntry } from '@/types/work-entry';
 
-import { buildWorkEntryColumns } from './work-entries/columns';
-import { WorkEntryDrawer } from './work-entries/WorkEntryDrawer';
-import { WorkEntryFilters } from './work-entries/WorkEntryFilters';
+import { buildWorkEntryColumns } from '@/features/work-entries/columns';
+import { WorkEntryDrawer } from '@/features/work-entries/WorkEntryDrawer';
+import { WorkEntryFilters } from '@/features/work-entries/WorkEntryFilters';
 
 export default function WorkEntriesPage() {
   // The default window is the last 30 days; "Clear" returns to it.

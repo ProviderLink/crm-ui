@@ -12,9 +12,9 @@ import {
   useDashboardStatsQuery,
 } from '@/hooks/queries';
 
-import { DashboardStatCard } from './admin-dashboard/DashboardStatCard';
+import { DashboardStatCard } from '@/components/shared/DashboardStatCard';
 import { ExportDataCard } from './admin-dashboard/ExportDataCard';
-import { NeedsAttentionCard } from './admin-dashboard/NeedsAttentionCard';
+import { NeedsAttentionCard } from '@/features/dashboard/NeedsAttentionCard';
 import {
   VaActivityCard,
   type VABreakdownRow,

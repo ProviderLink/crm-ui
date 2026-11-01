@@ -32,7 +32,7 @@ import {
   weekStartOfDateKey,
 } from '@/lib/time';
 
-import { DashboardStatCard } from '../admin/admin-dashboard/DashboardStatCard';
+import { DashboardStatCard } from '@/components/shared/DashboardStatCard';
 
 const MAX_TODAY_ROWS = 5;
 

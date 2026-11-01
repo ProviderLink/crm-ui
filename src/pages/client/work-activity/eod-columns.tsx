@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 import type { IEodSubmission } from '@/types/eod-submission';
 
-import { TaskSummary } from '../../admin/eod-reports/TaskSummary';
+import { TaskSummary } from '@/features/eod/TaskSummary';
 import { formatDate } from '@/lib/format';
 import { VaCell } from './VaCell';
 

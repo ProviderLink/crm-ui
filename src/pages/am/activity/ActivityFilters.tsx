@@ -17,7 +17,7 @@ import type { ExportFormat } from '@/services/reports.service';
 import type { IAssignment } from '@/types/assignment';
 import { WORK_ENTRY_CATEGORIES, WORK_ENTRY_STATUSES } from '@/types/work-entry';
 
-import { statusLabel } from '../../admin/work-entries/format';
+import { statusLabel } from '@/features/work-entries/format';
 
 export type ActivityTab = 'work' | 'reports';
 

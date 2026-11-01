@@ -9,11 +9,11 @@ import {
 import { useState } from 'react';
 
 import { Page, PageSection } from '@/components/shared/PageLayout';
-import { EodDetailSheet } from '@/components/eod/EodDetailSheet';
+import { EodDetailSheet } from '@/features/eod/EodDetailSheet';
 import type { IEodSubmission } from '@/types/eod-submission';
 
-import { DashboardStatCard } from '../admin/admin-dashboard/DashboardStatCard';
-import { NeedsAttentionCard } from '../admin/admin-dashboard/NeedsAttentionCard';
+import { DashboardStatCard } from '@/components/shared/DashboardStatCard';
+import { NeedsAttentionCard } from '@/features/dashboard/NeedsAttentionCard';
 import { BlockersCard } from './dashboard/BlockersCard';
 import { TeamTodayCard } from './dashboard/TeamTodayCard';
 import { useAmDashboard } from './dashboard/use-am-dashboard';

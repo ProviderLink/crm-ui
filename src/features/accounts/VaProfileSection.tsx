@@ -1,6 +1,6 @@
 import { AlertTriangleIcon, BriefcaseIcon, BuildingIcon, CalendarIcon, CheckCircle2Icon, ClockIcon, Edit3Icon, GaugeIcon, StarIcon, TrendingUpIcon, UsersIcon } from 'lucide-react';
 import { useState } from 'react';
-import { NotesThread } from '@/components/notes/NotesThread';
+import { NotesThread } from '@/features/notes/NotesThread';
 import { Button } from '@/components/ui/button';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

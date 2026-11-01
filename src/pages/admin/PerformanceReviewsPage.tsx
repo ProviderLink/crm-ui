@@ -2,15 +2,15 @@ import { PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
-import { GenerateReviewModal } from '@/components/performance-reviews/GenerateReviewModal';
+import { GenerateReviewModal } from '@/features/reviews/generate/GenerateReviewModal';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 
-import { ReviewDrawer } from './performance-review-editor/ReviewDrawer';
-import { buildReviewColumns } from './performance-reviews-list/columns';
-import { ReviewFilters } from './performance-reviews-list/ReviewFilters';
-import { useReviewsList } from './performance-reviews-list/use-reviews-list';
+import { ReviewDrawer } from '@/features/reviews/editor/ReviewDrawer';
+import { buildReviewColumns } from '@/features/reviews/list/columns';
+import { ReviewFilters } from '@/features/reviews/list/ReviewFilters';
+import { useReviewsList } from '@/features/reviews/list/use-reviews-list';
 
 export default function PerformanceReviewsPage() {
   const p = useReviewsList();
