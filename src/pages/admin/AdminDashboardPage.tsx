@@ -111,13 +111,14 @@ export default function AdminDashboardPage() {
 
       {/* VA activity */}
       <PageSection>
-        {!loadingStats && breakdown.length > 0 ? (
+        {!loadingStats && !statsError && breakdown.length > 0 ? (
           <VaActivityCard
             breakdown={breakdown}
             scorecardsPath={`${prefix}/scorecards`}
           />
         ) : (
-          !loadingStats && (
+          !loadingStats &&
+          !statsError && (
             <div className="flex min-h-40 items-center justify-center rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
               No work has been logged in the last 7 days.
             </div>
