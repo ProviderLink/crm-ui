@@ -13,7 +13,12 @@ import { useVaNames } from '@/hooks/use-name-maps';
 import type { IScorecard } from '@/types/scorecard';
 
 export default function ScorecardsPage() {
-  const { data: scorecards = [], isLoading } = useScorecardsQuery();
+  const {
+    data: scorecards = [],
+    isLoading,
+    isError,
+    error,
+  } = useScorecardsQuery();
   const vaMap = useVaNames();
   const nameOf = (s: IScorecard) => s.vaName || vaMap[s.vaId] || 'Unknown VA';
 
@@ -55,6 +60,8 @@ export default function ScorecardsPage() {
           columns={buildScorecardColumns(nameOf)}
           data={view.rows}
           isLoading={isLoading}
+          isError={isError}
+          error={error}
         />
 
         <ConfirmDialog

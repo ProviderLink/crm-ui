@@ -22,10 +22,11 @@ export function useAmCheckins() {
   // company's current day, not the device clock.
   const { today } = useCompanyDay();
 
-  const { data: reminders = [], isLoading: loadingReminders } =
-    useSurveyRemindersQuery();
+  const remindersQuery = useSurveyRemindersQuery();
+  const assignmentsQuery = useAllAssignmentsQuery(user?.id);
+  const { data: reminders = [], isLoading: loadingReminders } = remindersQuery;
   const { data: assignments = [], isLoading: loadingAssignments } =
-    useAllAssignmentsQuery(user?.id);
+    assignmentsQuery;
 
   // What the "For" column shows for each related record: a main line and a
   // supporting line, so it reads as people and companies, not ids.
@@ -80,5 +81,8 @@ export function useAmCheckins() {
     relatedInfo,
     today,
     isLoading: loadingReminders || loadingAssignments,
+    // The names are a nicety; the reminders themselves are what must load.
+    isError: remindersQuery.isError,
+    error: remindersQuery.error,
   };
 }

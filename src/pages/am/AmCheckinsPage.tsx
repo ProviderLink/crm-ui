@@ -7,6 +7,7 @@ import {
   SearchInput,
 } from '@/components/shared/FilterControls';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { ErrorNotice } from '@/components/shared/ErrorNotice';
 import { DataTable } from '@/components/shared/DataTable';
 import {
   TabCount,
@@ -184,7 +185,9 @@ export default function AmCheckinsPage() {
           <p className="mb-2 text-sm text-destructive">{updateError}</p>
         )}
 
-        {c.isLoading ? (
+        {c.isError ? (
+          <ErrorNotice error={c.error} />
+        ) : c.isLoading ? (
           <DataTable columns={columns} data={[]} isLoading />
         ) : view === 'todo' ? (
           open.length === 0 ? (

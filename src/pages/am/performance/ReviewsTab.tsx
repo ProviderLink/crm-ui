@@ -87,6 +87,8 @@ export function ReviewsTab() {
         columns={p.columns}
         data={rows}
         isLoading={p.isLoading}
+        isError={p.isError}
+        error={p.error}
         onRowClick={r => p.setOpenReviewId(r.id)}
       />
 

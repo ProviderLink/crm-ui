@@ -33,14 +33,15 @@ export function useAmAssignments() {
   const { today } = useCompanyDay();
   const weekStart = weekStartOfDateKey(today);
 
-  const { data: assignments = [], isLoading: loadingAssignments } =
-    useAllAssignmentsQuery(user?.id);
-  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery({
+  const assignmentsQuery = useAllAssignmentsQuery(user?.id);
+  const eodsQuery = useEodSubmissionsQuery({
     dateFrom: addDaysToDateKey(today, -30),
   });
-  const { data: work = [], isLoading: loadingWork } = useWorkEntriesQuery({
-    dateFrom: weekStart,
-  });
+  const workQuery = useWorkEntriesQuery({ dateFrom: weekStart });
+  const { data: assignments = [], isLoading: loadingAssignments } =
+    assignmentsQuery;
+  const { data: eods = [], isLoading: loadingEods } = eodsQuery;
+  const { data: work = [], isLoading: loadingWork } = workQuery;
   const { data: clientAccounts = [] } = useClientAccountsQuery();
 
   const rows = useMemo<AssignmentRow[]>(() => {
@@ -72,5 +73,7 @@ export function useAmAssignments() {
     rows,
     today,
     isLoading: loadingAssignments || loadingEods || loadingWork,
+    isError: assignmentsQuery.isError || eodsQuery.isError || workQuery.isError,
+    error: assignmentsQuery.error ?? eodsQuery.error ?? workQuery.error,
   };
 }

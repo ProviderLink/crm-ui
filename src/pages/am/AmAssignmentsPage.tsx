@@ -21,7 +21,7 @@ import { useAmAssignments } from './assignments/use-am-assignments';
 type StatusFilter = 'open' | 'active' | 'on_hold' | 'ended' | 'all';
 
 export default function AmAssignmentsPage() {
-  const { rows, today, isLoading } = useAmAssignments();
+  const { rows, today, isLoading, isError, error } = useAmAssignments();
   const [search, setSearch] = useState('');
   // Finished assignments stay out of the way until asked for.
   const [status, setStatus] = useState<StatusFilter>('open');
@@ -107,6 +107,8 @@ export default function AmAssignmentsPage() {
           columns={columns}
           data={visible}
           isLoading={isLoading}
+          isError={isError}
+          error={error}
           onRowClick={r => setOpenId(r.assignment._id)}
         />
       </PageSection>

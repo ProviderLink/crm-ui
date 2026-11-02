@@ -54,6 +54,23 @@ export function useReviewEditor(review: IPerformanceReview) {
     review.finalManagerSummary ?? ''
   );
 
+  // What the form holds now, as one string, to tell whether it differs from
+  // what was last saved (or loaded). Closing then asks before dropping edits.
+  const snapshot = () =>
+    JSON.stringify([
+      roleSummary,
+      coreResponsibilities,
+      categories,
+      strengths,
+      areasForImprovement,
+      goalsNextPeriod,
+      finalRecommendation,
+      overallRating,
+      finalManagerSummary,
+    ]);
+  const [savedSnapshot, setSavedSnapshot] = useState(snapshot);
+  const isDirty = !isReadOnly && snapshot() !== savedSnapshot;
+
   // AI loading states
   const [regenCatLoading, setRegenCatLoading] = useState(false);
   const [regenGoalsLoading, setRegenGoalsLoading] = useState(false);
@@ -69,6 +86,7 @@ export function useReviewEditor(review: IPerformanceReview) {
   }
 
   async function handleSaveDraft() {
+    const sent = snapshot();
     setSaving(true);
     try {
       await updateReview(id, {
@@ -87,6 +105,7 @@ export function useReviewEditor(review: IPerformanceReview) {
             ? 'In Review'
             : review.reviewStatus,
       });
+      setSavedSnapshot(sent);
       invalidate();
       toast.success('Saved');
     } catch {
@@ -154,6 +173,7 @@ export function useReviewEditor(review: IPerformanceReview) {
   }
 
   async function handleMarkCompleted() {
+    const sent = snapshot();
     setCompleting(true);
     try {
       // Save all current form state before completing so no selections are lost
@@ -169,6 +189,7 @@ export function useReviewEditor(review: IPerformanceReview) {
         categories,
       });
       await completeReview(id);
+      setSavedSnapshot(sent);
       invalidate();
       toast.success('Review marked as Completed');
       setCompleteOpen(false);
@@ -192,6 +213,7 @@ export function useReviewEditor(review: IPerformanceReview) {
   return {
     review,
     isReadOnly,
+    isDirty,
     roleSummary,
     setRoleSummary,
     coreResponsibilities,

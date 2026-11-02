@@ -74,7 +74,7 @@ export function ScorecardsTab() {
         />
       </div>
 
-      {!s.isLoading && none && !s.search ? (
+      {!s.isLoading && !s.isError && none && !s.search ? (
         <div className="rounded-lg border border-border bg-card p-8 text-center text-sm text-muted-foreground">
           No scorecards for this period yet. Use “Generate scorecards” to create
           this week’s.
@@ -84,6 +84,8 @@ export function ScorecardsTab() {
           columns={buildScorecardColumns(s.nameOf)}
           data={s.rows}
           isLoading={s.isLoading}
+          isError={s.isError}
+          error={s.error}
         />
       )}
 

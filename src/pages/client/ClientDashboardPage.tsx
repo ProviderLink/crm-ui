@@ -9,6 +9,7 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { ErrorNotice } from '@/components/shared/ErrorNotice';
 import { Page, PageSection } from '@/components/shared/PageLayout';
 import { EodDetailSheet } from '@/features/eod/EodDetailSheet';
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,12 @@ export default function ClientDashboardPage() {
           </Link>
         </Button>
       </div>
+
+      {d.error && (
+        <PageSection>
+          <ErrorNotice error={d.error} />
+        </PageSection>
+      )}
 
       {/* At a glance */}
       <div className="grid grid-cols-1 gap-4 px-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 lg:px-6">

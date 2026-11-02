@@ -50,8 +50,12 @@ export function useReviewsList() {
         : undefined,
   };
 
-  const { data: allReviews = [], isLoading } =
-    usePerformanceReviewsQuery(filters);
+  const {
+    data: allReviews = [],
+    isLoading,
+    isError,
+    error,
+  } = usePerformanceReviewsQuery(filters);
   const vaMap = useVaNames();
   const clientMap = useClientNames();
 
@@ -115,6 +119,8 @@ export function useReviewsList() {
   return {
     columns,
     isLoading,
+    isError,
+    error,
     reviews,
     vaMap,
     clientMap,

@@ -27,7 +27,12 @@ import { EditAssignmentForm } from './assignments/EditAssignmentForm';
 
 export default function AssignmentManagementPage() {
   const queryClient = useQueryClient();
-  const { data: assignments = [], isLoading } = useAllAssignmentsQuery();
+  const {
+    data: assignments = [],
+    isLoading,
+    isError,
+    error,
+  } = useAllAssignmentsQuery();
   // Clients provisioned with CRM access — from the dedicated CRM endpoint
   const { data: crmClients = [] } = useProvisionedClientsQuery();
   const { data: atsVas = [] } = useAtsVAsQuery();
@@ -225,6 +230,8 @@ export default function AssignmentManagementPage() {
           columns={columns}
           data={visible}
           isLoading={isLoading}
+          isError={isError}
+          error={error}
           onRowClick={a => setOpenAssignmentId(a._id)}
         />
       </PageSection>

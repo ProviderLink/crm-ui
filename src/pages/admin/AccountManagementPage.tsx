@@ -41,7 +41,8 @@ export default function AccountManagementPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
-  const { clientRows, vaRows, amRows, adminRows, isLoading } = useAccountRows();
+  const { clientRows, vaRows, amRows, adminRows, isLoading, isError, error } =
+    useAccountRows();
 
   const query = search.trim().toLowerCase();
   const filter = (rows: UserRow[]) =>
@@ -136,6 +137,8 @@ export default function AccountManagementPage() {
               columns={buildClientColumns()}
               data={clients}
               isLoading={isLoading}
+              isError={isError}
+              error={error}
               onRowClick={setDetailUser}
             />
           </TabsContent>
@@ -144,6 +147,8 @@ export default function AccountManagementPage() {
               columns={buildVaColumns()}
               data={vas}
               isLoading={isLoading}
+              isError={isError}
+              error={error}
               onRowClick={setDetailUser}
             />
           </TabsContent>
@@ -152,6 +157,8 @@ export default function AccountManagementPage() {
               columns={buildAmColumns()}
               data={ams}
               isLoading={isLoading}
+              isError={isError}
+              error={error}
             />
           </TabsContent>
           <TabsContent value="admins" className="mt-0">
@@ -159,6 +166,8 @@ export default function AccountManagementPage() {
               columns={buildAdminColumns()}
               data={admins}
               isLoading={isLoading}
+              isError={isError}
+              error={error}
             />
           </TabsContent>
         </Tabs>

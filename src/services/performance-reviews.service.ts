@@ -1,4 +1,4 @@
-import api from '@/lib/api';
+import api, { LONG_REQUEST_TIMEOUT_MS } from '@/lib/api';
 import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
 import { downloadBlob } from '@/lib/download';
 import type {
@@ -132,7 +132,8 @@ export async function generateReview(
   };
   const { data } = await api.post<{ data: BackendReview }>(
     '/crm/performance-reviews',
-    backendPayload
+    backendPayload,
+    { timeout: LONG_REQUEST_TIMEOUT_MS }
   );
   return mapReview(data.data);
 }
@@ -226,7 +227,8 @@ async function _regenerateSection(
 ): Promise<IPerformanceReview> {
   const { data } = await api.post<{ data: BackendReview }>(
     `/crm/performance-reviews/${id}/regenerate`,
-    { section }
+    { section },
+    { timeout: LONG_REQUEST_TIMEOUT_MS }
   );
   return mapReview(data.data);
 }
@@ -244,6 +246,7 @@ export async function exportReviewPdf(
 ): Promise<void> {
   const response = await api.get(`/crm/performance-reviews/${id}/export-pdf`, {
     responseType: 'blob',
+    timeout: LONG_REQUEST_TIMEOUT_MS,
   });
   downloadBlob(response.data as Blob, filename);
 }

@@ -1,4 +1,4 @@
-import api from '@/lib/api';
+import api, { LONG_REQUEST_TIMEOUT_MS } from '@/lib/api';
 import { downloadBlob } from '@/lib/download';
 
 export type ReportType = 'work_entries' | 'eod' | 'performance';
@@ -24,6 +24,7 @@ export async function exportReport(
   const response = await api.get(endpointMap[type], {
     params: { startDate: dateFrom, endDate: dateTo, format },
     responseType: 'blob',
+    timeout: LONG_REQUEST_TIMEOUT_MS,
   });
 
   const ext = format === 'xlsx' ? 'xlsx' : 'csv';

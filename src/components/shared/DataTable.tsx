@@ -6,14 +6,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import {
-  ChevronDown,
-  ChevronsUpDown,
-  ChevronUp,
-  TriangleAlert,
-} from 'lucide-react';
+import { ChevronDown, ChevronsUpDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
+import { ErrorNotice } from './ErrorNotice';
 import { columnWidthStyle } from './data-table/column-style';
 import { DataTablePagination } from './data-table/DataTablePagination';
 import { PAGE_SIZE_OPTIONS } from './data-table/page-sizes';
@@ -68,14 +64,7 @@ export function DataTable<T>({
     );
   }
 
-  if (isError) {
-    return (
-      <div className="flex items-center gap-2 rounded-lg border border-[rgba(255,255,255,0.08)] bg-surface-raised px-4 py-3 text-sm text-status-error">
-        <TriangleAlert className="size-4 shrink-0" />
-        {error?.message || 'Failed to load data. Please try again.'}
-      </div>
-    );
-  }
+  if (isError) return <ErrorNotice error={error} />;
 
   const rows = table.getRowModel().rows;
 

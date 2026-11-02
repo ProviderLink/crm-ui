@@ -1,4 +1,4 @@
-import api from '@/lib/api';
+import api, { LONG_REQUEST_TIMEOUT_MS } from '@/lib/api';
 import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
 import type { IScorecard } from '@/types/scorecard';
 
@@ -17,7 +17,8 @@ export async function generateScorecards(
   if (vaId) payload.vaId = vaId;
   const { data } = await api.post<{ data: { generated: number } }>(
     '/crm/scorecards/generate',
-    payload
+    payload,
+    { timeout: LONG_REQUEST_TIMEOUT_MS }
   );
   return data.data;
 }

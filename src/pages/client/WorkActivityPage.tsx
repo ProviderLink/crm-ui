@@ -170,6 +170,8 @@ export default function WorkActivityPage() {
               columns={w.workColumns}
               data={w.filteredEntries}
               isLoading={w.isLoading}
+              isError={!!w.entriesError}
+              error={w.entriesError}
               onRowClick={setOpenEntry}
             />
           </TabsContent>
@@ -179,6 +181,8 @@ export default function WorkActivityPage() {
               columns={w.eodColumns}
               data={w.filteredEods}
               isLoading={w.isLoading}
+              isError={!!w.eodsError}
+              error={w.eodsError}
               onRowClick={setOpenEod}
             />
           </TabsContent>

@@ -1,10 +1,12 @@
 import { DownloadIcon, Loader2Icon, LockIcon, SaveIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { DetailDrawer, DrawerHeader } from '@/components/shared/DetailDrawer';
 import { usePerformanceReviewQuery } from '@/hooks/queries';
 import type { IPerformanceReview } from '@/types/performance-review';
 import { ReviewStatusBadge } from '@/components/shared/badges';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { ErrorNotice } from '@/components/shared/ErrorNotice';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -28,26 +30,84 @@ export function ReviewDrawer({
   reviewId: string | null;
   onClose: () => void;
 }) {
+  const [dirty, setDirty] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+
+  // Esc or the close button must not throw away unsaved edits unasked.
+  function requestClose() {
+    if (dirty) setConfirmClose(true);
+    else onClose();
+  }
+
   return (
-    <DetailDrawer
-      open={!!reviewId}
-      onOpenChange={open => !open && onClose()}
-      width="2xl"
-      closeLabel="Close review"
-      srTitle="Performance review"
-      srDescription="View and edit this performance review."
-      keepOpenOnOutsideClick
-    >
-      {reviewId && <ReviewEditor key={reviewId} reviewId={reviewId} />}
-    </DetailDrawer>
+    <>
+      <DetailDrawer
+        open={!!reviewId}
+        onOpenChange={open => !open && requestClose()}
+        width="2xl"
+        closeLabel="Close review"
+        srTitle="Performance review"
+        srDescription="View and edit this performance review."
+        keepOpenOnOutsideClick
+      >
+        {reviewId && (
+          <ReviewEditor
+            key={reviewId}
+            reviewId={reviewId}
+            onDirtyChange={setDirty}
+          />
+        )}
+      </DetailDrawer>
+      <ConfirmDialog
+        open={confirmClose}
+        onCancel={() => setConfirmClose(false)}
+        title="Discard unsaved changes?"
+        description="Your edits to this review have not been saved. Closing now will lose them."
+        confirmLabel="Discard changes"
+        onConfirm={() => {
+          setConfirmClose(false);
+          setDirty(false);
+          onClose();
+        }}
+      />
+    </>
   );
 }
 
 /** Loads the review, then hands it to the editor that seeds its form from it. */
-function ReviewEditor({ reviewId }: { reviewId: string }) {
-  const { data: review, isLoading } = usePerformanceReviewQuery(reviewId);
+function ReviewEditor({
+  reviewId,
+  onDirtyChange,
+}: {
+  reviewId: string;
+  onDirtyChange: (dirty: boolean) => void;
+}) {
+  const {
+    data: review,
+    isLoading,
+    isError,
+    error,
+    isPlaceholderData,
+    refetch,
+  } = usePerformanceReviewQuery(reviewId);
 
-  if (isLoading) {
+  if (isError && !review) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6">
+        <ErrorNotice
+          error={error}
+          fallback="Could not load this review. Please try again."
+        />
+        <Button size="sm" variant="outline" onClick={() => refetch()}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
+  // The list's copy is shown while loading, but the form is seeded only once,
+  // so it must wait for the full review or edits would start from a stale one.
+  if (isLoading || isPlaceholderData) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
@@ -63,12 +123,29 @@ function ReviewEditor({ reviewId }: { reviewId: string }) {
     );
   }
 
-  return <ReviewEditorForm review={review} />;
+  return <ReviewEditorForm review={review} onDirtyChange={onDirtyChange} />;
 }
 
-function ReviewEditorForm({ review }: { review: IPerformanceReview }) {
+function ReviewEditorForm({
+  review,
+  onDirtyChange,
+}: {
+  review: IPerformanceReview;
+  onDirtyChange: (dirty: boolean) => void;
+}) {
   const e = useReviewEditor(review);
-  const { isReadOnly } = e;
+  const { isReadOnly, isDirty } = e;
+  const [regenConfirm, setRegenConfirm] = useState(false);
+
+  useEffect(() => {
+    onDirtyChange(isDirty);
+    return () => onDirtyChange(false);
+  }, [isDirty, onDirtyChange]);
+
+  // Regenerating replaces every category, so ratings already typed would go.
+  const hasCategoryEdits = e.categories.some(
+    c => c.rating !== null || !!c.managerComments?.trim()
+  );
 
   return (
     <>
@@ -171,7 +248,11 @@ function ReviewEditorForm({ review }: { review: IPerformanceReview }) {
               <AiButton
                 label="Regenerate"
                 loading={e.regenCatLoading}
-                onClick={e.handleRegenCategories}
+                onClick={() =>
+                  hasCategoryEdits
+                    ? setRegenConfirm(true)
+                    : e.handleRegenCategories()
+                }
               />
             )
           }
@@ -285,6 +366,19 @@ function ReviewEditorForm({ review }: { review: IPerformanceReview }) {
           </>
         )}
       </footer>
+
+      <ConfirmDialog
+        open={regenConfirm}
+        onCancel={() => setRegenConfirm(false)}
+        title="Regenerate categories?"
+        description="This replaces all categories, including the ratings and comments you have entered."
+        confirmLabel="Regenerate"
+        variant="default"
+        onConfirm={async () => {
+          setRegenConfirm(false);
+          await e.handleRegenCategories();
+        }}
+      />
 
       <ConfirmDialog
         open={e.completeOpen}

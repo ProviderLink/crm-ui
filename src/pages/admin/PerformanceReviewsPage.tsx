@@ -36,6 +36,8 @@ export default function PerformanceReviewsPage() {
           columns={p.columns}
           data={p.reviews}
           isLoading={p.isLoading}
+          isError={p.isError}
+          error={p.error}
           onRowClick={r => p.setOpenReviewId(r.id)}
         />
       </PageSection>

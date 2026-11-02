@@ -19,16 +19,17 @@ export function useDashboardData() {
   })();
   const sevenDaysAgo = addDaysToDateKey(today, -7);
 
+  const assignmentsQuery = useMyAllAssignmentsQuery();
   const { data: allAssignments = [], isLoading: loadingAssignments } =
-    useMyAllAssignmentsQuery();
+    assignmentsQuery;
   const { data: hiredVAs = [] } = useHiredVasForClientQuery(
     user?.clientRef ?? undefined
   );
   // Only this week's hours are shown, so only ask for this week.
-  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery({
-    dateFrom: weekStart,
-  });
-  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery();
+  const workQuery = useWorkEntriesQuery({ dateFrom: weekStart });
+  const eodsQuery = useEodSubmissionsQuery();
+  const { data: workAll = [], isLoading: loadingWork } = workQuery;
+  const { data: eods = [], isLoading: loadingEods } = eodsQuery;
 
   // Build VA name map from hired-vas endpoint (client-scoped, always accessible)
   const vaNameMap: Record<string, string> = {};
@@ -98,6 +99,7 @@ export function useDashboardData() {
     loadingAssignments,
     loadingWork,
     loadingEods,
+    error: assignmentsQuery.error ?? workQuery.error ?? eodsQuery.error,
     activeAssignments,
     onHoldAssignments,
     endedAssignments,

@@ -12,9 +12,15 @@ type FailedQueueEntry = {
   reject: (error: unknown) => void;
 };
 
+/** Most calls answer in well under a second; a hung one should fail, not spin. */
+export const REQUEST_TIMEOUT_MS = 30_000;
+/** For work that takes a while on the server: AI generation, PDFs, exports. */
+export const LONG_REQUEST_TIMEOUT_MS = 120_000;
+
 const api = axios.create({
   baseURL: config.apiUrl,
   withCredentials: true,
+  timeout: REQUEST_TIMEOUT_MS,
 });
 
 // Attach access token to every request

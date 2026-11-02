@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { ErrorNotice } from '@/components/shared/ErrorNotice';
 import { Page, PageSection } from '@/components/shared/PageLayout';
 import {
   AssignmentStatusPill,
@@ -41,15 +42,15 @@ export default function VaDashboardPage() {
   const weekStart = weekStartOfDateKey(today);
 
   // Everything shown here is from this week, so only ask for this week.
-  const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery({
-    dateFrom: weekStart,
-  });
-  const { data: todayEods = [], isLoading: loadingEods } =
-    useEodSubmissionsQuery({
-      date: today,
-    });
+  const workQuery = useWorkEntriesQuery({ dateFrom: weekStart });
+  const eodsQuery = useEodSubmissionsQuery({ date: today });
+  const assignmentsQuery = useMyAllAssignmentsQuery();
+  const { data: workAll = [], isLoading: loadingWork } = workQuery;
+  const { data: todayEods = [], isLoading: loadingEods } = eodsQuery;
   const { data: allAssignments = [], isLoading: loadingAssignments } =
-    useMyAllAssignmentsQuery();
+    assignmentsQuery;
+  const loadError =
+    workQuery.error ?? eodsQuery.error ?? assignmentsQuery.error;
 
   const todayEntries = workAll.filter(e => e.entryDate.slice(0, 10) === today);
   const eodSubmitted = todayEods.length > 0;
@@ -88,6 +89,12 @@ export default function VaDashboardPage() {
           </Button>
         </div>
       </div>
+
+      {loadError && (
+        <PageSection>
+          <ErrorNotice error={loadError} />
+        </PageSection>
+      )}
 
       {/* Today at a glance */}
       <div className="grid grid-cols-1 gap-4 px-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-3 lg:px-6">

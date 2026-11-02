@@ -16,16 +16,19 @@ import { buildWorkColumns } from './work-columns';
 
 export function useWorkActivity() {
   const user = useAppSelector(s => s.auth.user);
+  const assignmentsQuery = useAllAssignmentsQuery();
+  const entriesQuery = useWorkEntriesQuery();
+  const eodsQuery = useEodSubmissionsQuery();
   const { data: assignments = [], isLoading: loadingAssignments } =
-    useAllAssignmentsQuery();
-  const { data: allEntries = [], isLoading: loadingEntries } =
-    useWorkEntriesQuery();
-  const { data: allEods = [], isLoading: loadingEods } =
-    useEodSubmissionsQuery();
+    assignmentsQuery;
+  const { data: allEntries = [], isLoading: loadingEntries } = entriesQuery;
+  const { data: allEods = [], isLoading: loadingEods } = eodsQuery;
   const { data: hiredVAs = [] } = useHiredVasForClientQuery(
     user?.clientRef ?? undefined
   );
   const isLoading = loadingAssignments || loadingEntries || loadingEods;
+  const entriesError = entriesQuery.isError ? entriesQuery.error : null;
+  const eodsError = eodsQuery.isError ? eodsQuery.error : null;
 
   const vaMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -127,6 +130,8 @@ export function useWorkActivity() {
   return {
     assignments,
     isLoading,
+    entriesError,
+    eodsError,
     vaMap,
     assignmentMap,
     clientMap,

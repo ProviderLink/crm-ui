@@ -31,8 +31,8 @@ export function useAccountRows() {
   // (so AMs don't need the team.read permission just to see their accounts).
   // AM users and admin users are still fetched from /shared/users (admins only,
   // gated by team.read server-side, but AM-tabs aren't shown to AMs anyway).
-  const { data: crmAccounts, isLoading: loadingCrmAccounts } =
-    useCrmAccountsListQuery();
+  const crmAccountsQuery = useCrmAccountsListQuery();
+  const { data: crmAccounts, isLoading: loadingCrmAccounts } = crmAccountsQuery;
   const vaUsers = crmAccounts?.vas ?? [];
   const clientUsers = crmAccounts?.clients ?? [];
 
@@ -40,10 +40,10 @@ export function useAccountRows() {
   // users, so skip those requests for them.
   const { isAccountManager } = useRole();
   const canListUsers = !isAccountManager;
-  const { data: amUsers = [], isLoading: loadingAm } =
-    useAccountManagersQuery(canListUsers);
-  const { data: adminUsers = [], isLoading: loadingAdmin } =
-    useCrmAdminUsersQuery(canListUsers);
+  const amQuery = useAccountManagersQuery(canListUsers);
+  const { data: amUsers = [], isLoading: loadingAm } = amQuery;
+  const adminQuery = useCrmAdminUsersQuery(canListUsers);
+  const { data: adminUsers = [], isLoading: loadingAdmin } = adminQuery;
 
   const adminRows: UserRow[] = adminUsers.map(toRow);
 
@@ -140,5 +140,7 @@ export function useAccountRows() {
     amRows,
     adminRows,
     isLoading: loadingCrmAccounts || loadingAm || loadingAdmin,
+    isError: crmAccountsQuery.isError || amQuery.isError || adminQuery.isError,
+    error: crmAccountsQuery.error ?? amQuery.error ?? adminQuery.error,
   };
 }

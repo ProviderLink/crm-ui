@@ -41,15 +41,17 @@ export function useAmDashboard() {
   const { today } = useCompanyDay();
   const weekStart = weekStartOfDateKey(today);
 
-  const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery();
-  const { data: assignments = [], isLoading: loadingAssignments } =
-    useAllAssignmentsQuery(user?.id);
-  const { data: eods = [], isLoading: loadingEods } = useEodSubmissionsQuery({
+  const statsQuery = useDashboardStatsQuery();
+  const assignmentsQuery = useAllAssignmentsQuery(user?.id);
+  const eodsQuery = useEodSubmissionsQuery({
     dateFrom: addDaysToDateKey(today, -30),
   });
-  const { data: work = [], isLoading: loadingWork } = useWorkEntriesQuery({
-    dateFrom: weekStart,
-  });
+  const workQuery = useWorkEntriesQuery({ dateFrom: weekStart });
+  const { data: stats, isLoading: loadingStats } = statsQuery;
+  const { data: assignments = [], isLoading: loadingAssignments } =
+    assignmentsQuery;
+  const { data: eods = [], isLoading: loadingEods } = eodsQuery;
+  const { data: work = [], isLoading: loadingWork } = workQuery;
 
   const team = useMemo<TeamRow[]>(() => {
     const rows = assignments
@@ -96,5 +98,10 @@ export function useAmDashboard() {
     loadingStats,
     loadingTeam: loadingAssignments || loadingEods || loadingWork,
     loadingEods,
+    error:
+      statsQuery.error ??
+      assignmentsQuery.error ??
+      eodsQuery.error ??
+      workQuery.error,
   };
 }

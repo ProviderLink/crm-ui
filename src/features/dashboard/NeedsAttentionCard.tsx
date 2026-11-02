@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useRole } from '@/hooks/use-role';
+import { ErrorNotice } from '@/components/shared/ErrorNotice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -87,17 +88,21 @@ export function NeedsAttentionCard({ prefix }: { prefix: '/admin' | '/am' }) {
   const { today } = useCompanyDay();
 
   // Assignments are already scoped to the manager's own for an AM.
-  const { data: assignments = [], isLoading: l1 } = useAllAssignmentsQuery(
+  const assignmentsQuery = useAllAssignmentsQuery(
     isAccountManager ? user?.id : undefined
   );
-  const { data: eodsToday = [], isLoading: l2 } = useEodSubmissionsQuery({
-    date: today,
-  });
-  const { data: reminders = [], isLoading: l3 } = useSurveyRemindersQuery();
-  const { data: reviews = [], isLoading: l4 } = usePerformanceReviewsQuery();
+  const eodsQuery = useEodSubmissionsQuery({ date: today });
+  const remindersQuery = useSurveyRemindersQuery();
+  const reviewsQuery = usePerformanceReviewsQuery();
+  const { data: assignments = [] } = assignmentsQuery;
+  const { data: eodsToday = [] } = eodsQuery;
+  const { data: reminders = [] } = remindersQuery;
+  const { data: reviews = [] } = reviewsQuery;
   const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
-  const loading = l1 || l2 || l3 || l4;
+  const queries = [assignmentsQuery, eodsQuery, remindersQuery, reviewsQuery];
+  const loading = queries.some(q => q.isLoading);
+  const loadError = queries.find(q => q.error)?.error;
 
   const vaName = useMemo(() => {
     const m: Record<string, string> = {};
@@ -179,7 +184,9 @@ export function NeedsAttentionCard({ prefix }: { prefix: '/admin' | '/am' }) {
         <CardTitle className="text-sm font-medium">Needs attention</CardTitle>
       </CardHeader>
       <CardContent className="p-0 pt-3">
-        {loading ? (
+        {loadError ? (
+          <ErrorNotice error={loadError} />
+        ) : loading ? (
           <Skeleton className="h-24 w-full rounded-md" />
         ) : (
           <div className="grid gap-x-8 gap-y-6 sm:grid-cols-3">

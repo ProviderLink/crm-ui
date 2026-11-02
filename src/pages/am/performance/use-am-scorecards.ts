@@ -12,7 +12,12 @@ import type { IScorecard } from '@/types/scorecard';
  */
 export function useAmScorecards() {
   const user = useAppSelector(s => s.auth.user);
-  const { data: scorecards = [], isLoading } = useScorecardsQuery();
+  const {
+    data: scorecards = [],
+    isLoading,
+    isError,
+    error,
+  } = useScorecardsQuery();
   const { data: assignments = [] } = useAllAssignmentsQuery(user?.id);
 
   const vaMap = useMemo(() => {
@@ -39,6 +44,8 @@ export function useAmScorecards() {
   return {
     ...view,
     isLoading,
+    isError,
+    error,
     nameOf,
     avgScore: average(s => s.productivityScore),
     avgEod: average(s => s.eodComplianceRate),

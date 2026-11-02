@@ -5,6 +5,7 @@ import {
   ClipboardCheckIcon,
   UsersIcon,
 } from 'lucide-react';
+import { ErrorNotice } from '@/components/shared/ErrorNotice';
 import { Page, PageSection } from '@/components/shared/PageLayout';
 import {
   useAtsClientsQuery,
@@ -23,7 +24,11 @@ import {
 export default function AdminDashboardPage() {
   const prefix = '/admin';
 
-  const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery();
+  const {
+    data: stats,
+    isLoading: loadingStats,
+    error: statsError,
+  } = useDashboardStatsQuery();
   const { isLoading: loadingVAs } = useAtsVAsQuery();
   const { isLoading: loadingClients } = useAtsClientsQuery();
   const loading = loadingVAs || loadingClients;
@@ -51,6 +56,12 @@ export default function AdminDashboardPage() {
           </p>
         </div>
       </div>
+
+      {statsError && (
+        <PageSection>
+          <ErrorNotice error={statsError} />
+        </PageSection>
+      )}
 
       {/* Today at a glance */}
       <div className="grid grid-cols-1 gap-4 px-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 lg:px-6">

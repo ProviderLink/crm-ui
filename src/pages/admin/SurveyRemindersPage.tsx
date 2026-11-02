@@ -45,7 +45,12 @@ import {
 
 export default function SurveyRemindersPage() {
   const { data: assignments = [] } = useAllAssignmentsQuery();
-  const { data: allReminders = [], isLoading } = useSurveyRemindersQuery();
+  const {
+    data: allReminders = [],
+    isLoading,
+    isError,
+    error,
+  } = useSurveyRemindersQuery();
   // Due dates are company business days, so judge "overdue" against the
   // company's current day, not the device clock.
   const { today } = useCompanyDay();
@@ -287,7 +292,13 @@ export default function SurveyRemindersPage() {
         {updateError && (
           <p className="mb-2 text-sm text-destructive">{updateError}</p>
         )}
-        <DataTable columns={columns} data={reminders} isLoading={isLoading} />
+        <DataTable
+          columns={columns}
+          data={reminders}
+          isLoading={isLoading}
+          isError={isError}
+          error={error}
+        />
       </PageSection>
     </Page>
   );

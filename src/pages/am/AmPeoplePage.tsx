@@ -43,7 +43,7 @@ export default function AmPeoplePage() {
   const [status, setStatus] = useState<StatusFilter>('active');
   const [atRiskOnly, setAtRiskOnly] = useState(false);
 
-  const { clientRows, vaRows, isLoading } = useAccountRows();
+  const { clientRows, vaRows, isLoading, isError, error } = useAccountRows();
 
   const query = search.trim().toLowerCase();
   // Accounts that need attention come first; the rest stay in name order.
@@ -151,6 +151,8 @@ export default function AmPeoplePage() {
               columns={buildAmClientColumns()}
               data={clients}
               isLoading={isLoading}
+              isError={isError}
+              error={error}
               onRowClick={setDetailUser}
             />
           </TabsContent>
@@ -159,6 +161,8 @@ export default function AmPeoplePage() {
               columns={buildAmVaColumns()}
               data={vas}
               isLoading={isLoading}
+              isError={isError}
+              error={error}
               onRowClick={setDetailUser}
             />
           </TabsContent>
