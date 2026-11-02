@@ -16,9 +16,17 @@ import { buildWorkColumns } from './work-columns';
 
 export function useWorkActivity() {
   const user = useAppSelector(s => s.auth.user);
+  // The default window is the last 30 days; "Clear" returns to it.
+  const { today } = useCompanyDay();
+  const range = useDateRange(today);
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
+  const dateWindow = {
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  };
   const assignmentsQuery = useAllAssignmentsQuery();
-  const entriesQuery = useWorkEntriesQuery();
-  const eodsQuery = useEodSubmissionsQuery();
+  const entriesQuery = useWorkEntriesQuery(dateWindow);
+  const eodsQuery = useEodSubmissionsQuery(dateWindow);
   const { data: assignments = [], isLoading: loadingAssignments } =
     assignmentsQuery;
   const { data: allEntries = [], isLoading: loadingEntries } = entriesQuery;
@@ -59,10 +67,6 @@ export function useWorkActivity() {
     [vaMap, assignmentMap]
   );
 
-  // The default window is the last 30 days; "Clear" returns to it.
-  const { today } = useCompanyDay();
-  const range = useDateRange(today);
-  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [assignmentFilter, setAssignmentFilter] = useState('all');
   const [search, setSearch] = useState('');
 

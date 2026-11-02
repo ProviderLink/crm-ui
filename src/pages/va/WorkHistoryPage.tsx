@@ -8,7 +8,7 @@ import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import {
   QK,
-  useMyAssignmentsQuery,
+  useMyAllAssignmentsQuery,
   useWorkEntriesQuery,
   useCompanyDay,
 } from '@/hooks/queries';
@@ -21,13 +21,23 @@ import { EditWorkEntryDrawer } from './work-history/EditWorkEntryDrawer';
 
 export default function WorkHistoryPage() {
   const queryClient = useQueryClient();
+  // The default window is the last 30 days; "Clear" returns to it. The server
+  // is asked for just that window, so a long history is never cut off.
+  const { today } = useCompanyDay();
+  const range = useDateRange(today);
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const {
     data: entries = [],
     isLoading,
     isError,
     error,
-  } = useWorkEntriesQuery();
-  const { data: myAssignments = [] } = useMyAssignmentsQuery();
+  } = useWorkEntriesQuery({
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  });
+  // All of the VA's assignments, not only active ones: entries of an ended or
+  // on-hold assignment keep their client and service names.
+  const { data: myAssignments = [] } = useMyAllAssignmentsQuery();
 
   const clientMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -43,10 +53,6 @@ export default function WorkHistoryPage() {
     return m;
   }, [myAssignments]);
 
-  // The default window is the last 30 days; "Clear" returns to it.
-  const { today } = useCompanyDay();
-  const range = useDateRange(today);
-  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [category, setCategory] = useState('all');

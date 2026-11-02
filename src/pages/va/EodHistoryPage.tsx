@@ -11,7 +11,7 @@ import {
   QK,
   useCompanyDay,
   useEodSubmissionsQuery,
-  useMyAssignmentsQuery,
+  useMyAllAssignmentsQuery,
 } from '@/hooks/queries';
 import { useApiMutation } from '@/hooks/use-api-mutation';
 import { useDateRange } from '@/hooks/use-date-range';
@@ -23,13 +23,23 @@ import { buildEodHistoryColumns } from './eod-history/columns';
 import { EodHistoryFilters } from './eod-history/EodHistoryFilters';
 
 export default function EodHistoryPage() {
+  // Defaults come from the company business day, not the device clock, so a
+  // VA east of the company never loses a day of records. The server is asked
+  // for just that window.
+  const { today } = useCompanyDay();
+  const range = useDateRange(today);
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const {
     data: eods = [],
     isLoading,
     isError,
     error,
-  } = useEodSubmissionsQuery();
-  const { data: myAssignments = [] } = useMyAssignmentsQuery();
+  } = useEodSubmissionsQuery({
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  });
+  // All assignments, so reports of ended ones keep their names.
+  const { data: myAssignments = [] } = useMyAllAssignmentsQuery();
 
   const [deleteTarget, setDeleteTarget] = useState<IEodSubmission | null>(null);
   const remove = useApiMutation({
@@ -72,11 +82,6 @@ export default function EodHistoryPage() {
     [clientMap, assignmentMap]
   );
 
-  // Defaults come from the company business day, not the device clock, so a
-  // VA east of the company never loses a day of records.
-  const { today } = useCompanyDay();
-  const range = useDateRange(today);
-  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [search, setSearch] = useState('');
 
   // Search matches the client, the service or the task names.

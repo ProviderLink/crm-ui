@@ -8,8 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useAllAssignmentsQuery,
-  useAtsClientsQuery,
-  useAtsVAsQuery,
   useCompanyDay,
   useEodSubmissionsQuery,
   usePerformanceReviewsQuery,
@@ -17,6 +15,7 @@ import {
 } from '@/hooks/queries';
 import { reviewsInScope } from '@/features/reviews/scope';
 import { useAppSelector } from '@/hooks/store';
+import { useClientNames, useVaNames } from '@/hooks/use-name-maps';
 
 const MAX_ITEMS = 4;
 
@@ -98,22 +97,11 @@ export function NeedsAttentionCard({ prefix }: { prefix: '/admin' | '/am' }) {
   const { data: eodsToday = [] } = eodsQuery;
   const { data: reminders = [] } = remindersQuery;
   const { data: reviews = [] } = reviewsQuery;
-  const { data: atsVAs = [] } = useAtsVAsQuery();
-  const { data: atsClients = [] } = useAtsClientsQuery();
+  const vaName = useVaNames();
+  const clientName = useClientNames();
   const queries = [assignmentsQuery, eodsQuery, remindersQuery, reviewsQuery];
   const loading = queries.some(q => q.isLoading);
   const loadError = queries.find(q => q.error)?.error;
-
-  const vaName = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const v of atsVAs) m[v.id] = `${v.firstName} ${v.lastName}`;
-    return m;
-  }, [atsVAs]);
-  const clientName = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const c of atsClients) m[c.id] = c.companyName;
-    return m;
-  }, [atsClients]);
 
   const missing = useMemo<Item[]>(() => {
     const done = new Set(eodsToday.map(e => e.assignmentId));

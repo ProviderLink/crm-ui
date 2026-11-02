@@ -27,7 +27,11 @@ export function useDashboardData() {
   );
   // Only this week's hours are shown, so only ask for this week.
   const workQuery = useWorkEntriesQuery({ dateFrom: weekStart });
-  const eodsQuery = useEodSubmissionsQuery();
+  // Enough history for the latest report of each VA, the recent list and
+  // the 7-day rate, without loading every report ever filed.
+  const eodsQuery = useEodSubmissionsQuery({
+    dateFrom: addDaysToDateKey(today, -90),
+  });
   const { data: workAll = [], isLoading: loadingWork } = workQuery;
   const { data: eods = [], isLoading: loadingEods } = eodsQuery;
 

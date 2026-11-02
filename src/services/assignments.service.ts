@@ -9,14 +9,16 @@ import type {
 // VA — own active assignments only
 export async function getMyAssignments(): Promise<IAssignment[]> {
   const { data } = await api.get<{ data: IAssignment[] }>(
-    '/crm/assignments?status=active'
+    `/crm/assignments?${toQueryString({ status: 'active', limit: LIST_LIMIT })}`
   );
   return data.data;
 }
 
 // VA — all assignments regardless of status (for dashboard overview)
 export async function getMyAllAssignments(): Promise<IAssignment[]> {
-  const { data } = await api.get<{ data: IAssignment[] }>('/crm/assignments');
+  const { data } = await api.get<{ data: IAssignment[] }>(
+    `/crm/assignments?${toQueryString({ limit: LIST_LIMIT })}`
+  );
   return data.data;
 }
 

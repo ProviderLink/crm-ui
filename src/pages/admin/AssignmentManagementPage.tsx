@@ -11,9 +11,9 @@ import {
   ASSIGNMENT_KEYS,
   useActiveAccountManagersQuery,
   useAllAssignmentsQuery,
-  useAtsVAsQuery,
   useProvisionedClientsQuery,
 } from '@/hooks/queries';
+import { useVaNames } from '@/hooks/use-name-maps';
 import { useApiMutation } from '@/hooks/use-api-mutation';
 import { updateAssignment } from '@/services/assignments.service';
 import type { IAssignment } from '@/types/assignment';
@@ -35,7 +35,6 @@ export default function AssignmentManagementPage() {
   } = useAllAssignmentsQuery();
   // Clients provisioned with CRM access — from the dedicated CRM endpoint
   const { data: crmClients = [] } = useProvisionedClientsQuery();
-  const { data: atsVas = [] } = useAtsVAsQuery();
   const { data: accountManagers = [] } = useActiveAccountManagersQuery();
 
   const [openAssignmentId, setOpenAssignmentId] = useState<string | null>(null);
@@ -73,13 +72,7 @@ export default function AssignmentManagementPage() {
     () => Object.fromEntries(crmClients.map(c => [c.clientId, c.companyName])),
     [crmClients]
   );
-  const vaMap = useMemo(
-    () =>
-      Object.fromEntries(
-        atsVas.map(v => [v.id, `${v.firstName} ${v.lastName}`])
-      ),
-    [atsVas]
-  );
+  const vaMap = useVaNames();
   const amMap = useMemo(
     () =>
       Object.fromEntries(

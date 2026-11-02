@@ -25,11 +25,10 @@ import {
 import { useUpdateSurveyReminder } from '@/hooks/mutations';
 import {
   useAllAssignmentsQuery,
-  useAtsClientsQuery,
-  useAtsVAsQuery,
   useCompanyDay,
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
+import { useClientNames, useVaNames } from '@/hooks/use-name-maps';
 import { isOpen } from '@/lib/survey';
 import {
   SURVEY_TYPE_LABELS,
@@ -54,25 +53,21 @@ export default function SurveyRemindersPage() {
   // Due dates are company business days, so judge "overdue" against the
   // company's current day, not the device clock.
   const { today } = useCompanyDay();
-  const { data: atsVAs = [] } = useAtsVAsQuery();
-  const { data: atsClients = [] } = useAtsClientsQuery();
+  const vaNames = useVaNames();
+  const clientNames = useClientNames();
 
   // What the "For" column shows for each related record: a main line and a
   // supporting line, so it reads as people and companies, not ids.
   const relatedInfo = useMemo(() => {
     const info = new Map<string, RelatedInfo>();
-    for (const v of atsVAs)
-      info.set(v.id, {
-        title: `${v.firstName} ${v.lastName}`,
+    for (const [id, name] of Object.entries(vaNames))
+      info.set(id, {
+        title: name,
         subtitle: 'Virtual Assistant',
         isCompany: false,
       });
-    for (const c of atsClients)
-      info.set(c.id, {
-        title: c.companyName,
-        subtitle: 'Client',
-        isCompany: true,
-      });
+    for (const [id, name] of Object.entries(clientNames))
+      info.set(id, { title: name, subtitle: 'Client', isCompany: true });
     // An assignment is shown by its VA, with the client underneath.
     for (const a of assignments) {
       const va = info.get(a.candidateId);
@@ -86,7 +81,7 @@ export default function SurveyRemindersPage() {
       }
     }
     return info;
-  }, [atsVAs, atsClients, assignments]);
+  }, [vaNames, clientNames, assignments]);
   const [statusFilter, setStatusFilter] = useState<
     SurveyStatus | 'overdue' | 'all'
   >('all');

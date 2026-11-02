@@ -7,11 +7,7 @@ import {
 } from 'lucide-react';
 import { ErrorNotice } from '@/components/shared/ErrorNotice';
 import { Page, PageSection } from '@/components/shared/PageLayout';
-import {
-  useAtsClientsQuery,
-  useAtsVAsQuery,
-  useDashboardStatsQuery,
-} from '@/hooks/queries';
+import { useDashboardStatsQuery } from '@/hooks/queries';
 
 import { DashboardStatCard } from '@/components/shared/DashboardStatCard';
 import { ExportDataCard } from './admin-dashboard/ExportDataCard';
@@ -29,9 +25,6 @@ export default function AdminDashboardPage() {
     isLoading: loadingStats,
     error: statsError,
   } = useDashboardStatsQuery();
-  const { isLoading: loadingVAs } = useAtsVAsQuery();
-  const { isLoading: loadingClients } = useAtsClientsQuery();
-  const loading = loadingVAs || loadingClients;
 
   const overview = stats?.overview;
   const compliance = stats?.eodCompliance;
@@ -118,13 +111,13 @@ export default function AdminDashboardPage() {
 
       {/* VA activity */}
       <PageSection>
-        {!loading && breakdown.length > 0 ? (
+        {!loadingStats && breakdown.length > 0 ? (
           <VaActivityCard
             breakdown={breakdown}
             scorecardsPath={`${prefix}/scorecards`}
           />
         ) : (
-          !loading && (
+          !loadingStats && (
             <div className="flex min-h-40 items-center justify-center rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
               No work has been logged in the last 7 days.
             </div>
