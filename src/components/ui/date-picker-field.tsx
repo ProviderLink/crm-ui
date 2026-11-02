@@ -17,6 +17,8 @@ interface DatePickerFieldProps {
   placeholder?: string
   className?: string
   toDate?: Date // max selectable date
+  /** Accessible name; the button otherwise reads only the chosen date. */
+  ariaLabel?: string
 }
 
 export function DatePickerField({
@@ -25,6 +27,7 @@ export function DatePickerField({
   placeholder = 'Pick a date',
   className,
   toDate,
+  ariaLabel,
 }: DatePickerFieldProps) {
   const selected = value ? parse(value, 'yyyy-MM-dd', new Date()) : undefined
   const validSelected = selected && isValid(selected) ? selected : undefined
@@ -38,6 +41,7 @@ export function DatePickerField({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
+          aria-label={ariaLabel}
           data-empty={!validSelected}
           className={cn(
             'w-full justify-start text-left font-normal data-[empty=true]:text-muted-foreground',
@@ -57,6 +61,8 @@ export function DatePickerField({
           mode="single"
           selected={validSelected}
           onSelect={handleSelect}
+          // Moving focus into the calendar when it opens is what a popup should do.
+          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
           disabled={toDate ? (d: Date) => d > toDate : undefined}
           style={{ '--cell-size': '2.25rem' } as React.CSSProperties}

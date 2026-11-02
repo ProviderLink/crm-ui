@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
 import { withId, type ApiDoc } from '@/lib/with-id';
 import type { IAssignment } from '@/types/assignment';
 import type {
@@ -11,7 +12,7 @@ export async function getVaProfiles(): Promise<IVaProfile[]> {
   // Backend defaults to limit=20 when omitted, which silently truncates the list;
   // fetch a large page so every row is returned.
   const { data } = await api.get<{ data: ApiDoc<IVaProfile>[] }>(
-    '/crm/va-profiles?limit=1000'
+    `/crm/va-profiles?${toQueryString({ limit: LIST_LIMIT })}`
   );
   return data.data.map(v => withId<IVaProfile>(v));
 }
@@ -39,7 +40,7 @@ export async function getVaAssignments(
   candidateId: string
 ): Promise<IVaAssignment[]> {
   const { data } = await api.get<{ data: IAssignment[] }>(
-    `/crm/assignments?candidateId=${candidateId}&limit=100`
+    `/crm/assignments?${toQueryString({ candidateId, limit: LIST_LIMIT })}`
   );
   return (data.data ?? []).map(a => ({
     _id: a._id,

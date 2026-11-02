@@ -61,7 +61,7 @@ export default function AssignmentManagementPage() {
 
   function refreshAssignments() {
     for (const queryKey of ASSIGNMENT_KEYS)
-      queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey });
   }
 
   function handleSheetClose(open: boolean) {

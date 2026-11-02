@@ -1,5 +1,3 @@
-'use client';
-
 import { PlusCircleIcon, type LucideIcon } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 

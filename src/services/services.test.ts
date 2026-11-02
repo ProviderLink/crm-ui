@@ -244,3 +244,13 @@ describe('report export', () => {
     });
   });
 });
+
+describe('review PDF name', () => {
+  it('uses the VA name, lower-cased and hyphenated', async () => {
+    const { reviewPdfFilename } = await import('./performance-reviews.service');
+    expect(reviewPdfFilename('Ayesha  Rahman ')).toBe(
+      'performance-review-ayesha-rahman.pdf'
+    );
+    expect(reviewPdfFilename()).toBe('performance-review-review.pdf');
+  });
+});

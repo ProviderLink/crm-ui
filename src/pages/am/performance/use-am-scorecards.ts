@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
+import { buildScorecardColumns } from '@/features/scorecards/scorecard-columns';
 import { useScorecardGenerate } from '@/features/scorecards/use-scorecard-generate';
 import { useScorecardView } from '@/features/scorecards/use-scorecard-view';
 import { useAllAssignmentsQuery, useScorecardsQuery } from '@/hooks/queries';
@@ -26,7 +27,11 @@ export function useAmScorecards() {
       if (a.candidateName) m[a.candidateId] = a.candidateName;
     return m;
   }, [assignments]);
-  const nameOf = (s: IScorecard) => s.vaName || vaMap[s.vaId] || 'Unknown VA';
+  const nameOf = useCallback(
+    (s: IScorecard) => s.vaName || vaMap[s.vaId] || 'Unknown VA',
+    [vaMap]
+  );
+  const columns = useMemo(() => buildScorecardColumns(nameOf), [nameOf]);
 
   const view = useScorecardView(scorecards, nameOf);
   const generate = useScorecardGenerate();
@@ -47,6 +52,7 @@ export function useAmScorecards() {
     isError,
     error,
     nameOf,
+    columns,
     avgScore: average(s => s.productivityScore),
     avgEod: average(s => s.eodComplianceRate),
     lowest,

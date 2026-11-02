@@ -172,6 +172,8 @@ export function NotesThread({
               placeholder={`Internal note about this ${subjectType === 'va' ? 'VA' : 'client'} (visible only to your team, never to the client or VA)`}
               className="text-xs resize-none"
               rows={2}
+              // Opened by the user's own click on "Add note", so focus belongs here.
+              // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
             />
           </div>

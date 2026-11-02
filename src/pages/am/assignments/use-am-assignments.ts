@@ -12,7 +12,7 @@ import { isReportDue } from '@/lib/compliance';
 import { addDaysToDateKey, weekStartOfDateKey } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
-import { hasBlocker } from '../dashboard/use-am-dashboard';
+import { BLOCKER_DAYS, hasBlocker } from '@/lib/blockers';
 
 export type AssignmentRow = {
   assignment: IAssignment;
@@ -27,8 +27,6 @@ export type AssignmentRow = {
   blocker: boolean;
   health: string | null;
 };
-
-const BLOCKER_DAYS = 7;
 
 /** The manager's assignments with today's report, week and health alongside. */
 export function useAmAssignments() {

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import api from '@/lib/api';
+import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
 import { withId, type ApiDoc } from '@/lib/with-id';
 import type {
   IClientAccount,
@@ -20,7 +21,7 @@ export async function getClientAccounts(): Promise<IClientAccount[]> {
   // Backend defaults to limit=20 when omitted, which silently truncates the list;
   // fetch a large page so every row is returned.
   const { data } = await api.get<{ data: ApiDoc<IClientAccount>[] }>(
-    '/crm/client-accounts?limit=1000'
+    `/crm/client-accounts?${toQueryString({ limit: LIST_LIMIT })}`
   );
   return data.data.map(c => withId<IClientAccount>(c));
 }

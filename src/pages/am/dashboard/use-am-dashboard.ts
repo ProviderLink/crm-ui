@@ -8,9 +8,9 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import { BLOCKER_DAYS, hasBlocker } from '@/lib/blockers';
 import { isReportDue } from '@/lib/compliance';
 import { addDaysToDateKey, weekStartOfDateKey } from '@/lib/time';
-import type { IEodSubmission } from '@/types/eod-submission';
 
 export type TeamRow = {
   id: string;
@@ -24,15 +24,6 @@ export type TeamRow = {
   weekHours: number;
   lastReport: string | null;
 };
-
-/** A blocker field counts only when the VA wrote something other than "None". */
-const NO_BLOCKER = /^(none|n\/a|na|no|nil|nothing|-+)\.?$/i;
-export const hasBlocker = (e: IEodSubmission) => {
-  const text = e.blockers?.trim();
-  return !!text && !NO_BLOCKER.test(text);
-};
-
-const BLOCKER_DAYS = 7;
 
 /**
  * Everything the account manager's dashboard shows. The backend already limits

@@ -13,7 +13,7 @@ import { useCompanyDay } from '@/hooks/queries';
 import { dateKeyToLocalDate } from '@/lib/time';
 
 import { toISO, toYMD } from '../date-utils';
-import { Field } from '../field';
+import { Field } from '@/components/shared/form-layout';
 import { EditActions, ScoreSelect } from './parts';
 import type { ProfileEditor } from './use-profile-editor';
 
@@ -49,7 +49,7 @@ export function VaProfileForm({
 
   return (
     <div className="space-y-3 rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-3">
-      <Field label="Workload">
+      <Field compact label="Workload">
         <Select
           value={value('workloadLevel') ?? 'normal'}
           onValueChange={v => set('workloadLevel', v as WorkloadLevel)}
@@ -66,7 +66,7 @@ export function VaProfileForm({
         </Select>
       </Field>
 
-      <Field label="Satisfaction (1-5)">
+      <Field compact label="Satisfaction (1-5)">
         <ScoreSelect
           value={value('satisfactionScore')}
           onChange={score => set('satisfactionScore', score)}
@@ -74,13 +74,13 @@ export function VaProfileForm({
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Burnout Risk">
+        <Field compact label="Burnout Risk">
           <RiskSelect
             value={value('burnoutRiskFlag') ?? false}
             onChange={flagged => set('burnoutRiskFlag', flagged)}
           />
         </Field>
-        <Field label="Replacement Risk">
+        <Field compact label="Replacement Risk">
           <RiskSelect
             value={value('replacementRiskFlag') ?? false}
             onChange={flagged => set('replacementRiskFlag', flagged)}
@@ -88,7 +88,7 @@ export function VaProfileForm({
         </Field>
       </div>
 
-      <Field label="Last Check-in">
+      <Field compact label="Last Check-in">
         <DatePickerField
           value={toYMD(value('lastVaCheckin'))}
           onChange={v => set('lastVaCheckin', toISO(v))}
@@ -97,7 +97,7 @@ export function VaProfileForm({
         />
       </Field>
 
-      <Field label="Notes">
+      <Field compact label="Notes">
         <Textarea
           value={value('notes') ?? ''}
           onChange={e => set('notes', e.target.value)}

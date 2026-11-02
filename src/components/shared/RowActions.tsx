@@ -6,7 +6,12 @@ import type { ReactNode } from 'react';
  */
 export function RowActions({ children }: { children: ReactNode }) {
   return (
-    <div className="flex justify-end" onClick={e => e.stopPropagation()}>
+    <div
+      className="flex justify-end"
+      role="presentation"
+      onClick={e => e.stopPropagation()}
+      onKeyDown={e => e.stopPropagation()}
+    >
       {children}
     </div>
   );

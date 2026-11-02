@@ -9,7 +9,7 @@ import {
 import { useAppSelector } from '@/hooks/store';
 import { useDateRange } from '@/hooks/use-date-range';
 
-import { hasBlocker } from '../dashboard/use-am-dashboard';
+import { hasBlocker } from '@/lib/blockers';
 
 /**
  * Work entries and daily reports of the manager's own VAs. The backend already

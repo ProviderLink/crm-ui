@@ -95,7 +95,7 @@ function AddWorkEntryForm({
   }, [assignments, setValue]);
 
   async function onSubmit(data: FormData) {
-    if (await save.run(data)) navigate('/va/work/history');
+    if (await save.run(data)) void navigate('/va/work/history');
   }
 
   const title = 'Log Work Entry';

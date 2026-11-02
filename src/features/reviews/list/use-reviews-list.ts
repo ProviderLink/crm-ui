@@ -79,10 +79,9 @@ export function useReviewsList() {
   async function handleExportPdf(review: IPerformanceReview) {
     setExportingId(review.id);
     try {
-      const name = review.candidateName ?? vaMap[review.vaId] ?? 'review';
       await exportReviewPdf(
         review.id,
-        `performance-review-${name.replace(/\s+/g, '-').toLowerCase()}.pdf`
+        review.candidateName ?? vaMap[review.vaId]
       );
     } catch {
       toast.error('Failed to export PDF. Please try again.');
@@ -94,7 +93,7 @@ export function useReviewsList() {
   async function handleDelete(review: IPerformanceReview) {
     try {
       await deleteReview(review.id);
-      queryClient.invalidateQueries({ queryKey: QK.performanceReviews() });
+      void queryClient.invalidateQueries({ queryKey: QK.performanceReviews() });
       toast.success('Review deleted');
     } catch {
       toast.error('Failed to delete review.');
@@ -112,7 +111,7 @@ export function useReviewsList() {
     vaMap,
     clientMap,
     exportingId,
-    onExport: handleExportPdf,
+    onExport: (review: IPerformanceReview) => void handleExportPdf(review),
     onDelete: setDeleteTarget,
   });
 

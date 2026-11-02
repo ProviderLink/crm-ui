@@ -35,7 +35,7 @@ function ServiceStatus() {
       pingApi().then(s => {
         if (alive) setStatus(s);
       });
-    check();
+    void check();
     const timer = setInterval(check, RECHECK_MS);
     return () => {
       alive = false;

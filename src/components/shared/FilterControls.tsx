@@ -71,9 +71,13 @@ export function DateRangeFilter({
 }) {
   return (
     <div className="flex items-center gap-1.5">
-      <DatePickerField value={from} onChange={onFromChange} />
+      <DatePickerField
+        value={from}
+        onChange={onFromChange}
+        ariaLabel="From date"
+      />
       <span className="text-xs text-muted-foreground">to</span>
-      <DatePickerField value={to} onChange={onToChange} />
+      <DatePickerField value={to} onChange={onToChange} ariaLabel="To date" />
     </div>
   );
 }

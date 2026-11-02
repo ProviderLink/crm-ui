@@ -67,7 +67,7 @@ export function NavUser({
     dispatch(clearAuth());
     // Drop cached data so the next user on this tab never sees it.
     queryClient.clear();
-    navigate('/login');
+    void navigate('/login');
   }
 
   return (

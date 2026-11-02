@@ -34,17 +34,28 @@ export function Field({
   label,
   error,
   hint,
+  compact = false,
   children,
 }: {
   label: string;
   error?: string;
   hint?: string;
+  /** Smaller, muted label with a tighter gap, for dense side panels. */
+  compact?: boolean;
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={compact ? 'flex flex-col gap-1' : 'flex flex-col gap-1.5'}>
       {label && (
-        <Label className="text-sm font-medium text-foreground">{label}</Label>
+        <Label
+          className={
+            compact
+              ? 'text-xs font-medium text-muted-foreground'
+              : 'text-sm font-medium text-foreground'
+          }
+        >
+          {label}
+        </Label>
       )}
       {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
       {children}

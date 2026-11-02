@@ -23,7 +23,7 @@ import { dueKey, isOpen } from '@/lib/survey';
 import { isReportDue } from '@/lib/compliance';
 import { addDaysToDateKey, weekStartOfDateKey } from '@/lib/time';
 
-import { hasBlocker } from '../dashboard/use-am-dashboard';
+import { BLOCKER_DAYS, hasBlocker } from '@/lib/blockers';
 import { FollowUps } from './FollowUps';
 
 /**
@@ -103,7 +103,7 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
 
   // What needs attention
   const submittedToday = eods.some(e => e.date === today);
-  const blockerFrom = addDaysToDateKey(today, -7);
+  const blockerFrom = addDaysToDateKey(today, -BLOCKER_DAYS);
   const blockers = eods.filter(e => e.date >= blockerFrom && hasBlocker(e));
   const overdue = reminders.filter(
     r => isOpen(r) && (r.dueDate?.slice(0, 10) ?? '') < today

@@ -83,7 +83,7 @@ export default function AmCheckinsPage() {
         relatedInfo: c.relatedInfo,
         today: c.today,
         busyId,
-        onDone: r => handleUpdateStatus(r._id, 'completed'),
+        onDone: r => void handleUpdateStatus(r._id, 'completed'),
         onSkip: setSkipTarget,
       }),
     [c.relatedInfo, c.today, busyId, handleUpdateStatus]

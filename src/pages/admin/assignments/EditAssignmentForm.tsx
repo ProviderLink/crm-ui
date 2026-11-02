@@ -82,7 +82,7 @@ export function EditAssignmentForm({
       await updateAssignment(assignment._id, {
         ...rest,
         // Convert date to ISO for backend validation
-        // Empty string = user cleared the field → send null so backend deletes it from Firestore
+        // Empty string = user cleared the field → send null so the backend clears it
         // Value present → convert to ISO
         endDate: endDate ? new Date(endDate).toISOString() : null,
       });

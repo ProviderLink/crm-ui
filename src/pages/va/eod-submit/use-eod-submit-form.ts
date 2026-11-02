@@ -84,7 +84,7 @@ export function useEodSubmitForm() {
     // `date` is omitted so the server uses the company's current day, and
     // `hoursWorked` is derived server-side so overnight shifts are not
     // under-counted.
-    if (await submit.run(data)) navigate('/va/eod/history');
+    if (await submit.run(data)) void navigate('/va/eod/history');
   }
 
   return {

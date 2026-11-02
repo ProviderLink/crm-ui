@@ -53,7 +53,7 @@ export default function LoginPage() {
       queryClient.clear();
       dispatch(setAuth({ user: result.user, accessToken: result.accessToken }));
       toast.success('Welcome back!');
-      navigate(roleHome[result.user.role], { replace: true });
+      void navigate(roleHome[result.user.role], { replace: true });
     } catch (err) {
       // The server already issued a session; end it so no cookie lingers.
       if (err instanceof NoCrmAccessError) await logout();

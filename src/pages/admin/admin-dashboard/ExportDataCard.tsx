@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DownloadIcon } from 'lucide-react';
-import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -15,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { exportReport, type ExportFormat } from '@/services/reports.service';
+import { useApiMutation } from '@/hooks/use-api-mutation';
+import { exportReport } from '@/services/reports.service';
 
 const exportSchema = z
   .object({
@@ -31,8 +31,13 @@ const exportSchema = z
 type ExportFormData = z.infer<typeof exportSchema>;
 
 export function ExportDataCard() {
-  const [exporting, setExporting] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
+  const download = useApiMutation({
+    mutationFn: (v: ExportFormData) =>
+      exportReport(v.type, v.dateFrom, v.dateTo, v.format),
+    errorMessage: 'Export failed. Please try again.',
+  });
+  const exporting = download.isPending;
+  const exportError = download.error;
 
   const {
     control,
@@ -48,22 +53,7 @@ export function ExportDataCard() {
     },
   });
 
-  async function onExport(values: ExportFormData) {
-    setExporting(true);
-    setExportError(null);
-    try {
-      await exportReport(
-        values.type,
-        values.dateFrom,
-        values.dateTo,
-        values.format as ExportFormat
-      );
-    } catch {
-      setExportError('Export failed. Please try again.');
-    } finally {
-      setExporting(false);
-    }
-  }
+  const onExport = (values: ExportFormData) => download.run(values);
 
   return (
     <Card className="gap-4 p-5">

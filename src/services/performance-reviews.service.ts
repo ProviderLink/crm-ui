@@ -239,11 +239,16 @@ export const regenerateGoals = (id: string) => _regenerateSection(id, 'goals');
 export const improveManagerSummary = (id: string) =>
   _regenerateSection(id, 'summary');
 
+/** "performance-review-ayesha-rahman.pdf" for the VA the review is about. */
+export const reviewPdfFilename = (vaName = 'review') =>
+  `performance-review-${vaName.trim().replace(/\s+/g, '-').toLowerCase()}.pdf`;
+
 /** GET /crm/performance-reviews/:id/export-pdf — download PDF */
 export async function exportReviewPdf(
   id: string,
-  filename = 'performance-review.pdf'
+  vaName?: string
 ): Promise<void> {
+  const filename = reviewPdfFilename(vaName);
   const response = await api.get(`/crm/performance-reviews/${id}/export-pdf`, {
     responseType: 'blob',
     timeout: LONG_REQUEST_TIMEOUT_MS,

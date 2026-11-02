@@ -15,7 +15,7 @@ import type {
 } from '@/types/client-account';
 
 import { toISO, toYMD } from '../date-utils';
-import { Field } from '../field';
+import { Field } from '@/components/shared/form-layout';
 import { EditActions, ScoreSelect } from './parts';
 import type { ProfileEditor } from './use-profile-editor';
 
@@ -35,7 +35,7 @@ export function ClientProfileForm({
 
   return (
     <div className="space-y-3">
-      <Field label="Health Status">
+      <Field compact label="Health Status">
         <Select
           value={value('healthStatus') ?? 'green'}
           onValueChange={v => set('healthStatus', v as HealthStatus)}
@@ -51,14 +51,14 @@ export function ClientProfileForm({
         </Select>
       </Field>
 
-      <Field label="Satisfaction (1-5)">
+      <Field compact label="Satisfaction (1-5)">
         <ScoreSelect
           value={value('satisfactionScore')}
           onChange={score => set('satisfactionScore', score)}
         />
       </Field>
 
-      <Field label="EMR System">
+      <Field compact label="EMR System">
         <Input
           value={value('emrSystem') ?? ''}
           onChange={e => set('emrSystem', e.target.value)}
@@ -67,7 +67,7 @@ export function ClientProfileForm({
         />
       </Field>
 
-      <Field label="Service Start Date">
+      <Field compact label="Service Start Date">
         <DatePickerField
           value={toYMD(value('serviceStartDate'))}
           onChange={v => set('serviceStartDate', toISO(v))}
@@ -91,7 +91,7 @@ export function ClientProfileForm({
       </div>
 
       {Boolean(value('baaSigned')) && (
-        <Field label="BAA Signed Date">
+        <Field compact label="BAA Signed Date">
           <DatePickerField
             value={toYMD(value('baaSignedDate'))}
             onChange={v => set('baaSignedDate', toISO(v))}
@@ -100,7 +100,7 @@ export function ClientProfileForm({
         </Field>
       )}
 
-      <Field label="Last Check-in">
+      <Field compact label="Last Check-in">
         <DatePickerField
           value={toYMD(value('lastClientCheckin'))}
           onChange={v => set('lastClientCheckin', toISO(v))}
@@ -108,7 +108,7 @@ export function ClientProfileForm({
         />
       </Field>
 
-      <Field label="Open Issues">
+      <Field compact label="Open Issues">
         <Input
           type="number"
           min={0}
@@ -120,7 +120,7 @@ export function ClientProfileForm({
         />
       </Field>
 
-      <Field label="Notes">
+      <Field compact label="Notes">
         <Textarea
           value={value('notes') ?? ''}
           onChange={e => set('notes', e.target.value)}

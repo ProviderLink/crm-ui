@@ -81,8 +81,8 @@ export function useReviewEditor(review: IPerformanceReview) {
   const [completing, setCompleting] = useState(false);
 
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: QK.performanceReview(id) });
-    queryClient.invalidateQueries({ queryKey: QK.performanceReviews() });
+    void queryClient.invalidateQueries({ queryKey: QK.performanceReview(id) });
+    void queryClient.invalidateQueries({ queryKey: QK.performanceReviews() });
   }
 
   async function handleSaveDraft() {
@@ -160,11 +160,7 @@ export function useReviewEditor(review: IPerformanceReview) {
   async function handleExportPdf() {
     setExporting(true);
     try {
-      const name = review.candidateName ?? 'review';
-      await exportReviewPdf(
-        id,
-        `performance-review-${name.replace(/\s+/g, '-').toLowerCase()}.pdf`
-      );
+      await exportReviewPdf(id, review.candidateName);
     } catch {
       toast.error('Failed to export PDF. Please try again.');
     } finally {

@@ -4,7 +4,6 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
 import { StatTile } from '@/components/shared/StatTile';
 import { Button } from '@/components/ui/button';
-import { buildScorecardColumns } from '@/features/scorecards/scorecard-columns';
 import { ScorecardFilters } from '@/features/scorecards/ScorecardFilters';
 import { scoreColor } from '@/features/scorecards/score';
 
@@ -81,7 +80,7 @@ export function ScorecardsTab() {
         </div>
       ) : (
         <DataTable
-          columns={buildScorecardColumns(s.nameOf)}
+          columns={s.columns}
           data={s.rows}
           isLoading={s.isLoading}
           isError={s.isError}

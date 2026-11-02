@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { LIST_LIMIT } from '@/lib/api-query';
 import { withId, type ApiDoc } from '@/lib/with-id';
 import type { IAtsCandidate, IAtsClient } from '@/types/ats';
 import axios from 'axios';
@@ -17,7 +18,7 @@ interface AssignmentLookup {
 async function fromOwnAssignments(): Promise<AssignmentLookup[]> {
   const { data } = await api.get<{ data: AssignmentLookup[] }>(
     '/crm/assignments',
-    { params: { limit: 1000 } }
+    { params: { limit: LIST_LIMIT } }
   );
   return data.data;
 }
@@ -30,7 +31,7 @@ export async function getAtsClients(): Promise<IAtsClient[]> {
     const { data } = await api.get<{ data: ApiDoc<IAtsClient>[] }>(
       '/ats/clients',
       {
-        params: { limit: 1000 },
+        params: { limit: LIST_LIMIT },
       }
     );
     return data.data.map(c => withId<IAtsClient>(c));
@@ -56,7 +57,7 @@ export async function getAtsVAs(): Promise<IAtsCandidate[]> {
     const { data } = await api.get<{ data: ApiDoc<IAtsCandidate>[] }>(
       '/ats/candidates',
       {
-        params: { limit: 1000 },
+        params: { limit: LIST_LIMIT },
       }
     );
     return data.data.map(v => withId<IAtsCandidate>(v));

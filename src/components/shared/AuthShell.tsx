@@ -63,12 +63,15 @@ export function AuthErrorBanner({
 }) {
   return (
     <div
+      role="alert"
       className={cn(
         'flex items-start gap-2 rounded-md border border-[rgba(255,255,255,0.08)] bg-surface-raised px-4 py-3 text-sm text-status-error',
         className
       )}
     >
-      <span className="mt-0.5 shrink-0">⚠</span>
+      <span className="mt-0.5 shrink-0" aria-hidden>
+        ⚠
+      </span>
       {message}
     </div>
   );

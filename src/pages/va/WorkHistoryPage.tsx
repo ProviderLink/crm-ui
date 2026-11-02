@@ -123,7 +123,9 @@ export default function WorkHistoryPage() {
             }
             onClose={() => setEditEntry(null)}
             onSaved={() => {
-              queryClient.invalidateQueries({ queryKey: QK.workEntriesAll });
+              void queryClient.invalidateQueries({
+                queryKey: QK.workEntriesAll,
+              });
               setEditEntry(null);
             }}
           />

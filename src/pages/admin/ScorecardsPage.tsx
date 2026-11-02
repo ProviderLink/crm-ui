@@ -1,4 +1,5 @@
 import { RefreshCwIcon } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { DataTable } from '@/components/shared/DataTable';
@@ -20,7 +21,11 @@ export default function ScorecardsPage() {
     error,
   } = useScorecardsQuery();
   const vaMap = useVaNames();
-  const nameOf = (s: IScorecard) => s.vaName || vaMap[s.vaId] || 'Unknown VA';
+  const nameOf = useCallback(
+    (s: IScorecard) => s.vaName || vaMap[s.vaId] || 'Unknown VA',
+    [vaMap]
+  );
+  const columns = useMemo(() => buildScorecardColumns(nameOf), [nameOf]);
 
   const view = useScorecardView(scorecards, nameOf);
   const generate = useScorecardGenerate();
@@ -57,7 +62,7 @@ export default function ScorecardsPage() {
         />
 
         <DataTable
-          columns={buildScorecardColumns(nameOf)}
+          columns={columns}
           data={view.rows}
           isLoading={isLoading}
           isError={isError}
