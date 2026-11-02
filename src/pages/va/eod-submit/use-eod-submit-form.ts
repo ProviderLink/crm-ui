@@ -3,15 +3,11 @@ import { useEffect } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  QK,
-  useEodContextQuery,
-  useEodSubmissionsQuery,
-} from '@/hooks/queries';
+import { QK, useCompanyDay, useEodSubmissionsQuery } from '@/hooks/queries';
 import { useApiMutation } from '@/hooks/use-api-mutation';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { getApiError } from '@/lib/api-error';
-import { calcHours, todayString } from '@/lib/time';
+import { calcHours } from '@/lib/time';
 import { createEodSubmission } from '@/services/eod-submissions.service';
 
 import { DEFAULT_WORK_ENTRY, schema, type FormData } from './schema';
@@ -25,10 +21,11 @@ export function useEodSubmitForm() {
    * against its own current company day. The device value is only a
    * placeholder until the context resolves.
    */
-  const deviceToday = todayString();
-  const { data: eodContext, isLoading: loadingContext } = useEodContextQuery();
-  const today = eodContext?.dateKey ?? deviceToday;
-  const companyTimezone = eodContext?.timezone ?? null;
+  const {
+    today,
+    timezone: companyTimezone,
+    isLoading: loadingContext,
+  } = useCompanyDay();
   const {
     assignments,
     isLoading: loadingAssignments,

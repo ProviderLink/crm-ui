@@ -5,6 +5,7 @@ import {
   useEodSubmissionsQuery,
   useHiredVasForClientQuery,
   useWorkEntriesQuery,
+  useCompanyDay,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import { useDateRange } from '@/hooks/use-date-range';
@@ -56,7 +57,8 @@ export function useWorkActivity() {
   );
 
   // The default window is the last 30 days; "Clear" returns to it.
-  const range = useDateRange();
+  const { today } = useCompanyDay();
+  const range = useDateRange(today);
   const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [assignmentFilter, setAssignmentFilter] = useState('all');
   const [search, setSearch] = useState('');

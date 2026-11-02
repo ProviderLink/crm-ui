@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react';
 
 import { Page, PageHeader, PageSection } from '@/components/shared/PageLayout';
 import { DataTable } from '@/components/shared/DataTable';
-import { useAllAssignmentsQuery, useWorkEntriesQuery } from '@/hooks/queries';
+import {
+  useAllAssignmentsQuery,
+  useWorkEntriesQuery,
+  useCompanyDay,
+} from '@/hooks/queries';
 import { useDateRange } from '@/hooks/use-date-range';
 import {
   useClientNames,
@@ -18,7 +22,8 @@ import { WorkEntryFilters } from '@/features/work-entries/WorkEntryFilters';
 
 export default function WorkEntriesPage() {
   // The default window is the last 30 days; "Clear" returns to it.
-  const range = useDateRange();
+  const { today } = useCompanyDay();
+  const range = useDateRange(today);
   const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');

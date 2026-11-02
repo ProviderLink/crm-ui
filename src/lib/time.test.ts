@@ -8,6 +8,7 @@ import {
   formatDateKeyLong,
   formatDateKeyShort,
   formatMinutes,
+  nowTimeInZone,
   weekdayOfDateKey,
   weekStartOfDateKey,
 } from './time';
@@ -91,5 +92,16 @@ describe('date keys', () => {
     expect(d?.getMonth()).toBe(2);
     expect(d?.getDate()).toBe(4);
     expect(dateKeyToLocalDate('nope')).toBeNull();
+  });
+});
+
+describe('nowTimeInZone', () => {
+  it('is an HH:MM wall-clock time', () => {
+    expect(nowTimeInZone('Asia/Dhaka')).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
+  });
+
+  it('falls back to the device clock for no zone or a bad one', () => {
+    expect(nowTimeInZone(null)).toMatch(/^\d\d:\d\d$/);
+    expect(nowTimeInZone('Not/AZone')).toMatch(/^\d\d:\d\d$/);
   });
 });

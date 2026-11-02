@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  useEodContextQuery,
+  useCompanyDay,
   useEodSubmissionsQuery,
   useMyAllAssignmentsQuery,
   useWorkEntriesQuery,
@@ -28,7 +28,6 @@ import {
 import {
   formatDateKeyLong,
   formatMinutes,
-  todayString,
   weekStartOfDateKey,
 } from '@/lib/time';
 
@@ -37,11 +36,9 @@ import { DashboardStatCard } from '@/components/shared/DashboardStatCard';
 const MAX_TODAY_ROWS = 5;
 
 export default function VaDashboardPage() {
-  const today = todayString();
+  // Everything is judged on the company's business day, not the device's.
+  const { today } = useCompanyDay();
   const weekStart = weekStartOfDateKey(today);
-  // EOD compliance is judged on the company's business day, not the device's.
-  const { data: eodContext } = useEodContextQuery();
-  const companyToday = eodContext?.dateKey ?? today;
 
   // Everything shown here is from this week, so only ask for this week.
   const { data: workAll = [], isLoading: loadingWork } = useWorkEntriesQuery({
@@ -49,7 +46,7 @@ export default function VaDashboardPage() {
   });
   const { data: todayEods = [], isLoading: loadingEods } =
     useEodSubmissionsQuery({
-      date: companyToday,
+      date: today,
     });
   const { data: allAssignments = [], isLoading: loadingAssignments } =
     useMyAllAssignmentsQuery();

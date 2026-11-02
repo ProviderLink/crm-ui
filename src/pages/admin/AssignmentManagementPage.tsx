@@ -8,7 +8,7 @@ import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { SheetDescription, SheetTitle } from '@/components/ui/sheet';
 import {
-  QK,
+  ASSIGNMENT_KEYS,
   useActiveAccountManagersQuery,
   useAllAssignmentsQuery,
   useAtsVAsQuery,
@@ -44,7 +44,7 @@ export default function AssignmentManagementPage() {
   );
   const deactivate = useApiMutation({
     mutationFn: (id: string) => updateAssignment(id, { status: 'ended' }),
-    invalidate: [QK.assignmentLists],
+    invalidate: ASSIGNMENT_KEYS,
     errorMessage: 'Failed to deactivate assignment. Please try again.',
   });
   const deactivateError = deactivate.error;
@@ -53,6 +53,11 @@ export default function AssignmentManagementPage() {
     if (!deactivateTarget) return;
     await deactivate.run(deactivateTarget._id);
     setDeactivateTarget(null);
+  }
+
+  function refreshAssignments() {
+    for (const queryKey of ASSIGNMENT_KEYS)
+      queryClient.invalidateQueries({ queryKey });
   }
 
   function handleSheetClose(open: boolean) {
@@ -145,9 +150,7 @@ export default function AssignmentManagementPage() {
                   team={accountManagers}
                   onSuccess={() => {
                     setSheetMode(null);
-                    queryClient.invalidateQueries({
-                      queryKey: QK.assignmentLists,
-                    });
+                    refreshAssignments();
                   }}
                   onClose={() => setSheetMode(null)}
                 />
@@ -160,9 +163,7 @@ export default function AssignmentManagementPage() {
                   team={accountManagers}
                   onSuccess={() => {
                     setSheetMode(null);
-                    queryClient.invalidateQueries({
-                      queryKey: QK.assignmentLists,
-                    });
+                    refreshAssignments();
                   }}
                   onClose={() => setSheetMode(null)}
                 />

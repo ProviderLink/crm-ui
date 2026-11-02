@@ -9,13 +9,13 @@ import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
-  useEodContextQuery,
+  useCompanyDay,
   useEodSubmissionsQuery,
   usePerformanceReviewsQuery,
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
+import { reviewsInScope } from '@/features/reviews/scope';
 import { useAppSelector } from '@/hooks/store';
-import { todayString } from '@/lib/time';
 
 const MAX_ITEMS = 4;
 
@@ -84,8 +84,7 @@ export function NeedsAttentionCard({ prefix }: { prefix: '/admin' | '/am' }) {
   const user = useAppSelector(s => s.auth.user);
   const { isAccountManager } = useRole();
 
-  const { data: eodContext } = useEodContextQuery();
-  const today = eodContext?.dateKey ?? todayString();
+  const { today } = useCompanyDay();
 
   // Assignments are already scoped to the manager's own for an AM.
   const { data: assignments = [], isLoading: l1 } = useAllAssignmentsQuery(
@@ -159,20 +158,19 @@ export function NeedsAttentionCard({ prefix }: { prefix: '/admin' | '/am' }) {
 
   const drafts = useMemo<Item[]>(
     () =>
-      reviews
+      (isAccountManager ? reviewsInScope(reviews, assignments) : reviews)
         .filter(
           r =>
             r.reviewStatus === 'Draft' ||
             r.reviewStatus === 'AI Generated' ||
             r.reviewStatus === 'In Review'
         )
-        .filter(r => !scoped || scoped.has(r.vaId) || scoped.has(r.clientId))
         .map(r => ({
           key: r.id,
           title: r.candidateName ?? vaName[r.vaId] ?? 'VA',
           note: `${r.reviewType} review · ${r.reviewStatus}`,
         })),
-    [reviews, vaName, scoped]
+    [reviews, assignments, isAccountManager, vaName]
   );
 
   return (

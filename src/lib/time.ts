@@ -111,3 +111,22 @@ export function daysUntil(due: string, today: string): number {
     (Date.UTC(dy!, dm! - 1, dd) - Date.UTC(ty!, tm! - 1, td)) / 86_400_000
   );
 }
+
+/**
+ * Current time as "HH:MM" on the wall clock of `timeZone` (an IANA name), so
+ * a time stamped for the company matches the company's business day. Falls
+ * back to the device clock when no zone is known or the name is invalid.
+ */
+export function nowTimeInZone(timeZone: string | null): string {
+  if (!timeZone) return nowTimeString();
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(new Date());
+  } catch {
+    return nowTimeString();
+  }
+}

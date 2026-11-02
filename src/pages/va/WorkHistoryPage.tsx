@@ -10,6 +10,7 @@ import {
   QK,
   useMyAssignmentsQuery,
   useWorkEntriesQuery,
+  useCompanyDay,
 } from '@/hooks/queries';
 import { useDateRange } from '@/hooks/use-date-range';
 import type { IWorkEntry } from '@/types/work-entry';
@@ -43,7 +44,8 @@ export default function WorkHistoryPage() {
   }, [myAssignments]);
 
   // The default window is the last 30 days; "Clear" returns to it.
-  const range = useDateRange();
+  const { today } = useCompanyDay();
+  const range = useDateRange(today);
   const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');

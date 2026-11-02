@@ -15,7 +15,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { TimePickerField } from '@/components/ui/time-picker-field';
+import { useCompanyDay } from '@/hooks/queries';
 import { WORK_STATUS_DOT } from '@/lib/status-styles';
+import { dateKeyToLocalDate } from '@/lib/time';
 import { updateWorkEntry } from '@/services/work-entries.service';
 import {
   WORK_ENTRY_CATEGORIES,
@@ -65,6 +67,7 @@ export function EditWorkEntryForm({
     defaultValues: toFormValues(entry),
   });
 
+  const { today } = useCompanyDay();
   const timeSpent = useWatch({ control, name: 'timeSpent' });
   const [serverError, setServerError] = useState('');
 
@@ -101,7 +104,7 @@ export function EditWorkEntryForm({
                   <DatePickerField
                     value={field.value}
                     onChange={field.onChange}
-                    toDate={new Date()}
+                    toDate={dateKeyToLocalDate(today) ?? undefined}
                   />
                 )}
               />

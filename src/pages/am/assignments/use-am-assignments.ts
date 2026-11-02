@@ -3,12 +3,12 @@ import { useMemo } from 'react';
 import {
   useAllAssignmentsQuery,
   useClientAccountsQuery,
-  useEodContextQuery,
+  useCompanyDay,
   useEodSubmissionsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { addDaysToDateKey, todayString, weekStartOfDateKey } from '@/lib/time';
+import { addDaysToDateKey, weekStartOfDateKey } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
 import { hasBlocker } from '../dashboard/use-am-dashboard';
@@ -30,8 +30,7 @@ const BLOCKER_DAYS = 7;
 /** The manager's assignments with today's report, week and health alongside. */
 export function useAmAssignments() {
   const user = useAppSelector(s => s.auth.user);
-  const { data: eodContext } = useEodContextQuery();
-  const today = eodContext?.dateKey ?? todayString();
+  const { today } = useCompanyDay();
   const weekStart = weekStartOfDateKey(today);
 
   const { data: assignments = [], isLoading: loadingAssignments } =

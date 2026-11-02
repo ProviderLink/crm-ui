@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import {
   useAllAssignmentsQuery,
   useEodSubmissionsQuery,
+  useCompanyDay,
 } from '@/hooks/queries';
 import { useDateRange } from '@/hooks/use-date-range';
 import { useReportExport } from '@/hooks/use-report-export';
@@ -15,7 +16,8 @@ import type { IEodSubmission } from '@/types/eod-submission';
 
 export function useEodReports() {
   // The default window is the last 30 days; "Clear" returns to it.
-  const range = useDateRange();
+  const { today } = useCompanyDay();
+  const range = useDateRange(today);
   const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [search, setSearch] = useState('');
   const [selectedEodId, setSelectedEodId] = useState<string | null>(null);

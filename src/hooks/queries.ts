@@ -39,6 +39,7 @@ import {
 import { getWorkEntries } from '@/services/work-entries.service';
 import type { IAssignment } from '@/types/assignment';
 import type { IPerformanceReview } from '@/types/performance-review';
+import { todayString } from '@/lib/time';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 /** Return the current user's ID, scoped per login session to prevent cache pollution. */
@@ -81,10 +82,12 @@ export const QK = {
   clientAccountsList: ['client-accounts-list'] as const,
   clientAssignments: (clientId?: string) =>
     ['client-assignments', clientId ?? 'none'] as const,
+  clientAssignmentsAll: ['client-assignments'] as const,
   vaProfile: (vaId?: string | null) => ['va-profile', vaId ?? 'none'] as const,
   vaProfilesList: ['va-profiles-list'] as const,
   vaAssignments: (vaId?: string | null) =>
     ['va-assignments', vaId ?? 'none'] as const,
+  vaAssignmentsAll: ['va-assignments'] as const,
   crmAccountsList: ['crm-accounts-list'] as const,
   adminNotes: (subject: 'client' | 'va', id: string) =>
     ['admin-notes', subject, id] as const,
@@ -93,6 +96,16 @@ export const QK = {
     ['performance-reviews', filters ?? {}] as const,
   performanceReview: (id: string) => ['performance-reviews', id] as const,
 };
+
+/**
+ * Every query that shows an assignment or a count of them: the lists, the
+ * detail drawer, and the per-client and per-VA profile counts.
+ */
+export const ASSIGNMENT_KEYS = [
+  QK.assignmentsAll,
+  QK.clientAssignmentsAll,
+  QK.vaAssignmentsAll,
+] as const;
 
 export function useWorkEntriesQuery(filters?: {
   assignmentId?: string;
@@ -134,10 +147,11 @@ export function useEodSubmissionQuery(id?: string) {
 }
 
 /**
- * The company's current business day, used by the EOD submit form.
+ * The company's current business day, from the server (company timezone).
  *
- * Kept stale for the duration of a session: the key only changes at the
- * company's midnight, and the submit flow refetches after a successful POST.
+ * The key only changes at the company's midnight, so it is refreshed every few
+ * minutes and when the tab regains focus: a tab left open overnight must not
+ * keep showing yesterday.
  */
 export function useEodContextQuery() {
   const uid = useUserId();
@@ -145,8 +159,24 @@ export function useEodContextQuery() {
     queryKey: QK.eodContext,
     queryFn: getEodContext,
     enabled: !!uid,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
+}
+
+/**
+ * "Today" for the whole app: the company's business day, not the device's, so
+ * VAs in any timezone and their managers work on the same calendar. Falls back
+ * to the device date only until the server has answered (or if it cannot).
+ */
+export function useCompanyDay() {
+  const { data, isLoading } = useEodContextQuery();
+  return {
+    today: data?.dateKey ?? todayString(),
+    timezone: data?.timezone ?? null,
+    isLoading,
+  };
 }
 
 export function useMyAssignmentsQuery() {
@@ -167,13 +197,16 @@ export function useMyAllAssignmentsQuery() {
   });
 }
 
-export function useAllAssignmentsQuery(accountManagerId?: string) {
+export function useAllAssignmentsQuery(
+  accountManagerId?: string,
+  enabled = true
+) {
   const uid = useUserId();
   return useQuery({
     queryKey: [...QK.allAssignments(uid), accountManagerId ?? 'all'],
     queryFn: () =>
       getAllAssignments(accountManagerId ? { accountManagerId } : {}),
-    enabled: !!uid,
+    enabled: !!uid && enabled,
   });
 }
 

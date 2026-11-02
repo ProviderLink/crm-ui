@@ -4,6 +4,7 @@ import {
   useAllAssignmentsQuery,
   useEodSubmissionsQuery,
   useWorkEntriesQuery,
+  useCompanyDay,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import { useDateRange } from '@/hooks/use-date-range';
@@ -20,7 +21,8 @@ export function useAmActivity() {
   const { data: assignments = [] } = useAllAssignmentsQuery(user?.id);
 
   // The default window is the last 30 days; "Clear" returns to it.
-  const dates = useDateRange();
+  const { today } = useCompanyDay();
+  const dates = useDateRange(today);
   const { dateFrom, setDateFrom, dateTo, setDateTo } = dates;
   const [search, setSearch] = useState('');
   const [assignmentId, setAssignmentId] = useState('all');

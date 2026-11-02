@@ -9,11 +9,11 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { TimePickerField } from '@/components/ui/time-picker-field';
-import { QK } from '@/hooks/queries';
+import { QK, useCompanyDay } from '@/hooks/queries';
 import { useApiMutation } from '@/hooks/use-api-mutation';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { WORK_STATUS_DOT } from '@/lib/status-styles';
-import { nowTimeString, todayString } from '@/lib/time';
+import { dateKeyToLocalDate, nowTimeInZone } from '@/lib/time';
 import { createWorkEntry } from '@/services/work-entries.service';
 import {
   WORK_ENTRY_CATEGORIES,
@@ -39,7 +39,23 @@ import { addWorkEntrySchema, type AddWorkEntryForm } from './work-entry-schema';
 
 type FormData = AddWorkEntryForm;
 
+/**
+ * Waits for the company's business day, so the date and time the form starts
+ * with are the company's and not the device's.
+ */
 export default function AddWorkEntryPage() {
+  const { today, timezone, isLoading } = useCompanyDay();
+  if (isLoading) return <FormPageSkeleton />;
+  return <AddWorkEntryForm today={today} timezone={timezone} />;
+}
+
+function AddWorkEntryForm({
+  today,
+  timezone,
+}: {
+  today: string;
+  timezone: string | null;
+}) {
   const navigate = useNavigate();
   const {
     assignments,
@@ -64,8 +80,8 @@ export default function AddWorkEntryPage() {
   } = useForm<FormData>({
     resolver: zodResolver(addWorkEntrySchema),
     defaultValues: {
-      entryDate: todayString(),
-      entryTime: nowTimeString(),
+      entryDate: today,
+      entryTime: nowTimeInZone(timezone),
       status: 'completed',
     },
   });
@@ -162,7 +178,7 @@ export default function AddWorkEntryPage() {
                     <DatePickerField
                       value={field.value}
                       onChange={field.onChange}
-                      toDate={new Date()}
+                      toDate={dateKeyToLocalDate(today) ?? undefined}
                     />
                   )}
                 />

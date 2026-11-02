@@ -10,6 +10,7 @@ import {
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
 import { useClientNames, useVaNames } from '@/hooks/use-name-maps';
+import { reviewsInScope } from '../scope';
 import { buildReviewColumns } from './columns';
 import {
   deleteReview,
@@ -27,17 +28,10 @@ export function useReviewsList() {
   const user = useAppSelector(s => s.auth.user);
   const { isAccountManager } = useRole();
 
-  // AM scoping: only see reviews for their own assignments
+  // AM scoping: only see reviews for their own assignments (admins need none).
   const { data: amAssignments = [] } = useAllAssignmentsQuery(
-    isAccountManager ? user?.id : undefined
-  );
-  const amCandidateIds = useMemo(
-    () => new Set(amAssignments.map(a => a.candidateId).filter(Boolean)),
-    [amAssignments]
-  );
-  const amClientIds = useMemo(
-    () => new Set(amAssignments.map(a => a.clientId).filter(Boolean)),
-    [amAssignments]
+    isAccountManager ? user?.id : undefined,
+    isAccountManager
   );
 
   const [generateOpen, setGenerateOpen] = useState(false);
@@ -61,13 +55,12 @@ export function useReviewsList() {
   const vaMap = useVaNames();
   const clientMap = useClientNames();
 
-  // For AM, client-side filter by their assignments' candidateIds/clientIds
-  const scopedReviews = useMemo(() => {
-    if (!isAccountManager) return allReviews;
-    return allReviews.filter(
-      r => amCandidateIds.has(r.vaId) || amClientIds.has(r.clientId)
-    );
-  }, [allReviews, isAccountManager, amCandidateIds, amClientIds]);
+  // For an AM, only the reviews of their own VA–client pairs.
+  const scopedReviews = useMemo(
+    () =>
+      isAccountManager ? reviewsInScope(allReviews, amAssignments) : allReviews,
+    [allReviews, isAccountManager, amAssignments]
+  );
 
   // Search matches the VA or the client name, case-insensitively.
   const query = search.trim().toLowerCase();

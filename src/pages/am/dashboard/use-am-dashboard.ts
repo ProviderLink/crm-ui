@@ -3,12 +3,12 @@ import { useMemo } from 'react';
 import {
   useAllAssignmentsQuery,
   useDashboardStatsQuery,
-  useEodContextQuery,
+  useCompanyDay,
   useEodSubmissionsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { addDaysToDateKey, todayString, weekStartOfDateKey } from '@/lib/time';
+import { addDaysToDateKey, weekStartOfDateKey } from '@/lib/time';
 import type { IEodSubmission } from '@/types/eod-submission';
 
 export type TeamRow = {
@@ -38,8 +38,7 @@ const BLOCKER_DAYS = 7;
 export function useAmDashboard() {
   const user = useAppSelector(s => s.auth.user);
   // Business-day keys follow the company's calendar, not the device clock.
-  const { data: eodContext } = useEodContextQuery();
-  const today = eodContext?.dateKey ?? todayString();
+  const { today } = useCompanyDay();
   const weekStart = weekStartOfDateKey(today);
 
   const { data: stats, isLoading: loadingStats } = useDashboardStatsQuery();

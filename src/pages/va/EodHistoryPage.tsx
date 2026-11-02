@@ -9,12 +9,12 @@ import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import {
   QK,
-  useEodContextQuery,
+  useCompanyDay,
   useEodSubmissionsQuery,
   useMyAssignmentsQuery,
 } from '@/hooks/queries';
 import { useApiMutation } from '@/hooks/use-api-mutation';
-import { addDaysToDateKey } from '@/lib/time';
+import { useDateRange } from '@/hooks/use-date-range';
 import { deleteEodSubmission } from '@/services/eod-submissions.service';
 import type { IAssignment } from '@/types/assignment';
 import type { IEodSubmission } from '@/types/eod-submission';
@@ -72,18 +72,11 @@ export default function EodHistoryPage() {
     [clientMap, assignmentMap]
   );
 
-  // Defaults are derived from the company business day, not the device clock,
-  // so a VA east of the company never loses a day of records.
-  const { data: eodContext } = useEodContextQuery();
-  const defaultTo = eodContext?.dateKey ?? '';
-  const defaultFrom = eodContext
-    ? addDaysToDateKey(eodContext.dateKey, -30)
-    : '';
-  // `null` follows the default window; a value (even '') is the user's choice.
-  const [fromChoice, setDateFrom] = useState<string | null>(null);
-  const [toChoice, setDateTo] = useState<string | null>(null);
-  const dateFrom = fromChoice ?? defaultFrom;
-  const dateTo = toChoice ?? defaultTo;
+  // Defaults come from the company business day, not the device clock, so a
+  // VA east of the company never loses a day of records.
+  const { today } = useCompanyDay();
+  const range = useDateRange(today);
+  const { dateFrom, setDateFrom, dateTo, setDateTo } = range;
   const [search, setSearch] = useState('');
 
   // Search matches the client, the service or the task names.
@@ -107,12 +100,10 @@ export default function EodHistoryPage() {
 
   function clearFilters() {
     setSearch('');
-    setDateFrom(null);
-    setDateTo(null);
+    range.reset();
   }
 
-  const hasFilter =
-    search !== '' || dateFrom !== defaultFrom || dateTo !== defaultTo;
+  const hasFilter = search !== '' || range.isChanged;
 
   return (
     <Page

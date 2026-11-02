@@ -1,19 +1,18 @@
 import {
-  useEodContextQuery,
+  useCompanyDay,
   useEodSubmissionsQuery,
   useHiredVasForClientQuery,
   useMyAllAssignmentsQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { addDaysToDateKey, todayString, weekdayOfDateKey } from '@/lib/time';
+import { addDaysToDateKey, weekdayOfDateKey } from '@/lib/time';
 
 export function useDashboardData() {
   const user = useAppSelector(s => s.auth.user);
   // Compliance is measured against the company business day so VAs in any
   // timezone are judged on the same calendar.
-  const { data: eodContext } = useEodContextQuery();
-  const today = eodContext?.dateKey ?? todayString();
+  const { today } = useCompanyDay();
   const weekStart = (() => {
     const dow = weekdayOfDateKey(today);
     return addDaysToDateKey(today, -(dow === 0 ? 6 : dow - 1));

@@ -15,13 +15,14 @@ import {
   useAssignmentQuery,
   useAtsVAsQuery,
   useClientAccountQuery,
+  useCompanyDay,
   useEodSubmissionsQuery,
   usePerformanceReviewsQuery,
   useProvisionedClientsQuery,
   useVaProfileQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
-import { todayString, weekStartOfDateKey } from '@/lib/time';
+import { weekStartOfDateKey } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
 /**
@@ -63,6 +64,7 @@ function AssignmentDetail({
   id: string;
   onEdit: (a: IAssignment) => void;
 }) {
+  const { today } = useCompanyDay();
   const { data: assignment = null, isLoading: loadingAssignment } =
     useAssignmentQuery(id);
 
@@ -135,7 +137,7 @@ function AssignmentDetail({
             entries={entries}
             eods={eods}
             assignmentId={id}
-            weekStart={weekStartOfDateKey(todayString())}
+            weekStart={weekStartOfDateKey(today)}
             reviewCount={
               reviews.filter(r => r.clientId === assignment.clientId).length
             }

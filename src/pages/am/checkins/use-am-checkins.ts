@@ -2,11 +2,11 @@ import { useMemo } from 'react';
 
 import {
   useAllAssignmentsQuery,
-  useEodContextQuery,
+  useCompanyDay,
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
-import { daysUntil, todayString } from '@/lib/time';
+import { daysUntil } from '@/lib/time';
 import type { RelatedInfo } from '@/features/reminders/reminder-cells';
 import { dueKey, isOpen } from '@/lib/survey';
 import type { ISurveyReminder } from '@/types/survey-reminder';
@@ -20,8 +20,7 @@ export function useAmCheckins() {
   const user = useAppSelector(s => s.auth.user);
   // Due dates are company business days, so judge "overdue" against the
   // company's current day, not the device clock.
-  const { data: eodContext } = useEodContextQuery();
-  const today = eodContext?.dateKey ?? todayString();
+  const { today } = useCompanyDay();
 
   const { data: reminders = [], isLoading: loadingReminders } =
     useSurveyRemindersQuery();

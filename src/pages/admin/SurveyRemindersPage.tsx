@@ -27,10 +27,9 @@ import {
   useAllAssignmentsQuery,
   useAtsClientsQuery,
   useAtsVAsQuery,
-  useEodContextQuery,
+  useCompanyDay,
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
-import { todayString } from '@/lib/time';
 import { isOpen } from '@/lib/survey';
 import {
   SURVEY_TYPE_LABELS,
@@ -49,8 +48,7 @@ export default function SurveyRemindersPage() {
   const { data: allReminders = [], isLoading } = useSurveyRemindersQuery();
   // Due dates are company business days, so judge "overdue" against the
   // company's current day, not the device clock.
-  const { data: eodContext } = useEodContextQuery();
-  const today = eodContext?.dateKey ?? todayString();
+  const { today } = useCompanyDay();
   const { data: atsVAs = [] } = useAtsVAsQuery();
   const { data: atsClients = [] } = useAtsClientsQuery();
 

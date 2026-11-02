@@ -9,6 +9,9 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { UpdateVaProfilePayload, WorkloadLevel } from '@/types/va-profile';
 
+import { useCompanyDay } from '@/hooks/queries';
+import { dateKeyToLocalDate } from '@/lib/time';
+
 import { toISO, toYMD } from '../date-utils';
 import { Field } from '../field';
 import { EditActions, ScoreSelect } from './parts';
@@ -42,6 +45,7 @@ export function VaProfileForm({
   editor: ProfileEditor<UpdateVaProfilePayload>;
 }) {
   const { value, set } = editor;
+  const { today } = useCompanyDay();
 
   return (
     <div className="space-y-3 rounded-lg border border-white/[0.1] bg-white/[0.03] px-3 py-3">
@@ -89,7 +93,7 @@ export function VaProfileForm({
           value={toYMD(value('lastVaCheckin'))}
           onChange={v => set('lastVaCheckin', toISO(v))}
           placeholder="Pick date"
-          toDate={new Date()}
+          toDate={dateKeyToLocalDate(today) ?? undefined}
         />
       </Field>
 
