@@ -7,7 +7,4 @@ public
 # shadcn/ui components are generated; keep them as the CLI writes them.
 src/components/ui
 
-# Temporary demo data and adapter (see src/demo).
-src/demo
-
 vercel.json

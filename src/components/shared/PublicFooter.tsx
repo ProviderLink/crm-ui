@@ -6,7 +6,6 @@ import { config } from '@/lib/config';
 type Status =
   { kind: 'checking' } | { kind: 'ok'; ms: number } | { kind: 'down' };
 
-const DEMO = import.meta.env.VITE_DEMO === 'true';
 const RECHECK_MS = 60_000;
 
 /**
@@ -31,7 +30,6 @@ function ServiceStatus() {
   const [status, setStatus] = useState<Status>({ kind: 'checking' });
 
   useEffect(() => {
-    if (DEMO) return;
     let alive = true;
     const check = () =>
       pingApi().then(s => {
@@ -45,9 +43,8 @@ function ServiceStatus() {
     };
   }, []);
 
-  const view = DEMO
-    ? { dot: 'bg-text-tertiary', text: 'Demo environment' }
-    : status.kind === 'ok'
+  const view =
+    status.kind === 'ok'
       ? {
           dot: 'bg-status-success',
           text: `All systems operational · ${status.ms} ms`,

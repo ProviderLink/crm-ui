@@ -17,13 +17,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// DEMO — answer every call from fake in-memory data (no backend). Remove with src/demo.
-// Loaded lazily so a normal build drops it: the flag is replaced at build time.
-if (import.meta.env.VITE_DEMO === 'true') {
-  api.defaults.adapter = requestConfig =>
-    import('@/demo/adapter').then(m => m.demoAdapter(requestConfig));
-}
-
 // Attach access token to every request
 api.interceptors.request.use(requestConfig => {
   const token = store.getState().auth.accessToken;
