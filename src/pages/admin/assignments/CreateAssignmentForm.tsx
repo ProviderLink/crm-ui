@@ -26,19 +26,24 @@ import { type IAssignment } from '@/types/assignment';
 import { Section } from '@/components/shared/form-layout';
 import { Field } from '@/components/shared/form-layout';
 
-const createSchema = z.object({
-  clientId: z.string().min(1, 'Client is required'),
-  candidateId: z.string().min(1, 'Virtual assistant is required'),
-  accountManagerId: z.string().min(1, 'Account manager is required'),
-  serviceType: z
-    .string()
-    .min(1, 'Service type is required')
-    .max(100, 'Max 100 characters'),
-  startDate: z.string().min(1, 'Start date is required'),
-  endDate: z.string().optional(),
-  status: z.enum(['active', 'on_hold', 'ended']),
-  notes: z.string().optional(),
-});
+const createSchema = z
+  .object({
+    clientId: z.string().min(1, 'Client is required'),
+    candidateId: z.string().min(1, 'Virtual assistant is required'),
+    accountManagerId: z.string().min(1, 'Account manager is required'),
+    serviceType: z
+      .string()
+      .min(1, 'Service type is required')
+      .max(100, 'Max 100 characters'),
+    startDate: z.string().min(1, 'Start date is required'),
+    endDate: z.string().optional(),
+    status: z.enum(['active', 'on_hold', 'ended']),
+    notes: z.string().optional(),
+  })
+  .refine(d => !d.endDate || d.endDate >= d.startDate, {
+    message: 'End date must be on or after the start date',
+    path: ['endDate'],
+  });
 type CreateFormData = z.infer<typeof createSchema>;
 
 export function CreateAssignmentForm({

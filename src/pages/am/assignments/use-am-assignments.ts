@@ -8,6 +8,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import { isReportDue } from '@/lib/compliance';
 import { addDaysToDateKey, weekStartOfDateKey } from '@/lib/time';
 import type { IAssignment } from '@/types/assignment';
 
@@ -18,6 +19,8 @@ export type AssignmentRow = {
   vaName: string;
   clientName: string;
   service: string;
+  /** A report is expected today: active, started, and a working day. */
+  reportDue: boolean;
   submittedToday: boolean;
   weekHours: number;
   lastReport: string | null;
@@ -59,6 +62,7 @@ export function useAmAssignments() {
         vaName: a.candidateName || 'VA',
         clientName: a.companyName || '',
         service: a.serviceType ?? 'VA Service',
+        reportDue: isReportDue(a, today),
         submittedToday: own.some(e => e.date === today),
         weekHours: weekMinutes / 60,
         lastReport:

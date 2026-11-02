@@ -108,7 +108,7 @@ export default function ClientDashboardPage() {
           isLoading={d.loadingEods || d.loadingAssignments}
           to="/client/work"
         >
-          Submitted on the last 7 working days
+          Filed on working days, last 7 days
         </DashboardStatCard>
 
         <DashboardStatCard

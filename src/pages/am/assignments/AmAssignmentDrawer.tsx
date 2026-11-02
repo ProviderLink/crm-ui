@@ -19,7 +19,8 @@ import {
   useVaProfileQuery,
   useWorkEntriesQuery,
 } from '@/hooks/queries';
-import { isOpen } from '@/lib/survey';
+import { dueKey, isOpen } from '@/lib/survey';
+import { isReportDue } from '@/lib/compliance';
 import { addDaysToDateKey, weekStartOfDateKey } from '@/lib/time';
 
 import { hasBlocker } from '../dashboard/use-am-dashboard';
@@ -97,7 +98,7 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
     .filter(r => related.has(r.relatedId))
     .sort((a, b) => {
       if (isOpen(a) !== isOpen(b)) return isOpen(a) ? -1 : 1;
-      return a.dueDate.localeCompare(b.dueDate);
+      return dueKey(a).localeCompare(dueKey(b));
     });
 
   // What needs attention
@@ -111,7 +112,9 @@ function AmAssignmentDetail({ id, today }: { id: string; today: string }) {
     assignment.status === 'active'
       ? submittedToday
         ? 'Submitted'
-        : 'Missing'
+        : isReportDue(assignment, today)
+          ? 'Missing'
+          : 'Not due'
       : '—';
 
   return (

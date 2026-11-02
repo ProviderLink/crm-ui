@@ -13,6 +13,7 @@ import {
   usePerformanceReviewsQuery,
   useSurveyRemindersQuery,
 } from '@/hooks/queries';
+import { isReportDue } from '@/lib/compliance';
 import { reviewsInScope } from '@/features/reviews/scope';
 import { useAppSelector } from '@/hooks/store';
 import { useClientNames, useVaNames } from '@/hooks/use-name-maps';
@@ -106,13 +107,13 @@ export function NeedsAttentionCard({ prefix }: { prefix: '/admin' | '/am' }) {
   const missing = useMemo<Item[]>(() => {
     const done = new Set(eodsToday.map(e => e.assignmentId));
     return assignments
-      .filter(a => a.status === 'active' && !done.has(a._id))
+      .filter(a => isReportDue(a, today) && !done.has(a._id))
       .map(a => ({
         key: a._id,
         title: a.candidateName || vaName[a.candidateId] || 'VA',
         note: a.companyName || clientName[a.clientId] || '',
       }));
-  }, [assignments, eodsToday, vaName, clientName]);
+  }, [assignments, eodsToday, today, vaName, clientName]);
 
   // For an AM, only reminders and reviews tied to their own assignments.
   const scoped = useMemo(() => {

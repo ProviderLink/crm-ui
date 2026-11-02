@@ -8,6 +8,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import { isReportDue } from '@/lib/compliance';
 import { addDaysToDateKey, weekStartOfDateKey } from '@/lib/time';
 import type { IEodSubmission } from '@/types/eod-submission';
 
@@ -17,6 +18,8 @@ export type TeamRow = {
   clientName: string;
   service: string;
   onHold: boolean;
+  /** A report is expected today: active, started, and a working day. */
+  reportDue: boolean;
   submittedToday: boolean;
   weekHours: number;
   lastReport: string | null;
@@ -69,6 +72,7 @@ export function useAmDashboard() {
           clientName: a.companyName || '',
           service: a.serviceType ?? 'VA Service',
           onHold: a.status === 'on_hold',
+          reportDue: isReportDue(a, today),
           submittedToday: own.some(e => e.date === today),
           weekHours: weekMinutes / 60,
           lastReport,
@@ -78,7 +82,8 @@ export function useAmDashboard() {
     return rows.sort(
       (a, b) =>
         Number(a.onHold) - Number(b.onHold) ||
-        Number(a.submittedToday) - Number(b.submittedToday) ||
+        Number(!a.reportDue || a.submittedToday) -
+          Number(!b.reportDue || b.submittedToday) ||
         a.vaName.localeCompare(b.vaName)
     );
   }, [assignments, eods, work, today, weekStart]);

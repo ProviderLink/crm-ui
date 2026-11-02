@@ -18,14 +18,26 @@ import { type IAssignment } from '@/types/assignment';
 import { Section } from '@/components/shared/form-layout';
 import { Field } from '@/components/shared/form-layout';
 
-const editSchema = z.object({
-  accountManagerId: z.string().min(1, 'Required'),
-  status: z.enum(['active', 'on_hold', 'ended']),
-  serviceType: z.string().min(1, 'Required'),
-  endDate: z.string().optional(),
-  notes: z.string().optional(),
-});
-type EditFormData = z.infer<typeof editSchema>;
+/** `startDate` is the assignment's own, so the end cannot come before it. */
+const makeEditSchema = (startDate: string) =>
+  z
+    .object({
+      accountManagerId: z.string().min(1, 'Required'),
+      status: z.enum(['active', 'on_hold', 'ended']),
+      serviceType: z
+        .string()
+        .min(1, 'Required')
+        .max(SERVICE_TYPE_MAX, `Max ${SERVICE_TYPE_MAX} characters`),
+      endDate: z.string().optional(),
+      notes: z.string().optional(),
+    })
+    .refine(d => !d.endDate || d.endDate >= startDate.slice(0, 10), {
+      message: 'End date must be on or after the start date',
+      path: ['endDate'],
+    });
+type EditFormData = z.infer<ReturnType<typeof makeEditSchema>>;
+
+const SERVICE_TYPE_MAX = 100;
 
 function sanitizeDate(value: string | undefined | null): string {
   if (!value) return '';
@@ -51,7 +63,7 @@ export function EditAssignmentForm({
     control,
     formState: { errors, isSubmitting },
   } = useForm<EditFormData>({
-    resolver: zodResolver(editSchema),
+    resolver: zodResolver(makeEditSchema(assignment.startDate)),
     defaultValues: {
       accountManagerId: assignment.accountManagerId ?? '',
       status: assignment.status,
@@ -104,6 +116,7 @@ export function EditAssignmentForm({
             { value: 'on_hold', label: 'On Hold' },
             { value: 'ended', label: 'Ended' },
           ]}
+          maxLength={SERVICE_TYPE_MAX}
         />
       </Section>
 

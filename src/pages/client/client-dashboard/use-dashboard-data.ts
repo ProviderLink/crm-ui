@@ -6,6 +6,7 @@ import {
   useWorkEntriesQuery,
 } from '@/hooks/queries';
 import { useAppSelector } from '@/hooks/store';
+import { eodComplianceRate } from '@/lib/compliance';
 import { addDaysToDateKey, weekdayOfDateKey } from '@/lib/time';
 
 export function useDashboardData() {
@@ -17,7 +18,6 @@ export function useDashboardData() {
     const dow = weekdayOfDateKey(today);
     return addDaysToDateKey(today, -(dow === 0 ? 6 : dow - 1));
   })();
-  const sevenDaysAgo = addDaysToDateKey(today, -7);
 
   const assignmentsQuery = useMyAllAssignmentsQuery();
   const { data: allAssignments = [], isLoading: loadingAssignments } =
@@ -50,28 +50,9 @@ export function useDashboardData() {
       .filter(e => e.entryDate.slice(0, 10) >= weekStart)
       .reduce((sum, e) => sum + e.timeSpent, 0) / 60;
 
-  // EOD compliance last 7 working days
-  const activeCandidateIds = new Set(activeAssignments.map(a => a.candidateId));
-  const recentEods = eods.filter(e => e.date >= sevenDaysAgo);
-  const recentEodSet = new Set(
-    recentEods.map(e => `${e.candidateId}::${e.date}`)
-  );
-  const workingDaysLast7 = Array.from({ length: 7 }, (_, i) =>
-    addDaysToDateKey(today, -i)
-  ).filter(d => {
-    const day = weekdayOfDateKey(d);
-    return day >= 1 && day <= 5 && d <= today;
-  });
-  const expectedEods = activeCandidateIds.size * workingDaysLast7.length;
-  const submittedEods = workingDaysLast7.reduce(
-    (sum, day) =>
-      sum +
-      [...activeCandidateIds].filter(id => recentEodSet.has(`${id}::${day}`))
-        .length,
-    0
-  );
-  const eodCompliance =
-    expectedEods > 0 ? Math.round((submittedEods / expectedEods) * 100) : null;
+  // Share of the reports due on working days in the last 7 days that were
+  // filed (a VA is not owed a report before the assignment starts).
+  const eodCompliance = eodComplianceRate(activeAssignments, eods, today);
 
   // Per-VA helpers
   function vaWeekHours(candidateId: string) {

@@ -62,6 +62,8 @@ export function TeamTodayCard({
                     <Pill>On hold</Pill>
                   ) : r.submittedToday ? (
                     <Pill tone="success">Submitted</Pill>
+                  ) : !r.reportDue ? (
+                    <Pill tone="muted">Not due</Pill>
                   ) : (
                     <Pill tone="warning">Missing</Pill>
                   )}
