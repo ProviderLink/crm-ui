@@ -7,6 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { authErrorMessage } from '@/lib/auth-errors';
 import { acceptInvitation } from '@/services/auth.service';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
@@ -54,8 +55,10 @@ export default function AcceptInvitationPage() {
     try {
       await acceptInvitation(token!, data.password);
       setDone(true);
-    } catch {
-      setError('This invitation link is invalid or has expired.');
+    } catch (err) {
+      setError(
+        authErrorMessage(err, 'This invitation link is invalid or has expired.')
+      );
     }
   }
 

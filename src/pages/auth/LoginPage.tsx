@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAppDispatch, useAppSelector } from '@/hooks/store';
+import { authErrorMessage } from '@/lib/auth-errors';
 import { roleHome } from '@/lib/role-home';
 import { NoCrmAccessError, login, logout } from '@/services/auth.service';
 import { setAuth } from '@/store/slices/authSlice';
@@ -25,9 +26,6 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
-
-const NO_ACCESS_MESSAGE =
-  'Your account does not have access to the CRM. Contact your administrator.';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -57,28 +55,9 @@ export default function LoginPage() {
       toast.success('Welcome back!');
       navigate(roleHome[result.user.role], { replace: true });
     } catch (err) {
-      if (err instanceof NoCrmAccessError) {
-        // The server already issued a session; end it so no cookie lingers.
-        await logout();
-        setError(NO_ACCESS_MESSAGE);
-        toast.error(NO_ACCESS_MESSAGE);
-      } else if (err && typeof err === 'object' && 'response' in err) {
-        const status = (err as { response?: { status?: number } }).response
-          ?.status;
-        if (status === 403) {
-          setError(NO_ACCESS_MESSAGE);
-          toast.error(NO_ACCESS_MESSAGE);
-        } else if (status === 401 || status === 400) {
-          setError('Invalid email or password.');
-          toast.error('Invalid email or password.');
-        } else {
-          setError('Something went wrong. Please try again.');
-          toast.error('Something went wrong. Please try again.');
-        }
-      } else {
-        setError('Unable to connect. Check your internet and try again.');
-        toast.error('Unable to connect. Check your internet.');
-      }
+      // The server already issued a session; end it so no cookie lingers.
+      if (err instanceof NoCrmAccessError) await logout();
+      setError(authErrorMessage(err, 'Invalid email or password.'));
     }
   }
 

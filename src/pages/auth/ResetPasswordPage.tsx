@@ -7,6 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { authErrorMessage } from '@/lib/auth-errors';
 import { forgotPassword, resetPassword } from '@/services/auth.service';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
@@ -61,13 +62,9 @@ function RequestStep() {
       setSent(true);
       toast.success('Reset link sent — check your inbox.');
     } catch (err) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        setError('Something went wrong. Please try again.');
-        toast.error('Something went wrong. Please try again.');
-      } else {
-        setError('Unable to connect. Check your internet and try again.');
-        toast.error('Something went wrong. Please try again.');
-      }
+      setError(
+        authErrorMessage(err, 'Something went wrong. Please try again.')
+      );
     }
   }
 
@@ -138,9 +135,10 @@ function ConfirmStep({ token }: { token: string }) {
       await resetPassword(token, data.password);
       setDone(true);
       toast.success('Password updated successfully.');
-    } catch {
-      setError('This reset link is invalid or has expired.');
-      toast.error('This reset link is invalid or has expired.');
+    } catch (err) {
+      setError(
+        authErrorMessage(err, 'This reset link is invalid or has expired.')
+      );
     }
   }
 
