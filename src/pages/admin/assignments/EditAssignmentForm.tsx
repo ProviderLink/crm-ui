@@ -10,6 +10,7 @@ import {
   FormFooter,
   NotesSection,
   ServiceFields,
+  WeeklyHoursField,
 } from '@/features/assignments/form-fields';
 import { getApiError } from '@/lib/api-error';
 import { type IAccountManager } from '@/types/user';
@@ -24,6 +25,10 @@ const makeEditSchema = (startDate: string) =>
     .object({
       accountManagerId: z.string().min(1, 'Required'),
       status: z.enum(['active', 'on_hold', 'ended']),
+      weeklyHours: z
+        .number({ message: 'Enter the hours per week' })
+        .min(1, 'At least 1 hour')
+        .max(60, 'At most 60 hours'),
       serviceType: z
         .string()
         .min(1, 'Required')
@@ -68,6 +73,7 @@ export function EditAssignmentForm({
       accountManagerId: assignment.accountManagerId ?? '',
       status: assignment.status,
       serviceType: assignment.serviceType ?? '',
+      weeklyHours: assignment.weeklyHours ?? 40,
       endDate: sanitizeDate(assignment.endDate),
       notes: assignment.notes ?? '',
     },
@@ -117,6 +123,11 @@ export function EditAssignmentForm({
             { value: 'ended', label: 'Ended' },
           ]}
           maxLength={SERVICE_TYPE_MAX}
+        />
+
+        <WeeklyHoursField
+          register={register}
+          error={errors.weeklyHours?.message}
         />
       </Section>
 

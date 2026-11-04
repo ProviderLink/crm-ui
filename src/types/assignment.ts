@@ -8,6 +8,7 @@ export interface IAssignment {
   accountManagerEmail?: string;
   status: 'active' | 'on_hold' | 'ended';
   serviceType?: string;
+  weeklyHours?: number;
   accountManagerId?: string;
   startDate: string;
   endDate?: string;
@@ -23,10 +24,12 @@ export interface CreateAssignmentPayload {
   endDate?: string;
   status?: 'active' | 'on_hold' | 'ended';
   serviceType: string;
+  weeklyHours?: number;
   notes?: string;
 }
 
 export interface UpdateAssignmentPayload {
+  weeklyHours?: number;
   accountManagerId?: string;
   endDate?: string | null;
   status?: 'active' | 'on_hold' | 'ended';

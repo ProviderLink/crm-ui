@@ -131,6 +131,27 @@ export function ServiceFields<
   );
 }
 
+/** Contracted hours; scorecards measure the VA's hours against this. */
+export function WeeklyHoursField<
+  T extends FieldValues & { weeklyHours: number },
+>({ register, error }: { register: UseFormRegister<T>; error?: string }) {
+  return (
+    <Field
+      label="Hours per week"
+      error={error}
+      hint="Contracted hours. Scorecards measure hours against this."
+    >
+      <Input
+        {...register('weeklyHours' as Path<T>, { valueAsNumber: true })}
+        type="number"
+        min={1}
+        max={60}
+        className="h-10 rounded-xl border-input"
+      />
+    </Field>
+  );
+}
+
 export function NotesSection<T extends FieldValues & { notes?: string }>({
   register,
   error,

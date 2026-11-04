@@ -18,6 +18,7 @@ import {
   FormFooter,
   NotesSection,
   ServiceFields,
+  WeeklyHoursField,
 } from '@/features/assignments/form-fields';
 import { getApiError } from '@/lib/api-error';
 import { type IAccountManager } from '@/types/user';
@@ -35,6 +36,10 @@ const createSchema = z
       .string()
       .min(1, 'Service type is required')
       .max(100, 'Max 100 characters'),
+    weeklyHours: z
+      .number({ message: 'Enter the hours per week' })
+      .min(1, 'At least 1 hour')
+      .max(60, 'At most 60 hours'),
     startDate: z.string().min(1, 'Start date is required'),
     endDate: z.string().optional(),
     status: z.enum(['active', 'on_hold', 'ended']),
@@ -68,7 +73,7 @@ export function CreateAssignmentForm({
   } = useForm<CreateFormData>({
     resolver: zodResolver(createSchema),
     mode: 'onChange',
-    defaultValues: { status: 'active' },
+    defaultValues: { status: 'active', weeklyHours: 40 },
   });
 
   const selectedClientId = useWatch({ control, name: 'clientId' });
@@ -238,6 +243,11 @@ export function CreateAssignmentForm({
             { value: 'on_hold', label: 'On Hold' },
           ]}
           maxLength={100}
+        />
+
+        <WeeklyHoursField
+          register={register}
+          error={errors.weeklyHours?.message}
         />
       </Section>
 
