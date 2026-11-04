@@ -107,18 +107,21 @@ export const ASSIGNMENT_KEYS = [
   QK.vaAssignmentsAll,
 ] as const;
 
-export function useWorkEntriesQuery(filters?: {
-  assignmentId?: string;
-  candidateId?: string;
-  clientId?: string;
-  dateFrom?: string;
-  dateTo?: string;
-}) {
+export function useWorkEntriesQuery(
+  filters?: {
+    assignmentId?: string;
+    candidateId?: string;
+    clientId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  },
+  options?: { enabled?: boolean }
+) {
   const uid = useUserId();
   return useQuery({
     queryKey: [...QK.workEntries(uid), filters ?? {}],
     queryFn: () => getWorkEntries(filters),
-    enabled: !!uid,
+    enabled: !!uid && (options?.enabled ?? true),
   });
 }
 

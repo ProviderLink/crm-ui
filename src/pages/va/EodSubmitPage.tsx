@@ -119,6 +119,13 @@ export default function EodSubmitPage() {
 
           {/* ── Work completed ── */}
           <Section icon={<ClipboardList size={14} />} title="Work completed">
+            {f.prefilledCount > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Filled from {f.prefilledCount} work{' '}
+                {f.prefilledCount === 1 ? 'entry' : 'entries'} you logged today.
+                Check them and edit anything before submitting.
+              </p>
+            )}
             {errors.workEntries?.message && (
               <p className="text-xs text-destructive">
                 {errors.workEntries.message}

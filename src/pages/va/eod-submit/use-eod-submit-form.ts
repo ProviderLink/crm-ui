@@ -1,15 +1,21 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
-import { QK, useCompanyDay, useEodSubmissionsQuery } from '@/hooks/queries';
+import {
+  QK,
+  useCompanyDay,
+  useEodSubmissionsQuery,
+  useWorkEntriesQuery,
+} from '@/hooks/queries';
 import { useApiMutation } from '@/hooks/use-api-mutation';
 import { useMyAssignments } from '@/hooks/useMyAssignments';
 import { getApiError } from '@/lib/api-error';
 import { calcHours } from '@/lib/time';
 import { createEodSubmission } from '@/services/eod-submissions.service';
 
+import { canReplaceRows, rowsFromWorkEntries, sameRows } from './prefill';
 import { DEFAULT_WORK_ENTRY, schema, type FormData } from './schema';
 
 export function useEodSubmitForm() {
@@ -47,6 +53,7 @@ export function useEodSubmitForm() {
     handleSubmit,
     control,
     setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -62,6 +69,7 @@ export function useEodSubmitForm() {
     fields: workFields,
     append: appendWork,
     remove: removeWork,
+    replace: replaceWork,
   } = useFieldArray({ control, name: 'workEntries' });
 
   const selectedAssignmentId =
@@ -79,6 +87,41 @@ export function useEodSubmitForm() {
       setValue('assignmentId', assignments[0]._id);
     }
   }, [assignments, setValue]);
+
+  // Today's work log becomes the report's starting rows. Nothing is saved until
+  // the VA submits, and rows they have changed are never overwritten.
+  const { data: loggedEntries } = useWorkEntriesQuery(
+    { assignmentId: selectedAssignmentId, dateFrom: today, dateTo: today },
+    { enabled: !!selectedAssignmentId }
+  );
+  const loggedRows = useMemo(
+    () =>
+      selectedAssignmentId
+        ? rowsFromWorkEntries(
+            (loggedEntries ?? []).filter(
+              e => e.entryDate?.slice(0, 10) === today
+            )
+          )
+        : [],
+    [loggedEntries, selectedAssignmentId, today]
+  );
+  const logLoaded = !!selectedAssignmentId && loggedEntries !== undefined;
+  const lastFilled = useRef<FormData['workEntries']>([]);
+
+  useEffect(() => {
+    if (!logLoaded) return;
+    const current = getValues('workEntries');
+    if (!canReplaceRows(current, lastFilled.current)) return;
+    const next = loggedRows.length > 0 ? loggedRows : [DEFAULT_WORK_ENTRY];
+    if (!sameRows(current, next)) replaceWork(next);
+    lastFilled.current = loggedRows;
+  }, [logLoaded, loggedRows, getValues, replaceWork]);
+
+  const watchedRows = useWatch({ control, name: 'workEntries' });
+  const prefilledCount =
+    loggedRows.length > 0 && sameRows(watchedRows ?? [], loggedRows)
+      ? loggedRows.length
+      : 0;
 
   async function onSubmit(data: FormData) {
     // `date` is omitted so the server uses the company's current day, and
@@ -105,5 +148,6 @@ export function useEodSubmitForm() {
     removeWork,
     hoursWorked,
     alreadySubmitted,
+    prefilledCount,
   };
 }
