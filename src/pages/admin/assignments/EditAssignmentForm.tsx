@@ -87,10 +87,8 @@ export function EditAssignmentForm({
       const { endDate, ...rest } = data;
       await updateAssignment(assignment._id, {
         ...rest,
-        // Convert date to ISO for backend validation
-        // Empty string = user cleared the field → send null so the backend clears it
-        // Value present → convert to ISO
-        endDate: endDate ? new Date(endDate).toISOString() : null,
+        // Plain YYYY-MM-DD; an empty field means the end date was cleared.
+        endDate: endDate || null,
       });
       onSuccess();
     } catch (err: unknown) {

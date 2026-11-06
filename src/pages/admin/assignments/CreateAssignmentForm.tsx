@@ -95,8 +95,9 @@ export function CreateAssignmentForm({
       const { startDate, endDate, ...rest } = data;
       await createAssignment({
         ...rest,
-        startDate: new Date(startDate).toISOString(),
-        endDate: endDate ? new Date(endDate).toISOString() : undefined,
+        // The backend takes a plain YYYY-MM-DD date, as the date input gives.
+        startDate,
+        endDate: endDate || undefined,
       });
       onSuccess();
     } catch (err: unknown) {

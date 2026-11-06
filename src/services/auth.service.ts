@@ -46,7 +46,7 @@ function mapUser(u: BackendUser): IUser {
   return {
     id: u._id,
     email: u.email,
-    name: `${u.firstName} ${u.lastName}`,
+    name: `${u.firstName} ${u.lastName ?? ''}`.trim(),
     role,
     clientRef: u.clientRef ?? null,
   };
