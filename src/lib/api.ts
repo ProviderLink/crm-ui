@@ -111,8 +111,16 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError: unknown) {
       processQueue(refreshError, null);
-      store.dispatch(clearAuth());
-      window.location.href = '/login';
+      // Sign out only when the server says the session is over. A network
+      // blip, timeout, 5xx or a deploy keeps the user signed in; the request
+      // just fails and the next one tries again.
+      const status = axios.isAxiosError(refreshError)
+        ? refreshError.response?.status
+        : undefined;
+      if (status === 401 || status === 403) {
+        store.dispatch(clearAuth());
+        window.location.href = '/login';
+      }
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
