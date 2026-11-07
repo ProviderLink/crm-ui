@@ -118,6 +118,9 @@ export function useReviewEditor(review: IPerformanceReview) {
   async function handleRegenCategories() {
     setRegenCatLoading(true);
     try {
+      // Save the ratings and comments on screen first, so the server can keep
+      // them on every category that keeps its name.
+      if (isDirty) await updateReview(id, { categories });
       const updated = await regenerateCategories(id);
       setCategories(updated.categories ?? []);
       invalidate();

@@ -371,7 +371,7 @@ function ReviewEditorForm({
         open={regenConfirm}
         onCancel={() => setRegenConfirm(false)}
         title="Regenerate categories?"
-        description="This replaces all categories, including the ratings and comments you have entered."
+        description="Ratings and comments are kept on categories that keep their name. Categories that change lose theirs."
         confirmLabel="Regenerate"
         variant="default"
         onConfirm={async () => {
