@@ -60,7 +60,7 @@ describe('work entries', () => {
     get.mockResolvedValue({ data: { data: [] } });
     await getWorkEntries({ dateFrom: '2026-10-01', dateTo: undefined });
     expect(get).toHaveBeenCalledWith(
-      '/crm/work-entries?dateFrom=2026-10-01&limit=1000'
+      '/crm/work-entries?dateFrom=2026-10-01&limit=1000&page=1'
     );
   });
 });

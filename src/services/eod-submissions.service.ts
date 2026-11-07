@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
+import { getAllPages } from '@/lib/get-all-pages';
 import type {
   CreateEodPayload,
   EodContext,
@@ -19,10 +19,7 @@ export async function getEodSubmissions(
   query: EodQuery = {}
 ): Promise<IEodSubmission[]> {
   // A large page, so VA/client names are joined for the whole range.
-  const { data } = await api.get<{ data: IEodSubmission[] }>(
-    `/crm/eod-submissions?${toQueryString({ ...query, limit: LIST_LIMIT })}`
-  );
-  return data.data;
+  return getAllPages<IEodSubmission>('/crm/eod-submissions', { ...query });
 }
 
 /**

@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-import { LIST_LIMIT, toQueryString } from '@/lib/api-query';
+import { getAllPages } from '@/lib/get-all-pages';
 import type {
   CreateWorkEntryPayload,
   IWorkEntry,
@@ -18,10 +18,7 @@ export async function getWorkEntries(
   query: WorkEntriesQuery = {}
 ): Promise<IWorkEntry[]> {
   // A large page, so the VA/client name joins cover the whole range.
-  const { data } = await api.get<{ data: IWorkEntry[] }>(
-    `/crm/work-entries?${toQueryString({ ...query, limit: LIST_LIMIT })}`
-  );
-  return data.data;
+  return getAllPages<IWorkEntry>('/crm/work-entries', { ...query });
 }
 
 export async function createWorkEntry(

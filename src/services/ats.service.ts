@@ -1,5 +1,6 @@
 import api from '@/lib/api';
 import { LIST_LIMIT } from '@/lib/api-query';
+import { getAllPages } from '@/lib/get-all-pages';
 import { withId, type ApiDoc } from '@/lib/with-id';
 import type { IAtsCandidate, IAtsClient } from '@/types/ats';
 import axios from 'axios';
@@ -51,16 +52,13 @@ export async function getAtsClients(): Promise<IAtsClient[]> {
 
 /** Candidates = VAs in CRM context. */
 export async function getAtsVAs(): Promise<IAtsCandidate[]> {
-  // Backend defaults to limit=20 when omitted, which truncates the VA name map
-  // and causes assigned VAs to render as raw ids. Fetch a large page.
+  // VAs are the hired candidates. Load only those, and every page of them,
+  // so an assigned VA never shows as a raw id.
   try {
-    const { data } = await api.get<{ data: ApiDoc<IAtsCandidate>[] }>(
-      '/ats/candidates',
-      {
-        params: { limit: LIST_LIMIT },
-      }
-    );
-    return data.data.map(v => withId<IAtsCandidate>(v));
+    const rows = await getAllPages<ApiDoc<IAtsCandidate>>('/ats/candidates', {
+      status: 'hired',
+    });
+    return rows.map(v => withId<IAtsCandidate>(v));
   } catch (e) {
     if (!isForbidden(e)) throw e;
     const byId = new Map<string, IAtsCandidate>();
